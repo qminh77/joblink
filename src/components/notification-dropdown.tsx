@@ -3,9 +3,10 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { CheckCheck, ChevronRight } from "lucide-react"
+import { Bell, CheckCheck, ChevronRight } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import {
   useNotifications,
 } from "@/features/notifications/hooks"
 import { getNotificationVisual } from "@/features/notifications/lib/render"
+import { cn } from "@/lib/utils"
 import { formatRelativeTime, getInitials } from "@/lib/utils/format"
 
 const DROPDOWN_LIMIT = 6
@@ -32,9 +34,9 @@ const fadeIn = {
 }
 
 export function NotificationDropdown({
-  children,
+  className,
 }: {
-  children: React.ReactNode
+  className?: string
 }) {
   const t = useTranslations("notifications")
   const tTypes = useTranslations("notifications.types")
@@ -48,14 +50,18 @@ export function NotificationDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <span className="relative inline-flex">
-          {children}
+        <Button
+          variant="default"
+          className={cn("rounded-full h-9 px-3 relative", className)}
+          aria-label="Notifications"
+        >
+          <Bell className="w-4 h-4 shrink-0" />
           {unreadCount > 0 ? (
-            <span className="absolute top-2 right-2 lg:right-3 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none pointer-events-none">
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none pointer-events-none">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : null}
-        </span>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

@@ -58,7 +58,6 @@ const NAV_ITEMS = [
     key: "notifications",
     href: "/notifications",
     icon: Bell,
-    hasDropdown: "notifications" as const,
   },
 ] satisfies Array<{
   key: "home" | "network" | "jobs" | "messages" | "notifications"
@@ -169,14 +168,6 @@ export function Navbar() {
                 </button>
               )
 
-              if (item.hasDropdown === "notifications") {
-                return (
-                  <NotificationDropdown key={item.href}>
-                    {trigger}
-                  </NotificationDropdown>
-                )
-              }
-
               if (item.hasDropdown === "messages") {
                 return <MessageDropdown key={item.href}>{trigger}</MessageDropdown>
               }
@@ -256,6 +247,7 @@ export function Navbar() {
 
             <div className="hidden sm:block h-6 w-px bg-border/40 mx-1" />
 
+            <NotificationDropdown className="hidden sm:flex" />
             <LanguageSwitcher />
             <ThemeToggle />
 

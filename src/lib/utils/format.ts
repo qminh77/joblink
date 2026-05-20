@@ -1,5 +1,5 @@
-export function getInitials(name: string, fallback = "?"): string {
-  const trimmed = name.trim()
+export function getInitials(name: string | null | undefined, fallback = "?"): string { // Lấy 2 chữ cái đầu của tên, ví dụ "John Doe" => "JD"
+  const trimmed = (name ?? "").trim()
   if (!trimmed) return fallback
 
   const parts = trimmed.split(/\s+/).slice(-2)

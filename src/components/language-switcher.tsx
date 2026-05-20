@@ -32,7 +32,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="default"
           className={cn("rounded-full h-9 px-3", className)}
           disabled={isPending}
           aria-label="Language"
