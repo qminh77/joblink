@@ -28,6 +28,53 @@ export type AppUserRow = {
   two_fa_enabled: boolean
   locale: string
   last_login_at: string | null
+  connection_count: number
+  profile_view_count: number
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type PostType = "text" | "image" | "video" | "article" | "poll"
+export type PostVisibility = "public" | "connections" | "private"
+export type PostStatus = "active" | "hidden" | "deleted"
+
+export type PostRow = {
+  id: number
+  author_id: number
+  content: string
+  post_type: PostType
+  media: Json | null
+  visibility: PostVisibility
+  status: PostStatus
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type PostReactionType =
+  | "like"
+  | "celebrate"
+  | "support"
+  | "love"
+  | "insightful"
+  | "funny"
+
+export type PostReactionRow = {
+  id: number
+  post_id: number
+  user_id: number
+  reaction_type: PostReactionType
+  created_at: string
+}
+
+export type PostCommentRow = {
+  id: number
+  post_id: number
+  user_id: number
+  parent_id: number | null
+  content: string
+  status: "active" | "hidden" | "deleted"
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -124,6 +171,28 @@ export type ConnectionRow = {
   responded_at: string | null
 }
 
+export type NotificationType =
+  | "connection_request"
+  | "connection_accepted"
+
+export type NotificationRow = {
+  id: number
+  user_id: number
+  type: NotificationType
+  title: string | null
+  payload: Json | null
+  read_at: string | null
+  created_at: string
+}
+
+export type NotificationPreferenceRow = {
+  id: number
+  user_id: number
+  type: NotificationType
+  in_app_enabled: boolean
+  email_enabled: boolean
+}
+
 export type CompanyProfileRow = {
   id: number
   user_id: number
@@ -190,9 +259,59 @@ export type Database = {
         ConnectionRow,
         Omit<ConnectionRow, "id" | "requested_at" | "responded_at">
       >
+      notifications: TableDef<
+        NotificationRow,
+        Omit<NotificationRow, "id" | "created_at" | "read_at" | "title"> & {
+          title?: string | null
+          read_at?: string | null
+        }
+      >
+      notification_preferences: TableDef<
+        NotificationPreferenceRow,
+        Omit<NotificationPreferenceRow, "id">
+      >
+      posts: TableDef<
+        PostRow,
+        Omit<
+          PostRow,
+          | "id"
+          | "created_at"
+          | "updated_at"
+          | "deleted_at"
+          | "status"
+          | "media"
+          | "visibility"
+          | "post_type"
+        > & {
+          status?: PostStatus
+          visibility?: PostVisibility
+          post_type?: PostType
+          media?: Json | null
+        },
+        Partial<PostRow> & { deleted_at?: string | null }
+      >
+      post_reactions: TableDef<
+        PostReactionRow,
+        Omit<PostReactionRow, "id" | "created_at">
+      >
+      post_comments: TableDef<
+        PostCommentRow,
+        Omit<PostCommentRow, "id" | "created_at" | "updated_at" | "deleted_at" | "status"> & {
+          status?: PostCommentRow["status"]
+        }
+      >
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      get_home_feed: {
+        Args: {
+          p_posts_cursor?: string | null
+          p_posts_limit?: number
+          p_suggestion_limit?: number
+        }
+        Returns: Json
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

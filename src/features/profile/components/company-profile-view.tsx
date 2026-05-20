@@ -146,7 +146,7 @@ export function CompanyProfileView({
                   href={company.website}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-primary hover:underline break-all"
+                  className="text-primary hover:opacity-80 transition-opacity break-all"
                 >
                   {company.website}
                 </a>

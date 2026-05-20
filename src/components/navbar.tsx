@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { Logo } from "@/components/logo"
 import { MessageDropdown } from "@/components/message-dropdown"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import { ProfileDropdown } from "@/components/profile-dropdown"
@@ -129,12 +130,7 @@ export function Navbar() {
       <nav className="bg-background/80 backdrop-blur-xl border-b border-border/40 fixed top-0 w-full flex justify-between items-center px-4 md:px-8 h-16 z-50 transition-colors">
         <div className="flex items-center gap-4 lg:gap-6">
           <Link href="/home" className="flex items-center gap-2 group">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://emmariani.github.io/cartoon-hero/img/mode.jpg"
-              alt="JobLink"
-              className="w-8 h-8 rounded-xl object-cover shadow-sm shadow-primary/20 group-hover:shadow-md group-hover:shadow-primary/30 transition-shadow"
-            />
+            <Logo size="sm" />
           </Link>
 
           <div className="hidden sm:flex relative items-center group">

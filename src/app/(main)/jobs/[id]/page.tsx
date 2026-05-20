@@ -61,7 +61,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Senior Frontend Developer (React/Vue)</h1>
-                  <Link href="/company/1" className="text-primary hover:underline font-medium text-sm">
+                  <Link href="/company/1" className="text-primary hover:opacity-80 transition-opacity font-medium text-sm">
                     TechCorp Solutions VN
                   </Link>
                   <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
@@ -108,7 +108,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                               ))}
                             </RadioGroup>
                           </div>
-                          <Link href="/profile/edit" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <Link href="/profile/edit" className="flex items-center gap-2 text-xs text-primary hover:opacity-80 transition-opacity">
                             <Plus className="w-3.5 h-3.5" /> Quản lý CV
                           </Link>
                         </div>
@@ -235,7 +235,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             TechCorp Solutions VN
           </Link>
           <p className="text-xs text-muted-foreground mt-1">Phần mềm & Dịch vụ CNTT</p>
-          <a href="#" className="text-primary text-xs hover:underline mt-1 inline-block">https://techcorp.vn</a>
+          <a href="#" className="text-primary text-xs hover:opacity-80 transition-opacity mt-1 inline-block">https://techcorp.vn</a>
 
           <div className="flex justify-between text-sm my-5 px-4">
             <div>

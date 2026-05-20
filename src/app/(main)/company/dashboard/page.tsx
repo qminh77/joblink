@@ -111,7 +111,7 @@ export default function CompanyDashboardPage() {
                       <Briefcase className="w-4 h-4 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <Link href={`/jobs/${job.id}`} className="font-semibold text-sm text-foreground hover:text-primary hover:underline truncate block">{job.title}</Link>
+                      <Link href={`/jobs/${job.id}`} className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate block">{job.title}</Link>
                       <p className="text-xs text-muted-foreground">{job.applicants} ứng viên • {job.views} lượt xem</p>
                     </div>
                   </div>
@@ -159,7 +159,7 @@ export default function CompanyDashboardPage() {
                       <Briefcase className="w-5 h-5 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <Link href={`/jobs/${job.id}`} className="font-semibold text-sm text-foreground hover:text-primary hover:underline truncate block">{job.title}</Link>
+                      <Link href={`/jobs/${job.id}`} className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate block">{job.title}</Link>
                       <p className="text-xs text-muted-foreground">{job.applicants} ứng viên • {job.views} lượt xem • {job.created}</p>
                     </div>
                   </div>

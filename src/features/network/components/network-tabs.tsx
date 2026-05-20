@@ -197,7 +197,7 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
         </Link>
         <Link
           href={`/profile/${item.userId}`}
-          className="font-semibold text-xs sm:text-sm text-foreground hover:text-primary hover:underline leading-tight line-clamp-1 mt-0.5"
+          className="font-semibold text-xs sm:text-sm text-foreground hover:text-primary transition-colors leading-tight line-clamp-1 mt-0.5"
         >
           {item.displayName}
         </Link>
@@ -305,7 +305,7 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
       <div className="flex-1 min-w-0">
         <Link
           href={`/profile/${item.userId}`}
-          className="font-semibold text-sm text-foreground hover:text-primary hover:underline transition-colors block truncate"
+          className="font-semibold text-sm text-foreground hover:text-primary transition-colors block truncate"
         >
           {item.displayName}
         </Link>
@@ -405,7 +405,7 @@ function IncomingCard({ item }: { item: InvitationItem }) {
         <div className="flex-1 min-w-0">
           <Link
             href={`/profile/${item.userId}`}
-            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary hover:underline block"
+            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}
           </Link>
@@ -507,7 +507,7 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
         <div className="flex-1 min-w-0">
           <Link
             href={`/profile/${item.userId}`}
-            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary hover:underline block"
+            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}
           </Link>

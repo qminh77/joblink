@@ -1,0 +1,7 @@
+CREATE OR REPLACE FUNCTION row_to_jsonb(ANYELEMENT)
+RETURNS jsonb
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT to_jsonb($1);
+$$;

@@ -11,7 +11,7 @@ import {
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 
@@ -125,14 +125,14 @@ export default function AdminDashboardPage() {
           <motion.div variants={fadeUp} className="bg-card border-border/30 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-foreground">Recent Signups</h2>
-              <Link href="/admin/users" className="text-xs text-primary hover:underline flex items-center gap-0.5">
+              <Link href="/admin/users" className="text-xs text-primary hover:opacity-80 transition-opacity flex items-center gap-0.5">
                 View all <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
             <motion.div variants={staggerSm} initial="hidden" animate="show" className="space-y-3">
               {recentSignups.map((user) => (
                 <motion.div key={user.email} variants={slideLeft} className="flex items-center gap-3">
-                  <Avatar className="w-8 h-8"><AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" /><AvatarFallback className="text-xs">{user.initials}</AvatarFallback></Avatar>
+                  <Avatar className="w-8 h-8"><AvatarFallback className="text-xs">{user.initials}</AvatarFallback></Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
         <motion.div variants={fadeUp} initial="hidden" animate="show" className="bg-card border-border/30 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-foreground">Pending Reports</h2>
-            <Link href="/admin/reports" className="text-xs text-primary hover:underline flex items-center gap-0.5">
+            <Link href="/admin/reports" className="text-xs text-primary hover:opacity-80 transition-opacity flex items-center gap-0.5">
               View all <ChevronRight className="w-3 h-3" />
             </Link>
           </div>

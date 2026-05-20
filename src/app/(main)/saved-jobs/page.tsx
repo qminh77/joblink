@@ -13,7 +13,7 @@ import {
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -139,13 +139,13 @@ export default function SavedJobsPage() {
                   <Card className="bg-card border-border/30 rounded-xl p-4 hover:border-primary/30 transition-all group">
                     <div className="flex items-start gap-3 sm:gap-4">
                       <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl shrink-0">
-                        <AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" />
+
                         <AvatarFallback className="rounded-xl text-xs sm:text-sm font-semibold text-primary">{job.logo}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <Link href={`/jobs/${job.id}`} className="font-headline font-bold text-foreground text-sm sm:text-base hover:text-primary hover:underline transition-colors">{job.title}</Link>
+                            <Link href={`/jobs/${job.id}`} className="font-headline font-bold text-foreground text-sm sm:text-base hover:text-primary transition-colors">{job.title}</Link>
                             <p className="text-xs sm:text-sm text-muted-foreground">{job.company}</p>
                           </div>
                           <div className="flex gap-1 shrink-0">
@@ -197,13 +197,13 @@ export default function SavedJobsPage() {
                     <Card className="bg-card border-border/30 rounded-xl p-4 sm:p-5 hover:border-primary/30 transition-all">
                       <div className="flex items-start gap-3 sm:gap-4">
                         <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl shrink-0">
-                          <AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" />
+
                           <AvatarFallback className="rounded-xl text-xs sm:text-sm font-semibold text-primary">{app.logo}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <Link href={`/jobs/${app.id}`} className="font-headline font-bold text-foreground text-sm sm:text-base hover:text-primary hover:underline transition-colors">{app.jobTitle}</Link>
+                              <Link href={`/jobs/${app.id}`} className="font-headline font-bold text-foreground text-sm sm:text-base hover:text-primary transition-colors">{app.jobTitle}</Link>
                               <p className="text-xs sm:text-sm text-muted-foreground">{app.company}</p>
                             </div>
                             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${cfg.bg} ${cfg.color} text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0`}>

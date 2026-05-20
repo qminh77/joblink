@@ -17,7 +17,10 @@
     "no": "No",
     "required": "Required",
     "optional": "Optional",
-    "unknownError": "An unknown error occurred. Please try again."
+    "unknownError": "An unknown error occurred. Please try again.",
+    "send": "Send",
+    "viewAll": "View all",
+    "justNow": "Just now"
   },
   "nav": {
     "home": "Home",
@@ -42,7 +45,22 @@
     "createPost": "New post",
     "createPostHint": "Share your thoughts",
     "createJob": "Post a job",
-    "createJobHint": "Find potential candidates"
+    "createJobHint": "Find potential candidates",
+    "public": "Public",
+    "shareTitle": "Share post",
+    "shareToFeed": "Share to feed",
+    "shareToFeedHint": "Share it on your profile",
+    "copyLink": "Copy link",
+    "copyLinkHint": "Copy the post URL to share",
+    "sendViaMessage": "Send via message",
+    "searchPersonPlaceholder": "Search for someone...",
+    "errors": {
+      "contentRequired": "Please enter some content",
+      "contentMax": "Content is too long",
+      "invalidData": "Invalid data",
+      "invalidPost": "Invalid post",
+      "createFailed": "Could not create post"
+    }
   },
   "profileMenu": {
     "viewProfileShort": "View profile",
@@ -405,6 +423,74 @@
     },
     "validation": {
       "keywordMax": "Keyword up to 100 characters"
+    }
+  },
+  "home": {
+    "companyHeadlineFallback": "Company page",
+    "memberHeadlineFallback": "JobLink member",
+    "profileViews": "Profile views",
+    "connections": "Connections",
+    "connectSuggestions": "Connection suggestions",
+    "noSuggestions": "No suggestions yet",
+    "composerPlaceholder": "What's on your mind, {name}?",
+    "photoVideo": "Photo/Video",
+    "poll": "Poll",
+    "latest": "Latest",
+    "jobSuggestions": "Job suggestions",
+    "pendingInvitations": "Pending invitations",
+    "wantsToConnect": "Wants to connect with you",
+    "viewAllCount": "View all ({count})"
+  },
+  "feed": {
+    "like": "Like",
+    "comment": "Comment",
+    "share": "Share",
+    "send": "Send",
+    "reply": "Reply",
+    "commentsCount": "{count} comments",
+    "sharesCount": "{count} shares",
+    "writeComment": "Write a comment..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadSummary": "You have {count} unread notifications",
+    "noUnread": "No new notifications",
+    "markAllRead": "Mark all as read",
+    "tabs": {
+      "all": "All",
+      "unread": "Unread",
+      "connect": "Connections"
+    },
+    "empty": {
+      "title": "No notifications",
+      "desc": "You'll get notified when there's new activity."
+    },
+    "dropdown": {
+      "unreadSummary": "{count} unread notifications",
+      "markRead": "Read",
+      "viewAll": "View all notifications",
+      "empty": "No notifications yet"
+    },
+    "types": {
+      "connection_request": "sent you a connection request",
+      "connection_accepted": "accepted your connection request",
+      "unknown": "has new activity"
+    },
+    "errors": {
+      "invalidId": "Invalid notification"
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "searchPlaceholder": "Search...",
+    "online": "Active now",
+    "offline": "Offline",
+    "inputPlaceholder": "Type a message...",
+    "emptyTitle": "Your messages",
+    "emptyDesc": "Select a conversation to start chatting, or search for friends to send a new message.",
+    "dropdown": {
+      "unreadSummary": "{count} unread conversations",
+      "viewAll": "View all messages"
     }
   }
 }

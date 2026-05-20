@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RegisterForm } from "@/features/auth/components/register-form"
 
@@ -25,12 +26,7 @@ export default function RegisterPage() {
         <div className="bg-white dark:bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col items-center">
             <div className="mb-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://emmariani.github.io/cartoon-hero/img/mode.jpg"
-                alt="JobLink"
-                className="w-14 h-14 rounded-2xl object-cover border border-primary/20"
-              />
+              <Logo size="md" />
             </div>
 
             <div className="text-center mb-8">

@@ -2,14 +2,15 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { MessageSquare, ChevronRight, PenSquare } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { ChevronRight, PenSquare } from "lucide-react"
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 
 const recentConversations = [
@@ -57,6 +58,9 @@ export function MessageDropdown({
 }: {
   children: React.ReactNode
 }) {
+  const t = useTranslations("messages")
+  const unreadCount = recentConversations.filter((c) => c.unread > 0).length
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -67,8 +71,8 @@ export function MessageDropdown({
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/30">
           <div>
-            <h3 className="font-headline font-bold text-sm text-foreground">Tin nhắn</h3>
-            <p className="text-[11px] text-muted-foreground">2 cuộc hội thoại chưa đọc</p>
+            <h3 className="font-headline font-bold text-sm text-foreground">{t("title")}</h3>
+            <p className="text-[11px] text-muted-foreground">{t("dropdown.unreadSummary", { count: unreadCount })}</p>
           </div>
           <Button
             variant="ghost"
@@ -91,7 +95,7 @@ export function MessageDropdown({
                 >
                   <div className="relative shrink-0">
                     <Avatar className="w-10 h-10 rounded-xl">
-                      <AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" />
+
                       <AvatarFallback className="text-xs font-semibold">
                         {conv.initials}
                       </AvatarFallback>
@@ -140,7 +144,7 @@ export function MessageDropdown({
           href="/messages"
           className="flex items-center justify-center gap-1 px-4 py-3.5 text-xs font-semibold text-primary hover:bg-muted/30 transition-colors border-t border-border/20 rounded-b-2xl group"
         >
-          Xem tất cả tin nhắn
+          {t("dropdown.viewAll")}
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </DropdownMenuContent>

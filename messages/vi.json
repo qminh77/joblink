@@ -17,7 +17,10 @@
     "no": "Không",
     "required": "Bắt buộc",
     "optional": "Tùy chọn",
-    "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+    "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+    "send": "Gửi",
+    "viewAll": "Xem tất cả",
+    "justNow": "Vừa xong"
   },
   "nav": {
     "home": "Trang chủ",
@@ -42,7 +45,22 @@
     "createPost": "Đăng bài viết",
     "createPostHint": "Chia sẻ suy nghĩ của bạn",
     "createJob": "Đăng tin tuyển dụng",
-    "createJobHint": "Tìm kiếm ứng viên tiềm năng"
+    "createJobHint": "Tìm kiếm ứng viên tiềm năng",
+    "public": "Công khai",
+    "shareTitle": "Chia sẻ bài viết",
+    "shareToFeed": "Chia sẻ lên Feed",
+    "shareToFeedHint": "Chia sẻ ngay trên trang cá nhân của bạn",
+    "copyLink": "Sao chép liên kết",
+    "copyLinkHint": "Sao chép URL bài viết để gửi",
+    "sendViaMessage": "Gửi qua tin nhắn",
+    "searchPersonPlaceholder": "Tìm kiếm người để gửi...",
+    "errors": {
+      "contentRequired": "Vui lòng nhập nội dung",
+      "contentMax": "Nội dung quá dài",
+      "invalidData": "Dữ liệu không hợp lệ",
+      "invalidPost": "Bài viết không hợp lệ",
+      "createFailed": "Không thể tạo bài viết"
+    }
   },
   "profileMenu": {
     "viewProfileShort": "Xem hồ sơ",
@@ -405,6 +423,74 @@
     },
     "validation": {
       "keywordMax": "Từ khóa tối đa 100 ký tự"
+    }
+  },
+  "home": {
+    "companyHeadlineFallback": "Trang doanh nghiệp",
+    "memberHeadlineFallback": "Thành viên JobLink",
+    "profileViews": "Lượt xem hồ sơ",
+    "connections": "Kết nối",
+    "connectSuggestions": "Gợi ý kết nối",
+    "noSuggestions": "Chưa có gợi ý nào",
+    "composerPlaceholder": "Bạn đang nghĩ gì, {name}?",
+    "photoVideo": "Ảnh/Video",
+    "poll": "Bình chọn",
+    "latest": "Mới nhất",
+    "jobSuggestions": "Việc làm gợi ý",
+    "pendingInvitations": "Lời mời đang chờ xác nhận",
+    "wantsToConnect": "Muốn kết nối với bạn",
+    "viewAllCount": "Xem tất cả ({count})"
+  },
+  "feed": {
+    "like": "Thích",
+    "comment": "Bình luận",
+    "share": "Chia sẻ",
+    "send": "Gửi",
+    "reply": "Phản hồi",
+    "commentsCount": "{count} bình luận",
+    "sharesCount": "{count} chia sẻ",
+    "writeComment": "Viết bình luận..."
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "unreadSummary": "Bạn có {count} thông báo chưa đọc",
+    "noUnread": "Không có thông báo mới",
+    "markAllRead": "Đánh dấu đã đọc",
+    "tabs": {
+      "all": "Tất cả",
+      "unread": "Chưa đọc",
+      "connect": "Kết nối"
+    },
+    "empty": {
+      "title": "Không có thông báo",
+      "desc": "Bạn sẽ nhận được thông báo khi có hoạt động mới."
+    },
+    "dropdown": {
+      "unreadSummary": "{count} thông báo chưa đọc",
+      "markRead": "Đã đọc",
+      "viewAll": "Xem tất cả thông báo",
+      "empty": "Chưa có thông báo nào"
+    },
+    "types": {
+      "connection_request": "đã gửi cho bạn lời mời kết nối",
+      "connection_accepted": "đã chấp nhận lời mời kết nối của bạn",
+      "unknown": "có hoạt động mới"
+    },
+    "errors": {
+      "invalidId": "Thông báo không hợp lệ"
+    }
+  },
+  "messages": {
+    "title": "Tin nhắn",
+    "searchPlaceholder": "Tìm kiếm...",
+    "online": "Đang hoạt động",
+    "offline": "Không hoạt động",
+    "inputPlaceholder": "Nhập tin nhắn...",
+    "emptyTitle": "Tin nhắn của bạn",
+    "emptyDesc": "Chọn một cuộc hội thoại để bắt đầu trò chuyện hoặc tìm kiếm bạn bè để gửi tin nhắn mới.",
+    "dropdown": {
+      "unreadSummary": "{count} cuộc hội thoại chưa đọc",
+      "viewAll": "Xem tất cả tin nhắn"
     }
   }
 }

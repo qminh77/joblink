@@ -288,7 +288,7 @@ export function MemberProfileView({
                         href={profile.website}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary hover:underline truncate"
+                        className="text-primary hover:opacity-80 transition-opacity truncate"
                       >
                         {profile.website}
                       </a>
@@ -304,7 +304,7 @@ export function MemberProfileView({
                   href={profile.website}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-primary hover:underline break-all"
+                  className="text-sm text-primary hover:opacity-80 transition-opacity break-all"
                 >
                   {profile.website}
                 </a>

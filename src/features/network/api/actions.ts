@@ -3,12 +3,39 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
+import type { CurrentUser } from "@/features/auth/types"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { createNotification } from "@/features/notifications/lib/create-notification"
+import type { ActorRef } from "@/features/notifications/types"
 import { createClient } from "@/lib/supabase/server"
 import type { ConnectionRow } from "@/types/database"
-import type { NetworkUserCard } from "../types"
+import type { InvitationItem, NetworkUserCard } from "../types"
 
-import { loadSuggestions } from "./queries"
+import { loadInvitations, loadSuggestions } from "./queries"
+
+function actorRef(current: CurrentUser): ActorRef {
+  return {
+    userId: current.appUser.id,
+    displayName: current.profile.displayName,
+    avatarUrl: current.profile.avatarUrl,
+  }
+}
+
+async function notifyConnectionRequest(input: {
+  receiverId: number
+  connectionId: number
+  actor: ActorRef
+}) {
+  await createNotification({
+    userId: input.receiverId,
+    type: "connection_request",
+    payload: {
+      type: "connection_request",
+      connectionId: input.connectionId,
+      ...input.actor,
+    },
+  })
+}
 
 import {
   createConnectionIdSchema,
@@ -83,18 +110,32 @@ export async function sendConnectionRequestAction(
         })
         .eq("id", existing.id)
       if (error) return fail(error.message)
+      await notifyConnectionRequest({
+        receiverId: parsed.data,
+        connectionId: existing.id,
+        actor: actorRef(current),
+      })
       revalidateNetwork()
       return { ok: true }
     }
   }
 
-  const { error } = await supabase.from("connections").insert({
-    requester_id: me,
-    receiver_id: parsed.data,
-    status: "pending",
-  })
+  const { data: inserted, error } = await supabase
+    .from("connections")
+    .insert({
+      requester_id: me,
+      receiver_id: parsed.data,
+      status: "pending",
+    })
+    .select("id")
+    .single<{ id: number }>()
 
-  if (error) return fail(error.message)
+  if (error || !inserted) return fail(error?.message ?? te("invalidData"))
+  await notifyConnectionRequest({
+    receiverId: parsed.data,
+    connectionId: inserted.id,
+    actor: actorRef(current),
+  })
   revalidateNetwork()
   return { ok: true }
 }
@@ -144,9 +185,11 @@ export async function respondConnectionRequestAction(
 
   const { data: row } = await supabase
     .from("connections")
-    .select("id, receiver_id, status")
+    .select("id, requester_id, receiver_id, status")
     .eq("id", parsed.data)
-    .maybeSingle<Pick<ConnectionRow, "id" | "receiver_id" | "status">>()
+    .maybeSingle<
+      Pick<ConnectionRow, "id" | "requester_id" | "receiver_id" | "status">
+    >()
 
   if (!row) return fail(te("invitationNotFound"))
   if (row.receiver_id !== current.appUser.id) {
@@ -163,6 +206,17 @@ export async function respondConnectionRequestAction(
     .eq("id", row.id)
 
   if (error) return fail(error.message)
+  if (accept) {
+    await createNotification({
+      userId: row.requester_id,
+      type: "connection_accepted",
+      payload: {
+        type: "connection_accepted",
+        connectionId: row.id,
+        ...actorRef(current),
+      },
+    })
+  }
   revalidateNetwork()
   return { ok: true }
 }
@@ -202,4 +256,9 @@ export async function removeConnectionAction(
 
 export async function getSuggestionsAction(): Promise<NetworkUserCard[]> {
   return loadSuggestions()
+}
+
+export async function getIncomingInvitationsAction(): Promise<InvitationItem[]> {
+  const { incoming } = await loadInvitations()
+  return incoming
 }

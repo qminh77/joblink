@@ -4,15 +4,14 @@ import { motion } from "framer-motion"
 import { pageEntrance, staggerSm, fadeUp, slideLeft, slideRight, btnTap } from "@/lib/animations"
 import { useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import {
   Search, Send, MoreHorizontal, Phone, Video,
-  Smile, Paperclip, Image, Check, CheckCheck,
-  ArrowLeft, X,
+  Smile, Paperclip, Check, CheckCheck,
+  ArrowLeft,
 } from "lucide-react"
 
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 
 interface Message {
@@ -94,6 +93,8 @@ const conversations: Conversation[] = [
 ]
 
 export default function MessagesPage() {
+  const t = useTranslations("messages")
+  const tCommon = useTranslations("common")
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [messageText, setMessageText] = useState("")
   const [conversationsList, setConversationsList] = useState(conversations)
@@ -104,13 +105,14 @@ export default function MessagesPage() {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
     if (!messageText.trim() || !selectedId) return
+    const now = tCommon("justNow")
     setConversationsList(prev => prev.map(c => {
       if (c.id !== selectedId) return c
       return {
         ...c,
-        messages: [...c.messages, { id: Date.now(), sender: "me", text: messageText, time: "Vừa xong", seen: false }],
+        messages: [...c.messages, { id: Date.now(), sender: "me", text: messageText, time: now, seen: false }],
         lastMessage: messageText,
-        lastTime: "Vừa xong",
+        lastTime: now,
       }
     }))
     setMessageText("")
@@ -127,10 +129,10 @@ export default function MessagesPage() {
       {/* Conversation List */}
       <motion.div variants={slideLeft} initial="hidden" animate="show" className={`${selectedId && !showMobileList ? "hidden" : "flex"} md:flex w-full md:w-80 lg:w-96 shrink-0 flex-col bg-card border border-border/40 rounded-2xl overflow-hidden`}>
         <div className="p-4 border-b border-border/40">
-          <h1 className="font-headline font-bold text-xl">Tin nhắn</h1>
+          <h1 className="font-headline font-bold text-xl">{t("title")}</h1>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input className="pl-9 h-9 rounded-full bg-muted border-none text-sm" placeholder="Tìm kiếm..." />
+            <Input className="pl-9 h-9 rounded-full bg-muted border-none text-sm" placeholder={t("searchPlaceholder")} />
           </div>
         </div>
         <motion.div variants={staggerSm} initial="hidden" animate="show" className="flex-1 overflow-y-auto">
@@ -141,7 +143,7 @@ export default function MessagesPage() {
               className={`w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left border-b border-border/20 last:border-b-0 ${selectedId === conv.id ? "bg-primary/5" : ""}`}
             >
               <div className="relative shrink-0">
-                <Avatar className="w-11 h-11"><AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" /><AvatarFallback>{conv.initials}</AvatarFallback></Avatar>
+                <Avatar className="w-11 h-11"><AvatarFallback>{conv.initials}</AvatarFallback></Avatar>
                 {conv.online && (
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-card rounded-full"></span>
                 )}
@@ -174,14 +176,14 @@ export default function MessagesPage() {
                 </button>
                 <Link href={`/profile/${selected.id}`}>
                   <Avatar className="w-9 h-9 cursor-pointer hover:opacity-80">
-                    <AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" />
+
                     <AvatarFallback>{selected.initials}</AvatarFallback>
                   </Avatar>
                 </Link>
                 <div className="min-w-0">
-                  <Link href={`/profile/${selected.id}`} className="font-semibold text-sm hover:text-primary hover:underline truncate block">{selected.name}</Link>
+                  <Link href={`/profile/${selected.id}`} className="font-semibold text-sm hover:text-primary transition-colors truncate block">{selected.name}</Link>
                   <span className={`text-[11px] ${selected.online ? "text-emerald-500" : "text-muted-foreground"}`}>
-                    {selected.online ? "Đang hoạt động" : "Không hoạt động"}
+                    {selected.online ? t("online") : t("offline")}
                   </span>
                 </div>
               </div>
@@ -199,7 +201,7 @@ export default function MessagesPage() {
                   <div className={`max-w-[75%] sm:max-w-[60%] ${msg.sender === "me" ? "order-1" : "order-1"}`}>
                     {msg.sender === "them" && (
                       <div className="flex items-center gap-2 mb-1">
-                        <Avatar className="w-5 h-5"><AvatarImage src="https://emmariani.github.io/cartoon-hero/img/mode.jpg" /><AvatarFallback className="text-[9px]">{selected.initials}</AvatarFallback></Avatar>
+                        <Avatar className="w-5 h-5"><AvatarFallback className="text-[9px]">{selected.initials}</AvatarFallback></Avatar>
                         <span className="text-[10px] text-muted-foreground">{selected.name}</span>
                       </div>
                     )}
@@ -230,7 +232,7 @@ export default function MessagesPage() {
                   type="text"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Nhập tin nhắn..."
+                  placeholder={t("inputPlaceholder")}
                   className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2.5 outline-none"
                 />
                 <button type="button" className="p-1 text-muted-foreground hover:text-foreground"><Smile className="w-4 h-4" /></button>
@@ -246,9 +248,9 @@ export default function MessagesPage() {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Send className="w-7 h-7 text-primary" />
             </div>
-            <h2 className="font-headline font-bold text-lg text-foreground">Tin nhắn của bạn</h2>
+            <h2 className="font-headline font-bold text-lg text-foreground">{t("emptyTitle")}</h2>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              Chọn một cuộc hội thoại để bắt đầu trò chuyện hoặc tìm kiếm bạn bè để gửi tin nhắn mới.
+              {t("emptyDesc")}
             </p>
           </div>
         )}

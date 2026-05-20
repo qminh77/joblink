@@ -2,53 +2,24 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import {
-  Bell,
-  ThumbsUp,
-  MessageCircle,
-  UserPlus,
-  CheckCheck,
-  ChevronRight,
-} from "lucide-react"
+import { useTranslations } from "next-intl"
+import { CheckCheck, ChevronRight } from "lucide-react"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
+} from "@/features/notifications/hooks"
+import { getNotificationVisual } from "@/features/notifications/lib/render"
+import { formatRelativeTime, getInitials } from "@/lib/utils/format"
 
-const recentNotifications = [
-  {
-    id: 1,
-    type: "like",
-    user: "Trần Hoàng",
-    initials: "TH",
-    content: "đã thích bài viết của bạn",
-    time: "5 phút trước",
-    icon: ThumbsUp,
-    color: "text-muted-foreground",
-  },
-  {
-    id: 2,
-    type: "comment",
-    user: "Lê Vy",
-    initials: "LV",
-    content: "đã bình luận: \"Khóa học tuyệt vời quá!\"",
-    time: "15 phút trước",
-    icon: MessageCircle,
-    color: "text-muted-foreground",
-  },
-  {
-    id: 3,
-    type: "connect",
-    user: "Phạm Minh",
-    initials: "PM",
-    content: "đã gửi lời mời kết nối",
-    time: "30 phút trước",
-    icon: UserPlus,
-    color: "text-muted-foreground",
-  },
-]
+const DROPDOWN_LIMIT = 6
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -65,9 +36,27 @@ export function NotificationDropdown({
 }: {
   children: React.ReactNode
 }) {
+  const t = useTranslations("notifications")
+  const tTypes = useTranslations("notifications.types")
+  const { data: notifications = [] } = useNotifications()
+  const markRead = useMarkNotificationRead()
+  const markAllRead = useMarkAllNotificationsRead()
+
+  const unreadCount = notifications.filter((item) => !item.isRead).length
+  const visible = notifications.slice(0, DROPDOWN_LIMIT)
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
+        <span className="relative inline-flex">
+          {children}
+          {unreadCount > 0 ? (
+            <span className="absolute top-2 right-2 lg:right-3 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none pointer-events-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : null}
+        </span>
+      </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         sideOffset={10}
@@ -75,53 +64,98 @@ export function NotificationDropdown({
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/30">
           <div>
-            <h3 className="font-headline font-bold text-sm text-foreground">Thông báo</h3>
-            <p className="text-[11px] text-muted-foreground">3 thông báo chưa đọc</p>
+            <h3 className="font-headline font-bold text-sm text-foreground">
+              {t("title")}
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              {unreadCount > 0
+                ? t("dropdown.unreadSummary", { count: unreadCount })
+                : t("noUnread")}
+            </p>
           </div>
-          <Link
-            href="/notifications"
-            className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5"
-          >
-            <CheckCheck className="w-3.5 h-3.5" />
-            Đã đọc
-          </Link>
+          {unreadCount > 0 ? (
+            <button
+              type="button"
+              disabled={markAllRead.isPending}
+              onClick={() => markAllRead.mutate()}
+              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5 disabled:opacity-50"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              {t("dropdown.markRead")}
+            </button>
+          ) : null}
         </div>
 
         <div className="max-h-80 overflow-y-auto">
-          <motion.div variants={stagger} initial="hidden" animate="show">
-            {recentNotifications.map((notif, index) => {
-              const Icon = notif.icon
-              return (
-                <motion.div key={notif.id} variants={fadeIn}>
-                  <Link
-                    href="/notifications"
-                    className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
-                      index < recentNotifications.length - 1 ? "border-b border-border/10" : ""
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${notif.color} mt-0.5 shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-foreground/90 leading-relaxed">
-                        <span className="font-semibold text-foreground">{notif.user} </span>
-                        {notif.content}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[10px] text-muted-foreground">{notif.time}</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          {visible.length === 0 ? (
+            <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+              {t("dropdown.empty")}
+            </p>
+          ) : (
+            <motion.div variants={stagger} initial="hidden" animate="show">
+              {visible.map((item, index) => {
+                const visual = getNotificationVisual(item)
+                const Icon = visual.icon
+                return (
+                  <motion.div key={item.id} variants={fadeIn}>
+                    <Link
+                      href={visual.href}
+                      onClick={() => {
+                        if (!item.isRead) markRead.mutate(item.id)
+                      }}
+                      className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
+                        index < visible.length - 1
+                          ? "border-b border-border/10"
+                          : ""
+                      } ${!item.isRead ? "bg-primary/[0.03]" : ""}`}
+                    >
+                      {visual.actorUserId != null ? (
+                        <Avatar className="w-8 h-8 shrink-0 border border-border/30">
+                          {visual.actorAvatarUrl ? (
+                            <AvatarImage src={visual.actorAvatarUrl} />
+                          ) : null}
+                          <AvatarFallback className="text-[10px]">
+                            {getInitials(visual.actorName ?? "JL", "JL")}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div
+                          className={`w-8 h-8 rounded-full ${visual.iconClassName} flex items-center justify-center shrink-0`}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-foreground/90 leading-relaxed">
+                          {visual.actorName ? (
+                            <span className="font-semibold text-foreground">
+                              {visual.actorName}{" "}
+                            </span>
+                          ) : null}
+                          {tTypes(item.type)}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatRelativeTime(item.createdAt)}
+                          </span>
+                          {!item.isRead ? (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              )
-            })}
-          </motion.div>
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
         </div>
 
         <Link
           href="/notifications"
           className="flex items-center justify-center gap-1 px-4 py-3.5 text-xs font-semibold text-primary hover:bg-muted/30 transition-colors border-t border-border/20 rounded-b-2xl group"
         >
-          Xem tất cả thông báo
+          {t("dropdown.viewAll")}
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </DropdownMenuContent>

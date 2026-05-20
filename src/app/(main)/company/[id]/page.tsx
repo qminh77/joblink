@@ -78,7 +78,7 @@ export default function CompanyPage({ params }: { params: { id: string } }) {
                 <p className="text-muted-foreground text-sm mt-1">{company.industry}</p>
                 <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {company.location}</span>
-                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline">
+                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:opacity-80 transition-opacity">
                     <Globe className="w-3.5 h-3.5" /> Website
                   </a>
                 </div>

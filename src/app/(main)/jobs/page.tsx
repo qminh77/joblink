@@ -79,7 +79,7 @@ export default function JobsPage() {
                 <h2 className="font-semibold text-foreground flex items-center gap-1.5">
                   <Filter className="w-4 h-4" /> Bộ lọc
                 </h2>
-                <button className="text-xs text-primary hover:underline">Xóa lọc</button>
+                <button className="text-xs text-primary hover:opacity-80 transition-opacity">Xóa lọc</button>
               </motion.div>
 
             <motion.div variants={fadeUp} className="mb-5">
