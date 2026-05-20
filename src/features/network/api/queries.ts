@@ -336,6 +336,43 @@ async function filterActiveUserIds(
   return ((data ?? []) as Array<{ id: number }>).map((row) => row.id)
 }
 
+export async function loadNetworkOverview(): Promise<{
+  suggestions: NetworkUserCard[]
+  connections: ConnectionItem[]
+  incoming: InvitationItem[]
+  outgoing: InvitationItem[]
+}> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc("get_network_overview", {
+    p_suggestion_limit: SUGGESTION_LIMIT,
+  })
+
+  if (error || !data) {
+    console.error("[loadNetworkOverview] RPC error", error)
+    return {
+      suggestions: [],
+      connections: [],
+      incoming: [],
+      outgoing: [],
+    }
+  }
+
+  const payload = data as unknown as {
+    suggestions?: NetworkUserCard[]
+    connections?: ConnectionItem[]
+    incoming?: InvitationItem[]
+    outgoing?: InvitationItem[]
+  }
+
+  return {
+    suggestions: payload.suggestions ?? [],
+    connections: payload.connections ?? [],
+    incoming: payload.incoming ?? [],
+    outgoing: payload.outgoing ?? [],
+  }
+}
+
 export async function loadConnectionRelation(
   targetUserId: number,
 ): Promise<ConnectionRelation> {

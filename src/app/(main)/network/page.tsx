@@ -1,26 +1,12 @@
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import {
-  loadConnections,
-  loadInvitations,
-  loadSuggestions,
-} from "@/features/network/api/queries"
-import { NetworkTabs } from "@/features/network/components/network-tabs"
+import { Suspense } from "react"
 
-export default async function NetworkPage() {
-  await requireCurrentUser()
+import { NetworkContent } from "@/features/network/components/network-content"
+import { NetworkSkeleton } from "@/features/network/components/network-skeleton"
 
-  const [suggestions, connections, invitations] = await Promise.all([
-    loadSuggestions(),
-    loadConnections(),
-    loadInvitations(),
-  ])
-
+export default function NetworkPage() {
   return (
-    <NetworkTabs
-      suggestions={suggestions}
-      connections={connections}
-      incoming={invitations.incoming}
-      outgoing={invitations.outgoing}
-    />
+    <Suspense fallback={<NetworkSkeleton />}>
+      <NetworkContent />
+    </Suspense>
   )
 }
