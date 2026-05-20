@@ -1,0 +1,78 @@
+"use client"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Mail } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+
+import { useForgotPassword } from "../hooks"
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+} from "../schemas"
+
+export function ForgotPasswordForm() {
+  const form = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  })
+
+  const forgotPassword = useForgotPassword()
+
+  function onSubmit(values: ForgotPasswordInput) {
+    forgotPassword.mutate(values, { onSuccess: () => form.reset() })
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-semibold text-foreground/80">
+                Email
+              </FormLabel>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                  <Mail className="w-5 h-5" />
+                </span>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="name@company.com"
+                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                  />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          disabled={forgotPassword.isPending}
+          className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
+        >
+          {forgotPassword.isPending
+            ? "Đang gửi..."
+            : "Gửi liên kết khôi phục"}
+        </Button>
+      </form>
+    </Form>
+  )
+}

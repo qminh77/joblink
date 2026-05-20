@@ -1,0 +1,84 @@
+import "server-only"
+
+import { redirect } from "next/navigation"
+
+import { createClient } from "@/lib/supabase/server"
+import type { AppUserRow } from "@/types/database"
+
+import type { CurrentUser } from "../types"
+
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const supabase = await createClient()
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser()
+
+  if (!authUser) return null
+
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("*")
+    .eq("auth_id", authUser.id)
+    .is("deleted_at", null)
+    .maybeSingle<AppUserRow>()
+
+  if (!appUser) return null
+
+  const profile =
+    appUser.role === "company"
+      ? await loadCompanyProfile(supabase, appUser.id)
+      : await loadMemberProfile(supabase, appUser.id)
+
+  return {
+    authUser,
+    appUser,
+    profile,
+  }
+}
+
+export async function requireCurrentUser(): Promise<CurrentUser> {
+  const user = await getCurrentUser()
+  if (!user) redirect("/login")
+  return user
+}
+
+type SupabaseServer = Awaited<ReturnType<typeof createClient>>
+
+async function loadMemberProfile(supabase: SupabaseServer, userId: number) {
+  const { data } = await supabase
+    .from("member_profiles")
+    .select("full_name, avatar_url, headline")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle<{
+      full_name: string
+      avatar_url: string | null
+      headline: string | null
+    }>()
+
+  return {
+    displayName: data?.full_name ?? "Thành viên",
+    avatarUrl: data?.avatar_url ?? null,
+    headline: data?.headline ?? null,
+  }
+}
+
+async function loadCompanyProfile(supabase: SupabaseServer, userId: number) {
+  const { data } = await supabase
+    .from("company_profiles")
+    .select("name, logo_url, industry")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle<{
+      name: string
+      logo_url: string | null
+      industry: string | null
+    }>()
+
+  return {
+    displayName: data?.name ?? "Công ty",
+    avatarUrl: data?.logo_url ?? null,
+    headline: data?.industry ?? null,
+  }
+}
