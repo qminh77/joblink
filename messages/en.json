@@ -54,6 +54,10 @@
     "copyLinkHint": "Copy the post URL to share",
     "sendViaMessage": "Send via message",
     "searchPersonPlaceholder": "Search for someone...",
+    "deletePost": "Delete post",
+    "deleteConfirm": "Are you sure you want to delete this post?",
+    "deleteSuccess": "Post deleted",
+    "reportPost": "Report post",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentMax": "Content is too long",
@@ -478,6 +482,22 @@
     },
     "errors": {
       "invalidId": "Invalid notification"
+    }
+  },
+  "reports": {
+    "reportTitle": "Report post",
+    "loadingTypes": "Loading...",
+    "descriptionPlaceholder": "Additional details (optional)...",
+    "cancel": "Cancel",
+    "submitReport": "Submit report",
+    "submitting": "Submitting...",
+    "errors": {
+      "invalidTarget": "Invalid target",
+      "reasonRequired": "Please select a reason",
+      "reasonMax": "Reason up to 80 characters",
+      "descriptionMax": "Description up to 500 characters",
+      "invalidData": "Invalid data",
+      "createFailed": "Could not submit report"
     }
   },
   "messages": {

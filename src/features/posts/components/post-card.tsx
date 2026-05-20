@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import {
+  Flag,
   Globe,
   Lock,
   MessageCircle,
@@ -12,17 +13,25 @@ import {
   Send,
   Share2,
   ThumbsUp,
+  Trash2,
   Users,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { btnTap, fadeUp } from "@/lib/animations"
-import { formatRelativeTime } from "@/lib/utils/format"
-import { getInitials } from "@/lib/utils/format"
+import { formatRelativeTime, getInitials } from "@/lib/utils/format"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { ReportDialog } from "@/features/reports/components/report-dialog"
 
-import { useCreateComment, useToggleReaction } from "../hooks"
+import { useCreateComment, useDeletePost, useToggleReaction } from "../hooks"
 import type { FeedPost } from "../types"
 
 type Props = {
@@ -39,15 +48,19 @@ function visibilityIcon(v: FeedPost["visibility"]) {
 
 export function PostCard({ post, onShare, onSend }: Props) {
   const tFeed = useTranslations("feed")
+  const tPosts = useTranslations("posts")
   const user = useCurrentUser()
   const userInitials = getInitials(user.displayName, "JL")
 
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState("")
+  const [showReport, setShowReport] = useState(false)
 
   const toggle = useToggleReaction()
   const createComment = useCreateComment()
+  const deletePost = useDeletePost()
 
+  const isOwnPost = user.id === post.authorId
   const authorInitials = getInitials(post.author.displayName, "JL")
 
   async function submitComment(e: React.FormEvent) {
@@ -91,12 +104,53 @@ export function PostCard({ post, onShare, onSend }: Props) {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted/50 transition-colors"
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted/50 transition-colors"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="min-w-44 rounded-xl border-border/40 p-1.5"
+              >
+                {isOwnPost ? (
+                  <DropdownMenuItem
+                    onClick={() => deletePost.mutate(post.id)}
+                    disabled={deletePost.isPending}
+                    className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
+                  >
+                    <Trash2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">{tPosts("deletePost")}</span>
+                  </DropdownMenuItem>
+                ) : null}
+                {!isOwnPost ? (
+                  <DropdownMenuItem
+                    onClick={() => setShowReport(true)}
+                    className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
+                  >
+                    <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">{tPosts("reportPost")}</span>
+                  </DropdownMenuItem>
+                ) : null}
+                {isOwnPost ? (
+                  <>
+                    <DropdownMenuSeparator className="mx-2 my-1 bg-border/20" />
+                    <DropdownMenuItem
+                      onClick={() => setShowReport(true)}
+                      className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
+                    >
+                      <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium">{tPosts("reportPost")}</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="mt-4 text-[13px] sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line font-body">
@@ -204,6 +258,13 @@ export function PostCard({ post, onShare, onSend }: Props) {
           </div>
         ) : null}
       </Card>
+
+      <ReportDialog
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        targetType="post"
+        targetId={post.id}
+      />
     </motion.div>
   )
 }

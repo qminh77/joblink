@@ -54,6 +54,10 @@
     "copyLinkHint": "Sao chép URL bài viết để gửi",
     "sendViaMessage": "Gửi qua tin nhắn",
     "searchPersonPlaceholder": "Tìm kiếm người để gửi...",
+    "deletePost": "Xoá bài viết",
+    "deleteConfirm": "Bạn có chắc muốn xoá bài viết này?",
+    "deleteSuccess": "Đã xoá bài viết",
+    "reportPost": "Báo cáo bài viết",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentMax": "Nội dung quá dài",
@@ -478,6 +482,22 @@
     },
     "errors": {
       "invalidId": "Thông báo không hợp lệ"
+    }
+  },
+  "reports": {
+    "reportTitle": "Báo cáo bài viết",
+    "loadingTypes": "Đang tải...",
+    "descriptionPlaceholder": "Mô tả thêm (không bắt buộc)...",
+    "cancel": "Huỷ",
+    "submitReport": "Gửi báo cáo",
+    "submitting": "Đang gửi...",
+    "errors": {
+      "invalidTarget": "Nội dung không hợp lệ",
+      "reasonRequired": "Vui lòng chọn lý do báo cáo",
+      "reasonMax": "Lý do tối đa 80 ký tự",
+      "descriptionMax": "Mô tả tối đa 500 ký tự",
+      "invalidData": "Dữ liệu không hợp lệ",
+      "createFailed": "Không thể gửi báo cáo"
     }
   },
   "messages": {

@@ -171,6 +171,35 @@ export type ConnectionRow = {
   responded_at: string | null
 }
 
+export type ReportTargetType = "user" | "post" | "comment" | "job" | "company"
+export type ReportStatus = "pending" | "in_review" | "resolved" | "dismissed"
+
+export type ReportTypeRow = {
+  id: number
+  code: string
+  name: string
+  name_en: string | null
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ReportRow = {
+  id: number
+  reporter_id: number
+  target_type: ReportTargetType
+  target_id: number
+  reason: string
+  description: string | null
+  status: ReportStatus
+  assigned_to: number | null
+  resolved_by: number | null
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type NotificationType =
   | "connection_request"
   | "connection_accepted"
@@ -298,6 +327,19 @@ export type Database = {
         PostCommentRow,
         Omit<PostCommentRow, "id" | "created_at" | "updated_at" | "deleted_at" | "status"> & {
           status?: PostCommentRow["status"]
+        }
+      >
+      report_types: TableDef<
+        ReportTypeRow,
+        Omit<ReportTypeRow, "id" | "created_at" | "updated_at">
+      >
+      reports: TableDef<
+        ReportRow,
+        Omit<ReportRow, "id" | "created_at" | "updated_at" | "status" | "assigned_to" | "resolved_by" | "resolved_at"> & {
+          status?: ReportStatus
+          assigned_to?: number | null
+          resolved_by?: number | null
+          resolved_at?: string | null
         }
       >
     }

@@ -10,9 +10,9 @@ type LogoProps = {
 }
 
 const SIZE_CLASSES: Record<NonNullable<LogoProps["size"]>, string> = {
-  sm: "w-8 h-8 text-[11px]",
-  md: "w-14 h-14 text-base",
-  lg: "w-20 h-20 text-xl",
+  sm: "text-sm",
+  md: "text-xl",
+  lg: "text-3xl",
 }
 
 export function Logo({
@@ -24,19 +24,19 @@ export function Logo({
   const content = (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-500 text-white font-headline font-extrabold tracking-tight select-none shadow-sm shadow-primary/20",
+        "inline-flex items-center font-headline font-bold tracking-tight select-none text-foreground",
         SIZE_CLASSES[size],
         className,
       )}
       aria-label="JobLink"
     >
-      JL
+      JobLink
     </span>
   )
 
   if (asLink) {
     return (
-      <Link href={href} className="group inline-flex items-center gap-2">
+      <Link href={href} className="inline-flex items-center">
         {content}
       </Link>
     )
