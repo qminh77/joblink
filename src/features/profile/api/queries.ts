@@ -141,7 +141,7 @@ async function loadMemberProfileDetail(
     experiences = (exp ?? []) as MemberExperienceRow[]
     educations = (edu ?? []) as MemberEducationRow[]
     skills =
-      ((ms ?? []) as Array<{ skills: SkillRow | null }>)
+      ((ms ?? []) as unknown as Array<{ skills: SkillRow | null }>)
         .map((row) => row.skills)
         .filter((row): row is SkillRow => row != null)
   }
