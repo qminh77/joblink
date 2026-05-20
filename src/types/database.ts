@@ -353,6 +353,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_network_overview: {
+        Args: {
+          p_suggestion_limit?: number
+        }
+        Returns: Json
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
