@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { motion } from "framer-motion"
 import {
   BarChart2,
@@ -17,6 +18,7 @@ import {
   Users,
 } from "lucide-react"
 
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { MessageDropdown } from "@/components/message-dropdown"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import { ProfileDropdown } from "@/components/profile-dropdown"
@@ -42,13 +44,23 @@ import { useCurrentUser } from "@/features/auth/components/current-user-provider
 import { getInitials } from "@/lib/utils/format"
 
 const NAV_ITEMS = [
-  { name: "Trang chủ", href: "/home", icon: Home },
-  { name: "Mạng lưới", href: "/network", icon: Users },
-  { name: "Việc làm", href: "/jobs", icon: Briefcase },
-  { name: "Tin nhắn", href: "/messages", icon: MessageSquare, hasDropdown: "messages" as const },
-  { name: "Thông báo", href: "/notifications", icon: Bell, hasDropdown: "notifications" as const },
+  { key: "home", href: "/home", icon: Home },
+  { key: "network", href: "/network", icon: Users },
+  { key: "jobs", href: "/jobs", icon: Briefcase },
+  {
+    key: "messages",
+    href: "/messages",
+    icon: MessageSquare,
+    hasDropdown: "messages" as const,
+  },
+  {
+    key: "notifications",
+    href: "/notifications",
+    icon: Bell,
+    hasDropdown: "notifications" as const,
+  },
 ] satisfies Array<{
-  name: string
+  key: "home" | "network" | "jobs" | "messages" | "notifications"
   href: string
   icon: typeof Home
   hasDropdown?: "messages" | "notifications"
@@ -60,6 +72,9 @@ export function Navbar() {
   const user = useCurrentUser()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const initials = getInitials(user.displayName, "JL")
+  const tNav = useTranslations("nav")
+  const tPost = useTranslations("posts")
+  const tProfile = useTranslations("profile.visibility")
 
   return (
     <>
@@ -67,7 +82,7 @@ export function Navbar() {
         <DialogContent className="sm:max-w-lg rounded-2xl gap-0 p-0">
           <DialogHeader className="p-4 border-b border-border/40">
             <DialogTitle className="font-headline font-bold text-lg text-center">
-              Tạo bài viết
+              {tPost("createTitle")}
             </DialogTitle>
           </DialogHeader>
           <div className="p-4">
@@ -79,7 +94,7 @@ export function Navbar() {
               <div>
                 <h3 className="font-semibold text-sm">{user.displayName}</h3>
                 <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1 font-medium text-muted-foreground">
-                  <Globe className="w-3 h-3" /> Công khai
+                  <Globe className="w-3 h-3" /> {tProfile("public")}
                 </span>
               </div>
             </div>
@@ -87,7 +102,7 @@ export function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              placeholder="Bạn đang nghĩ gì?"
+              placeholder={tPost("whatsOnYourMind")}
               className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70"
               autoFocus
             />
@@ -105,7 +120,7 @@ export function Navbar() {
               onClick={() => setIsCreatePostOpen(false)}
               className="px-6 rounded-xl font-semibold"
             >
-              Đăng
+              {tPost("publish")}
             </Button>
           </div>
         </DialogContent>
@@ -126,7 +141,7 @@ export function Navbar() {
             <Search className="absolute left-3 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors pointer-events-none" />
             <Input
               className="h-9 pl-9 pr-4 bg-muted border-none focus-visible:ring-1 focus-visible:ring-primary w-48 md:w-64 lg:w-80 rounded-full transition-all text-sm"
-              placeholder="Tìm kiếm..."
+              placeholder={tNav("searchPlaceholder")}
               type="text"
             />
           </div>
@@ -153,7 +168,7 @@ export function Navbar() {
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
-                    {item.name}
+                    {tNav(item.key)}
                   </span>
                 </button>
               )
@@ -182,7 +197,7 @@ export function Navbar() {
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
-                    {item.name}
+                    {tNav(item.key)}
                   </span>
                 </Link>
               )
@@ -198,7 +213,7 @@ export function Navbar() {
                   className="hidden sm:flex rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:border-primary text-xs h-8 px-3 transition-all"
                 >
                   <Plus className="w-4 h-4 mr-0.5" />
-                  Đăng tin
+                  {tPost("postCta")}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -207,7 +222,7 @@ export function Navbar() {
                 className="w-56 p-1.5 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40"
               >
                 <DropdownMenuLabel className="px-3 py-2 text-xs font-medium text-muted-foreground">
-                  Tạo nội dung mới
+                  {tPost("createMenuLabel")}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/20" />
                 <DropdownMenuItem
@@ -217,10 +232,10 @@ export function Navbar() {
                   <ImageIcon className="w-4.5 h-4.5 text-blue-500 mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
-                      Đăng bài viết
+                      {tPost("createPost")}
                     </span>
                     <p className="text-[10px] text-muted-foreground">
-                      Chia sẻ suy nghĩ của bạn
+                      {tPost("createPostHint")}
                     </p>
                   </div>
                 </DropdownMenuItem>
@@ -232,10 +247,10 @@ export function Navbar() {
                     <Briefcase className="w-4.5 h-4.5 text-emerald-500 mr-3 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-foreground">
-                        Đăng tin tuyển dụng
+                        {tPost("createJob")}
                       </span>
                       <p className="text-[10px] text-muted-foreground">
-                        Tìm kiếm ứng viên tiềm năng
+                        {tPost("createJobHint")}
                       </p>
                     </div>
                   </DropdownMenuItem>
@@ -245,6 +260,7 @@ export function Navbar() {
 
             <div className="hidden sm:block h-6 w-px bg-border/40 mx-1" />
 
+            <LanguageSwitcher />
             <ThemeToggle />
 
             <ProfileDropdown />
@@ -275,7 +291,7 @@ export function Navbar() {
                   />
                 </div>
                 <span className="text-[10px] font-medium mt-1">
-                  {item.name}
+                  {tNav(item.key)}
                 </span>
               </Link>
             )

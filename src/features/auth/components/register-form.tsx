@@ -2,8 +2,8 @@
 
 import { useEffect } from "react"
 import Link from "next/link"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Briefcase, Lock, Mail, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { useRegister } from "../hooks"
-import { registerSchema, type RegisterInput } from "../schemas"
+import { createRegisterSchema, type RegisterInput } from "../schemas"
 
 import { PasswordInput } from "./password-input"
 
@@ -43,6 +43,10 @@ const defaultValues: RegisterFormValues = {
 }
 
 export function RegisterForm() {
+  const t = useTranslations("auth.register")
+  const tv = useTranslations("auth.validation")
+  const registerSchema = createRegisterSchema(tv)
+
   const form = useForm<RegisterFormValues>({
     defaultValues,
     resolver: async (values) => {
@@ -119,18 +123,18 @@ export function RegisterForm() {
                 }
                 className="w-full mb-2"
               >
-                <TabsList className="grid w-full grid-cols-2 bg-background/50 h-11 border border-border/80 rounded-xl p-1">
+                <TabsList className="grid w-full grid-cols-2 bg-muted h-11 border border-border/80 rounded-xl p-1">
                   <TabsTrigger
                     value="member"
                     className="w-full h-full rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
-                    Ứng viên
+                    {t("asMember")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="company"
                     className="w-full h-full rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
-                    Nhà tuyển dụng
+                    {t("asCompany")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -145,7 +149,7 @@ export function RegisterForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="font-semibold text-foreground/80">
-                  Họ và tên
+                  {t("fullName")}
                 </FormLabel>
                 <div className="relative group">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -155,8 +159,8 @@ export function RegisterForm() {
                     <Input
                       {...field}
                       autoComplete="name"
-                      placeholder="Nguyễn Văn A"
-                      className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                      placeholder={t("fullNamePlaceholder")}
+                      className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                     />
                   </FormControl>
                 </div>
@@ -171,7 +175,7 @@ export function RegisterForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="font-semibold text-foreground/80">
-                  Tên công ty
+                  {t("companyName")}
                 </FormLabel>
                 <div className="relative group">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -181,8 +185,8 @@ export function RegisterForm() {
                     <Input
                       {...field}
                       autoComplete="organization"
-                      placeholder="Công ty TNHH XYZ"
-                      className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                      placeholder={t("companyNamePlaceholder")}
+                      className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                     />
                   </FormControl>
                 </div>
@@ -198,7 +202,7 @@ export function RegisterForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-semibold text-foreground/80">
-                Email
+                {t("email")}
               </FormLabel>
               <div className="relative group">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -210,7 +214,7 @@ export function RegisterForm() {
                     type="email"
                     autoComplete="email"
                     placeholder="name@company.com"
-                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
@@ -225,7 +229,7 @@ export function RegisterForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-semibold text-foreground/80">
-                Mật khẩu
+                {t("password")}
               </FormLabel>
               <div className="relative group">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors z-10">
@@ -235,8 +239,8 @@ export function RegisterForm() {
                   <PasswordInput
                     {...field}
                     autoComplete="new-password"
-                    placeholder="Tối thiểu 8 ký tự"
-                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    placeholder={t("passwordPlaceholder")}
+                    className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
@@ -259,19 +263,19 @@ export function RegisterForm() {
               </FormControl>
               <div className="space-y-1">
                 <FormLabel className="text-sm font-medium text-muted-foreground cursor-pointer leading-relaxed">
-                  Tôi đồng ý với{" "}
+                  {t("acceptTermsPrefix")}{" "}
                   <Link
                     href="#"
                     className="text-primary hover:text-primary/80 transition-colors font-semibold"
                   >
-                    Điều khoản dịch vụ
+                    {t("termsOfService")}
                   </Link>{" "}
-                  và{" "}
+                  {t("and")}{" "}
                   <Link
                     href="#"
                     className="text-primary hover:text-primary/80 transition-colors font-semibold"
                   >
-                    Chính sách bảo mật
+                    {t("privacyPolicy")}
                   </Link>
                 </FormLabel>
                 <FormMessage />
@@ -286,10 +290,10 @@ export function RegisterForm() {
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
           {register.isPending
-            ? "Đang xử lý..."
+            ? t("submitting")
             : role === "company"
-              ? "Tạo tài khoản doanh nghiệp"
-              : "Đăng ký tài khoản"}
+              ? t("submitCompany")
+              : t("submitMember")}
         </Button>
       </form>
     </Form>

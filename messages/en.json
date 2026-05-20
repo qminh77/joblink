@@ -1,0 +1,410 @@
+{
+  "common": {
+    "appName": "JobLink",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "loading": "Loading...",
+    "submitting": "Processing...",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "required": "Required",
+    "optional": "Optional",
+    "unknownError": "An unknown error occurred. Please try again."
+  },
+  "nav": {
+    "home": "Home",
+    "jobs": "Jobs",
+    "network": "Network",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "savedJobs": "Saved jobs",
+    "profile": "Profile",
+    "settings": "Settings",
+    "admin": "Admin",
+    "logout": "Sign out",
+    "company": "Company",
+    "searchPlaceholder": "Search..."
+  },
+  "posts": {
+    "createTitle": "Create post",
+    "whatsOnYourMind": "What's on your mind?",
+    "publish": "Post",
+    "postCta": "Post",
+    "createMenuLabel": "Create new content",
+    "createPost": "New post",
+    "createPostHint": "Share your thoughts",
+    "createJob": "Post a job",
+    "createJobHint": "Find potential candidates"
+  },
+  "profileMenu": {
+    "viewProfileShort": "View profile",
+    "viewProfile": "View profile",
+    "viewProfileHint": "Your professional profile",
+    "savedJobsHint": "Jobs you've bookmarked",
+    "settings": "Account settings",
+    "settingsHint": "Security, notifications, privacy",
+    "help": "Help & Support",
+    "helpHint": "Contact, FAQ"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to JobLink to continue",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "rememberMe": "Remember me",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up",
+      "success": "Signed in successfully"
+    },
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Enter your details to start your new journey",
+      "asMember": "Candidate",
+      "asCompany": "Recruiter",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "John Doe",
+      "companyName": "Company name",
+      "companyNamePlaceholder": "Acme Corp",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "acceptTermsPrefix": "I agree to the",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "submitMember": "Create account",
+      "submitCompany": "Create business account",
+      "submitting": "Processing...",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in",
+      "successWithSession": "Signed up successfully",
+      "successNeedVerify": "Signed up successfully. Please check your email to verify your account."
+    },
+    "forgotPassword": {
+      "title": "Forgot password?",
+      "subtitle": "Enter your email to receive a reset link",
+      "email": "Email",
+      "submit": "Send reset link",
+      "submitting": "Sending...",
+      "backToLogin": "Back to sign in",
+      "success": "Reset email sent. Please check your inbox."
+    },
+    "logout": {
+      "success": "Signed out",
+      "menu": "Sign out"
+    },
+    "errors": {
+      "invalidCredentials": "Incorrect email or password",
+      "emailNotConfirmed": "Email has not been verified. Please check your inbox.",
+      "userAlreadyExists": "This email is already registered",
+      "userNotFound": "No account found for this email",
+      "weakPassword": "Password too weak — please use a stronger one",
+      "rateLimit": "Too many requests, please try again in a few minutes",
+      "samePassword": "New password must differ from the current one"
+    },
+    "validation": {
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Invalid email",
+      "emailTooLong": "Email up to 255 characters",
+      "passwordRequired": "Please enter your password",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordMax": "Password up to 72 characters",
+      "fullNameMin": "Full name must be at least 2 characters",
+      "fullNameMax": "Full name up to 255 characters",
+      "companyNameMin": "Company name must be at least 2 characters",
+      "companyNameMax": "Company name up to 255 characters",
+      "termsRequired": "You must agree to the terms of service"
+    }
+  },
+  "profile": {
+    "edit": {
+      "title": "Edit profile",
+      "subtitle": "Update your personal info, experience and skills",
+      "tabs": {
+        "basic": "Basic info",
+        "experiences": "Experience",
+        "educations": "Education",
+        "skills": "Skills"
+      }
+    },
+    "basic": {
+      "title": "Basic information",
+      "fullName": "Full name",
+      "headline": "Professional headline",
+      "headlinePlaceholder": "e.g. Senior Frontend Engineer at JobLink",
+      "about": "About you",
+      "aboutPlaceholder": "Short description about yourself, experience and goals",
+      "avatarUrl": "Avatar URL",
+      "website": "Website",
+      "province": "Province/City",
+      "district": "District",
+      "selectProvince": "Select province",
+      "selectDistrict": "Select district",
+      "visibility": "Profile visibility",
+      "openToWork": "Open to work",
+      "saveSuccess": "Profile updated"
+    },
+    "experiences": {
+      "title": "Work experience",
+      "addButton": "Add experience",
+      "empty": "You haven't added any experience yet",
+      "dialog": {
+        "addTitle": "Add experience",
+        "editTitle": "Edit experience",
+        "companyName": "Company name",
+        "position": "Position",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "isCurrent": "I currently work here",
+        "description": "Description",
+        "submit": "Save experience",
+        "submitting": "Saving..."
+      },
+      "current": "Present",
+      "deleteConfirm": "Delete this experience?",
+      "addSuccess": "Experience added",
+      "updateSuccess": "Experience updated",
+      "deleteSuccess": "Experience deleted"
+    },
+    "educations": {
+      "title": "Education",
+      "addButton": "Add education",
+      "empty": "You haven't added any education yet",
+      "dialog": {
+        "addTitle": "Add education",
+        "editTitle": "Edit education",
+        "schoolName": "School",
+        "degree": "Degree",
+        "fieldOfStudy": "Field of study",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "description": "Description",
+        "submit": "Save education",
+        "submitting": "Saving..."
+      },
+      "deleteConfirm": "Delete this education?",
+      "addSuccess": "Education added",
+      "updateSuccess": "Education updated",
+      "deleteSuccess": "Education deleted"
+    },
+    "skills": {
+      "title": "Skills",
+      "placeholder": "Enter a skill name and press Enter",
+      "addButton": "Add",
+      "empty": "You haven't added any skill yet",
+      "addSuccess": "Skill added",
+      "removeSuccess": "Skill removed",
+      "removeConfirm": "Remove this skill?"
+    },
+    "view": {
+      "memberDefault": "Member",
+      "companyDefault": "Company",
+      "viewCount": "{count} profile views",
+      "private": "This profile is private",
+      "notFound": "Profile not found"
+    },
+    "visibility": {
+      "public": "Public",
+      "connections": "Connections",
+      "private": "Private"
+    },
+    "validation": {
+      "fullNameRequired": "Please enter your full name",
+      "fullNameMax": "Full name up to 255 characters",
+      "companyNameRequired": "Please enter company name",
+      "companyNameMax": "Company name up to 255 characters",
+      "positionRequired": "Please enter the position",
+      "schoolRequired": "Please enter the school name",
+      "startDateRequired": "Please enter the start date",
+      "endDateAfterStart": "End date must be after start date",
+      "skillNameRequired": "Please enter the skill name",
+      "skillNameMax": "Skill name up to 80 characters",
+      "urlInvalid": "Invalid URL"
+    },
+    "errors": {
+      "memberOnly": "Only members can perform this action",
+      "companyOnly": "Only company accounts can perform this action",
+      "invalidData": "Invalid data",
+      "missingId": "Missing ID to update"
+    }
+  },
+  "settings": {
+    "title": "Account settings",
+    "subtitle": "Manage your login, security, privacy and preferences",
+    "tabs": {
+      "account": "Account",
+      "privacy": "Privacy",
+      "notifications": "Notifications",
+      "language": "Language"
+    },
+    "account": {
+      "title": "Account information",
+      "email": "Login email",
+      "role": "Role",
+      "status": "Status",
+      "locale": "Language"
+    },
+    "roles": {
+      "member": "Member",
+      "company": "Recruiter",
+      "admin": "Administrator"
+    },
+    "statuses": {
+      "active": "Active",
+      "pending_verification": "Pending verification",
+      "suspended": "Suspended",
+      "banned": "Banned",
+      "deleted": "Deleted"
+    },
+    "password": {
+      "title": "Change password",
+      "subtitle": "Enter current password to verify before changing",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm password",
+      "submit": "Change password",
+      "submitting": "Processing...",
+      "success": "Password changed successfully",
+      "wrongCurrent": "Current password is incorrect"
+    },
+    "locale": {
+      "title": "Language",
+      "subtitle": "The UI will display in the language you choose",
+      "save": "Save",
+      "success": "Language updated",
+      "languageTabHint": "You can change the language in the Account tab."
+    },
+    "privacy": {
+      "title": "Profile privacy",
+      "subtitle": "Decide who can view your profile and career information",
+      "visibility": "Profile visibility",
+      "visibilityHint": "Public: anyone · Connections: only connected users · Private: only you",
+      "openToWork": "Open to Work",
+      "openToWorkHint": "Show a green badge on your profile and let recruiters filter by this status",
+      "success": "Privacy updated"
+    },
+    "openToHire": {
+      "title": "Open to Hire",
+      "subtitle": "When enabled, your company shows an \"Open to Hire\" badge on its page and in search results",
+      "success": "Hiring status updated"
+    },
+    "notifications": {
+      "title": "Notification preferences",
+      "subtitle": "Channel configuration will be enabled when this feature is rolled out",
+      "items": {
+        "like": "Post likes",
+        "likeDesc": "When someone likes your post",
+        "comment": "Comments",
+        "commentDesc": "When someone comments on a post",
+        "newConnection": "New connection",
+        "newConnectionDesc": "When someone sends a connection request",
+        "message": "Messages",
+        "messageDesc": "When you receive a new message",
+        "jobMatch": "Job suggestions",
+        "jobMatchDesc": "When a job matches your profile"
+      }
+    },
+    "validation": {
+      "currentPasswordRequired": "Please enter the current password",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "passwordMax": "Password up to 72 characters",
+      "confirmMismatch": "Password confirmation does not match",
+      "localeInvalid": "Invalid language"
+    },
+    "errors": {
+      "privacyMemberOnly": "This option only applies to member accounts",
+      "openToHireCompanyOnly": "This option only applies to company accounts"
+    }
+  },
+  "network": {
+    "title": "Network",
+    "subtitle": "Connect and expand your professional network",
+    "searchPlaceholder": "Search suggestions by name, headline or company...",
+    "searchConnectionsPlaceholder": "Search in connections...",
+    "tabs": {
+      "suggestions": "Suggestions",
+      "connections": "Connections",
+      "invitations": "Invitations",
+      "sent": "Sent"
+    },
+    "suggestions": {
+      "emptyTitle": "No suggestions yet",
+      "emptyDesc": "Come back later as more members join the community",
+      "notFoundTitle": "No results",
+      "notFoundDesc": "Try changing your search keyword"
+    },
+    "connections": {
+      "allTitle": "All connections",
+      "emptyTitle": "You have no connections yet",
+      "emptyDesc": "Start connecting with people in the Suggestions tab",
+      "noMatch": "No matching connections found.",
+      "removeAction": "Remove connection",
+      "removeConfirm": "Remove connection with {name}?"
+    },
+    "invitations": {
+      "emptyTitle": "No invitations",
+      "emptyDesc": "You have no connection invitations. Start reaching out to others!",
+      "explore": "Explore suggestions",
+      "accept": "Accept",
+      "reject": "Decline"
+    },
+    "sent": {
+      "emptyTitle": "No sent invitations",
+      "emptyDesc": "Invitations you send will appear here until they get a response.",
+      "cancel": "Cancel invitation"
+    },
+    "button": {
+      "connect": "Connect",
+      "sending": "Sending...",
+      "pendingOutgoing": "Pending — cancel",
+      "canceling": "Cancelling...",
+      "connected": "Connected",
+      "removing": "Removing...",
+      "removeConfirm": "Are you sure you want to remove this connection?",
+      "unavailable": "Unavailable",
+      "accept": "Accept",
+      "reject": "Decline"
+    },
+    "toast": {
+      "sent": "Connection invitation sent",
+      "canceled": "Invitation cancelled",
+      "accepted": "Invitation accepted",
+      "rejected": "Invitation declined",
+      "removed": "Connection removed"
+    },
+    "errors": {
+      "invalidUser": "Invalid user",
+      "invalidConnection": "Invalid connection",
+      "invalidData": "Invalid data",
+      "selfConnect": "You cannot connect with yourself",
+      "userNotFound": "User does not exist",
+      "targetInactive": "This account is not active",
+      "targetIsAdmin": "Cannot send an invitation to an administrator",
+      "alreadyConnected": "You are already connected",
+      "alreadyPending": "There is already a pending invitation",
+      "blocked": "Cannot send invitation to this user",
+      "invitationNotFound": "Invitation not found",
+      "noCancelPermission": "You don't have permission to cancel this invitation",
+      "notPending": "Invitation is no longer pending",
+      "noRespondPermission": "You don't have permission to respond to this invitation",
+      "connectionNotFound": "Connection not found",
+      "noRemovePermission": "You don't have permission to remove this connection",
+      "notAccepted": "This connection is not established"
+    },
+    "validation": {
+      "keywordMax": "Keyword up to 100 characters"
+    }
+  }
+}

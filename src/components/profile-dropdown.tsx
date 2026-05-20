@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { motion } from "framer-motion"
 import {
   Bookmark,
@@ -34,6 +35,8 @@ export function ProfileDropdown() {
   const router = useRouter()
   const user = useCurrentUser()
   const initials = getInitials(user.displayName, "JL")
+  const tNav = useTranslations("nav")
+  const tMenu = useTranslations("profileMenu")
 
   return (
     <DropdownMenu>
@@ -82,14 +85,14 @@ export function ProfileDropdown() {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Xem hồ sơ</span>
+              <span>{tMenu("viewProfileShort")}</span>
             </Link>
             <Link
               href="/network"
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Mạng lưới</span>
+              <span>{tNav("network")}</span>
             </Link>
           </div>
         </div>
@@ -111,10 +114,10 @@ export function ProfileDropdown() {
                 <User className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
-                    Xem trang cá nhân
+                    {tMenu("viewProfile")}
                   </span>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    Hồ sơ chuyên nghiệp của bạn
+                    {tMenu("viewProfileHint")}
                   </p>
                 </div>
               </DropdownMenuItem>
@@ -132,10 +135,10 @@ export function ProfileDropdown() {
                 <Bookmark className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
-                    Việc làm đã lưu
+                    {tNav("savedJobs")}
                   </span>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    Danh sách việc làm bạn theo dõi
+                    {tMenu("savedJobsHint")}
                   </p>
                 </div>
               </DropdownMenuItem>
@@ -158,10 +161,10 @@ export function ProfileDropdown() {
                 <Settings className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
-                    Cài đặt tài khoản
+                    {tMenu("settings")}
                   </span>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    Bảo mật, thông báo, quyền riêng tư
+                    {tMenu("settingsHint")}
                   </p>
                 </div>
               </DropdownMenuItem>
@@ -176,10 +179,10 @@ export function ProfileDropdown() {
                 <HelpCircle className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
-                    Trợ giúp &amp; Hỗ trợ
+                    {tMenu("help")}
                   </span>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    Liên hệ, câu hỏi thường gặp
+                    {tMenu("helpHint")}
                   </p>
                 </div>
               </DropdownMenuItem>

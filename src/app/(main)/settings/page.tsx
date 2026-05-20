@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server"
+
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import {
   loadOwnCompanyProfile,
@@ -8,6 +10,7 @@ import { SettingsTabs } from "@/features/settings/components/settings-tabs"
 
 export default async function SettingsPage() {
   const current = await requireCurrentUser()
+  const t = await getTranslations("settings")
 
   const sessionUser: SessionUserSummary = {
     id: current.appUser.id,
@@ -17,6 +20,7 @@ export default async function SettingsPage() {
     status: current.appUser.status,
     displayName: current.profile.displayName,
     avatarUrl: current.profile.avatarUrl,
+    headline: current.profile.headline,
   }
 
   const member =
@@ -35,14 +39,16 @@ export default async function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="font-headline font-bold text-2xl text-foreground">
-          Cài đặt tài khoản
+          {t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Quản lý thông tin đăng nhập, bảo mật, quyền riêng tư và tùy chỉnh
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{t("subtitle")}</p>
       </div>
 
-      <SettingsTabs user={sessionUser} profile={profile} locale={current.appUser.locale} />
+      <SettingsTabs
+        user={sessionUser}
+        profile={profile}
+        locale={current.appUser.locale}
+      />
     </div>
   )
 }

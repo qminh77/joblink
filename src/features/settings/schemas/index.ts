@@ -2,35 +2,43 @@ import { z } from "zod"
 
 import { PROFILE_VISIBILITIES } from "@/features/profile/lib/constants"
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-    newPassword: z
-      .string()
-      .min(8, "Mật khẩu mới tối thiểu 8 ký tự")
-      .max(72, "Mật khẩu tối đa 72 ký tự"),
-    confirmPassword: z.string(),
+type Translator = (key: string) => string
+
+export function createChangePasswordSchema(t: Translator) {
+  return z
+    .object({
+      currentPassword: z.string().min(1, t("currentPasswordRequired")),
+      newPassword: z
+        .string()
+        .min(8, t("newPasswordMin"))
+        .max(72, t("passwordMax")),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t("confirmMismatch"),
+      path: ["confirmPassword"],
+    })
+}
+
+export function createPrivacySchema() {
+  return z.object({
+    profileVisibility: z.enum(PROFILE_VISIBILITIES),
+    openToWork: z.boolean(),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Xác nhận mật khẩu không khớp",
-    path: ["confirmPassword"],
-  })
-
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
-
-export const privacySchema = z.object({
-  profileVisibility: z.enum(PROFILE_VISIBILITIES),
-  openToWork: z.boolean(),
-})
-
-export type PrivacyInput = z.infer<typeof privacySchema>
+}
 
 export const companyOpenToHireSchema = z.object({
   openToHire: z.boolean(),
 })
 
-export const localeSchema = z.object({
-  locale: z.enum(["vi", "en"]),
-})
+export function createLocaleSchema(t: Translator) {
+  return z.object({
+    locale: z.enum(["vi", "en"], { message: t("localeInvalid") }),
+  })
+}
 
-export type LocaleInput = z.infer<typeof localeSchema>
+export type ChangePasswordInput = z.infer<
+  ReturnType<typeof createChangePasswordSchema>
+>
+export type PrivacyInput = z.infer<ReturnType<typeof createPrivacySchema>>
+export type LocaleInput = z.infer<ReturnType<typeof createLocaleSchema>>

@@ -1,30 +1,33 @@
 import { AuthError } from "@supabase/supabase-js"
 
-const SUPABASE_MESSAGES: Record<string, string> = {
-  invalid_credentials: "Email hoặc mật khẩu không chính xác",
-  email_not_confirmed: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư.",
-  user_already_exists: "Email này đã được đăng ký",
-  user_not_found: "Không tìm thấy tài khoản với email này",
-  weak_password: "Mật khẩu quá yếu, vui lòng dùng mật khẩu mạnh hơn",
-  over_email_send_rate_limit:
-    "Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau ít phút",
-  same_password: "Mật khẩu mới phải khác mật khẩu hiện tại",
+type Translator = (key: string) => string
+
+const CODE_TO_KEY: Record<string, string> = {
+  invalid_credentials: "invalidCredentials",
+  email_not_confirmed: "emailNotConfirmed",
+  user_already_exists: "userAlreadyExists",
+  user_not_found: "userNotFound",
+  weak_password: "weakPassword",
+  over_email_send_rate_limit: "rateLimit",
+  same_password: "samePassword",
 }
 
-export function getAuthErrorMessage(error: unknown): string {
+export function getAuthErrorMessage(
+  error: unknown,
+  t: Translator,
+  tCommon: Translator,
+): string {
   if (error instanceof AuthError) {
     const code = error.code ?? ""
-    if (code && SUPABASE_MESSAGES[code]) return SUPABASE_MESSAGES[code]
+    if (code && CODE_TO_KEY[code]) return t(CODE_TO_KEY[code])
 
     const message = error.message.toLowerCase()
-    if (message.includes("invalid login")) return SUPABASE_MESSAGES.invalid_credentials
-    if (message.includes("already registered"))
-      return SUPABASE_MESSAGES.user_already_exists
-    if (message.includes("email rate limit"))
-      return SUPABASE_MESSAGES.over_email_send_rate_limit
+    if (message.includes("invalid login")) return t("invalidCredentials")
+    if (message.includes("already registered")) return t("userAlreadyExists")
+    if (message.includes("email rate limit")) return t("rateLimit")
     return error.message
   }
 
   if (error instanceof Error) return error.message
-  return "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+  return tCommon("unknownError")
 }

@@ -1,0 +1,410 @@
+{
+  "common": {
+    "appName": "JobLink",
+    "save": "Lưu",
+    "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "add": "Thêm",
+    "close": "Đóng",
+    "loading": "Đang tải...",
+    "submitting": "Đang xử lý...",
+    "back": "Quay lại",
+    "next": "Tiếp",
+    "yes": "Có",
+    "no": "Không",
+    "required": "Bắt buộc",
+    "optional": "Tùy chọn",
+    "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "jobs": "Việc làm",
+    "network": "Mạng lưới",
+    "messages": "Tin nhắn",
+    "notifications": "Thông báo",
+    "savedJobs": "Việc đã lưu",
+    "profile": "Hồ sơ",
+    "settings": "Cài đặt",
+    "admin": "Quản trị",
+    "logout": "Đăng xuất",
+    "company": "Công ty",
+    "searchPlaceholder": "Tìm kiếm..."
+  },
+  "posts": {
+    "createTitle": "Tạo bài viết",
+    "whatsOnYourMind": "Bạn đang nghĩ gì?",
+    "publish": "Đăng",
+    "postCta": "Đăng tin",
+    "createMenuLabel": "Tạo nội dung mới",
+    "createPost": "Đăng bài viết",
+    "createPostHint": "Chia sẻ suy nghĩ của bạn",
+    "createJob": "Đăng tin tuyển dụng",
+    "createJobHint": "Tìm kiếm ứng viên tiềm năng"
+  },
+  "profileMenu": {
+    "viewProfileShort": "Xem hồ sơ",
+    "viewProfile": "Xem trang cá nhân",
+    "viewProfileHint": "Hồ sơ chuyên nghiệp của bạn",
+    "savedJobsHint": "Danh sách việc làm bạn theo dõi",
+    "settings": "Cài đặt tài khoản",
+    "settingsHint": "Bảo mật, thông báo, quyền riêng tư",
+    "help": "Trợ giúp & Hỗ trợ",
+    "helpHint": "Liên hệ, câu hỏi thường gặp"
+  },
+  "auth": {
+    "login": {
+      "title": "Chào mừng trở lại",
+      "subtitle": "Đăng nhập vào JobLink để tiếp tục",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "rememberMe": "Ghi nhớ đăng nhập",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "noAccount": "Chưa có tài khoản?",
+      "register": "Đăng ký ngay",
+      "success": "Đăng nhập thành công"
+    },
+    "register": {
+      "title": "Tạo tài khoản",
+      "subtitle": "Điền thông tin của bạn để bắt đầu hành trình mới",
+      "asMember": "Ứng viên",
+      "asCompany": "Nhà tuyển dụng",
+      "fullName": "Họ và tên",
+      "fullNamePlaceholder": "Nguyễn Văn A",
+      "companyName": "Tên công ty",
+      "companyNamePlaceholder": "Công ty TNHH XYZ",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Tối thiểu 8 ký tự",
+      "acceptTermsPrefix": "Tôi đồng ý với",
+      "termsOfService": "Điều khoản dịch vụ",
+      "and": "và",
+      "privacyPolicy": "Chính sách bảo mật",
+      "submitMember": "Đăng ký tài khoản",
+      "submitCompany": "Tạo tài khoản doanh nghiệp",
+      "submitting": "Đang xử lý...",
+      "hasAccount": "Đã có tài khoản?",
+      "login": "Đăng nhập",
+      "successWithSession": "Đăng ký thành công",
+      "successNeedVerify": "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản."
+    },
+    "forgotPassword": {
+      "title": "Quên mật khẩu?",
+      "subtitle": "Nhập email của bạn để nhận liên kết khôi phục",
+      "email": "Email",
+      "submit": "Gửi liên kết khôi phục",
+      "submitting": "Đang gửi...",
+      "backToLogin": "Quay lại đăng nhập",
+      "success": "Đã gửi email khôi phục. Vui lòng kiểm tra hộp thư của bạn."
+    },
+    "logout": {
+      "success": "Đã đăng xuất",
+      "menu": "Đăng xuất"
+    },
+    "errors": {
+      "invalidCredentials": "Email hoặc mật khẩu không chính xác",
+      "emailNotConfirmed": "Email chưa được xác minh. Vui lòng kiểm tra hộp thư.",
+      "userAlreadyExists": "Email này đã được đăng ký",
+      "userNotFound": "Không tìm thấy tài khoản với email này",
+      "weakPassword": "Mật khẩu quá yếu, vui lòng dùng mật khẩu mạnh hơn",
+      "rateLimit": "Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau ít phút",
+      "samePassword": "Mật khẩu mới phải khác mật khẩu hiện tại"
+    },
+    "validation": {
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "emailTooLong": "Email tối đa 255 ký tự",
+      "passwordRequired": "Vui lòng nhập mật khẩu",
+      "passwordMin": "Mật khẩu tối thiểu 8 ký tự",
+      "passwordMax": "Mật khẩu tối đa 72 ký tự",
+      "fullNameMin": "Họ tên tối thiểu 2 ký tự",
+      "fullNameMax": "Họ tên tối đa 255 ký tự",
+      "companyNameMin": "Tên công ty tối thiểu 2 ký tự",
+      "companyNameMax": "Tên công ty tối đa 255 ký tự",
+      "termsRequired": "Bạn cần đồng ý với điều khoản dịch vụ"
+    }
+  },
+  "profile": {
+    "edit": {
+      "title": "Chỉnh sửa hồ sơ",
+      "subtitle": "Cập nhật thông tin cá nhân, kinh nghiệm và kỹ năng của bạn",
+      "tabs": {
+        "basic": "Thông tin chung",
+        "experiences": "Kinh nghiệm",
+        "educations": "Học vấn",
+        "skills": "Kỹ năng"
+      }
+    },
+    "basic": {
+      "title": "Thông tin cơ bản",
+      "fullName": "Họ và tên",
+      "headline": "Tiêu đề nghề nghiệp",
+      "headlinePlaceholder": "VD: Senior Frontend Engineer tại JobLink",
+      "about": "Giới thiệu bản thân",
+      "aboutPlaceholder": "Mô tả ngắn về bản thân, kinh nghiệm và mục tiêu của bạn",
+      "avatarUrl": "Ảnh đại diện (URL)",
+      "website": "Website",
+      "province": "Tỉnh/Thành",
+      "district": "Quận/Huyện",
+      "selectProvince": "Chọn tỉnh/thành",
+      "selectDistrict": "Chọn quận/huyện",
+      "visibility": "Hiển thị hồ sơ",
+      "openToWork": "Đang tìm việc",
+      "saveSuccess": "Đã cập nhật hồ sơ"
+    },
+    "experiences": {
+      "title": "Kinh nghiệm làm việc",
+      "addButton": "Thêm kinh nghiệm",
+      "empty": "Bạn chưa thêm kinh nghiệm nào",
+      "dialog": {
+        "addTitle": "Thêm kinh nghiệm",
+        "editTitle": "Chỉnh sửa kinh nghiệm",
+        "companyName": "Tên công ty",
+        "position": "Vị trí",
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "isCurrent": "Đang làm việc ở đây",
+        "description": "Mô tả công việc",
+        "submit": "Lưu kinh nghiệm",
+        "submitting": "Đang lưu..."
+      },
+      "current": "Hiện tại",
+      "deleteConfirm": "Xóa kinh nghiệm này?",
+      "addSuccess": "Đã thêm kinh nghiệm",
+      "updateSuccess": "Đã cập nhật kinh nghiệm",
+      "deleteSuccess": "Đã xóa kinh nghiệm"
+    },
+    "educations": {
+      "title": "Học vấn",
+      "addButton": "Thêm học vấn",
+      "empty": "Bạn chưa thêm học vấn nào",
+      "dialog": {
+        "addTitle": "Thêm học vấn",
+        "editTitle": "Chỉnh sửa học vấn",
+        "schoolName": "Trường",
+        "degree": "Bằng cấp",
+        "fieldOfStudy": "Chuyên ngành",
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "description": "Mô tả",
+        "submit": "Lưu học vấn",
+        "submitting": "Đang lưu..."
+      },
+      "deleteConfirm": "Xóa học vấn này?",
+      "addSuccess": "Đã thêm học vấn",
+      "updateSuccess": "Đã cập nhật học vấn",
+      "deleteSuccess": "Đã xóa học vấn"
+    },
+    "skills": {
+      "title": "Kỹ năng",
+      "placeholder": "Nhập tên kỹ năng và Enter để thêm",
+      "addButton": "Thêm",
+      "empty": "Bạn chưa thêm kỹ năng nào",
+      "addSuccess": "Đã thêm kỹ năng",
+      "removeSuccess": "Đã xóa kỹ năng",
+      "removeConfirm": "Xóa kỹ năng này?"
+    },
+    "view": {
+      "memberDefault": "Thành viên",
+      "companyDefault": "Công ty",
+      "viewCount": "{count} lượt xem hồ sơ",
+      "private": "Hồ sơ này đang ở chế độ riêng tư",
+      "notFound": "Không tìm thấy hồ sơ"
+    },
+    "visibility": {
+      "public": "Công khai",
+      "connections": "Chỉ kết nối",
+      "private": "Riêng tư"
+    },
+    "validation": {
+      "fullNameRequired": "Vui lòng nhập họ tên",
+      "fullNameMax": "Họ tên tối đa 255 ký tự",
+      "companyNameRequired": "Vui lòng nhập tên công ty",
+      "companyNameMax": "Tên công ty tối đa 255 ký tự",
+      "positionRequired": "Vui lòng nhập vị trí",
+      "schoolRequired": "Vui lòng nhập tên trường",
+      "startDateRequired": "Vui lòng nhập ngày bắt đầu",
+      "endDateAfterStart": "Ngày kết thúc phải sau ngày bắt đầu",
+      "skillNameRequired": "Vui lòng nhập tên kỹ năng",
+      "skillNameMax": "Tên kỹ năng tối đa 80 ký tự",
+      "urlInvalid": "Đường dẫn không hợp lệ"
+    },
+    "errors": {
+      "memberOnly": "Chỉ thành viên mới có thể thực hiện thao tác này",
+      "companyOnly": "Chỉ tài khoản công ty mới có thể thực hiện thao tác này",
+      "invalidData": "Dữ liệu không hợp lệ",
+      "missingId": "Thiếu ID cần cập nhật"
+    }
+  },
+  "settings": {
+    "title": "Cài đặt tài khoản",
+    "subtitle": "Quản lý thông tin đăng nhập, bảo mật, quyền riêng tư và tùy chỉnh",
+    "tabs": {
+      "account": "Tài khoản",
+      "privacy": "Quyền riêng tư",
+      "notifications": "Thông báo",
+      "language": "Ngôn ngữ"
+    },
+    "account": {
+      "title": "Thông tin tài khoản",
+      "email": "Email đăng nhập",
+      "role": "Vai trò",
+      "status": "Trạng thái",
+      "locale": "Ngôn ngữ"
+    },
+    "roles": {
+      "member": "Thành viên",
+      "company": "Nhà tuyển dụng",
+      "admin": "Quản trị viên"
+    },
+    "statuses": {
+      "active": "Đang hoạt động",
+      "pending_verification": "Chờ xác minh",
+      "suspended": "Tạm khóa",
+      "banned": "Bị cấm",
+      "deleted": "Đã xóa"
+    },
+    "password": {
+      "title": "Đổi mật khẩu",
+      "subtitle": "Nhập mật khẩu hiện tại để xác minh trước khi đổi",
+      "current": "Mật khẩu hiện tại",
+      "new": "Mật khẩu mới",
+      "confirm": "Xác nhận mật khẩu",
+      "submit": "Đổi mật khẩu",
+      "submitting": "Đang xử lý...",
+      "success": "Đã đổi mật khẩu thành công",
+      "wrongCurrent": "Mật khẩu hiện tại không chính xác"
+    },
+    "locale": {
+      "title": "Ngôn ngữ",
+      "subtitle": "Hệ thống hiển thị giao diện theo ngôn ngữ bạn chọn",
+      "save": "Lưu",
+      "success": "Đã cập nhật ngôn ngữ",
+      "languageTabHint": "Bạn có thể đổi ngôn ngữ trong tab Tài khoản."
+    },
+    "privacy": {
+      "title": "Quyền riêng tư hồ sơ",
+      "subtitle": "Quyết định ai có thể xem hồ sơ và các thông tin nghề nghiệp của bạn",
+      "visibility": "Mức hiển thị hồ sơ",
+      "visibilityHint": "Public: ai cũng xem được · Connections: chỉ người đã kết nối · Private: chỉ chính bạn",
+      "openToWork": "Đang tìm việc (Open to Work)",
+      "openToWorkHint": "Hiển thị badge xanh trên hồ sơ và cho phép nhà tuyển dụng lọc bạn theo trạng thái này",
+      "success": "Đã cập nhật quyền riêng tư"
+    },
+    "openToHire": {
+      "title": "Đang tuyển dụng (Open to Hire)",
+      "subtitle": "Khi bật, công ty sẽ hiển thị badge \"Đang tuyển dụng\" trên trang công ty và trong kết quả tìm kiếm",
+      "success": "Đã cập nhật trạng thái tuyển dụng"
+    },
+    "notifications": {
+      "title": "Tùy chỉnh thông báo",
+      "subtitle": "Cấu hình kênh thông báo sẽ được kích hoạt khi tính năng được triển khai",
+      "items": {
+        "like": "Thích bài viết",
+        "likeDesc": "Khi ai đó thích bài viết của bạn",
+        "comment": "Bình luận",
+        "commentDesc": "Khi ai đó bình luận bài viết",
+        "newConnection": "Kết nối mới",
+        "newConnectionDesc": "Khi ai đó gửi lời mời kết nối",
+        "message": "Tin nhắn",
+        "messageDesc": "Khi bạn nhận được tin nhắn mới",
+        "jobMatch": "Việc làm gợi ý",
+        "jobMatchDesc": "Khi có việc làm phù hợp với bạn"
+      }
+    },
+    "validation": {
+      "currentPasswordRequired": "Vui lòng nhập mật khẩu hiện tại",
+      "newPasswordMin": "Mật khẩu mới tối thiểu 8 ký tự",
+      "passwordMax": "Mật khẩu tối đa 72 ký tự",
+      "confirmMismatch": "Xác nhận mật khẩu không khớp",
+      "localeInvalid": "Ngôn ngữ không hợp lệ"
+    },
+    "errors": {
+      "privacyMemberOnly": "Tùy chọn này chỉ áp dụng cho tài khoản thành viên",
+      "openToHireCompanyOnly": "Tùy chọn này chỉ áp dụng cho tài khoản công ty"
+    }
+  },
+  "network": {
+    "title": "Mạng lưới",
+    "subtitle": "Kết nối và mở rộng mạng lưới quan hệ của bạn",
+    "searchPlaceholder": "Tìm theo tên, headline hoặc công ty trong gợi ý...",
+    "searchConnectionsPlaceholder": "Tìm trong kết nối...",
+    "tabs": {
+      "suggestions": "Gợi ý",
+      "connections": "Kết nối",
+      "invitations": "Lời mời",
+      "sent": "Đã gửi"
+    },
+    "suggestions": {
+      "emptyTitle": "Chưa có gợi ý nào",
+      "emptyDesc": "Hãy quay lại sau khi cộng đồng có thêm thành viên mới",
+      "notFoundTitle": "Không tìm thấy",
+      "notFoundDesc": "Thử thay đổi từ khóa tìm kiếm của bạn"
+    },
+    "connections": {
+      "allTitle": "Tất cả kết nối",
+      "emptyTitle": "Bạn chưa có kết nối nào",
+      "emptyDesc": "Hãy bắt đầu kết nối với những người trong tab Gợi ý",
+      "noMatch": "Không tìm thấy kết nối phù hợp.",
+      "removeAction": "Hủy kết nối",
+      "removeConfirm": "Hủy kết nối với {name}?"
+    },
+    "invitations": {
+      "emptyTitle": "Không có lời mời",
+      "emptyDesc": "Bạn chưa có lời mời kết nối nào. Hãy chủ động kết nối với mọi người nhé!",
+      "explore": "Khám phá gợi ý",
+      "accept": "Chấp nhận",
+      "reject": "Từ chối"
+    },
+    "sent": {
+      "emptyTitle": "Chưa gửi lời mời nào",
+      "emptyDesc": "Khi bạn gửi lời mời kết nối, nó sẽ xuất hiện ở đây cho tới khi được phản hồi.",
+      "cancel": "Hủy lời mời"
+    },
+    "button": {
+      "connect": "Kết nối",
+      "sending": "Đang gửi...",
+      "pendingOutgoing": "Đang chờ — hủy",
+      "canceling": "Đang hủy...",
+      "connected": "Đã kết nối",
+      "removing": "Đang hủy...",
+      "removeConfirm": "Bạn có chắc muốn hủy kết nối với người này?",
+      "unavailable": "Không khả dụng",
+      "accept": "Chấp nhận",
+      "reject": "Từ chối"
+    },
+    "toast": {
+      "sent": "Đã gửi lời mời kết nối",
+      "canceled": "Đã hủy lời mời kết nối",
+      "accepted": "Đã chấp nhận lời mời kết nối",
+      "rejected": "Đã từ chối lời mời kết nối",
+      "removed": "Đã hủy kết nối"
+    },
+    "errors": {
+      "invalidUser": "Người dùng không hợp lệ",
+      "invalidConnection": "Kết nối không hợp lệ",
+      "invalidData": "Dữ liệu không hợp lệ",
+      "selfConnect": "Không thể tự kết nối với chính mình",
+      "userNotFound": "Người dùng không tồn tại",
+      "targetInactive": "Tài khoản này hiện không hoạt động",
+      "targetIsAdmin": "Không thể gửi lời mời tới quản trị viên",
+      "alreadyConnected": "Hai bạn đã kết nối với nhau",
+      "alreadyPending": "Đã có lời mời đang chờ phản hồi",
+      "blocked": "Không thể gửi lời mời tới người dùng này",
+      "invitationNotFound": "Lời mời không tồn tại",
+      "noCancelPermission": "Bạn không có quyền hủy lời mời này",
+      "notPending": "Lời mời không còn ở trạng thái chờ",
+      "noRespondPermission": "Bạn không có quyền phản hồi lời mời này",
+      "connectionNotFound": "Kết nối không tồn tại",
+      "noRemovePermission": "Bạn không có quyền hủy kết nối này",
+      "notAccepted": "Kết nối này chưa được thiết lập"
+    },
+    "validation": {
+      "keywordMax": "Từ khóa tối đa 100 ký tự"
+    }
+  }
+}

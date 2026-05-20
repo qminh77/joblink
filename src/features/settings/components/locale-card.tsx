@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -13,13 +14,11 @@ import {
 } from "@/components/ui/select"
 import { useUpdateLocale } from "@/features/settings/hooks"
 import type { LocaleInput } from "@/features/settings/schemas"
-
-const OPTIONS: Array<{ value: LocaleInput["locale"]; label: string }> = [
-  { value: "vi", label: "Tiếng Việt" },
-  { value: "en", label: "English" },
-]
+import { locales, localeLabels, type Locale } from "@/i18n/config"
 
 export function LocaleCard({ initialLocale }: { initialLocale: string }) {
+  const t = useTranslations("settings.locale")
+  const tCommon = useTranslations("common")
   const [locale, setLocale] = useState<LocaleInput["locale"]>(
     initialLocale === "en" ? "en" : "vi",
   )
@@ -30,11 +29,9 @@ export function LocaleCard({ initialLocale }: { initialLocale: string }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-headline font-bold text-base text-foreground">
-            Ngôn ngữ
+            {t("title")}
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Hệ thống hiển thị giao diện theo ngôn ngữ bạn chọn
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Select
@@ -45,9 +42,9 @@ export function LocaleCard({ initialLocale }: { initialLocale: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {locales.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {localeLabels[value as Locale]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -57,7 +54,7 @@ export function LocaleCard({ initialLocale }: { initialLocale: string }) {
             onClick={() => updateLocale.mutate({ locale })}
             className="h-10 rounded-lg"
           >
-            Lưu
+            {updateLocale.isPending ? tCommon("saving") : t("save")}
           </Button>
         </div>
       </div>

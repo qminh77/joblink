@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   BarChart2,
   Bookmark,
   Briefcase,
   Building2,
-  Check,
   ChevronDown,
   Globe,
   Image as ImageIcon,
@@ -27,6 +27,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { useSendConnectionRequest } from "@/features/network/hooks"
+import { getSuggestionsAction } from "@/features/network/api/actions"
+import { getProfileStatsAction } from "@/features/profile/api/actions"
 import {
   btnTap,
   fadeUp,
@@ -39,8 +42,6 @@ import {
 } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
 
-type ConnectStatus = "none" | "pending"
-
 type Comment = {
   id: number
   name: string
@@ -48,18 +49,6 @@ type Comment = {
   text: string
   time: string
 }
-
-type SuggestedConnection = {
-  id: number
-  name: string
-  headline: string
-  initials: string
-}
-
-const SUGGESTED_CONNECTIONS: SuggestedConnection[] = [
-  { id: 2, name: "Trần Hoàng", headline: "Product Manager @ VNG", initials: "TH" },
-  { id: 3, name: "Lê Vy", headline: "Recruiter @ FPT Software", initials: "LV" },
-]
 
 const INITIAL_COMMENTS: Comment[] = [
   {
@@ -76,9 +65,6 @@ export default function HomeFeedPage() {
   const userInitials = getInitials(user.displayName, "JL")
 
   const [isLiked, setIsLiked] = useState(false)
-  const [connectStatuses, setConnectStatuses] = useState<
-    Record<number, ConnectStatus>
-  >({})
 
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -88,12 +74,19 @@ export default function HomeFeedPage() {
   const [comments, setComments] = useState<Comment[]>(INITIAL_COMMENTS)
   const [newComment, setNewComment] = useState("")
 
-  function toggleConnect(id: number) {
-    setConnectStatuses((prev) => ({
-      ...prev,
-      [id]: prev[id] === "pending" ? "none" : "pending",
-    }))
-  }
+  const { data: suggestions = [] } = useQuery({
+    queryKey: ["suggestions"],
+    queryFn: getSuggestionsAction,
+    staleTime: 60_000,
+  })
+
+  const { data: profileStats } = useQuery({
+    queryKey: ["profile-stats"],
+    queryFn: getProfileStatsAction,
+    staleTime: 30_000,
+  })
+
+  const sendConnection = useSendConnectionRequest()
 
   function handlePostComment(event: React.FormEvent) {
     event.preventDefault()
@@ -299,17 +292,22 @@ export default function HomeFeedPage() {
                 />
               </div>
               <div className="p-2 max-h-60 overflow-y-auto">
-                {SUGGESTED_CONNECTIONS.map((connection) => (
+                {suggestions.map((connection) => (
                   <div
-                    key={connection.id}
+                    key={connection.userId}
                     className="flex items-center justify-between p-2 hover:bg-muted rounded-xl"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarFallback>{connection.initials}</AvatarFallback>
+                        {connection.avatarUrl ? (
+                          <AvatarImage src={connection.avatarUrl} />
+                        ) : null}
+                        <AvatarFallback>
+                          {getInitials(connection.displayName, "JL")}
+                        </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-semibold">
-                        {connection.name}
+                        {connection.displayName}
                       </span>
                     </div>
                     <Button
@@ -334,7 +332,7 @@ export default function HomeFeedPage() {
         animate="show"
         className="hidden lg:block lg:col-span-3 space-y-4"
       >
-        <Card className="overflow-hidden bg-card border-border/40 rounded-2xl">
+        <Card className="overflow-hidden bg-card border-border/40 rounded-2xl p-0 gap-0">
           <div className="h-16 bg-gradient-to-r from-primary/80 to-blue-400" />
           <CardContent className="p-0">
             <div className="relative w-16 h-16 rounded-full border-[3px] border-card -mt-8 mx-auto overflow-hidden bg-muted">
@@ -352,9 +350,10 @@ export default function HomeFeedPage() {
                 {user.displayName}
               </Link>
               <p className="text-sm text-muted-foreground font-body mt-0.5">
-                {user.role === "company"
-                  ? "Trang doanh nghiệp"
-                  : "Thành viên JobLink"}
+                {user.headline ??
+                  (user.role === "company"
+                    ? "Trang doanh nghiệp"
+                    : "Thành viên JobLink")}
               </p>
             </div>
 
@@ -363,11 +362,15 @@ export default function HomeFeedPage() {
                 <span className="text-xs text-muted-foreground">
                   Lượt xem hồ sơ
                 </span>
-                <span className="text-xs font-semibold text-primary">—</span>
+                <span className="text-xs font-semibold text-primary">
+                  {profileStats?.profileViewCount ?? "—"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">Kết nối</span>
-                <span className="text-xs font-semibold text-primary">—</span>
+                <span className="text-xs font-semibold text-primary">
+                  {profileStats?.connectionCount ?? "—"}
+                </span>
               </div>
             </div>
 
@@ -386,41 +389,46 @@ export default function HomeFeedPage() {
           <h3 className="text-sm font-headline font-bold text-foreground mb-4">
             Gợi ý kết nối
           </h3>
-          <ul className="space-y-4">
-            {SUGGESTED_CONNECTIONS.map((connection) => {
-              const status = connectStatuses[connection.id] ?? "none"
-              return (
-                <li key={connection.id} className="flex items-center gap-3">
-                  <Link href={`/profile/${connection.id}`}>
+          {suggestions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Chưa có gợi ý nào
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {suggestions.map((connection) => (
+                <li key={connection.userId} className="flex items-center gap-3">
+                  <Link href={`/profile/${connection.userId}`}>
                     <Avatar className="w-10 h-10 border border-border/40 cursor-pointer hover:opacity-80 transition-opacity">
-                      <AvatarFallback>{connection.initials}</AvatarFallback>
+                      {connection.avatarUrl ? (
+                        <AvatarImage src={connection.avatarUrl} />
+                      ) : null}
+                      <AvatarFallback>
+                        {getInitials(connection.displayName, "JL")}
+                      </AvatarFallback>
                     </Avatar>
                   </Link>
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/profile/${connection.id}`}
+                      href={`/profile/${connection.userId}`}
                       className="text-sm font-semibold text-foreground truncate hover:text-primary hover:underline transition-colors block leading-tight"
                     >
-                      {connection.name}
+                      {connection.displayName}
                     </Link>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {connection.headline}
+                      {connection.headline ?? connection.location ?? ""}
                     </p>
                   </div>
                   <Button
-                    variant={status === "pending" ? "secondary" : "outline"}
+                    variant="outline"
                     size="sm"
-                    className={`h-8 rounded-full shrink-0 text-xs font-medium px-3 ${
-                      status === "pending"
-                        ? "text-foreground"
-                        : "text-primary border-primary/40 hover:bg-primary/10"
-                    }`}
-                    onClick={() => toggleConnect(connection.id)}
+                    className="h-8 rounded-full shrink-0 text-xs font-medium px-3 text-primary border-primary/40 hover:bg-primary/10"
+                    disabled={sendConnection.isPending}
+                    onClick={() => sendConnection.mutate(connection.userId)}
                   >
-                    {status === "pending" ? (
-                      <>
-                        <Check className="w-3 h-3 mr-1" /> Chờ xác nhận
-                      </>
+                    {sendConnection.isPending ? (
+                      <span className="flex items-center gap-1">
+                        <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      </span>
                     ) : (
                       <>
                         <UserPlus className="w-3 h-3 mr-1" /> Kết nối
@@ -428,9 +436,9 @@ export default function HomeFeedPage() {
                     )}
                   </Button>
                 </li>
-              )
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
         </Card>
       </motion.aside>
 
@@ -689,7 +697,7 @@ export default function HomeFeedPage() {
         variants={slideRight}
         initial="hidden"
         animate="show"
-        className="col-span-1 lg:col-span-3 space-y-4"
+        className="hidden lg:block col-span-1 lg:col-span-3 space-y-4"
       >
         <Card className="bg-card border-border/40 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4 border-b border-border/40 pb-3">

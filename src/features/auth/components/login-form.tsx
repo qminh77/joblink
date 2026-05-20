@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Lock, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -18,13 +19,17 @@ import {
 import { Input } from "@/components/ui/input"
 
 import { useLogin } from "../hooks"
-import { loginSchema, type LoginInput } from "../schemas"
+import { createLoginSchema, type LoginInput } from "../schemas"
 
 import { PasswordInput } from "./password-input"
 
 export function LoginForm() {
+  const t = useTranslations("auth.login")
+  const tv = useTranslations("auth.validation")
+  const schema = createLoginSchema(tv)
+
   const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: "", password: "", remember: false },
   })
 
@@ -36,14 +41,17 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full space-y-4"
+      >
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-semibold text-foreground/80">
-                Email
+                {t("email")}
               </FormLabel>
               <div className="relative group">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -55,7 +63,7 @@ export function LoginForm() {
                     type="email"
                     autoComplete="email"
                     placeholder="name@company.com"
-                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-background border-border focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
@@ -71,13 +79,13 @@ export function LoginForm() {
             <FormItem>
               <div className="flex items-center justify-between">
                 <FormLabel className="font-semibold text-foreground/80">
-                  Mật khẩu
+                  {t("password")}
                 </FormLabel>
                 <Link
                   href="/forgot-password"
                   className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
                 >
-                  Quên mật khẩu?
+                  {t("forgotPassword")}
                 </Link>
               </div>
               <div className="relative group">
@@ -89,7 +97,7 @@ export function LoginForm() {
                     {...field}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-background border-border focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
@@ -111,7 +119,7 @@ export function LoginForm() {
                 />
               </FormControl>
               <FormLabel className="text-sm font-medium text-muted-foreground cursor-pointer">
-                Ghi nhớ đăng nhập
+                {t("rememberMe")}
               </FormLabel>
             </FormItem>
           )}
@@ -122,7 +130,7 @@ export function LoginForm() {
           disabled={login.isPending}
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
-          {login.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
+          {login.isPending ? t("submitting") : t("submit")}
         </Button>
       </form>
     </Form>

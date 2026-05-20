@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Briefcase, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ export function ExperiencesSection({
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<MemberExperienceRow | null>(null)
   const deleteMutation = useDeleteExperience()
+  const t = useTranslations("profile.experiences")
 
   function openCreate() {
     setEditing(null)
@@ -30,7 +32,7 @@ export function ExperiencesSection({
   }
 
   function handleDelete(id: number) {
-    if (!confirm("Bạn có chắc muốn xóa kinh nghiệm này?")) return
+    if (!confirm(t("deleteConfirm"))) return
     deleteMutation.mutate(id)
   }
 
@@ -44,10 +46,10 @@ export function ExperiencesSection({
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-headline font-bold text-base text-foreground">
-          Kinh nghiệm làm việc
+          {t("title")}
         </h2>
         <Button size="sm" className="rounded-lg" onClick={openCreate}>
-          <Plus className="w-3.5 h-3.5 mr-1" /> Thêm
+          <Plus className="w-3.5 h-3.5 mr-1" /> {t("addButton")}
         </Button>
       </div>
 
@@ -55,7 +57,7 @@ export function ExperiencesSection({
         <div className="py-10 text-center">
           <Briefcase className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
-            Chưa có kinh nghiệm nào
+            {t("empty")}
           </p>
         </div>
       ) : (
@@ -78,7 +80,7 @@ export function ExperiencesSection({
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(exp.start_date)} —{" "}
                   {exp.is_current
-                    ? "Hiện tại"
+                    ? t("current")
                     : exp.end_date
                       ? formatDate(exp.end_date)
                       : "—"}

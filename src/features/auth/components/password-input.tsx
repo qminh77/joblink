@@ -22,13 +22,26 @@ export function PasswordInput({
       <Input
         {...props}
         type={visible ? "text" : "password"}
-        className={cn("pr-11", className)}
+        className={cn("pr-12", className)}
       />
       <button
         type="button"
-        aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-        onClick={() => setVisible((v) => !v)}
-        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+        tabIndex={-1}
+        aria-label={visible ? "Hide password" : "Show password"}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setVisible((v) => !v)
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        className="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none z-10"
       >
         {visible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
       </button>

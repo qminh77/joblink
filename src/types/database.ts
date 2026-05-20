@@ -1,4 +1,4 @@
-import type { UserRole, UserStatus } from "@/lib/constants"
+import type { ConnectionStatus, UserRole, UserStatus } from "@/lib/constants"
 
 export type Json =
   | string
@@ -115,6 +115,15 @@ export type ProfileViewLogRow = {
   viewed_at: string
 }
 
+export type ConnectionRow = {
+  id: number
+  requester_id: number
+  receiver_id: number
+  status: ConnectionStatus
+  requested_at: string
+  responded_at: string | null
+}
+
 export type CompanyProfileRow = {
   id: number
   user_id: number
@@ -177,6 +186,10 @@ export type Database = {
         Omit<ProfileViewLogRow, "id" | "viewed_at">
       >
       company_profiles: TableDef<CompanyProfileRow>
+      connections: TableDef<
+        ConnectionRow,
+        Omit<ConnectionRow, "id" | "requested_at" | "responded_at">
+      >
     }
     Views: Record<string, never>
     Functions: Record<string, never>

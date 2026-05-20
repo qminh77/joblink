@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { Inter, Manrope } from "next/font/google"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getMessages } from "next-intl/server"
 
 import { Providers } from "@/providers"
 import { siteConfig } from "@/config/site"
@@ -25,19 +27,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${fontBody.variable} ${fontHeadline.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-body">
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

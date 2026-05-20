@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -12,10 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import {
-  PROFILE_VISIBILITIES,
-  PROFILE_VISIBILITY_LABELS,
-} from "@/features/profile/lib/constants"
+import { PROFILE_VISIBILITIES } from "@/features/profile/lib/constants"
 import { useUpdatePrivacy } from "@/features/settings/hooks"
 import type { ProfileVisibility } from "@/types/database"
 
@@ -26,6 +24,9 @@ export function PrivacyCard({
   initialVisibility: ProfileVisibility
   initialOpenToWork: boolean
 }) {
+  const t = useTranslations("settings.privacy")
+  const tCommon = useTranslations("common")
+  const tVis = useTranslations("profile.visibility")
   const [visibility, setVisibility] =
     useState<ProfileVisibility>(initialVisibility)
   const [openToWork, setOpenToWork] = useState(initialOpenToWork)
@@ -45,22 +46,15 @@ export function PrivacyCard({
     <Card className="rounded-2xl border-border/30 p-6 space-y-5">
       <div>
         <h2 className="font-headline font-bold text-base text-foreground">
-          Quyền riêng tư hồ sơ
+          {t("title")}
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Quyết định ai có thể xem hồ sơ và các thông tin nghề nghiệp của bạn
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-foreground">
-            Mức hiển thị hồ sơ
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Public: ai cũng xem được · Connections: chỉ người đã kết nối ·
-            Private: chỉ chính bạn
-          </p>
+          <p className="text-sm font-medium text-foreground">{t("visibility")}</p>
+          <p className="text-xs text-muted-foreground">{t("visibilityHint")}</p>
         </div>
         <Select
           value={visibility}
@@ -72,7 +66,7 @@ export function PrivacyCard({
           <SelectContent>
             {PROFILE_VISIBILITIES.map((value) => (
               <SelectItem key={value} value={value}>
-                {PROFILE_VISIBILITY_LABELS[value]}
+                {tVis(value)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -81,18 +75,10 @@ export function PrivacyCard({
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-foreground">
-            Đang tìm việc (Open to Work)
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Hiển thị badge xanh trên hồ sơ và cho phép nhà tuyển dụng lọc bạn
-            theo trạng thái này
-          </p>
+          <p className="text-sm font-medium text-foreground">{t("openToWork")}</p>
+          <p className="text-xs text-muted-foreground">{t("openToWorkHint")}</p>
         </div>
-        <Switch
-          checked={openToWork}
-          onCheckedChange={setOpenToWork}
-        />
+        <Switch checked={openToWork} onCheckedChange={setOpenToWork} />
       </div>
 
       <div className="flex justify-end">
@@ -101,7 +87,7 @@ export function PrivacyCard({
           disabled={!dirty || updatePrivacy.isPending}
           className="rounded-lg"
         >
-          {updatePrivacy.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+          {updatePrivacy.isPending ? tCommon("saving") : tCommon("saveChanges")}
         </Button>
       </div>
     </Card>

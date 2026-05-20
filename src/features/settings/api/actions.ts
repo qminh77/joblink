@@ -1,14 +1,15 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import {
-  changePasswordSchema,
-  localeSchema,
-  privacySchema,
+  createChangePasswordSchema,
+  createLocaleSchema,
+  createPrivacySchema,
   type ChangePasswordInput,
   type LocaleInput,
   type PrivacyInput,
@@ -29,9 +30,12 @@ function revalidateAll() {
 export async function changePasswordAction(
   input: ChangePasswordInput,
 ): Promise<ActionResult> {
-  const parsed = changePasswordSchema.safeParse(input)
+  const tv = await getTranslations("settings.validation")
+  const tp = await getTranslations("settings.password")
+
+  const parsed = createChangePasswordSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? tv("currentPasswordRequired"))
   }
 
   const current = await requireCurrentUser()
@@ -42,7 +46,7 @@ export async function changePasswordAction(
     password: parsed.data.currentPassword,
   })
   if (verify.error) {
-    return fail("Mật khẩu hiện tại không chính xác")
+    return fail(tp("wrongCurrent"))
   }
 
   const { error } = await supabase.auth.updateUser({
@@ -56,14 +60,17 @@ export async function changePasswordAction(
 export async function updatePrivacyAction(
   input: PrivacyInput,
 ): Promise<ActionResult> {
-  const parsed = privacySchema.safeParse(input)
+  const te = await getTranslations("settings.errors")
+  const tp = await getTranslations("profile.errors")
+
+  const parsed = createPrivacySchema().safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? tp("invalidData"))
   }
 
   const current = await requireCurrentUser()
   if (current.appUser.role !== "member") {
-    return fail("Tùy chọn này chỉ áp dụng cho tài khoản thành viên")
+    return fail(te("privacyMemberOnly"))
   }
 
   const supabase = await createClient()
@@ -84,9 +91,11 @@ export async function updatePrivacyAction(
 export async function updateCompanyOpenToHireAction(
   openToHire: boolean,
 ): Promise<ActionResult> {
+  const te = await getTranslations("settings.errors")
+
   const current = await requireCurrentUser()
   if (current.appUser.role !== "company") {
-    return fail("Tùy chọn này chỉ áp dụng cho tài khoản công ty")
+    return fail(te("openToHireCompanyOnly"))
   }
 
   const supabase = await createClient()
@@ -106,9 +115,12 @@ export async function updateCompanyOpenToHireAction(
 export async function updateLocaleAction(
   input: LocaleInput,
 ): Promise<ActionResult> {
-  const parsed = localeSchema.safeParse(input)
+  const tv = await getTranslations("settings.validation")
+  const tp = await getTranslations("profile.errors")
+
+  const parsed = createLocaleSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Ngôn ngữ không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? tp("invalidData"))
   }
 
   const current = await requireCurrentUser()
@@ -119,6 +131,20 @@ export async function updateLocaleAction(
     .eq("id", current.appUser.id)
 
   if (error) return fail(error.message)
+
+  // Đồng bộ cookie để request kế tiếp dùng locale mới ngay
+  try {
+    const { cookies } = await import("next/headers")
+    const cookieStore = await cookies()
+    cookieStore.set("NEXT_LOCALE", parsed.data.locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    })
+  } catch {
+    // ignore
+  }
+
   revalidateAll()
   return { ok: true }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Wrench, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,7 @@ export function SkillsSection({ skills }: { skills: SkillRow[] }) {
   const [name, setName] = useState("")
   const addMutation = useAddSkill()
   const removeMutation = useRemoveSkill()
+  const t = useTranslations("profile.skills")
 
   function submit(event?: React.FormEvent) {
     event?.preventDefault()
@@ -23,13 +25,13 @@ export function SkillsSection({ skills }: { skills: SkillRow[] }) {
   return (
     <>
       <h2 className="font-headline font-bold text-base text-foreground mb-4">
-        Kỹ năng
+        {t("title")}
       </h2>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {skills.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Chưa có kỹ năng nào — thêm để nhà tuyển dụng tìm thấy bạn dễ hơn.
+            {t("empty")}
           </p>
         ) : (
           skills.map((skill) => (
@@ -58,7 +60,7 @@ export function SkillsSection({ skills }: { skills: SkillRow[] }) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             className="h-10 pl-9 rounded-xl"
-            placeholder="Nhập kỹ năng và nhấn Enter..."
+            placeholder={t("placeholder")}
           />
         </div>
         <Button
@@ -67,7 +69,7 @@ export function SkillsSection({ skills }: { skills: SkillRow[] }) {
           className="h-10 rounded-xl"
           disabled={addMutation.isPending || name.trim().length === 0}
         >
-          Thêm
+          {t("addButton")}
         </Button>
       </form>
     </>

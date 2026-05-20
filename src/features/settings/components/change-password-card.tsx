@@ -1,7 +1,9 @@
 "use client"
 
+import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -16,13 +18,16 @@ import {
 import { PasswordInput } from "@/features/auth/components/password-input"
 import { useChangePassword } from "@/features/settings/hooks"
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordInput,
 } from "@/features/settings/schemas"
 
 export function ChangePasswordCard() {
+  const tv = useTranslations("settings.validation")
+  const t = useTranslations("settings.password")
+  const schema = useMemo(() => createChangePasswordSchema(tv), [tv])
   const form = useForm<ChangePasswordInput>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -39,11 +44,9 @@ export function ChangePasswordCard() {
   return (
     <Card className="rounded-2xl border-border/30 p-6">
       <h2 className="font-headline font-bold text-base text-foreground mb-1">
-        Đổi mật khẩu
+        {t("title")}
       </h2>
-      <p className="text-xs text-muted-foreground mb-5">
-        Nhập mật khẩu hiện tại để xác minh trước khi đổi
-      </p>
+      <p className="text-xs text-muted-foreground mb-5">{t("subtitle")}</p>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -54,7 +57,7 @@ export function ChangePasswordCard() {
             name="currentPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mật khẩu hiện tại</FormLabel>
+                <FormLabel>{t("current")}</FormLabel>
                 <FormControl>
                   <PasswordInput
                     {...field}
@@ -71,7 +74,7 @@ export function ChangePasswordCard() {
             name="newPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mật khẩu mới</FormLabel>
+                <FormLabel>{t("new")}</FormLabel>
                 <FormControl>
                   <PasswordInput
                     {...field}
@@ -88,7 +91,7 @@ export function ChangePasswordCard() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Xác nhận mật khẩu</FormLabel>
+                <FormLabel>{t("confirm")}</FormLabel>
                 <FormControl>
                   <PasswordInput
                     {...field}
@@ -107,7 +110,7 @@ export function ChangePasswordCard() {
               disabled={changePassword.isPending}
               className="rounded-lg"
             >
-              {changePassword.isPending ? "Đang xử lý..." : "Đổi mật khẩu"}
+              {changePassword.isPending ? t("submitting") : t("submit")}
             </Button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { GraduationCap, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -18,9 +19,10 @@ export function EducationsSection({
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<MemberEducationRow | null>(null)
   const deleteMutation = useDeleteEducation()
+  const t = useTranslations("profile.educations")
 
   function handleDelete(id: number) {
-    if (!confirm("Bạn có chắc muốn xóa thông tin học vấn này?")) return
+    if (!confirm(t("deleteConfirm"))) return
     deleteMutation.mutate(id)
   }
 
@@ -34,7 +36,7 @@ export function EducationsSection({
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-headline font-bold text-base text-foreground">
-          Học vấn
+          {t("title")}
         </h2>
         <Button
           size="sm"
@@ -44,7 +46,7 @@ export function EducationsSection({
             setOpen(true)
           }}
         >
-          <Plus className="w-3.5 h-3.5 mr-1" /> Thêm
+          <Plus className="w-3.5 h-3.5 mr-1" /> {t("addButton")}
         </Button>
       </div>
 
@@ -52,7 +54,7 @@ export function EducationsSection({
         <div className="py-10 text-center">
           <GraduationCap className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
-            Chưa có thông tin học vấn
+            {t("empty")}
           </p>
         </div>
       ) : (

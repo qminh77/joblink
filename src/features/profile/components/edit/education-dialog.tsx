@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +29,7 @@ import {
   useUpdateEducation,
 } from "@/features/profile/hooks"
 import {
-  memberEducationSchema,
+  createMemberEducationSchema,
   type MemberEducationInput,
 } from "@/features/profile/schemas"
 import type { MemberEducationRow } from "@/types/database"
@@ -68,8 +69,14 @@ export function EducationDialog({
   onOpenChange,
   education,
 }: EducationDialogProps) {
+  const tCommon = useTranslations("common")
+  const t = useTranslations("profile.educations")
+  const td = useTranslations("profile.educations.dialog")
+  const tv = useTranslations("profile.validation")
+
+  const schema = useMemo(() => createMemberEducationSchema(tv), [tv])
   const form = useForm<MemberEducationInput>({
-    resolver: zodResolver(memberEducationSchema),
+    resolver: zodResolver(schema),
     defaultValues: toFormValues(education),
   })
 
@@ -91,11 +98,9 @@ export function EducationDialog({
       <DialogContent className="sm:max-w-lg rounded-2xl">
         <DialogHeader>
           <DialogTitle>
-            {education ? "Sửa học vấn" : "Thêm học vấn"}
+            {education ? td("editTitle") : td("addTitle")}
           </DialogTitle>
-          <DialogDescription>
-            Trường học, chuyên ngành và thời gian học
-          </DialogDescription>
+          <DialogDescription>{t("title")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -108,7 +113,7 @@ export function EducationDialog({
               name="schoolName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên trường</FormLabel>
+                  <FormLabel>{td("schoolName")}</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-10 rounded-xl" />
                   </FormControl>
@@ -123,13 +128,12 @@ export function EducationDialog({
                 name="degree"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bằng cấp</FormLabel>
+                    <FormLabel>{td("degree")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value ?? ""}
                         className="h-10 rounded-xl"
-                        placeholder="Cử nhân"
                       />
                     </FormControl>
                     <FormMessage />
@@ -141,13 +145,12 @@ export function EducationDialog({
                 name="fieldOfStudy"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Chuyên ngành</FormLabel>
+                    <FormLabel>{td("fieldOfStudy")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value ?? ""}
                         className="h-10 rounded-xl"
-                        placeholder="Công nghệ thông tin"
                       />
                     </FormControl>
                     <FormMessage />
@@ -162,7 +165,7 @@ export function EducationDialog({
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bắt đầu</FormLabel>
+                    <FormLabel>{td("startDate")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -180,7 +183,7 @@ export function EducationDialog({
                 name="endDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kết thúc</FormLabel>
+                    <FormLabel>{td("endDate")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -200,7 +203,7 @@ export function EducationDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả (tùy chọn)</FormLabel>
+                  <FormLabel>{td("description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
@@ -221,14 +224,14 @@ export function EducationDialog({
                 onClick={() => onOpenChange(false)}
                 className="rounded-lg"
               >
-                Hủy
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={isPending}
                 className="rounded-lg"
               >
-                {isPending ? "Đang lưu..." : "Lưu"}
+                {isPending ? td("submitting") : td("submit")}
               </Button>
             </DialogFooter>
           </form>

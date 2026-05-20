@@ -1,59 +1,79 @@
 import { z } from "zod"
 
-export const emailSchema = z
-  .string()
-  .min(1, "Vui lòng nhập email")
-  .email("Email không hợp lệ")
-  .max(255, "Email tối đa 255 ký tự")
+type Translator = (key: string) => string
 
-export const passwordSchema = z
-  .string()
-  .min(8, "Mật khẩu tối thiểu 8 ký tự")
-  .max(72, "Mật khẩu tối đa 72 ký tự")
-
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
-  remember: z.boolean(),
-})
-
-export const memberRegisterSchema = z.object({
-  role: z.literal("member"),
-  fullName: z
+export function createEmailSchema(t: Translator) {
+  return z
     .string()
-    .min(2, "Họ tên tối thiểu 2 ký tự")
-    .max(255, "Họ tên tối đa 255 ký tự"),
-  email: emailSchema,
-  password: passwordSchema,
-  acceptTerms: z.literal<boolean>(true, {
-    message: "Bạn cần đồng ý với điều khoản dịch vụ",
-  }),
-})
+    .min(1, t("emailRequired"))
+    .email(t("emailInvalid"))
+    .max(255, t("emailTooLong"))
+}
 
-export const companyRegisterSchema = z.object({
-  role: z.literal("company"),
-  companyName: z
+export function createPasswordSchema(t: Translator) {
+  return z
     .string()
-    .min(2, "Tên công ty tối thiểu 2 ký tự")
-    .max(255, "Tên công ty tối đa 255 ký tự"),
-  email: emailSchema,
-  password: passwordSchema,
-  acceptTerms: z.literal<boolean>(true, {
-    message: "Bạn cần đồng ý với điều khoản dịch vụ",
-  }),
-})
+    .min(8, t("passwordMin"))
+    .max(72, t("passwordMax"))
+}
 
-export const registerSchema = z.discriminatedUnion("role", [
-  memberRegisterSchema,
-  companyRegisterSchema,
-])
+export function createLoginSchema(t: Translator) {
+  return z.object({
+    email: createEmailSchema(t),
+    password: z.string().min(1, t("passwordRequired")),
+    remember: z.boolean(),
+  })
+}
 
-export const forgotPasswordSchema = z.object({
-  email: emailSchema,
-})
+export function createMemberRegisterSchema(t: Translator) {
+  return z.object({
+    role: z.literal("member"),
+    fullName: z
+      .string()
+      .min(2, t("fullNameMin"))
+      .max(255, t("fullNameMax")),
+    email: createEmailSchema(t),
+    password: createPasswordSchema(t),
+    acceptTerms: z.literal<boolean>(true, { message: t("termsRequired") }),
+  })
+}
 
-export type LoginInput = z.infer<typeof loginSchema>
-export type RegisterInput = z.infer<typeof registerSchema>
-export type MemberRegisterInput = z.infer<typeof memberRegisterSchema>
-export type CompanyRegisterInput = z.infer<typeof companyRegisterSchema>
-export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export function createCompanyRegisterSchema(t: Translator) {
+  return z.object({
+    role: z.literal("company"),
+    companyName: z
+      .string()
+      .min(2, t("companyNameMin"))
+      .max(255, t("companyNameMax")),
+    email: createEmailSchema(t),
+    password: createPasswordSchema(t),
+    acceptTerms: z.literal<boolean>(true, { message: t("termsRequired") }),
+  })
+}
+
+export function createRegisterSchema(t: Translator) {
+  return z.discriminatedUnion("role", [
+    createMemberRegisterSchema(t),
+    createCompanyRegisterSchema(t),
+  ])
+}
+
+export function createForgotPasswordSchema(t: Translator) {
+  return z.object({
+    email: createEmailSchema(t),
+  })
+}
+
+const noop: Translator = (k) => k
+export type LoginInput = z.infer<ReturnType<typeof createLoginSchema>>
+export type RegisterInput = z.infer<ReturnType<typeof createRegisterSchema>>
+export type MemberRegisterInput = z.infer<
+  ReturnType<typeof createMemberRegisterSchema>
+>
+export type CompanyRegisterInput = z.infer<
+  ReturnType<typeof createCompanyRegisterSchema>
+>
+export type ForgotPasswordInput = z.infer<
+  ReturnType<typeof createForgotPasswordSchema>
+>
+void noop

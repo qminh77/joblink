@@ -21,4 +21,5 @@ export type SessionUserSummary = {
   status: UserStatus
   displayName: string
   avatarUrl: string | null
+  headline: string | null
 }

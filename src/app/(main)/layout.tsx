@@ -18,13 +18,14 @@ export default async function MainLayout({
     status: user.appUser.status,
     displayName: user.profile.displayName,
     avatarUrl: user.profile.avatarUrl,
+    headline: user.profile.headline,
   }
 
   return (
     <CurrentUserProvider user={sessionUser}>
       <div className="min-h-screen bg-zinc-50/50 dark:bg-background font-body text-foreground pt-16">
         <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6">
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-24 md:pb-6">
           {children}
         </main>
       </div>

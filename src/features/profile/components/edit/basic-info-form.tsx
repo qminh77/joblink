@@ -1,7 +1,9 @@
 "use client"
 
+import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,12 +24,9 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { PROFILE_VISIBILITIES } from "@/features/profile/lib/constants"
 import {
-  PROFILE_VISIBILITIES,
-  PROFILE_VISIBILITY_LABELS,
-} from "@/features/profile/lib/constants"
-import {
-  memberProfileSchema,
+  createMemberProfileSchema,
   type MemberProfileInput,
 } from "@/features/profile/schemas"
 import type { MemberProfileDetail } from "@/features/profile/types"
@@ -42,8 +41,14 @@ export function BasicInfoForm({
   profile: MemberProfileDetail
   provinces: ProvinceRow[]
 }) {
+  const tCommon = useTranslations("common")
+  const t = useTranslations("profile.basic")
+  const tv = useTranslations("profile.validation")
+  const tVisibility = useTranslations("profile.visibility")
+
+  const schema = useMemo(() => createMemberProfileSchema(tv), [tv])
   const form = useForm<MemberProfileInput>({
-    resolver: zodResolver(memberProfileSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       fullName: profile.full_name,
       headline: profile.headline ?? "",
@@ -65,23 +70,16 @@ export function BasicInfoForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="fullName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Họ và tên</FormLabel>
+                <FormLabel>{t("fullName")}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    className="h-10 rounded-xl"
-                    placeholder="Nguyễn Văn A"
-                  />
+                  <Input {...field} className="h-10 rounded-xl" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,13 +91,13 @@ export function BasicInfoForm({
             name="headline"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Chức danh</FormLabel>
+                <FormLabel>{t("headline")}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     value={field.value ?? ""}
                     className="h-10 rounded-xl"
-                    placeholder="Senior UX Designer"
+                    placeholder={t("headlinePlaceholder")}
                   />
                 </FormControl>
                 <FormMessage />
@@ -112,7 +110,7 @@ export function BasicInfoForm({
             name="avatarUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>URL ảnh đại diện</FormLabel>
+                <FormLabel>{t("avatarUrl")}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -131,7 +129,7 @@ export function BasicInfoForm({
             name="website"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Website / Portfolio</FormLabel>
+                <FormLabel>{t("website")}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -150,7 +148,7 @@ export function BasicInfoForm({
             name="provinceId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tỉnh / Thành phố</FormLabel>
+                <FormLabel>{t("province")}</FormLabel>
                 <Select
                   value={field.value ? String(field.value) : "none"}
                   onValueChange={(value) =>
@@ -159,11 +157,11 @@ export function BasicInfoForm({
                 >
                   <FormControl>
                     <SelectTrigger className="h-10 rounded-xl">
-                      <SelectValue placeholder="Chọn tỉnh / thành" />
+                      <SelectValue placeholder={t("selectProvince")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="none">— Không xác định —</SelectItem>
+                    <SelectItem value="none">— —</SelectItem>
                     {provinces.map((province) => (
                       <SelectItem key={province.id} value={String(province.id)}>
                         {province.name}
@@ -181,7 +179,7 @@ export function BasicInfoForm({
             name="profileVisibility"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quyền riêng tư hồ sơ</FormLabel>
+                <FormLabel>{t("visibility")}</FormLabel>
                 <Select
                   value={field.value}
                   onValueChange={(value) =>
@@ -198,7 +196,7 @@ export function BasicInfoForm({
                   <SelectContent>
                     {PROFILE_VISIBILITIES.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {PROFILE_VISIBILITY_LABELS[value]}
+                        {tVisibility(value)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -214,13 +212,13 @@ export function BasicInfoForm({
           name="about"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Giới thiệu bản thân</FormLabel>
+              <FormLabel>{t("about")}</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   value={field.value ?? ""}
                   rows={5}
-                  placeholder="Mô tả ngắn về bạn, kinh nghiệm và mục tiêu nghề nghiệp"
+                  placeholder={t("aboutPlaceholder")}
                   className="rounded-xl"
                 />
               </FormControl>
@@ -235,11 +233,7 @@ export function BasicInfoForm({
           render={({ field }) => (
             <FormItem className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3">
               <div className="space-y-1 pr-4">
-                <FormLabel className="text-sm">Đang tìm việc</FormLabel>
-                <p className="text-xs text-muted-foreground">
-                  Hiển thị badge &ldquo;Đang tìm việc&rdquo; trên hồ sơ và cho phép
-                  nhà tuyển dụng lọc bạn vào danh sách ứng viên.
-                </p>
+                <FormLabel className="text-sm">{t("openToWork")}</FormLabel>
               </div>
               <FormControl>
                 <Switch
@@ -257,7 +251,9 @@ export function BasicInfoForm({
             disabled={updateProfile.isPending}
             className="rounded-lg"
           >
-            {updateProfile.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+            {updateProfile.isPending
+              ? tCommon("saving")
+              : tCommon("saveChanges")}
           </Button>
         </div>
       </form>

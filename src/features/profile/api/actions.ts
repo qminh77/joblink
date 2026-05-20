@@ -1,16 +1,17 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import {
-  companyProfileSchema,
-  memberEducationSchema,
-  memberExperienceSchema,
-  memberProfileSchema,
-  skillNameSchema,
+  createCompanyProfileSchema,
+  createMemberEducationSchema,
+  createMemberExperienceSchema,
+  createMemberProfileSchema,
+  createSkillNameSchema,
   type CompanyProfileInput,
   type MemberEducationInput,
   type MemberExperienceInput,
@@ -29,6 +30,19 @@ function fail(error: string): ActionResult<never> {
   return { ok: false, error }
 }
 
+function emptyToNull(value: string | null | undefined): string | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
+}
+
+function normalizeDate(value: string | null | undefined): string | null {
+  const cleaned = emptyToNull(value)
+  if (!cleaned) return null
+  if (/^\d{4}-\d{2}$/.test(cleaned)) return `${cleaned}-01`
+  return cleaned
+}
+
 function revalidateProfile(userId: number) {
   revalidatePath("/profile/edit")
   revalidatePath(`/profile/${userId}`)
@@ -40,14 +54,15 @@ function revalidateProfile(userId: number) {
 export async function updateMemberProfileAction(
   input: MemberProfileInput,
 ): Promise<ActionResult> {
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể cập nhật hồ sơ này")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = memberProfileSchema.safeParse(input)
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const parsed = createMemberProfileSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
@@ -55,10 +70,10 @@ export async function updateMemberProfileAction(
     .from("member_profiles")
     .update({
       full_name: parsed.data.fullName,
-      headline: parsed.data.headline,
-      about: parsed.data.about,
-      avatar_url: parsed.data.avatarUrl,
-      website: parsed.data.website,
+      headline: emptyToNull(parsed.data.headline),
+      about: emptyToNull(parsed.data.about),
+      avatar_url: emptyToNull(parsed.data.avatarUrl),
+      website: emptyToNull(parsed.data.website),
       province_id: parsed.data.provinceId ?? null,
       district_id: parsed.data.districtId ?? null,
       profile_visibility: parsed.data.profileVisibility,
@@ -68,7 +83,6 @@ export async function updateMemberProfileAction(
     .eq("user_id", current.appUser.id)
 
   if (error) return fail(error.message)
-
   revalidateProfile(current.appUser.id)
   return ok(undefined)
 }
@@ -76,21 +90,23 @@ export async function updateMemberProfileAction(
 export async function addExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể quản lý kinh nghiệm")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = memberExperienceSchema.safeParse(input)
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const parsed = createMemberExperienceSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
-  const startDate = normalizeRequiredDate(parsed.data.startDate)
+  const startDate = normalizeDate(parsed.data.startDate)
+  if (!startDate) return fail(tv("startDateRequired"))
   const endDate = parsed.data.isCurrent
     ? null
-    : normalizeDate(parsed.data.endDate ?? null)
+    : normalizeDate(parsed.data.endDate)
 
   const { error } = await supabase.from("member_experiences").insert({
     user_id: current.appUser.id,
@@ -99,11 +115,10 @@ export async function addExperienceAction(
     start_date: startDate,
     end_date: endDate,
     is_current: parsed.data.isCurrent,
-    description: parsed.data.description,
+    description: emptyToNull(parsed.data.description),
   })
 
   if (error) return fail(error.message)
-
   revalidateProfile(current.appUser.id)
   return ok(undefined)
 }
@@ -111,23 +126,25 @@ export async function addExperienceAction(
 export async function updateExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
-  if (!input.id) return fail("Thiếu ID kinh nghiệm cần cập nhật")
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
+
+  if (!input.id) return fail(te("missingId"))
 
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể quản lý kinh nghiệm")
-  }
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
 
-  const parsed = memberExperienceSchema.safeParse(input)
+  const parsed = createMemberExperienceSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
-  const startDate = normalizeRequiredDate(parsed.data.startDate)
+  const startDate = normalizeDate(parsed.data.startDate)
+  if (!startDate) return fail(tv("startDateRequired"))
   const endDate = parsed.data.isCurrent
     ? null
-    : normalizeDate(parsed.data.endDate ?? null)
+    : normalizeDate(parsed.data.endDate)
 
   const { error } = await supabase
     .from("member_experiences")
@@ -137,14 +154,13 @@ export async function updateExperienceAction(
       start_date: startDate,
       end_date: endDate,
       is_current: parsed.data.isCurrent,
-      description: parsed.data.description,
+      description: emptyToNull(parsed.data.description),
       updated_at: new Date().toISOString(),
     })
     .eq("id", parsed.data.id!)
     .eq("user_id", current.appUser.id)
 
   if (error) return fail(error.message)
-
   revalidateProfile(current.appUser.id)
   return ok(undefined)
 }
@@ -168,25 +184,26 @@ export async function deleteExperienceAction(
 export async function addEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể quản lý học vấn")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = memberEducationSchema.safeParse(input)
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const parsed = createMemberEducationSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
   const { error } = await supabase.from("member_educations").insert({
     user_id: current.appUser.id,
     school_name: parsed.data.schoolName,
-    degree: parsed.data.degree,
-    field_of_study: parsed.data.fieldOfStudy,
-    start_date: normalizeDate(parsed.data.startDate ?? null),
-    end_date: normalizeDate(parsed.data.endDate ?? null),
-    description: parsed.data.description,
+    degree: emptyToNull(parsed.data.degree),
+    field_of_study: emptyToNull(parsed.data.fieldOfStudy),
+    start_date: normalizeDate(parsed.data.startDate),
+    end_date: normalizeDate(parsed.data.endDate),
+    description: emptyToNull(parsed.data.description),
   })
 
   if (error) return fail(error.message)
@@ -197,15 +214,16 @@ export async function addEducationAction(
 export async function updateEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
-  if (!input.id) return fail("Thiếu ID học vấn cần cập nhật")
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể quản lý học vấn")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = memberEducationSchema.safeParse(input)
+  if (!input.id) return fail(te("missingId"))
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const parsed = createMemberEducationSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
@@ -213,11 +231,11 @@ export async function updateEducationAction(
     .from("member_educations")
     .update({
       school_name: parsed.data.schoolName,
-      degree: parsed.data.degree,
-      field_of_study: parsed.data.fieldOfStudy,
-      start_date: normalizeDate(parsed.data.startDate ?? null),
-      end_date: normalizeDate(parsed.data.endDate ?? null),
-      description: parsed.data.description,
+      degree: emptyToNull(parsed.data.degree),
+      field_of_study: emptyToNull(parsed.data.fieldOfStudy),
+      start_date: normalizeDate(parsed.data.startDate),
+      end_date: normalizeDate(parsed.data.endDate),
+      description: emptyToNull(parsed.data.description),
       updated_at: new Date().toISOString(),
     })
     .eq("id", parsed.data.id!)
@@ -247,14 +265,15 @@ export async function deleteEducationAction(
 export async function addSkillAction(
   skillName: string,
 ): Promise<ActionResult> {
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") {
-    return fail("Chỉ thành viên mới có thể quản lý kỹ năng")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = skillNameSchema.safeParse(skillName)
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const parsed = createSkillNameSchema(tv).safeParse(skillName)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Tên kỹ năng không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? tv("skillNameRequired"))
   }
 
   const supabase = await createClient()
@@ -277,16 +296,14 @@ export async function addSkillAction(
     skillId = created.id
   }
 
-  const { error } = await supabase
-    .from("member_skills")
-    .upsert(
-      {
-        user_id: current.appUser.id,
-        skill_id: skillId,
-        endorsement_count: 0,
-      },
-      { onConflict: "user_id,skill_id" },
-    )
+  const { error } = await supabase.from("member_skills").upsert(
+    {
+      user_id: current.appUser.id,
+      skill_id: skillId,
+      endorsement_count: 0,
+    },
+    { onConflict: "user_id,skill_id" },
+  )
 
   if (error) return fail(error.message)
   revalidateProfile(current.appUser.id)
@@ -328,14 +345,15 @@ export async function logProfileViewAction(
 export async function updateCompanyProfileAction(
   input: CompanyProfileInput,
 ): Promise<ActionResult> {
-  const current = await requireCurrentUser()
-  if (current.appUser.role !== "company") {
-    return fail("Chỉ tài khoản công ty mới có thể cập nhật hồ sơ này")
-  }
+  const tv = await getTranslations("profile.validation")
+  const te = await getTranslations("profile.errors")
 
-  const parsed = companyProfileSchema.safeParse(input)
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "company") return fail(te("companyOnly"))
+
+  const parsed = createCompanyProfileSchema(tv).safeParse(input)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ")
+    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
   const supabase = await createClient()
@@ -343,19 +361,19 @@ export async function updateCompanyProfileAction(
     .from("company_profiles")
     .update({
       name: parsed.data.name,
-      about: parsed.data.about,
-      logo_url: parsed.data.logoUrl,
-      website: parsed.data.website,
-      industry: parsed.data.industry,
-      size: parsed.data.size,
+      about: emptyToNull(parsed.data.about),
+      logo_url: emptyToNull(parsed.data.logoUrl),
+      website: emptyToNull(parsed.data.website),
+      industry: emptyToNull(parsed.data.industry),
+      size: emptyToNull(parsed.data.size),
       province_id: parsed.data.provinceId ?? null,
       district_id: parsed.data.districtId ?? null,
       open_to_hire: parsed.data.openToHire,
-      business_address: parsed.data.businessAddress,
-      business_email: parsed.data.businessEmail,
-      representative_name: parsed.data.representativeName,
-      representative_title: parsed.data.representativeTitle,
-      tax_id: parsed.data.taxId,
+      business_address: emptyToNull(parsed.data.businessAddress),
+      business_email: emptyToNull(parsed.data.businessEmail),
+      representative_name: emptyToNull(parsed.data.representativeName),
+      representative_title: emptyToNull(parsed.data.representativeTitle),
+      tax_id: emptyToNull(parsed.data.taxId),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", current.appUser.id)
@@ -365,21 +383,29 @@ export async function updateCompanyProfileAction(
   return ok(undefined)
 }
 
-function normalizeDate(value: string | null | undefined): string | null {
-  if (!value || value.length === 0) return null
-  // YYYY-MM → YYYY-MM-01 cho khớp kiểu DATE của Postgres
-  if (/^\d{4}-\d{2}$/.test(value)) return `${value}-01`
-  return value
-}
+export async function getProfileStatsAction(): Promise<{
+  profileViewCount: number
+  connectionCount: number
+}> {
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+  const userId = current.appUser.id
 
-function normalizeRequiredDate(value: string): string {
-  const normalized = normalizeDate(value)
-  if (!normalized) throw new Error("Vui lòng nhập ngày bắt đầu")
-  return normalized
-}
+  const [{ count: profileViewCount }, { count: connectionCount }] =
+    await Promise.all([
+      supabase
+        .from("profile_view_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("target_user_id", userId),
+      supabase
+        .from("connections")
+        .select("id", { count: "exact", head: true })
+        .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+        .eq("status", "accepted"),
+    ])
 
-function emptyToNull(value: string | null | undefined): string | null {
-  if (!value) return null
-  const trimmed = value.trim()
-  return trimmed.length === 0 ? null : trimmed
+  return {
+    profileViewCount: profileViewCount ?? 0,
+    connectionCount: connectionCount ?? 0,
+  }
 }

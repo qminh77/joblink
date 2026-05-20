@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -29,7 +30,7 @@ import {
   useUpdateExperience,
 } from "@/features/profile/hooks"
 import {
-  memberExperienceSchema,
+  createMemberExperienceSchema,
   type MemberExperienceInput,
 } from "@/features/profile/schemas"
 import type { MemberExperienceRow } from "@/types/database"
@@ -69,8 +70,14 @@ export function ExperienceDialog({
   onOpenChange,
   experience,
 }: ExperienceDialogProps) {
+  const tCommon = useTranslations("common")
+  const t = useTranslations("profile.experiences")
+  const td = useTranslations("profile.experiences.dialog")
+  const tv = useTranslations("profile.validation")
+
+  const schema = useMemo(() => createMemberExperienceSchema(tv), [tv])
   const form = useForm<MemberExperienceInput>({
-    resolver: zodResolver(memberExperienceSchema),
+    resolver: zodResolver(schema),
     defaultValues: toFormValues(experience),
   })
 
@@ -93,11 +100,9 @@ export function ExperienceDialog({
       <DialogContent className="sm:max-w-lg rounded-2xl">
         <DialogHeader>
           <DialogTitle>
-            {experience ? "Sửa kinh nghiệm" : "Thêm kinh nghiệm"}
+            {experience ? td("editTitle") : td("addTitle")}
           </DialogTitle>
-          <DialogDescription>
-            Cung cấp thông tin về vị trí và thời gian làm việc
-          </DialogDescription>
+          <DialogDescription>{t("title")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -110,7 +115,7 @@ export function ExperienceDialog({
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Công ty</FormLabel>
+                  <FormLabel>{td("companyName")}</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-10 rounded-xl" />
                   </FormControl>
@@ -124,7 +129,7 @@ export function ExperienceDialog({
               name="position"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Vị trí</FormLabel>
+                  <FormLabel>{td("position")}</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-10 rounded-xl" />
                   </FormControl>
@@ -139,7 +144,7 @@ export function ExperienceDialog({
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bắt đầu</FormLabel>
+                    <FormLabel>{td("startDate")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -156,7 +161,7 @@ export function ExperienceDialog({
                 name="endDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kết thúc</FormLabel>
+                    <FormLabel>{td("endDate")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -188,7 +193,7 @@ export function ExperienceDialog({
                     />
                   </FormControl>
                   <FormLabel className="text-sm text-muted-foreground cursor-pointer">
-                    Tôi đang làm tại đây
+                    {td("isCurrent")}
                   </FormLabel>
                 </FormItem>
               )}
@@ -199,14 +204,13 @@ export function ExperienceDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả (tùy chọn)</FormLabel>
+                  <FormLabel>{td("description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value ?? ""}
                       rows={4}
                       className="rounded-xl"
-                      placeholder="Trách nhiệm và thành tựu chính"
                     />
                   </FormControl>
                   <FormMessage />
@@ -221,14 +225,14 @@ export function ExperienceDialog({
                 onClick={() => onOpenChange(false)}
                 className="rounded-lg"
               >
-                Hủy
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={isPending}
                 className="rounded-lg"
               >
-                {isPending ? "Đang lưu..." : "Lưu"}
+                {isPending ? td("submitting") : td("submit")}
               </Button>
             </DialogFooter>
           </form>

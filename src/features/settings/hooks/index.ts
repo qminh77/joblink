@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
@@ -26,19 +27,21 @@ function wrap<T>(action: (input: T) => Promise<ActionResult>) {
 }
 
 export function useChangePassword() {
+  const t = useTranslations("settings.password")
   return useMutation({
     mutationFn: wrap<ChangePasswordInput>(changePasswordAction),
-    onSuccess: () => toast.success("Đã đổi mật khẩu thành công"),
+    onSuccess: () => toast.success(t("success")),
     onError: (error: Error) => toast.error(error.message),
   })
 }
 
 export function useUpdatePrivacy() {
   const router = useRouter()
+  const t = useTranslations("settings.privacy")
   return useMutation({
     mutationFn: wrap<PrivacyInput>(updatePrivacyAction),
     onSuccess: () => {
-      toast.success("Đã cập nhật quyền riêng tư")
+      toast.success(t("success"))
       router.refresh()
     },
     onError: (error: Error) => toast.error(error.message),
@@ -47,10 +50,11 @@ export function useUpdatePrivacy() {
 
 export function useUpdateOpenToHire() {
   const router = useRouter()
+  const t = useTranslations("settings.openToHire")
   return useMutation({
     mutationFn: wrap<boolean>(updateCompanyOpenToHireAction),
     onSuccess: () => {
-      toast.success("Đã cập nhật trạng thái tuyển dụng")
+      toast.success(t("success"))
       router.refresh()
     },
     onError: (error: Error) => toast.error(error.message),
@@ -59,10 +63,11 @@ export function useUpdateOpenToHire() {
 
 export function useUpdateLocale() {
   const router = useRouter()
+  const t = useTranslations("settings.locale")
   return useMutation({
     mutationFn: wrap<LocaleInput>(updateLocaleAction),
     onSuccess: () => {
-      toast.success("Đã cập nhật ngôn ngữ")
+      toast.success(t("success"))
       router.refresh()
     },
     onError: (error: Error) => toast.error(error.message),

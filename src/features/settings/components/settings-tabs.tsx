@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Bell, Globe, Shield, User } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
@@ -20,13 +21,21 @@ type Profile =
   | { kind: "company"; data: CompanyProfileDetail }
   | null
 
-const NOTIFICATION_PLACEHOLDERS = [
-  { label: "Thích bài viết", desc: "Khi ai đó thích bài viết của bạn", checked: true },
-  { label: "Bình luận", desc: "Khi ai đó bình luận bài viết", checked: true },
-  { label: "Kết nối mới", desc: "Khi ai đó gửi lời mời kết nối", checked: true },
-  { label: "Tin nhắn", desc: "Khi bạn nhận được tin nhắn mới", checked: true },
-  { label: "Việc làm gợi ý", desc: "Khi có việc làm phù hợp với bạn", checked: false },
-]
+const NOTIFICATION_KEYS = [
+  "like",
+  "comment",
+  "newConnection",
+  "message",
+  "jobMatch",
+] as const
+
+const NOTIFICATION_DEFAULTS: Record<(typeof NOTIFICATION_KEYS)[number], boolean> = {
+  like: true,
+  comment: true,
+  newConnection: true,
+  message: true,
+  jobMatch: false,
+}
 
 export function SettingsTabs({
   user,
@@ -37,6 +46,9 @@ export function SettingsTabs({
   profile: Profile
   locale: string
 }) {
+  const t = useTranslations("settings")
+  const tn = useTranslations("settings.notifications.items")
+
   return (
     <Tabs defaultValue="account">
       <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto">
@@ -44,25 +56,25 @@ export function SettingsTabs({
           value="account"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
         >
-          <User className="w-4 h-4 mr-1.5" /> Tài khoản
+          <User className="w-4 h-4 mr-1.5" /> {t("tabs.account")}
         </TabsTrigger>
         <TabsTrigger
           value="privacy"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
         >
-          <Shield className="w-4 h-4 mr-1.5" /> Quyền riêng tư
+          <Shield className="w-4 h-4 mr-1.5" /> {t("tabs.privacy")}
         </TabsTrigger>
         <TabsTrigger
           value="notifications"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
         >
-          <Bell className="w-4 h-4 mr-1.5" /> Thông báo
+          <Bell className="w-4 h-4 mr-1.5" /> {t("tabs.notifications")}
         </TabsTrigger>
         <TabsTrigger
           value="language"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
         >
-          <Globe className="w-4 h-4 mr-1.5" /> Ngôn ngữ
+          <Globe className="w-4 h-4 mr-1.5" /> {t("tabs.language")}
         </TabsTrigger>
       </TabsList>
 
@@ -85,24 +97,25 @@ export function SettingsTabs({
       <TabsContent value="notifications" className="mt-6">
         <Card className="rounded-2xl border-border/30 p-6 space-y-1">
           <h2 className="font-headline font-bold text-base text-foreground mb-1">
-            Tùy chỉnh thông báo
+            {t("notifications.title")}
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Cấu hình kênh thông báo sẽ được kích hoạt khi tính năng được triển
-            khai
+            {t("notifications.subtitle")}
           </p>
-          {NOTIFICATION_PLACEHOLDERS.map((item) => (
+          {NOTIFICATION_KEYS.map((key) => (
             <div
-              key={item.label}
+              key={key}
               className="flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/30 transition-colors"
             >
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {item.label}
+                  {tn(key)}
                 </p>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
+                <p className="text-xs text-muted-foreground">
+                  {tn(`${key}Desc`)}
+                </p>
               </div>
-              <Switch defaultChecked={item.checked} disabled />
+              <Switch defaultChecked={NOTIFICATION_DEFAULTS[key]} disabled />
             </div>
           ))}
         </Card>
@@ -110,7 +123,7 @@ export function SettingsTabs({
 
       <TabsContent value="language" className="mt-6">
         <p className="text-sm text-muted-foreground">
-          Bạn có thể đổi ngôn ngữ trong tab Tài khoản.
+          {t("locale.languageTabHint")}
         </p>
       </TabsContent>
     </Tabs>

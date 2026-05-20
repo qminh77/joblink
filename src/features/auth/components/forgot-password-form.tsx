@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 import { Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,13 +18,16 @@ import { Input } from "@/components/ui/input"
 
 import { useForgotPassword } from "../hooks"
 import {
-  forgotPasswordSchema,
+  createForgotPasswordSchema,
   type ForgotPasswordInput,
 } from "../schemas"
 
 export function ForgotPasswordForm() {
+  const t = useTranslations("auth.forgotPassword")
+  const tv = useTranslations("auth.validation")
+
   const form = useForm<ForgotPasswordInput>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(createForgotPasswordSchema(tv)),
     defaultValues: { email: "" },
   })
 
@@ -42,7 +46,7 @@ export function ForgotPasswordForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-semibold text-foreground/80">
-                Email
+                {t("email")}
               </FormLabel>
               <div className="relative group">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -68,9 +72,7 @@ export function ForgotPasswordForm() {
           disabled={forgotPassword.isPending}
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
-          {forgotPassword.isPending
-            ? "Đang gửi..."
-            : "Gửi liên kết khôi phục"}
+          {forgotPassword.isPending ? t("submitting") : t("submit")}
         </Button>
       </form>
     </Form>
