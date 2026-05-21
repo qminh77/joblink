@@ -111,10 +111,10 @@ export function Navbar() {
           <div className="p-4 border-t border-border/40 flex items-center justify-between">
             <div className="flex gap-2">
               <button className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-colors">
-                <ImageIcon className="w-5 h-5" />
+                <ImageIcon className="size-5" />
               </button>
               <button className="p-2 text-orange-500 hover:bg-orange-500/10 rounded-xl transition-colors">
-                <BarChart2 className="w-5 h-5" />
+                <BarChart2 className="size-5" />
               </button>
             </div>
             <Button
@@ -134,7 +134,7 @@ export function Navbar() {
           </Link>
 
           <div className="hidden sm:flex relative items-center group">
-            <Search className="absolute left-3 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors pointer-events-none" />
+                  <Search className="absolute left-3 text-muted-foreground size-4 group-focus-within:text-primary transition-colors pointer-events-none" />
             <Input
               className="h-9 pl-9 pr-4 bg-muted border-none focus-visible:ring-1 focus-visible:ring-primary w-48 md:w-64 lg:w-80 rounded-full transition-all text-sm"
               placeholder={tNav("searchPlaceholder")}
@@ -160,7 +160,7 @@ export function Navbar() {
                 <button className={baseClasses} type="button">
                   <div className="relative flex items-center justify-center">
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "fill-primary/20" : ""}`}
+                      className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
@@ -189,7 +189,7 @@ export function Navbar() {
                 >
                   <div className="relative flex items-center justify-center">
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "fill-primary/20" : ""}`}
+                      className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
@@ -208,7 +208,7 @@ export function Navbar() {
                   size="sm"
                   className="hidden sm:flex text-primary hover:bg-primary/10 text-xs h-8 px-3"
                 >
-                  <Plus className="w-4 h-4 mr-0.5" />
+                  <Plus className="size-4 mr-0.5" />
                   {tPost("postCta")}
                 </Button>
               </DropdownMenuTrigger>
@@ -283,7 +283,7 @@ export function Navbar() {
               >
                 <div className="relative flex items-center justify-center">
                   <Icon
-                    className={`w-5 h-5 ${isActive ? "fill-primary/20" : ""}`}
+                    className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
                   />
                 </div>
                 <span className="text-[10px] font-medium mt-1">

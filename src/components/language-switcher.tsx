@@ -47,7 +47,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           aria-label={t("label")}
           className={className}
         >
-          <Globe className="h-[1.2rem] w-[1.2rem]" />
+          <Globe className="size-5" />
           <span className="sr-only">{t("label")}</span>
         </Button>
       </DropdownMenuTrigger>
