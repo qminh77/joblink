@@ -12,8 +12,8 @@ import {
   createPostInputSchema,
   createReactionInputSchema,
 } from "../schemas"
-import { loadFeedPage } from "./queries"
-import type { FeedPage, FeedPost } from "../types"
+import { loadFeedPage, loadHomeStats } from "./queries"
+import type { FeedPage, FeedPost, HomeFeedStats } from "../types"
 
 type ActionResult<T = void> =
   | { ok: true; data: T }
@@ -31,6 +31,10 @@ export async function getFeedPageAction(
   cursor: string | null,
 ): Promise<FeedPage> {
   return loadFeedPage(cursor)
+}
+
+export async function getHomeStatsAction(): Promise<HomeFeedStats> {
+  return loadHomeStats()
 }
 
 export async function createPostAction(input: {

@@ -1,33 +1,25 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import { Bookmark, Building2, ChevronDown, MoreHorizontal } from "lucide-react"
+import { Building2, ChevronDown, MoreHorizontal } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { SuggestionList } from "@/features/network/components/suggestion-list"
-import { getInitials } from "@/lib/utils/format"
 
 import { loadHomeFeed } from "../api/queries"
 
 import { HomeComposerTrigger } from "./home-composer-trigger"
+import { HomeStatsCard } from "./home-stats-card"
 import { PostsFeed } from "./posts-feed"
 
 export async function HomeContent() {
-  const [tHome, tNav, user, feed] = await Promise.all([
+  const [tHome, user, feed] = await Promise.all([
     getTranslations("home"),
-    getTranslations("nav"),
     requireCurrentUser(),
     loadHomeFeed(),
   ])
-
-  const userInitials = getInitials(user.profile.displayName, "JL")
-  const headlineFallback =
-    user.appUser.role === "company"
-      ? tHome("companyHeadlineFallback")
-      : tHome("memberHeadlineFallback")
 
   const realtimeAuthorIds = [
     ...(feed.me ? [feed.me] : []),
@@ -37,59 +29,12 @@ export async function HomeContent() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
       <aside className="hidden lg:block lg:col-span-3 space-y-4">
-        <Card className="overflow-hidden bg-card border-border/40 rounded-2xl p-0 gap-0">
-          <div className="h-16 bg-gradient-to-r from-primary/80 to-blue-400" />
-          <CardContent className="p-0">
-            <div className="relative w-16 h-16 rounded-full border-[3px] border-card -mt-8 mx-auto overflow-hidden bg-muted">
-              <Avatar className="w-full h-full">
-                {user.profile.avatarUrl ? (
-                  <AvatarImage src={user.profile.avatarUrl} />
-                ) : null}
-                <AvatarFallback>{userInitials}</AvatarFallback>
-              </Avatar>
-            </div>
-
-            <div className="text-center mt-2 border-b border-border/40 pb-4 px-4">
-              <Link
-                href="/profile/me"
-                className="font-headline font-bold text-foreground text-lg hover:text-primary transition-all"
-              >
-                {user.profile.displayName}
-              </Link>
-              <p className="text-sm text-muted-foreground font-body mt-0.5">
-                {user.profile.headline ?? headlineFallback}
-              </p>
-            </div>
-
-            <div className="py-3 space-y-3 border-b border-border/40 px-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  {tHome("profileViews")}
-                </span>
-                <span className="text-xs font-semibold text-primary">
-                  {feed.stats.profile_view_count}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  {tHome("connections")}
-                </span>
-                <span className="text-xs font-semibold text-primary">
-                  {feed.stats.connection_count}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3">
-              <Link
-                href="/saved-jobs"
-                className="flex items-center text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-muted/50"
-              >
-                <Bookmark className="w-4 h-4 mr-2" /> {tNav("savedJobs")}
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <HomeStatsCard
+          initialStats={feed.stats}
+          displayName={user.profile.displayName}
+          avatarUrl={user.profile.avatarUrl}
+          headline={user.profile.headline}
+        />
 
         <Card className="bg-card border-border/40 rounded-2xl p-4">
           <h3 className="text-sm font-headline font-bold text-foreground mb-4">

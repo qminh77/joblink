@@ -54,9 +54,10 @@ function useNetworkMutation<TArgs>(
     onSuccess: () => {
       toast.success(t(successKey))
       queryClient.invalidateQueries({ queryKey: NETWORK_OVERVIEW_KEY })
-      // Connection actions also touch notifications (mới insert/update),
-      // invalidate luôn để badge cập nhật tức thì.
+      // Connection actions also touch notifications (insert/update) và
+      // counter cache (connection_count) — invalidate cả hai để UI đồng bộ.
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["home", "stats"] })
     },
     onError: (error: Error) => toast.error(error.message),
   })

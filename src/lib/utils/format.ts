@@ -28,6 +28,17 @@ export function formatDate(
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date)
 }
 
+export function formatCompactNumber(
+  value: number | null | undefined,
+  locale: string = "vi-VN",
+): string {
+  if (value == null || Number.isNaN(value)) return "0"
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
 export function formatRelativeTime(
   value: string | Date | null | undefined,
   locale: string = "vi-VN",

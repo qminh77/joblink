@@ -25,8 +25,9 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 2. REPLICA IDENTITY — Supabase yêu cầu để stream UPDATE/DELETE đúng
 -- -----------------------------------------------------------------------------
-ALTER TABLE public.notifications REPLICA IDENTITY DEFAULT;
-ALTER TABLE public.connections   REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.notifications      REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.connections        REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.profile_view_logs  REPLICA IDENTITY DEFAULT;
 
 -- -----------------------------------------------------------------------------
 -- 3. Add bảng vào publication (idempotent qua check pg_publication_tables)
@@ -49,6 +50,15 @@ BEGIN
            AND tablename = 'connections'
     ) THEN
         EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.connections';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'profile_view_logs'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.profile_view_logs';
     END IF;
 END
 $$;

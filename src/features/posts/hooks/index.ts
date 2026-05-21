@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query"
@@ -15,11 +16,13 @@ import {
   createPostAction,
   deletePostAction,
   getFeedPageAction,
+  getHomeStatsAction,
   toggleReactionAction,
 } from "../api/actions"
-import type { FeedPage, FeedPost } from "../types"
+import type { FeedPage, FeedPost, HomeFeedStats } from "../types"
 
 export const FEED_QUERY_KEY = ["home-feed"] as const
+export const HOME_STATS_KEY = ["home", "stats"] as const
 
 type FeedCache = InfiniteData<FeedPage>
 
@@ -199,4 +202,67 @@ export function useRealtimeFeed(allowedAuthorIds: number[]) {
       void supabase.removeChannel(channel)
     }
   }, [filterKey, qc])
+}
+
+export function useHomeStats(initialStats: HomeFeedStats) {
+  return useQuery<HomeFeedStats>({
+    queryKey: HOME_STATS_KEY,
+    queryFn: getHomeStatsAction,
+    initialData: initialStats,
+    staleTime: 30_000,
+  })
+}
+
+/**
+ * Đồng bộ counter cache (connection_count, profile_view_count) realtime:
+ *   • connections — INSERT/UPDATE/DELETE liên quan tới me → connection_count đổi
+ *   • profile_view_logs — INSERT target=me → profile_view_count tăng
+ * Cả hai đều invalidate cùng 1 query key, gọn và đúng nguồn dữ liệu.
+ */
+export function useRealtimeHomeStats(currentUserId: number | null) {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!currentUserId) return
+    const supabase = createBrowserClient()
+    const invalidate = () => {
+      qc.invalidateQueries({ queryKey: HOME_STATS_KEY })
+    }
+    const channel = supabase
+      .channel(`home-stats-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "connections",
+          filter: `requester_id=eq.${currentUserId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "connections",
+          filter: `receiver_id=eq.${currentUserId}`,
+        },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "profile_view_logs",
+          filter: `target_user_id=eq.${currentUserId}`,
+        },
+        invalidate,
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [currentUserId, qc])
 }

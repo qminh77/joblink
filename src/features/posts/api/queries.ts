@@ -1,7 +1,18 @@
 import "server-only"
 
+import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import type { FeedPage, FeedPost, HomeFeedPayload } from "../types"
+import type {
+  FeedPage,
+  FeedPost,
+  HomeFeedPayload,
+  HomeFeedStats,
+} from "../types"
+
+const EMPTY_STATS: HomeFeedStats = {
+  connection_count: 0,
+  profile_view_count: 0,
+}
 
 const DEFAULT_POSTS_LIMIT = 20
 const DEFAULT_SUGGESTION_LIMIT = 12
@@ -55,6 +66,20 @@ export async function loadFeedPage(
 ): Promise<FeedPage> {
   const payload = await loadHomeFeed({ cursor, postsLimit: limit })
   return { posts: payload.posts, nextCursor: payload.next_cursor }
+}
+
+export async function loadHomeStats(): Promise<HomeFeedStats> {
+  const current = await getCurrentUser()
+  if (!current) return EMPTY_STATS
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("users")
+    .select("connection_count, profile_view_count")
+    .eq("id", current.appUser.id)
+    .maybeSingle<HomeFeedStats>()
+
+  return data ?? EMPTY_STATS
 }
 
 export type { FeedPost }
