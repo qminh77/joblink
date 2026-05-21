@@ -17,8 +17,20 @@ import {
   Users,
 } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +52,11 @@ type Props = {
   onSend: (post: FeedPost) => void
 }
 
+const dropdownItemVariants = {
+  hidden: { opacity: 0, x: -8 },
+  show: { opacity: 1, x: 0 },
+}
+
 function visibilityIcon(v: FeedPost["visibility"]) {
   if (v === "private") return <Lock className="w-3 h-3" />
   if (v === "connections") return <Users className="w-3 h-3" />
@@ -55,6 +72,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState("")
   const [showReport, setShowReport] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
 
   const toggle = useToggleReaction()
   const createComment = useCreateComment()
@@ -115,40 +133,60 @@ export function PostCard({ post, onShare, onSend }: Props) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                sideOffset={8}
-                className="min-w-44 rounded-xl border-border/40 p-1.5"
+                sideOffset={10}
+                className="w-64 p-1.5 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40"
               >
                 {isOwnPost ? (
-                  <DropdownMenuItem
-                    onClick={() => deletePost.mutate(post.id)}
-                    disabled={deletePost.isPending}
-                    className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
+                  <motion.div
+                    variants={dropdownItemVariants}
+                    initial="hidden"
+                    animate="show"
+                    transition={{ delay: 0.05 }}
                   >
-                    <Trash2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">{tPosts("deletePost")}</span>
-                  </DropdownMenuItem>
-                ) : null}
-                {!isOwnPost ? (
-                  <DropdownMenuItem
-                    onClick={() => setShowReport(true)}
-                    className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
-                  >
-                    <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">{tPosts("reportPost")}</span>
-                  </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault()
+                        setShowDelete(true)
+                      }}
+                      disabled={deletePost.isPending}
+                      className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                    >
+                      <Trash2 className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground">
+                          {tPosts("deletePost")}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {tPosts("deletePostHint")}
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                  </motion.div>
                 ) : null}
                 {isOwnPost ? (
-                  <>
-                    <DropdownMenuSeparator className="mx-2 my-1 bg-border/20" />
-                    <DropdownMenuItem
-                      onClick={() => setShowReport(true)}
-                      className="cursor-pointer rounded-lg py-2.5 px-3 gap-3 transition-all focus:bg-muted"
-                    >
-                      <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium">{tPosts("reportPost")}</span>
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuSeparator className="my-1 bg-border/20" />
                 ) : null}
+                <motion.div
+                  variants={dropdownItemVariants}
+                  initial="hidden"
+                  animate="show"
+                  transition={{ delay: 0.08 }}
+                >
+                  <DropdownMenuItem
+                    onClick={() => setShowReport(true)}
+                    className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                  >
+                    <Flag className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground">
+                        {tPosts("reportPost")}
+                      </span>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {tPosts("reportPostHint")}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                </motion.div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -238,21 +276,24 @@ export function PostCard({ post, onShare, onSend }: Props) {
                 {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
                 <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 flex items-center bg-transparent border border-border/60 rounded-full px-4 bg-card focus-within:border-primary transition-colors">
-                <input
+              <div className="flex-1 flex items-center gap-1.5">
+                <Input
                   type="text"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder={tFeed("writeComment")}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-[13px] py-2 outline-none"
+                  className="h-9 rounded-full text-[13px]"
                 />
-                <button
+                <Button
                   type="submit"
+                  size="icon-sm"
+                  variant="ghost"
                   disabled={!comment.trim() || createComment.isPending}
-                  className="text-primary disabled:opacity-50 p-1"
+                  aria-label={tFeed("send")}
+                  className="text-primary shrink-0"
                 >
-                  <Send className="w-4 h-4" />
-                </button>
+                  <Send />
+                </Button>
               </div>
             </form>
           </div>
@@ -265,6 +306,31 @@ export function PostCard({ post, onShare, onSend }: Props) {
         targetType="post"
         targetId={post.id}
       />
+
+      <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tPosts("deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tPosts("deleteDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePost.isPending}>
+              {tPosts("deleteDialog.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletePost.isPending}
+              onClick={() => {
+                deletePost.mutate(post.id)
+                setShowDelete(false)
+              }}
+            >
+              {tPosts("deleteDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }

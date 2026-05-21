@@ -28,7 +28,7 @@ export async function HomeContent() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
-      <aside className="hidden lg:block lg:col-span-3 space-y-4">
+      <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
         <HomeStatsCard
           initialStats={feed.stats}
           displayName={user.profile.displayName}

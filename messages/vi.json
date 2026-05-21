@@ -54,9 +54,18 @@
     "copyLinkHint": "Sao chép URL bài viết để gửi",
     "sendViaMessage": "Gửi qua tin nhắn",
     "searchPersonPlaceholder": "Tìm kiếm người để gửi...",
+    "createSuccess": "Đã đăng bài",
     "deletePost": "Xoá bài viết",
+    "deletePostHint": "Ẩn bài viết khỏi bảng tin",
+    "reportPostHint": "Phản hồi nội dung không phù hợp",
     "deleteConfirm": "Bạn có chắc muốn xoá bài viết này?",
     "deleteSuccess": "Đã xoá bài viết",
+    "deleteDialog": {
+      "title": "Xoá bài viết",
+      "description": "Bài viết sẽ bị ẩn khỏi bảng tin. Bạn không thể hoàn tác hành động này.",
+      "confirm": "Xoá bài viết",
+      "cancel": "Giữ lại"
+    },
     "reportPost": "Báo cáo bài viết",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
@@ -65,6 +74,13 @@
       "invalidPost": "Bài viết không hợp lệ",
       "createFailed": "Không thể tạo bài viết"
     }
+  },
+  "languageSwitcher": {
+    "label": "Ngôn ngữ",
+    "vi": "Tiếng Việt",
+    "viHint": "Hiển thị giao diện bằng tiếng Việt",
+    "en": "English",
+    "enHint": "Display the interface in English"
   },
   "profileMenu": {
     "viewProfileShort": "Xem hồ sơ",
@@ -373,7 +389,13 @@
       "emptyDesc": "Hãy bắt đầu kết nối với những người trong tab Gợi ý",
       "noMatch": "Không tìm thấy kết nối phù hợp.",
       "removeAction": "Hủy kết nối",
-      "removeConfirm": "Hủy kết nối với {name}?"
+      "removeConfirm": "Hủy kết nối với {name}?",
+      "removeDialog": {
+        "title": "Hủy kết nối",
+        "description": "Bạn có chắc muốn hủy kết nối với {name}? Hai bên sẽ không còn là kết nối.",
+        "confirm": "Hủy kết nối",
+        "cancel": "Giữ kết nối"
+      }
     },
     "invitations": {
       "emptyTitle": "Không có lời mời",
@@ -390,11 +412,18 @@
     "button": {
       "connect": "Kết nối",
       "sending": "Đang gửi...",
+      "sent": "Đã gửi",
       "pendingOutgoing": "Đang chờ — hủy",
       "canceling": "Đang hủy...",
       "connected": "Đã kết nối",
       "removing": "Đang hủy...",
       "removeConfirm": "Bạn có chắc muốn hủy kết nối với người này?",
+      "removeDialog": {
+        "title": "Hủy kết nối",
+        "description": "Bạn có chắc muốn hủy kết nối với người này? Hai bên sẽ không còn là kết nối.",
+        "confirm": "Hủy kết nối",
+        "cancel": "Giữ kết nối"
+      },
       "unavailable": "Không khả dụng",
       "accept": "Chấp nhận",
       "reject": "Từ chối"

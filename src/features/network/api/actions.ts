@@ -5,7 +5,10 @@ import { getTranslations } from "next-intl/server"
 
 import type { CurrentUser } from "@/features/auth/types"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import { createNotification } from "@/features/notifications/lib/create-notification"
+import {
+  createNotification,
+  deleteConnectionNotifications,
+} from "@/features/notifications/lib/create-notification"
 import type { ActorRef } from "@/features/notifications/types"
 import { createClient } from "@/lib/supabase/server"
 import type { ConnectionRow } from "@/types/database"
@@ -14,9 +17,9 @@ import {
   createConnectionIdSchema,
   createTargetUserIdSchema,
 } from "../schemas"
-import type { NetworkOverview } from "../types"
+import type { ConnectionRelation, NetworkOverview } from "../types"
 
-import { loadNetworkOverview } from "./queries"
+import { loadConnectionRelation, loadNetworkOverview } from "./queries"
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -56,6 +59,12 @@ function revalidateAfterConnectionChange() {
 
 export async function getNetworkOverviewAction(): Promise<NetworkOverview> {
   return loadNetworkOverview()
+}
+
+export async function getConnectionRelationAction(
+  targetUserId: number,
+): Promise<ConnectionRelation> {
+  return loadConnectionRelation(targetUserId)
 }
 
 export async function sendConnectionRequestAction(
@@ -169,6 +178,11 @@ export async function cancelConnectionRequestAction(
 
   const { error } = await supabase.from("connections").delete().eq("id", row.id)
   if (error) return fail(error.message)
+  // Dọn thông báo "X muốn kết nối" còn treo ở receiver — tránh stale.
+  await deleteConnectionNotifications({
+    connectionId: row.id,
+    types: ["connection_request"],
+  })
   revalidateAfterConnectionChange()
   return { ok: true }
 }

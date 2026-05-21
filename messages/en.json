@@ -54,8 +54,17 @@
     "copyLinkHint": "Copy the post URL to share",
     "sendViaMessage": "Send via message",
     "searchPersonPlaceholder": "Search for someone...",
+    "createSuccess": "Post published",
     "deletePost": "Delete post",
+    "deletePostHint": "Hide this post from your feed",
+    "reportPostHint": "Flag inappropriate content",
     "deleteConfirm": "Are you sure you want to delete this post?",
+    "deleteDialog": {
+      "title": "Delete post",
+      "description": "This post will be hidden from your feed. This action cannot be undone.",
+      "confirm": "Delete post",
+      "cancel": "Keep"
+    },
     "deleteSuccess": "Post deleted",
     "reportPost": "Report post",
     "errors": {
@@ -65,6 +74,13 @@
       "invalidPost": "Invalid post",
       "createFailed": "Could not create post"
     }
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "vi": "Tiếng Việt",
+    "viHint": "Hiển thị giao diện bằng tiếng Việt",
+    "en": "English",
+    "enHint": "Display the interface in English"
   },
   "profileMenu": {
     "viewProfileShort": "View profile",
@@ -373,7 +389,13 @@
       "emptyDesc": "Start connecting with people in the Suggestions tab",
       "noMatch": "No matching connections found.",
       "removeAction": "Remove connection",
-      "removeConfirm": "Remove connection with {name}?"
+      "removeConfirm": "Remove connection with {name}?",
+      "removeDialog": {
+        "title": "Remove connection",
+        "description": "Are you sure you want to remove your connection with {name}? You will no longer be connected.",
+        "confirm": "Remove",
+        "cancel": "Keep connected"
+      }
     },
     "invitations": {
       "emptyTitle": "No invitations",
@@ -390,11 +412,18 @@
     "button": {
       "connect": "Connect",
       "sending": "Sending...",
+      "sent": "Sent",
       "pendingOutgoing": "Pending — cancel",
       "canceling": "Cancelling...",
       "connected": "Connected",
       "removing": "Removing...",
       "removeConfirm": "Are you sure you want to remove this connection?",
+      "removeDialog": {
+        "title": "Remove connection",
+        "description": "Are you sure you want to remove this connection? You will no longer be connected.",
+        "confirm": "Remove",
+        "cancel": "Keep connected"
+      },
       "unavailable": "Unavailable",
       "accept": "Accept",
       "reject": "Decline"

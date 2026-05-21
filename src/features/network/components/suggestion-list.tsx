@@ -2,13 +2,18 @@
 
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { UserPlus } from "lucide-react"
+import { Check, Loader2, UserPlus } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { getInitials } from "@/lib/utils/format"
 
-import { useSendConnectionRequest } from "../hooks"
+import { useSendConnectionRequest, useSentConnectionIds } from "../hooks"
 import type { NetworkUserCard } from "../types"
 
 export function SuggestionList({
@@ -27,7 +32,7 @@ export function SuggestionList({
   }
 
   return (
-    <ul className="space-y-4">
+    <ul className="space-y-3">
       {suggestions.map((connection) => (
         <SuggestionRow key={connection.userId} connection={connection} />
       ))}
@@ -38,15 +43,20 @@ export function SuggestionList({
 function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
   const tButton = useTranslations("network.button")
   const send = useSendConnectionRequest()
+  const sentIds = useSentConnectionIds()
+  const isSent = sentIds.has(connection.userId)
+  const secondary = connection.headline ?? connection.location
+
+  const label = isSent ? tButton("sent") : tButton("connect")
 
   return (
-    <li className="flex items-center gap-3">
-      <Link href={`/profile/${connection.userId}`}>
-        <Avatar className="w-10 h-10 border border-border/40 cursor-pointer hover:opacity-80 transition-opacity">
+    <li className="flex items-center gap-2.5">
+      <Link href={`/profile/${connection.userId}`} className="shrink-0">
+        <Avatar className="size-9 hover:opacity-80 transition-opacity">
           {connection.avatarUrl ? (
             <AvatarImage src={connection.avatarUrl} />
           ) : null}
-          <AvatarFallback>
+          <AvatarFallback className="text-xs">
             {getInitials(connection.displayName, "JL")}
           </AvatarFallback>
         </Avatar>
@@ -54,31 +64,43 @@ function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
       <div className="flex-1 min-w-0">
         <Link
           href={`/profile/${connection.userId}`}
-          className="text-sm font-semibold text-foreground truncate hover:text-primary transition-colors block leading-tight"
+          className="text-[13px] font-semibold text-foreground truncate hover:text-primary transition-colors block leading-tight"
+          title={connection.displayName}
         >
           {connection.displayName}
         </Link>
-        <p className="text-[11px] text-muted-foreground truncate">
-          {connection.headline ?? connection.location ?? ""}
-        </p>
+        {secondary ? (
+          <p
+            className="text-[11px] text-muted-foreground truncate mt-0.5"
+            title={secondary}
+          >
+            {secondary}
+          </p>
+        ) : null}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 rounded-full shrink-0 text-xs font-medium px-3 text-primary border-primary/40 hover:bg-primary/10"
-        disabled={send.isPending}
-        onClick={() => send.mutate(connection.userId)}
-      >
-        {send.isPending ? (
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          </span>
-        ) : (
-          <>
-            <UserPlus className="w-3 h-3 mr-1" /> {tButton("connect")}
-          </>
-        )}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon-sm"
+            variant={isSent ? "secondary" : "outline"}
+            className="rounded-full shrink-0"
+            disabled={isSent || send.isPending}
+            aria-label={label}
+            onClick={() => {
+              if (!isSent) send.mutate(connection.userId)
+            }}
+          >
+            {send.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : isSent ? (
+              <Check />
+            ) : (
+              <UserPlus />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
     </li>
   )
 }

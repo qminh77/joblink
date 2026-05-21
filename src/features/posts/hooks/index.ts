@@ -8,6 +8,7 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { createClient as createBrowserClient } from "@/lib/supabase/client"
@@ -76,6 +77,7 @@ export function usePrependPost() {
 
 export function useCreatePost() {
   const prepend = usePrependPost()
+  const t = useTranslations("posts")
   return useMutation({
     mutationFn: async (input: {
       content: string
@@ -87,7 +89,7 @@ export function useCreatePost() {
     },
     onSuccess: (post) => {
       prepend(post)
-      toast.success("Đã đăng bài")
+      toast.success(t("createSuccess"))
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -148,13 +150,17 @@ export function useCreateComment() {
 
 export function useDeletePost() {
   const qc = useQueryClient()
+  const t = useTranslations("posts")
   return useMutation({
     mutationFn: async (postId: number) => {
       const result = await deletePostAction(postId)
       if (!result.ok) throw new Error(result.error)
       return postId
     },
-    onSuccess: (postId) => {
+    onMutate: async (postId) => {
+      // Optimistic: ẩn ngay khỏi feed cache. Rollback nếu server fail.
+      await qc.cancelQueries({ queryKey: FEED_QUERY_KEY })
+      const previous = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
       qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) => {
         if (!cache) return cache
         return {
@@ -165,9 +171,15 @@ export function useDeletePost() {
           })),
         }
       })
-      toast.success("Đã xoá bài viết")
+      return { previous }
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error, _postId, context) => {
+      if (context?.previous) qc.setQueryData(FEED_QUERY_KEY, context.previous)
+      toast.error(e.message)
+    },
+    onSuccess: () => {
+      toast.success(t("deleteSuccess"))
+    },
   })
 }
 

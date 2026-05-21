@@ -14,14 +14,24 @@ import {
   X,
 } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getInitials } from "@/lib/utils/format"
-
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { getInitials } from "@/lib/utils/format"
 
 import {
   useAcceptConnectionRequest,
@@ -31,6 +41,7 @@ import {
   useRejectConnectionRequest,
   useRemoveConnection,
   useSendConnectionRequest,
+  useSentConnectionIds,
 } from "../hooks"
 import type {
   ConnectionItem,
@@ -39,10 +50,13 @@ import type {
   NetworkUserCard,
 } from "../types"
 
-function filterByKeyword<T extends { displayName: string; headline: string | null; location: string | null }>(
-  items: T[],
-  query: string,
-): T[] {
+function filterByKeyword<
+  T extends {
+    displayName: string
+    headline: string | null
+    location: string | null
+  },
+>(items: T[], query: string): T[] {
   if (!query.trim()) return items
   const lower = query.toLowerCase().trim()
   return items.filter(
@@ -90,9 +104,9 @@ export function NetworkTabs({
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
         <Input
-          className="pl-10 h-10 rounded-xl bg-muted/50 border-border/30 text-sm focus:bg-card"
+          className="pl-10 h-10 rounded-xl"
           placeholder={t("searchPlaceholder")}
           value={suggestionQuery}
           onChange={(event) => setSuggestionQuery(event.target.value)}
@@ -157,6 +171,35 @@ export function NetworkTabs({
   )
 }
 
+// -- Empty / placeholder card --------------------------------------------
+function EmptyStateCard({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: typeof Users
+  title: string
+  description: string
+  action?: React.ReactNode
+}) {
+  return (
+    <Card className="p-8 text-center">
+      <div className="size-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+        <Icon className="size-6 text-muted-foreground/60" />
+      </div>
+      <h3 className="font-headline font-bold text-base text-foreground">
+        {title}
+      </h3>
+      <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+        {description}
+      </p>
+      {action ? <div className="mt-4">{action}</div> : null}
+    </Card>
+  )
+}
+
+// -- SUGGESTIONS ----------------------------------------------------------
 function SuggestionsTab({
   items,
   isFiltered,
@@ -168,24 +211,18 @@ function SuggestionsTab({
 
   if (items.length === 0) {
     return (
-      <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
-        <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-        <h3 className="font-headline font-bold text-base text-foreground">
-          {isFiltered ? t("notFoundTitle") : t("emptyTitle")}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isFiltered ? t("notFoundDesc") : t("emptyDesc")}
-        </p>
-      </Card>
+      <EmptyStateCard
+        icon={Users}
+        title={isFiltered ? t("notFoundTitle") : t("emptyTitle")}
+        description={isFiltered ? t("notFoundDesc") : t("emptyDesc")}
+      />
     )
   }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
       {items.map((item) => (
-        <div key={item.userId}>
-          <SuggestionCard item={item} />
-        </div>
+        <SuggestionCard key={item.userId} item={item} />
       ))}
     </div>
   )
@@ -194,51 +231,67 @@ function SuggestionsTab({
 function SuggestionCard({ item }: { item: NetworkUserCard }) {
   const tButton = useTranslations("network.button")
   const send = useSendConnectionRequest()
+  const sentIds = useSentConnectionIds()
+  const isSent = sentIds.has(item.userId)
+
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all h-full group">
+    <Card className="p-4 h-full">
       <div className="flex flex-col items-center text-center gap-1.5 h-full">
         <Link href={`/profile/${item.userId}`}>
-          <Avatar className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-border/20 cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+          <Avatar className="size-14 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
-            <AvatarFallback className="text-xs sm:text-sm">
+            <AvatarFallback className="text-sm">
               {getInitials(item.displayName)}
             </AvatarFallback>
           </Avatar>
         </Link>
         <Link
           href={`/profile/${item.userId}`}
-          className="font-semibold text-xs sm:text-sm text-foreground hover:text-primary transition-colors leading-tight line-clamp-1 mt-0.5"
+          className="font-semibold text-sm text-foreground hover:text-primary transition-colors leading-tight line-clamp-1 mt-0.5"
         >
           {item.displayName}
         </Link>
         {item.headline ? (
-          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-1">
+          <p className="text-xs text-muted-foreground leading-tight line-clamp-1">
             {item.headline}
           </p>
         ) : null}
         {item.location ? (
-          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
-            <MapPin className="w-3 h-3 shrink-0" />
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="size-3 shrink-0" />
             <span className="truncate">{item.location}</span>
           </div>
         ) : null}
 
-        <div className="flex gap-1.5 mt-auto pt-2 w-full">
-          <Button
-            size="sm"
-            className="flex-1 h-8 rounded-lg text-[10px] sm:text-xs"
-            disabled={send.isPending}
-            onClick={() => send.mutate(item.userId)}
-          >
-            <UserPlus className="w-3 h-3 mr-1" />
-            {send.isPending ? tButton("sending") : tButton("connect")}
-          </Button>
+        <div className="mt-auto pt-2 w-full">
+          {isSent ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled
+              className="w-full"
+            >
+              <Check /> {tButton("sent")}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full"
+              disabled={send.isPending}
+              onClick={() => send.mutate(item.userId)}
+            >
+              <UserPlus />
+              {send.isPending ? tButton("sending") : tButton("connect")}
+            </Button>
+          )}
         </div>
       </div>
     </Card>
   )
 }
 
+// -- CONNECTIONS ----------------------------------------------------------
 function ConnectionsTab({
   items,
   total,
@@ -255,27 +308,25 @@ function ConnectionsTab({
 
   if (total === 0) {
     return (
-      <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
-        <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-        <h3 className="font-headline font-bold text-base text-foreground">
-          {t("emptyTitle")}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1">{t("emptyDesc")}</p>
-      </Card>
+      <EmptyStateCard
+        icon={Users}
+        title={t("emptyTitle")}
+        description={t("emptyDesc")}
+      />
     )
   }
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-border/30 flex items-center justify-between gap-3">
+    <Card className="overflow-hidden p-0">
+      <div className="px-5 py-3.5 border-b border-border/10 flex items-center justify-between gap-3">
         <h2 className="font-headline font-bold text-sm sm:text-base text-foreground">
           {t("allTitle")}{" "}
           <span className="text-muted-foreground font-normal">({total})</span>
         </h2>
         <div className="relative w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <Input
-            className="pl-8 h-8 rounded-lg bg-muted/50 border-none text-xs"
+            className="pl-8 h-8 rounded-lg text-xs"
             placeholder={tNetwork("searchConnectionsPlaceholder")}
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
@@ -287,7 +338,7 @@ function ConnectionsTab({
           {t("noMatch")}
         </div>
       ) : (
-        <div className="divide-y divide-border/20">
+        <div className="divide-y divide-border/10">
           {items.map((item) => (
             <ConnectionRow key={item.connectionId} item={item} />
           ))}
@@ -303,9 +354,9 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
   const remove = useRemoveConnection()
 
   return (
-    <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-muted/20 transition-colors">
+    <div className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
       <Link href={`/profile/${item.userId}`}>
-        <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border border-border/20 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all">
+        <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
           {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
           <AvatarFallback className="text-xs">
             {getInitials(item.displayName)}
@@ -321,37 +372,37 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
         </Link>
         {item.headline ? (
           <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-            <Building2 className="w-3 h-3 shrink-0" /> {item.headline}
+            <Building2 className="size-3 shrink-0" /> {item.headline}
           </p>
         ) : null}
         {item.location ? (
           <p className="text-[11px] text-muted-foreground/70 flex items-center mt-0.5">
-            <MapPin className="w-3 h-3 mr-0.5" /> {item.location}
+            <MapPin className="size-3 mr-0.5" /> {item.location}
           </p>
         ) : null}
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <RemoveConnectionDialog
+        displayName={item.displayName}
+        isPending={remove.isPending}
+        onConfirm={() => remove.mutate(item.connectionId)}
+      >
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-8 rounded-lg text-xs px-2.5"
           disabled={remove.isPending}
-          onClick={() => {
-            if (window.confirm(t("removeConfirm", { name: item.displayName }))) {
-              remove.mutate(item.connectionId)
-            }
-          }}
+          aria-label={t("removeAction")}
         >
-          <UserMinus className="w-3.5 h-3.5 sm:mr-1" />
+          <UserMinus />
           <span className="hidden sm:inline">
             {remove.isPending ? tButton("removing") : t("removeAction")}
           </span>
         </Button>
-      </div>
+      </RemoveConnectionDialog>
     </div>
   )
 }
 
+// -- INVITATIONS (incoming) ----------------------------------------------
 function IncomingTab({
   items,
   onExplore,
@@ -363,33 +414,23 @@ function IncomingTab({
 
   if (items.length === 0) {
     return (
-      <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-          <Users className="w-6 h-6 text-muted-foreground/50" />
-        </div>
-        <h3 className="font-headline font-bold text-base sm:text-lg text-foreground">
-          {t("emptyTitle")}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-          {t("emptyDesc")}
-        </p>
-        <Button
-          variant="outline"
-          className="mt-4 rounded-lg text-sm"
-          onClick={onExplore}
-        >
-          <UserPlus className="w-4 h-4 mr-1.5" /> {t("explore")}
-        </Button>
-      </Card>
+      <EmptyStateCard
+        icon={Users}
+        title={t("emptyTitle")}
+        description={t("emptyDesc")}
+        action={
+          <Button variant="ghost" size="sm" onClick={onExplore}>
+            <UserPlus /> {t("explore")}
+          </Button>
+        }
+      />
     )
   }
 
   return (
     <div className="space-y-3">
       {items.map((item) => (
-        <div key={item.connectionId}>
-          <IncomingCard item={item} />
-        </div>
+        <IncomingCard key={item.connectionId} item={item} />
       ))}
     </div>
   )
@@ -402,10 +443,10 @@ function IncomingCard({ item }: { item: InvitationItem }) {
   const isBusy = accept.isPending || reject.isPending
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-4 hover:border-primary/30 transition-all">
+    <Card className="p-4">
       <div className="flex items-center gap-3 sm:gap-4">
         <Link href={`/profile/${item.userId}`}>
-          <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border border-border/20 cursor-pointer">
+          <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
             <AvatarFallback className="text-xs">
               {getInitials(item.displayName)}
@@ -415,38 +456,37 @@ function IncomingCard({ item }: { item: InvitationItem }) {
         <div className="flex-1 min-w-0">
           <Link
             href={`/profile/${item.userId}`}
-            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary transition-colors block"
+            className="font-semibold text-sm text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}
           </Link>
           {item.headline ? (
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {item.headline}
             </p>
           ) : null}
           {item.location ? (
             <p className="text-[11px] text-muted-foreground/70 flex items-center mt-0.5">
-              <MapPin className="w-3 h-3 mr-0.5" /> {item.location}
+              <MapPin className="size-3 mr-0.5" /> {item.location}
             </p>
           ) : null}
         </div>
         <div className="flex gap-2 shrink-0">
           <Button
             size="sm"
-            className="h-8 sm:h-9 rounded-lg text-xs px-3"
-            disabled={isBusy}
-            onClick={() => accept.mutate(item.connectionId)}
-          >
-            <Check className="w-3.5 h-3.5 mr-1" /> {t("accept")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 sm:h-9 rounded-lg text-xs px-3"
+            variant="ghost"
+            className="hover:bg-destructive/10 hover:text-destructive"
             disabled={isBusy}
             onClick={() => reject.mutate(item.connectionId)}
           >
-            <X className="w-3.5 h-3.5 mr-1" /> {t("reject")}
+            <X /> {t("reject")}
+          </Button>
+          <Button
+            size="sm"
+            disabled={isBusy}
+            onClick={() => accept.mutate(item.connectionId)}
+          >
+            <Check /> {t("accept")}
           </Button>
         </div>
       </div>
@@ -454,6 +494,7 @@ function IncomingCard({ item }: { item: InvitationItem }) {
   )
 }
 
+// -- SENT (outgoing) ------------------------------------------------------
 function OutgoingTab({
   items,
   onExplore,
@@ -466,33 +507,23 @@ function OutgoingTab({
 
   if (items.length === 0) {
     return (
-      <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-          <Users className="w-6 h-6 text-muted-foreground/50" />
-        </div>
-        <h3 className="font-headline font-bold text-base sm:text-lg text-foreground">
-          {t("emptyTitle")}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-          {t("emptyDesc")}
-        </p>
-        <Button
-          variant="outline"
-          className="mt-4 rounded-lg text-sm"
-          onClick={onExplore}
-        >
-          <UserPlus className="w-4 h-4 mr-1.5" /> {tInv("explore")}
-        </Button>
-      </Card>
+      <EmptyStateCard
+        icon={Users}
+        title={t("emptyTitle")}
+        description={t("emptyDesc")}
+        action={
+          <Button variant="ghost" size="sm" onClick={onExplore}>
+            <UserPlus /> {tInv("explore")}
+          </Button>
+        }
+      />
     )
   }
 
   return (
     <div className="space-y-3">
       {items.map((item) => (
-        <div key={item.connectionId}>
-          <OutgoingCard item={item} />
-        </div>
+        <OutgoingCard key={item.connectionId} item={item} />
       ))}
     </div>
   )
@@ -504,10 +535,10 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
   const cancel = useCancelConnectionRequest()
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-4 hover:border-primary/30 transition-all">
+    <Card className="p-4">
       <div className="flex items-center gap-3 sm:gap-4">
         <Link href={`/profile/${item.userId}`}>
-          <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border border-border/20 cursor-pointer">
+          <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
             <AvatarFallback className="text-xs">
               {getInitials(item.displayName)}
@@ -517,29 +548,62 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
         <div className="flex-1 min-w-0">
           <Link
             href={`/profile/${item.userId}`}
-            className="font-semibold text-sm sm:text-base text-foreground truncate hover:text-primary transition-colors block"
+            className="font-semibold text-sm text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}
           </Link>
           {item.headline ? (
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {item.headline}
             </p>
           ) : null}
         </div>
-        <div className="shrink-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-8 sm:h-9 rounded-lg text-xs px-3"
-            disabled={cancel.isPending}
-            onClick={() => cancel.mutate(item.connectionId)}
-          >
-            <X className="w-3.5 h-3.5 mr-1" />
-            {cancel.isPending ? tButton("canceling") : t("cancel")}
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={cancel.isPending}
+          onClick={() => cancel.mutate(item.connectionId)}
+        >
+          <X />
+          {cancel.isPending ? tButton("canceling") : t("cancel")}
+        </Button>
       </div>
     </Card>
+  )
+}
+
+// -- Confirm dialog -------------------------------------------------------
+function RemoveConnectionDialog({
+  displayName,
+  isPending,
+  onConfirm,
+  children,
+}: {
+  displayName: string
+  isPending: boolean
+  onConfirm: () => void
+  children: React.ReactNode
+}) {
+  const t = useTranslations("network.connections.removeDialog")
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("title")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("description", { name: displayName })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>
+            {t("cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction disabled={isPending} onClick={onConfirm}>
+            {t("confirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
