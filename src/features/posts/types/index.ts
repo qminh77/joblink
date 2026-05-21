@@ -49,4 +49,18 @@ export type FeedPage = {
   nextCursor: string | null
 }
 
+export type UserPostsPage = FeedPage & {
+  canView: boolean
+}
+
+export type FeedComment = {
+  id: number
+  postId: number
+  userId: number
+  parentId: number | null
+  content: string
+  createdAt: string
+  author: FeedAuthor
+}
+
 export type { PostReactionType }

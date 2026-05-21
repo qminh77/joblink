@@ -67,12 +67,39 @@
       "cancel": "Giữ lại"
     },
     "reportPost": "Báo cáo bài viết",
+    "editPost": "Chỉnh sửa bài viết",
+    "editPostHint": "Cập nhật nội dung hoặc đối tượng xem",
+    "editTitle": "Chỉnh sửa bài viết",
+    "updating": "Đang lưu...",
+    "save": "Lưu thay đổi",
+    "updateSuccess": "Đã cập nhật bài viết",
+    "publishing": "Đang đăng...",
+    "visibility": {
+      "label": "Hiển thị với",
+      "public": "Công khai",
+      "publicHint": "Ai cũng có thể xem",
+      "connections": "Kết nối",
+      "connectionsHint": "Chỉ các kết nối của bạn",
+      "private": "Riêng tư",
+      "privateHint": "Chỉ mình bạn"
+    },
+    "shareSuccess": "Đã chia sẻ bài viết",
+    "shareSubmitting": "Đang chia sẻ...",
+    "copyLinkSuccess": "Đã sao chép liên kết",
+    "copyLinkError": "Không thể sao chép liên kết",
+    "sendComingSoon": "Tin nhắn sắp ra mắt",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentMax": "Nội dung quá dài",
       "invalidData": "Dữ liệu không hợp lệ",
       "invalidPost": "Bài viết không hợp lệ",
-      "createFailed": "Không thể tạo bài viết"
+      "invalidComment": "Bình luận không hợp lệ",
+      "createFailed": "Không thể tạo bài viết",
+      "updateFailed": "Không thể cập nhật bài viết",
+      "shareFailed": "Không thể chia sẻ bài viết",
+      "commentFailed": "Không thể đăng bình luận",
+      "loadCommentsFailed": "Không thể tải bình luận",
+      "deleteCommentFailed": "Không thể xoá bình luận"
     }
   },
   "languageSwitcher": {
@@ -252,6 +279,15 @@
       "viewCount": "{count} lượt xem hồ sơ",
       "private": "Hồ sơ này đang ở chế độ riêng tư",
       "notFound": "Không tìm thấy hồ sơ"
+    },
+    "stats": {
+      "connections": "{count} kết nối"
+    },
+    "posts": {
+      "heading": "Bài viết",
+      "emptyOwn": "Bạn chưa đăng bài nào. Hãy chia sẻ điều gì đó với cộng đồng JobLink.",
+      "emptyOther": "Người dùng này chưa đăng bài viết nào.",
+      "lockedHint": "Bạn không có quyền xem bài viết của hồ sơ này."
     },
     "visibility": {
       "public": "Công khai",
@@ -468,8 +504,10 @@
     "composerPlaceholder": "Bạn đang nghĩ gì, {name}?",
     "photoVideo": "Ảnh/Video",
     "poll": "Bình chọn",
+    "postJob": "Đăng tin",
     "latest": "Mới nhất",
     "jobSuggestions": "Việc làm gợi ý",
+    "jobSuggestionsViewAll": "Xem tất cả",
     "pendingInvitations": "Lời mời đang chờ xác nhận",
     "wantsToConnect": "Muốn kết nối với bạn",
     "viewAllCount": "Xem tất cả ({count})"
@@ -482,7 +520,15 @@
     "reply": "Phản hồi",
     "commentsCount": "{count} bình luận",
     "sharesCount": "{count} chia sẻ",
-    "writeComment": "Viết bình luận..."
+    "writeComment": "Viết bình luận...",
+    "emptyFeed": "Chưa có bài viết nào trong bảng tin của bạn.",
+    "loadingMore": "Đang tải thêm...",
+    "endOfFeed": "Hết bài viết",
+    "loadingComments": "Đang tải bình luận...",
+    "noComments": "Chưa có bình luận nào",
+    "deleteComment": "Xoá bình luận",
+    "deleteCommentSuccess": "Đã xoá bình luận",
+    "viewMoreComments": "Xem thêm {count} bình luận"
   },
   "notifications": {
     "title": "Thông báo",
@@ -507,6 +553,9 @@
     "types": {
       "connection_request": "đã gửi cho bạn lời mời kết nối",
       "connection_accepted": "đã chấp nhận lời mời kết nối của bạn",
+      "post_reaction": "đã bày tỏ cảm xúc về bài viết của bạn",
+      "post_comment": "đã bình luận bài viết của bạn",
+      "post_share": "đã chia sẻ bài viết của bạn",
       "unknown": "có hoạt động mới"
     },
     "errors": {

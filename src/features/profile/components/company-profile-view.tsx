@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 import {
   BadgeCheck,
   Building2,
@@ -10,6 +11,7 @@ import {
   MapPin,
   Pencil,
   ShieldCheck,
+  Users,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,9 +20,12 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
 import type { ConnectionRelation } from "@/features/network/types"
+import type { UserPostsPage } from "@/features/posts/types"
 import type { CompanyProfileDetail } from "@/features/profile/types"
 import { getInitials } from "@/lib/utils/format"
 import { fadeUp, pageEntrance } from "@/lib/animations"
+
+import { ProfilePostsSection } from "./profile-posts-section"
 
 const VERIFICATION_LABELS: Record<CompanyProfileDetail["verification_status"], { label: string; tone: string }> = {
   pending: { label: "Chờ xác minh", tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
@@ -34,11 +39,14 @@ export function CompanyProfileView({
   company,
   isOwner,
   relation,
+  postsPage,
 }: {
   company: CompanyProfileDetail
   isOwner: boolean
   relation: ConnectionRelation
+  postsPage: UserPostsPage
 }) {
+  const tProfile = useTranslations("profile")
   const initials = getInitials(company.name, "JL")
   const verification = VERIFICATION_LABELS[company.verification_status]
   const locationText = [company.district?.name, company.province?.name]
@@ -89,6 +97,12 @@ export function CompanyProfileView({
                       <MapPin className="w-3.5 h-3.5" /> {locationText}
                     </p>
                   ) : null}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+                    <Users className="w-3.5 h-3.5" />
+                    {tProfile("stats.connections", {
+                      count: company.connectionCount,
+                    })}
+                  </p>
                 </div>
               </div>
 
@@ -126,6 +140,14 @@ export function CompanyProfileView({
               </Card>
             </motion.div>
           ) : null}
+
+          <motion.div variants={fadeUp}>
+            <ProfilePostsSection
+              targetUserId={company.user_id}
+              isOwner={isOwner}
+              initialPage={postsPage}
+            />
+          </motion.div>
         </div>
 
         <motion.div variants={fadeUp}>

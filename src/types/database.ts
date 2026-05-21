@@ -80,6 +80,14 @@ export type PostCommentRow = {
   deleted_at: string | null
 }
 
+export type PostShareRow = {
+  id: number
+  post_id: number
+  user_id: number
+  comment_content: string | null
+  created_at: string
+}
+
 export type ProvinceRow = {
   id: number
   code: string
@@ -203,6 +211,9 @@ export type ReportRow = {
 export type NotificationType =
   | "connection_request"
   | "connection_accepted"
+  | "post_reaction"
+  | "post_comment"
+  | "post_share"
 
 export type NotificationRow = {
   id: number
@@ -327,6 +338,13 @@ export type Database = {
         PostCommentRow,
         Omit<PostCommentRow, "id" | "created_at" | "updated_at" | "deleted_at" | "status"> & {
           status?: PostCommentRow["status"]
+        },
+        Partial<PostCommentRow> & { deleted_at?: string | null }
+      >
+      post_shares: TableDef<
+        PostShareRow,
+        Omit<PostShareRow, "id" | "created_at"> & {
+          comment_content?: string | null
         }
       >
       report_types: TableDef<
@@ -356,6 +374,14 @@ export type Database = {
       get_network_overview: {
         Args: {
           p_suggestion_limit?: number
+        }
+        Returns: Json
+      }
+      get_user_posts: {
+        Args: {
+          p_target_user_id: number
+          p_posts_cursor?: string | null
+          p_posts_limit?: number
         }
         Returns: Json
       }

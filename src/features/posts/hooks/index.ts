@@ -15,17 +15,33 @@ import { createClient as createBrowserClient } from "@/lib/supabase/client"
 import {
   createCommentAction,
   createPostAction,
+  deleteCommentAction,
   deletePostAction,
   getFeedPageAction,
   getHomeStatsAction,
+  getPostCommentsAction,
+  getUserPostsPageAction,
+  sharePostAction,
   toggleReactionAction,
+  updatePostAction,
 } from "../api/actions"
-import type { FeedPage, FeedPost, HomeFeedStats } from "../types"
+import type {
+  FeedComment,
+  FeedPage,
+  FeedPost,
+  HomeFeedStats,
+  UserPostsPage,
+} from "../types"
 
 export const FEED_QUERY_KEY = ["home-feed"] as const
 export const HOME_STATS_KEY = ["home", "stats"] as const
+export const POST_COMMENTS_KEY = (postId: number) =>
+  ["post-comments", postId] as const
+export const USER_POSTS_QUERY_KEY = (userId: number) =>
+  ["user-posts", userId] as const
 
 type FeedCache = InfiniteData<FeedPage>
+type UserPostsCache = InfiniteData<UserPostsPage>
 
 export function useHomeFeed(initialPage: FeedPage) {
   return useInfiniteQuery<FeedPage>({
@@ -38,11 +54,11 @@ export function useHomeFeed(initialPage: FeedPage) {
   })
 }
 
-function applyToPost(
-  cache: FeedCache | undefined,
+function mapCachePosts<T extends { posts: FeedPost[] }>(
+  cache: InfiniteData<T> | undefined,
   postId: number,
   updater: (post: FeedPost) => FeedPost,
-): FeedCache | undefined {
+): InfiniteData<T> | undefined {
   if (!cache) return cache
   return {
     ...cache,
@@ -50,6 +66,68 @@ function applyToPost(
       ...page,
       posts: page.posts.map((p) => (p.id === postId ? updater(p) : p)),
     })),
+  }
+}
+
+function applyToPost(
+  cache: FeedCache | undefined,
+  postId: number,
+  updater: (post: FeedPost) => FeedPost,
+): FeedCache | undefined {
+  return mapCachePosts(cache, postId, updater)
+}
+
+/**
+ * Apply a per-post updater to every cache that contains feed posts:
+ * the home feed and any open user-posts caches. Lets reactions/comments/
+ * shares stay consistent regardless of where the user interacted with a post.
+ */
+function applyToAllPostCaches(
+  qc: ReturnType<typeof useQueryClient>,
+  postId: number,
+  updater: (post: FeedPost) => FeedPost,
+) {
+  qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) =>
+    applyToPost(cache, postId, updater),
+  )
+  const userPostsQueries = qc.getQueriesData<UserPostsCache>({
+    queryKey: ["user-posts"],
+  })
+  for (const [key] of userPostsQueries) {
+    qc.setQueryData<UserPostsCache>(key, (cache) =>
+      mapCachePosts(cache, postId, updater),
+    )
+  }
+}
+
+function removePostFromAllCaches(
+  qc: ReturnType<typeof useQueryClient>,
+  postId: number,
+) {
+  qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) => {
+    if (!cache) return cache
+    return {
+      ...cache,
+      pages: cache.pages.map((page) => ({
+        ...page,
+        posts: page.posts.filter((p) => p.id !== postId),
+      })),
+    }
+  })
+  const userPostsQueries = qc.getQueriesData<UserPostsCache>({
+    queryKey: ["user-posts"],
+  })
+  for (const [key] of userPostsQueries) {
+    qc.setQueryData<UserPostsCache>(key, (cache) => {
+      if (!cache) return cache
+      return {
+        ...cache,
+        pages: cache.pages.map((page) => ({
+          ...page,
+          posts: page.posts.filter((p) => p.id !== postId),
+        })),
+      }
+    })
   }
 }
 
@@ -72,7 +150,34 @@ export function usePrependPost() {
       }
       return { ...cache, pages: [updatedFirst, ...rest] }
     })
+
+    // Prepend vào user-posts cache của chính tác giả (nếu đang mở profile họ).
+    const key = USER_POSTS_QUERY_KEY(post.authorId)
+    qc.setQueryData<UserPostsCache>(key, (cache) => {
+      if (!cache) return cache
+      const [first, ...rest] = cache.pages
+      const exists = first?.posts.some((p) => p.id === post.id) ?? false
+      if (exists) return cache
+      const updatedFirst: UserPostsPage = {
+        posts: [post, ...(first?.posts ?? [])],
+        nextCursor: first?.nextCursor ?? null,
+        canView: first?.canView ?? true,
+      }
+      return { ...cache, pages: [updatedFirst, ...rest] }
+    })
   }
+}
+
+export function useUserPosts(userId: number, initialPage: UserPostsPage) {
+  return useInfiniteQuery<UserPostsPage>({
+    queryKey: USER_POSTS_QUERY_KEY(userId),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      getUserPostsPageAction(userId, pageParam as string | null),
+    getNextPageParam: (last) => last.nextCursor,
+    initialData: { pages: [initialPage], pageParams: [null] },
+    staleTime: 30_000,
+  })
 }
 
 export function useCreatePost() {
@@ -95,6 +200,31 @@ export function useCreatePost() {
   })
 }
 
+export function useUpdatePost() {
+  const qc = useQueryClient()
+  const t = useTranslations("posts")
+  return useMutation({
+    mutationFn: async (input: {
+      postId: number
+      content: string
+      visibility: "public" | "connections" | "private"
+    }) => {
+      const result = await updatePostAction(input)
+      if (!result.ok) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: (updated) => {
+      applyToAllPostCaches(qc, updated.postId, (p) => ({
+        ...p,
+        content: updated.content,
+        visibility: updated.visibility,
+      }))
+      toast.success(t("updateSuccess"))
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
 export function useToggleReaction() {
   const qc = useQueryClient()
   return useMutation({
@@ -105,22 +235,44 @@ export function useToggleReaction() {
     },
     onMutate: async (postId) => {
       await qc.cancelQueries({ queryKey: FEED_QUERY_KEY })
-      const previous = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
-      qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) =>
-        applyToPost(cache, postId, (p) => ({
-          ...p,
-          viewerReacted: !p.viewerReacted,
-          reactionCount: p.viewerReacted
-            ? Math.max(0, p.reactionCount - 1)
-            : p.reactionCount + 1,
-        })),
-      )
-      return { previous }
+      await qc.cancelQueries({ queryKey: ["user-posts"] })
+      const previousFeed = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
+      const previousUserPosts = qc.getQueriesData<UserPostsCache>({
+        queryKey: ["user-posts"],
+      })
+      applyToAllPostCaches(qc, postId, (p) => ({
+        ...p,
+        viewerReacted: !p.viewerReacted,
+        reactionCount: p.viewerReacted
+          ? Math.max(0, p.reactionCount - 1)
+          : p.reactionCount + 1,
+      }))
+      return { previousFeed, previousUserPosts }
     },
     onError: (e: Error, _postId, context) => {
-      if (context?.previous) qc.setQueryData(FEED_QUERY_KEY, context.previous)
+      if (context?.previousFeed) {
+        qc.setQueryData(FEED_QUERY_KEY, context.previousFeed)
+      }
+      if (context?.previousUserPosts) {
+        for (const [key, data] of context.previousUserPosts) {
+          qc.setQueryData(key, data)
+        }
+      }
       toast.error(e.message)
     },
+  })
+}
+
+export function usePostComments(postId: number, enabled: boolean) {
+  return useQuery<FeedComment[]>({
+    queryKey: POST_COMMENTS_KEY(postId),
+    enabled,
+    queryFn: async () => {
+      const result = await getPostCommentsAction(postId)
+      if (!result.ok) throw new Error(result.error)
+      return result.data
+    },
+    staleTime: 30_000,
   })
 }
 
@@ -134,15 +286,63 @@ export function useCreateComment() {
     }) => {
       const result = await createCommentAction(input)
       if (!result.ok) throw new Error(result.error)
+      return result.data.comment
+    },
+    onSuccess: (comment) => {
+      applyToAllPostCaches(qc, comment.postId, (p) => ({
+        ...p,
+        commentCount: p.commentCount + 1,
+      }))
+      qc.setQueryData<FeedComment[]>(
+        POST_COMMENTS_KEY(comment.postId),
+        (prev) => (prev ? [...prev, comment] : [comment]),
+      )
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useDeleteComment() {
+  const qc = useQueryClient()
+  const t = useTranslations("feed")
+  return useMutation({
+    mutationFn: async (commentId: number) => {
+      const result = await deleteCommentAction(commentId)
+      if (!result.ok) throw new Error(result.error)
       return result.data
     },
-    onSuccess: (_data, variables) => {
-      qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) =>
-        applyToPost(cache, variables.postId, (p) => ({
-          ...p,
-          commentCount: p.commentCount + 1,
-        })),
+    onSuccess: ({ commentId, postId }) => {
+      qc.setQueryData<FeedComment[]>(POST_COMMENTS_KEY(postId), (prev) =>
+        prev ? prev.filter((c) => c.id !== commentId) : prev,
       )
+      applyToAllPostCaches(qc, postId, (p) => ({
+        ...p,
+        commentCount: Math.max(0, p.commentCount - 1),
+      }))
+      toast.success(t("deleteCommentSuccess"))
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useSharePost() {
+  const qc = useQueryClient()
+  const t = useTranslations("posts")
+  return useMutation({
+    mutationFn: async (input: {
+      postId: number
+      commentContent?: string | null
+    }) => {
+      const result = await sharePostAction(input)
+      if (!result.ok) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: ({ postId }) => {
+      applyToAllPostCaches(qc, postId, (p) => ({
+        ...p,
+        shareCount: p.shareCount + 1,
+      }))
+      toast.success(t("shareSuccess"))
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -158,23 +358,25 @@ export function useDeletePost() {
       return postId
     },
     onMutate: async (postId) => {
-      // Optimistic: ẩn ngay khỏi feed cache. Rollback nếu server fail.
+      // Optimistic: ẩn ngay khỏi feed + user-posts cache. Rollback nếu server fail.
       await qc.cancelQueries({ queryKey: FEED_QUERY_KEY })
-      const previous = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
-      qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) => {
-        if (!cache) return cache
-        return {
-          ...cache,
-          pages: cache.pages.map((page) => ({
-            ...page,
-            posts: page.posts.filter((p) => p.id !== postId),
-          })),
-        }
+      await qc.cancelQueries({ queryKey: ["user-posts"] })
+      const previousFeed = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
+      const previousUserPosts = qc.getQueriesData<UserPostsCache>({
+        queryKey: ["user-posts"],
       })
-      return { previous }
+      removePostFromAllCaches(qc, postId)
+      return { previousFeed, previousUserPosts }
     },
     onError: (e: Error, _postId, context) => {
-      if (context?.previous) qc.setQueryData(FEED_QUERY_KEY, context.previous)
+      if (context?.previousFeed) {
+        qc.setQueryData(FEED_QUERY_KEY, context.previousFeed)
+      }
+      if (context?.previousUserPosts) {
+        for (const [key, data] of context.previousUserPosts) {
+          qc.setQueryData(key, data)
+        }
+      }
       toast.error(e.message)
     },
     onSuccess: () => {
@@ -209,6 +411,53 @@ export function useRealtimeFeed(allowedAuthorIds: number[]) {
         },
       )
       .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [filterKey, qc])
+}
+
+/**
+ * Subscribe realtime cho engagement (reactions/comments/shares) trên các post
+ * đang hiển thị trong feed. Khi có thay đổi, invalidate feed để counters cập
+ * nhật từ server (đơn giản, không phải build delta logic phức tạp ở client).
+ */
+export function useRealtimeEngagement(visiblePostIds: number[]) {
+  const qc = useQueryClient()
+  const filterKey = visiblePostIds.join(",")
+  useEffect(() => {
+    if (!filterKey) return
+    const supabase = createBrowserClient()
+    const invalidateFeed = () => {
+      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
+    }
+    const channel = supabase.channel("home-feed-engagement")
+    for (const table of ["post_reactions", "post_comments", "post_shares"]) {
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table,
+          filter: `post_id=in.(${filterKey})`,
+        },
+        (payload) => {
+          invalidateFeed()
+          if (table === "post_comments") {
+            const row =
+              (payload.new as { post_id?: number } | null) ??
+              (payload.old as { post_id?: number } | null)
+            if (row?.post_id) {
+              qc.invalidateQueries({
+                queryKey: POST_COMMENTS_KEY(row.post_id),
+              })
+            }
+          }
+        },
+      )
+    }
+    channel.subscribe()
 
     return () => {
       void supabase.removeChannel(channel)

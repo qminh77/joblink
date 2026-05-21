@@ -22,21 +22,27 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
 import type { ConnectionRelation } from "@/features/network/types"
+import type { UserPostsPage } from "@/features/posts/types"
 import { PROFILE_VISIBILITY_LABELS } from "@/features/profile/lib/constants"
 import type { MemberProfileDetail } from "@/features/profile/types"
 import { formatDate } from "@/lib/utils/format"
 import { getInitials } from "@/lib/utils/format"
 import { fadeUp, pageEntrance, staggerMd } from "@/lib/animations"
+import { useTranslations } from "next-intl"
 
+import { ProfilePostsSection } from "./profile-posts-section"
 import { ProfileViewLogger } from "./profile-view-logger"
 
 export function MemberProfileView({
   profile,
   relation,
+  postsPage,
 }: {
   profile: MemberProfileDetail
   relation: ConnectionRelation
+  postsPage: UserPostsPage
 }) {
+  const tProfile = useTranslations("profile")
   const initials = getInitials(profile.full_name, "JL")
   const visibilityLabel = PROFILE_VISIBILITY_LABELS[profile.profile_visibility]
   const locationText = [profile.district?.name, profile.province?.name]
@@ -129,27 +135,34 @@ export function MemberProfileView({
               </div>
             </div>
 
-            {profile.isOwner ? (
-              <div className="mt-6 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span className="font-semibold text-foreground">
-                    {profile.profileViewCount}
-                  </span>{" "}
-                  lượt xem hồ sơ
-                </span>
-                <span className="flex items-center gap-1.5">
-                  {profile.profile_visibility === "public" ? (
-                    <Globe className="w-3.5 h-3.5" />
-                  ) : profile.profile_visibility === "connections" ? (
-                    <Users className="w-3.5 h-3.5" />
-                  ) : (
-                    <Lock className="w-3.5 h-3.5" />
-                  )}
-                  {visibilityLabel}
-                </span>
-              </div>
-            ) : null}
+            <div className="mt-6 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {tProfile("stats.connections", {
+                  count: profile.connectionCount,
+                })}
+              </span>
+              {profile.isOwner ? (
+                <>
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5" />
+                    {tProfile("view.viewCount", {
+                      count: profile.profileViewCount,
+                    })}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    {profile.profile_visibility === "public" ? (
+                      <Globe className="w-3.5 h-3.5" />
+                    ) : profile.profile_visibility === "connections" ? (
+                      <Users className="w-3.5 h-3.5" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5" />
+                    )}
+                    {visibilityLabel}
+                  </span>
+                </>
+              ) : null}
+            </div>
           </div>
         </Card>
       </motion.div>
@@ -249,6 +262,14 @@ export function MemberProfileView({
                 ))}
               </ul>
             </SectionCard>
+          </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <ProfilePostsSection
+              targetUserId={profile.user_id}
+              isOwner={profile.isOwner}
+              initialPage={postsPage}
+            />
           </motion.div>
         </div>
 

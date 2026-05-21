@@ -16,6 +16,7 @@ export type MemberProfileDetail = MemberProfileRow & {
   educations: MemberEducationRow[]
   skills: SkillRow[]
   profileViewCount: number
+  connectionCount: number
   isOwner: boolean
   isVisible: boolean
 }
@@ -24,6 +25,8 @@ export type CompanyProfileDetail = CompanyProfileRow & {
   email: string
   province: Pick<ProvinceRow, "id" | "name"> | null
   district: { id: number; name: string } | null
+  profileViewCount: number
+  connectionCount: number
 }
 
 export type AnyProfileDetail =

@@ -99,7 +99,7 @@ export async function HomeContent() {
               variant="ghost"
               className="w-full mt-3 text-xs font-semibold text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg"
             >
-              Xem tất cả
+              {tHome("jobSuggestionsViewAll")}
             </Button>
           </Link>
         </Card>

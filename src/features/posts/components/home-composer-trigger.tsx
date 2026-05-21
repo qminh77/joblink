@@ -64,7 +64,7 @@ export function HomeComposerTrigger() {
             >
               <Briefcase className="text-emerald-500 w-4 h-4" />
               <span className="text-[11px] sm:text-xs font-semibold">
-                Đăng tin
+                {tHome("postJob")}
               </span>
             </Link>
           ) : null}

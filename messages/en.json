@@ -67,12 +67,39 @@
     },
     "deleteSuccess": "Post deleted",
     "reportPost": "Report post",
+    "editPost": "Edit post",
+    "editPostHint": "Update the content or who can see it",
+    "editTitle": "Edit post",
+    "updating": "Saving...",
+    "save": "Save changes",
+    "updateSuccess": "Post updated",
+    "publishing": "Publishing...",
+    "visibility": {
+      "label": "Visible to",
+      "public": "Public",
+      "publicHint": "Anyone can see",
+      "connections": "Connections",
+      "connectionsHint": "Only your connections",
+      "private": "Only me",
+      "privateHint": "Only you can see"
+    },
+    "shareSuccess": "Post shared",
+    "shareSubmitting": "Sharing...",
+    "copyLinkSuccess": "Link copied",
+    "copyLinkError": "Could not copy link",
+    "sendComingSoon": "Messaging coming soon",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentMax": "Content is too long",
       "invalidData": "Invalid data",
       "invalidPost": "Invalid post",
-      "createFailed": "Could not create post"
+      "invalidComment": "Invalid comment",
+      "createFailed": "Could not create post",
+      "updateFailed": "Could not update post",
+      "shareFailed": "Could not share post",
+      "commentFailed": "Could not post comment",
+      "loadCommentsFailed": "Could not load comments",
+      "deleteCommentFailed": "Could not delete comment"
     }
   },
   "languageSwitcher": {
@@ -252,6 +279,15 @@
       "viewCount": "{count} profile views",
       "private": "This profile is private",
       "notFound": "Profile not found"
+    },
+    "stats": {
+      "connections": "{count} connections"
+    },
+    "posts": {
+      "heading": "Posts",
+      "emptyOwn": "You have not posted anything yet. Share something with the JobLink community.",
+      "emptyOther": "This user has not posted anything yet.",
+      "lockedHint": "You don't have permission to view posts on this profile."
     },
     "visibility": {
       "public": "Public",
@@ -468,8 +504,10 @@
     "composerPlaceholder": "What's on your mind, {name}?",
     "photoVideo": "Photo/Video",
     "poll": "Poll",
+    "postJob": "Post a job",
     "latest": "Latest",
     "jobSuggestions": "Job suggestions",
+    "jobSuggestionsViewAll": "View all",
     "pendingInvitations": "Pending invitations",
     "wantsToConnect": "Wants to connect with you",
     "viewAllCount": "View all ({count})"
@@ -482,7 +520,15 @@
     "reply": "Reply",
     "commentsCount": "{count} comments",
     "sharesCount": "{count} shares",
-    "writeComment": "Write a comment..."
+    "writeComment": "Write a comment...",
+    "emptyFeed": "Your feed is empty for now.",
+    "loadingMore": "Loading more...",
+    "endOfFeed": "End of feed",
+    "loadingComments": "Loading comments...",
+    "noComments": "No comments yet",
+    "deleteComment": "Delete comment",
+    "deleteCommentSuccess": "Comment deleted",
+    "viewMoreComments": "View {count} more comments"
   },
   "notifications": {
     "title": "Notifications",
@@ -507,6 +553,9 @@
     "types": {
       "connection_request": "sent you a connection request",
       "connection_accepted": "accepted your connection request",
+      "post_reaction": "reacted to your post",
+      "post_comment": "commented on your post",
+      "post_share": "shared your post",
       "unknown": "has new activity"
     },
     "errors": {

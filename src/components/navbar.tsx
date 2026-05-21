@@ -150,17 +150,13 @@ export function Navbar() {
                 pathname === item.href ||
                 (item.href === "/jobs" && pathname.startsWith("/jobs/"))
               const Icon = item.icon
-              const baseClasses = `flex flex-col items-center justify-center w-14 lg:w-16 h-16 transition-all duration-200 relative ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              }`
+              const baseClasses = "flex flex-col items-center justify-center w-14 lg:w-16 h-16 transition-all duration-200 relative text-muted-foreground"
 
               const trigger = (
                 <button className={baseClasses} type="button">
                   <div className="relative flex items-center justify-center">
                     <Icon
-                      className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
+                      className={`size-5 transition-colors duration-200 ${isActive ? "text-primary fill-primary/20" : ""}`}
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
@@ -189,7 +185,7 @@ export function Navbar() {
                 >
                   <div className="relative flex items-center justify-center">
                     <Icon
-                      className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
+                      className={`size-5 transition-colors duration-200 ${isActive ? "text-primary fill-primary/20" : ""}`}
                     />
                   </div>
                   <span className="font-body text-[10px] font-semibold mt-1 hidden lg:block">
@@ -275,15 +271,11 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center flex-1 h-full relative ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex flex-col items-center justify-center flex-1 h-full relative text-muted-foreground"
               >
                 <div className="relative flex items-center justify-center">
                   <Icon
-                    className={`size-5 ${isActive ? "fill-primary/20" : ""}`}
+                    className={`size-5 transition-colors duration-200 ${isActive ? "text-primary fill-primary/20" : ""}`}
                   />
                 </div>
                 <span className="text-[10px] font-medium mt-1">

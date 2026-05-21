@@ -1,4 +1,12 @@
-import { UserPlus, Users, Bell, type LucideIcon } from "lucide-react"
+import {
+  Bell,
+  MessageCircle,
+  Share2,
+  ThumbsUp,
+  UserPlus,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 
 import type { NotificationItem, NotificationType } from "../types"
 
@@ -22,6 +30,18 @@ const VISUALS: Record<
   connection_accepted: {
     icon: Users,
     iconClassName: "text-emerald-500 bg-emerald-500/10",
+  },
+  post_reaction: {
+    icon: ThumbsUp,
+    iconClassName: "text-blue-500 bg-blue-500/10",
+  },
+  post_comment: {
+    icon: MessageCircle,
+    iconClassName: "text-amber-500 bg-amber-500/10",
+  },
+  post_share: {
+    icon: Share2,
+    iconClassName: "text-sky-500 bg-sky-500/10",
   },
 }
 
@@ -50,6 +70,17 @@ export function getNotificationVisual(
         ...base,
         href:
           payload?.type === item.type ? `/profile/${payload.userId}` : "/network",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "post_reaction":
+    case "post_comment":
+    case "post_share":
+      return {
+        ...base,
+        href:
+          payload?.type === item.type ? `/posts/${payload.postId}` : "/home",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

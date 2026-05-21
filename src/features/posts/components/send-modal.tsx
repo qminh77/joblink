@@ -1,7 +1,9 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 import { X } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,6 +20,14 @@ export function SendModal({
   onClose: () => void
   contacts: NetworkUserCard[]
 }) {
+  const tPosts = useTranslations("posts")
+  const tFeed = useTranslations("feed")
+
+  function handleSend() {
+    toast.info(tPosts("sendComingSoon"))
+    onClose()
+  }
+
   return (
     <AnimatePresence>
       {open ? (
@@ -39,10 +49,13 @@ export function SendModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40">
-              <h2 className="font-headline font-bold text-lg">Gửi qua tin nhắn</h2>
+              <h2 className="font-headline font-bold text-lg">
+                {tPosts("sendViaMessage")}
+              </h2>
               <button
                 type="button"
                 onClick={onClose}
+                aria-label={tPosts("deleteDialog.cancel")}
                 className="p-2 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -51,7 +64,7 @@ export function SendModal({
             <div className="p-4 border-b border-border/40">
               <input
                 type="text"
-                placeholder="Tìm kiếm người để gửi..."
+                placeholder={tPosts("searchPersonPlaceholder")}
                 className="w-full bg-muted border border-border/40 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50"
               />
             </div>
@@ -78,9 +91,9 @@ export function SendModal({
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs rounded-lg"
-                    onClick={onClose}
+                    onClick={handleSend}
                   >
-                    Gửi
+                    {tFeed("send")}
                   </Button>
                 </div>
               ))}

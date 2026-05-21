@@ -10,6 +10,7 @@ import {
   Lock,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
   Send,
   Share2,
   ThumbsUp,
@@ -45,6 +46,8 @@ import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import { useCreateComment, useDeletePost, useToggleReaction } from "../hooks"
 import type { FeedPost } from "../types"
+import { CommentsThread } from "./comments-thread"
+import { PostComposer } from "./post-composer"
 
 type Props = {
   post: FeedPost
@@ -73,6 +76,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
   const [comment, setComment] = useState("")
   const [showReport, setShowReport] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
 
   const toggle = useToggleReaction()
   const createComment = useCreateComment()
@@ -136,6 +140,32 @@ export function PostCard({ post, onShare, onSend }: Props) {
                 sideOffset={10}
                 className="w-64 p-1.5 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40"
               >
+                {isOwnPost ? (
+                  <motion.div
+                    variants={dropdownItemVariants}
+                    initial="hidden"
+                    animate="show"
+                    transition={{ delay: 0.04 }}
+                  >
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault()
+                        setShowEdit(true)
+                      }}
+                      className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                    >
+                      <Pencil className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground">
+                          {tPosts("editPost")}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {tPosts("editPostHint")}
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                  </motion.div>
+                ) : null}
                 {isOwnPost ? (
                   <motion.div
                     variants={dropdownItemVariants}
@@ -270,7 +300,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
         </div>
 
         {open ? (
-          <div className="p-4 bg-muted/10 border-t border-border/30">
+          <div className="p-4 bg-muted/10 border-t border-border/30 space-y-3">
             <form onSubmit={submitComment} className="flex gap-3">
               <Avatar className="w-8 h-8">
                 {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
@@ -296,9 +326,16 @@ export function PostCard({ post, onShare, onSend }: Props) {
                 </Button>
               </div>
             </form>
+            <CommentsThread postId={post.id} enabled={open} />
           </div>
         ) : null}
       </Card>
+
+      <PostComposer
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        post={post}
+      />
 
       <ReportDialog
         open={showReport}

@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 import { staggerSm } from "@/lib/animations"
 
-import { useHomeFeed, useRealtimeFeed } from "../hooks"
+import { useHomeFeed, useRealtimeEngagement, useRealtimeFeed } from "../hooks"
 import type { FeedPage, FeedPost } from "../types"
 
 import { PostCard } from "./post-card"
@@ -20,6 +21,7 @@ type Props = {
 }
 
 export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
+  const tFeed = useTranslations("feed")
   const {
     data,
     fetchNextPage,
@@ -51,7 +53,12 @@ export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const posts = data?.pages.flatMap((p) => p.posts) ?? []
+  const posts = useMemo(
+    () => data?.pages.flatMap((p) => p.posts) ?? [],
+    [data],
+  )
+  const visiblePostIds = useMemo(() => posts.map((p) => p.id), [posts])
+  useRealtimeEngagement(visiblePostIds)
 
   return (
     <>
@@ -63,7 +70,7 @@ export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
       >
         {posts.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-10">
-            Chưa có bài viết nào trong bảng tin của bạn.
+            {tFeed("emptyFeed")}
           </div>
         ) : null}
 
@@ -79,18 +86,17 @@ export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
         <div ref={sentinelRef} className="h-10 flex items-center justify-center">
           {isFetchingNextPage ? (
             <span className="text-xs text-muted-foreground">
-              Đang tải thêm...
+              {tFeed("loadingMore")}
             </span>
           ) : !hasNextPage && posts.length > 0 ? (
-            <span className="text-xs text-muted-foreground">Hết bài viết</span>
+            <span className="text-xs text-muted-foreground">
+              {tFeed("endOfFeed")}
+            </span>
           ) : null}
         </div>
       </motion.div>
 
-      <ShareModal
-        open={shareTarget != null}
-        onClose={() => setShareTarget(null)}
-      />
+      <ShareModal post={shareTarget} onClose={() => setShareTarget(null)} />
       <SendModal
         open={sendTarget != null}
         onClose={() => setSendTarget(null)}

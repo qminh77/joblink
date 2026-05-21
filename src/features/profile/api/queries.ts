@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import type {
   AppUserRow,
+  CompanyProfileRow,
   MemberEducationRow,
   MemberExperienceRow,
   MemberProfileRow,
@@ -18,6 +19,30 @@ import type {
 } from "../types"
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>
+
+type LocationRef = { id: number; name: string } | null
+
+type MemberProfileWithLocation = MemberProfileRow & {
+  province: LocationRef
+  district: LocationRef
+}
+
+type CompanyProfileWithLocation = CompanyProfileRow & {
+  province: LocationRef
+  district: LocationRef
+}
+
+const MEMBER_PROFILE_SELECT = `
+  *,
+  province:provinces(id, name),
+  district:districts(id, name)
+`
+
+const COMPANY_PROFILE_SELECT = `
+  *,
+  province:provinces(id, name),
+  district:districts(id, name)
+`
 
 export async function loadProvinces(): Promise<ProvinceRow[]> {
   const supabase = await createClient()
@@ -94,62 +119,59 @@ async function loadMemberProfileDetail(
   target: AppUserRow,
   viewerUserId: number,
 ): Promise<MemberProfileDetail | null> {
-  const { data: profile } = await supabase
+  const isOwner = viewerUserId === target.id
+
+  const profilePromise = supabase
     .from("member_profiles")
+    .select(MEMBER_PROFILE_SELECT)
+    .eq("user_id", target.id)
+    .is("deleted_at", null)
+    .maybeSingle<MemberProfileWithLocation>()
+
+  const experiencesPromise = supabase
+    .from("member_experiences")
     .select("*")
     .eq("user_id", target.id)
     .is("deleted_at", null)
-    .maybeSingle<MemberProfileRow>()
+    .order("is_current", { ascending: false })
+    .order("start_date", { ascending: false })
 
-  if (!profile) return null
+  const educationsPromise = supabase
+    .from("member_educations")
+    .select("*")
+    .eq("user_id", target.id)
+    .is("deleted_at", null)
+    .order("start_date", { ascending: false })
 
-  const isOwner = viewerUserId === target.id
+  const skillsPromise = supabase
+    .from("member_skills")
+    .select("skill_id, skills(id, name)")
+    .eq("user_id", target.id)
+
+  const [
+    { data: profileRow },
+    { data: expData },
+    { data: eduData },
+    { data: skillData },
+  ] = await Promise.all([
+    profilePromise,
+    experiencesPromise,
+    educationsPromise,
+    skillsPromise,
+  ])
+
+  if (!profileRow) return null
+
+  const { province, district, ...profile } = profileRow
   const isVisible = profile.profile_visibility !== "private" || isOwner
 
-  const province = profile.province_id
-    ? await loadProvinceById(supabase, profile.province_id)
-    : null
-  const district = profile.district_id
-    ? await loadDistrictById(supabase, profile.district_id)
-    : null
-
-  let experiences: MemberExperienceRow[] = []
-  let educations: MemberEducationRow[] = []
-  let skills: SkillRow[] = []
-
-  if (isVisible) {
-    const [{ data: exp }, { data: edu }, { data: ms }] = await Promise.all([
-      supabase
-        .from("member_experiences")
-        .select("*")
-        .eq("user_id", target.id)
-        .is("deleted_at", null)
-        .order("is_current", { ascending: false })
-        .order("start_date", { ascending: false }),
-      supabase
-        .from("member_educations")
-        .select("*")
-        .eq("user_id", target.id)
-        .is("deleted_at", null)
-        .order("start_date", { ascending: false }),
-      supabase
-        .from("member_skills")
-        .select("skill_id, skills(id, name)")
-        .eq("user_id", target.id),
-    ])
-
-    experiences = (exp ?? []) as MemberExperienceRow[]
-    educations = (edu ?? []) as MemberEducationRow[]
-    skills =
-      ((ms ?? []) as unknown as Array<{ skills: SkillRow | null }>)
+  const experiences = isVisible ? ((expData ?? []) as MemberExperienceRow[]) : []
+  const educations = isVisible ? ((eduData ?? []) as MemberEducationRow[]) : []
+  const skills = isVisible
+    ? ((skillData ?? []) as unknown as Array<{ skills: SkillRow | null }>)
         .map((row) => row.skills)
         .filter((row): row is SkillRow => row != null)
-  }
-
-  const { count: profileViewCount } = await supabase
-    .from("profile_view_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("target_user_id", target.id)
+    : []
 
   return {
     ...profile,
@@ -159,7 +181,8 @@ async function loadMemberProfileDetail(
     experiences,
     educations,
     skills,
-    profileViewCount: profileViewCount ?? 0,
+    profileViewCount: target.profile_view_count,
+    connectionCount: target.connection_count,
     isOwner,
     isVisible,
   }
@@ -171,42 +194,21 @@ async function loadCompanyProfileDetail(
 ): Promise<CompanyProfileDetail | null> {
   const { data } = await supabase
     .from("company_profiles")
-    .select("*")
+    .select(COMPANY_PROFILE_SELECT)
     .eq("user_id", target.id)
     .is("deleted_at", null)
-    .maybeSingle<CompanyProfileDetail>()
+    .maybeSingle<CompanyProfileWithLocation>()
 
   if (!data) return null
 
-  const province = data.province_id
-    ? await loadProvinceById(supabase, data.province_id)
-    : null
-  const district = data.district_id
-    ? await loadDistrictById(supabase, data.district_id)
-    : null
+  const { province, district, ...rest } = data
 
   return {
-    ...data,
+    ...rest,
     email: target.email,
     province,
     district,
+    profileViewCount: target.profile_view_count,
+    connectionCount: target.connection_count,
   }
-}
-
-async function loadProvinceById(supabase: SupabaseServer, id: number) {
-  const { data } = await supabase
-    .from("provinces")
-    .select("id, name")
-    .eq("id", id)
-    .maybeSingle<{ id: number; name: string }>()
-  return data ?? null
-}
-
-async function loadDistrictById(supabase: SupabaseServer, id: number) {
-  const { data } = await supabase
-    .from("districts")
-    .select("id, name")
-    .eq("id", id)
-    .maybeSingle<{ id: number; name: string }>()
-  return data ?? null
 }
