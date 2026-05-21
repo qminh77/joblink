@@ -21,14 +21,23 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getInitials } from "@/lib/utils/format"
 
+import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+
 import {
   useAcceptConnectionRequest,
   useCancelConnectionRequest,
+  useNetworkOverview,
+  useRealtimeConnections,
   useRejectConnectionRequest,
   useRemoveConnection,
   useSendConnectionRequest,
 } from "../hooks"
-import type { ConnectionItem, InvitationItem, NetworkUserCard } from "../types"
+import type {
+  ConnectionItem,
+  InvitationItem,
+  NetworkOverview,
+  NetworkUserCard,
+} from "../types"
 
 function filterByKeyword<T extends { displayName: string; headline: string | null; location: string | null }>(
   items: T[],
@@ -45,17 +54,18 @@ function filterByKeyword<T extends { displayName: string; headline: string | nul
 }
 
 export function NetworkTabs({
-  suggestions,
-  connections,
-  incoming,
-  outgoing,
+  initialOverview,
 }: {
-  suggestions: NetworkUserCard[]
-  connections: ConnectionItem[]
-  incoming: InvitationItem[]
-  outgoing: InvitationItem[]
+  initialOverview: NetworkOverview
 }) {
   const t = useTranslations("network")
+  const currentUser = useCurrentUser()
+  const { data } = useNetworkOverview(initialOverview)
+  useRealtimeConnections(currentUser.id)
+
+  const overview = data ?? initialOverview
+  const { suggestions, connections, incoming, outgoing } = overview
+
   const [tab, setTab] = useState("suggestions")
   const [suggestionQuery, setSuggestionQuery] = useState("")
   const [connectionQuery, setConnectionQuery] = useState("")

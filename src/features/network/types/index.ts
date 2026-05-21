@@ -28,3 +28,10 @@ export type ConnectionRelation =
   | { kind: "accepted"; connectionId: number }
   | { kind: "rejected"; connectionId: number }
   | { kind: "blocked"; connectionId: number }
+
+export type NetworkOverview = {
+  suggestions: NetworkUserCard[]
+  connections: ConnectionItem[]
+  incoming: InvitationItem[]
+  outgoing: InvitationItem[]
+}

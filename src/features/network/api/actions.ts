@@ -9,9 +9,20 @@ import { createNotification } from "@/features/notifications/lib/create-notifica
 import type { ActorRef } from "@/features/notifications/types"
 import { createClient } from "@/lib/supabase/server"
 import type { ConnectionRow } from "@/types/database"
-import type { InvitationItem, NetworkUserCard } from "../types"
 
-import { loadInvitations, loadSuggestions } from "./queries"
+import {
+  createConnectionIdSchema,
+  createTargetUserIdSchema,
+} from "../schemas"
+import type { NetworkOverview } from "../types"
+
+import { loadNetworkOverview } from "./queries"
+
+type ActionResult = { ok: true } | { ok: false; error: string }
+
+function fail(error: string): ActionResult {
+  return { ok: false, error }
+}
 
 function actorRef(current: CurrentUser): ActorRef {
   return {
@@ -37,31 +48,23 @@ async function notifyConnectionRequest(input: {
   })
 }
 
-import {
-  createConnectionIdSchema,
-  createTargetUserIdSchema,
-} from "../schemas"
-
-type ActionResult = { ok: true } | { ok: false; error: string }
-
-function fail(error: string): ActionResult {
-  return { ok: false, error }
+// Revalidate profile layout (connect button is server-rendered there).
+// /network không cần revalidate vì client dùng React Query + realtime.
+function revalidateAfterConnectionChange() {
+  revalidatePath("/profile", "layout")
 }
 
-function revalidateNetwork() {
-  revalidatePath("/network")
-  revalidatePath("/profile", "layout")
+export async function getNetworkOverviewAction(): Promise<NetworkOverview> {
+  return loadNetworkOverview()
 }
 
 export async function sendConnectionRequestAction(
   targetUserId: number,
 ): Promise<ActionResult> {
-  const tv = await getTranslations("network.validation")
   const te = await getTranslations("network.errors")
 
   const parsed = createTargetUserIdSchema(te).safeParse(targetUserId)
   if (!parsed.success) {
-    void tv
     return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
   }
 
@@ -115,7 +118,7 @@ export async function sendConnectionRequestAction(
         connectionId: existing.id,
         actor: actorRef(current),
       })
-      revalidateNetwork()
+      revalidateAfterConnectionChange()
       return { ok: true }
     }
   }
@@ -136,7 +139,7 @@ export async function sendConnectionRequestAction(
     connectionId: inserted.id,
     actor: actorRef(current),
   })
-  revalidateNetwork()
+  revalidateAfterConnectionChange()
   return { ok: true }
 }
 
@@ -166,7 +169,7 @@ export async function cancelConnectionRequestAction(
 
   const { error } = await supabase.from("connections").delete().eq("id", row.id)
   if (error) return fail(error.message)
-  revalidateNetwork()
+  revalidateAfterConnectionChange()
   return { ok: true }
 }
 
@@ -217,7 +220,7 @@ export async function respondConnectionRequestAction(
       },
     })
   }
-  revalidateNetwork()
+  revalidateAfterConnectionChange()
   return { ok: true }
 }
 
@@ -250,15 +253,6 @@ export async function removeConnectionAction(
 
   const { error } = await supabase.from("connections").delete().eq("id", row.id)
   if (error) return fail(error.message)
-  revalidateNetwork()
+  revalidateAfterConnectionChange()
   return { ok: true }
-}
-
-export async function getSuggestionsAction(): Promise<NetworkUserCard[]> {
-  return loadSuggestions()
-}
-
-export async function getIncomingInvitationsAction(): Promise<InvitationItem[]> {
-  const { incoming } = await loadInvitations()
-  return incoming
 }

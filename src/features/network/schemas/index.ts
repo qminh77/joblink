@@ -15,7 +15,3 @@ export function createConnectionIdSchema(t: Translator) {
     .int()
     .positive(t("invalidConnection"))
 }
-
-export function createNetworkSearchSchema(t: Translator) {
-  return z.string().trim().max(100, t("keywordMax")).optional()
-}
