@@ -1,4 +1,5 @@
-export function getInitials(name: string, fallback = "?"): string {
+export function getInitials(name: string | null | undefined, fallback = "?"): string {
+  if (!name) return fallback
   const trimmed = name.trim()
   if (!trimmed) return fallback
 
