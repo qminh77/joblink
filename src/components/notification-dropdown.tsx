@@ -60,7 +60,7 @@ export function NotificationDropdown({
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-80 p-0 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden"
+        className="w-80 p-0 rounded-2xl bg-background/95 backdrop-blur-2xl overflow-hidden"
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/30">
           <div>
@@ -110,7 +110,7 @@ export function NotificationDropdown({
                       } ${!item.isRead ? "bg-primary/[0.03]" : ""}`}
                     >
                       {visual.actorUserId != null ? (
-                        <Avatar className="w-8 h-8 shrink-0 border border-border/30">
+                        <Avatar className="w-8 h-8 shrink-0">
                           {visual.actorAvatarUrl ? (
                             <AvatarImage src={visual.actorAvatarUrl} />
                           ) : null}

@@ -42,7 +42,7 @@ export function ProfileDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="block outline-none group">
-          <Avatar className="w-8 h-8 border-2 border-border/60 cursor-pointer hover:border-primary/60 transition-all duration-300">
+          <Avatar className="w-8 h-8 cursor-pointer transition-all duration-300">
             {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
             <AvatarFallback className="text-xs font-semibold text-foreground">
               {initials}
@@ -53,13 +53,13 @@ export function ProfileDropdown() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-72 p-0 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden"
+        className="w-72 p-0 rounded-2xl bg-background/95 backdrop-blur-2xl overflow-hidden"
       >
         <div className="relative">
           <div className="h-16 bg-gradient-to-r from-primary/15 to-primary/5" />
           <div className="px-4 pb-3 -mt-8">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl border-2 border-background overflow-hidden shrink-0 bg-muted shadow-sm">
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-muted">
                 <Avatar className="w-full h-full rounded-xl">
                   {user.avatarUrl ? (
                     <AvatarImage src={user.avatarUrl} />

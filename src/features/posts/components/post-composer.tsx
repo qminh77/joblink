@@ -52,7 +52,7 @@ export function PostComposer({
             initial="hidden"
             animate="show"
             exit="exit"
-            className="w-full max-w-lg bg-card border border-border/40 rounded-[24px] shadow-lg"
+              className="w-full max-w-lg bg-card rounded-[24px]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40">

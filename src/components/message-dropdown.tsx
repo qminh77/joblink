@@ -67,7 +67,7 @@ export function MessageDropdown({
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-80 p-0 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden"
+        className="w-80 p-0 rounded-2xl bg-background/95 backdrop-blur-2xl overflow-hidden"
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/30">
           <div>
@@ -101,7 +101,7 @@ export function MessageDropdown({
                       </AvatarFallback>
                     </Avatar>
                     {conv.online && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-background" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

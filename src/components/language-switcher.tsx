@@ -41,14 +41,11 @@ export function LanguageSwitcher({ className }: { className?: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           disabled={isPending}
           aria-label={t("label")}
-          className={cn(
-            "rounded-full w-10 h-10 border-border bg-background text-foreground transition-colors hover:bg-muted",
-            className,
-          )}
+          className={className}
         >
           <Globe className="h-[1.2rem] w-[1.2rem]" />
           <span className="sr-only">{t("label")}</span>
@@ -57,7 +54,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-64 p-1.5 rounded-2xl border-border/40 bg-background shadow-2xl shadow-black/10 dark:shadow-black/40"
+        className="w-64 p-1.5 rounded-2xl bg-background"
       >
         <DropdownMenuGroup>
           {locales.map((value, index) => {

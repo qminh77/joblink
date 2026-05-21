@@ -150,10 +150,10 @@ export function Navbar() {
                 pathname === item.href ||
                 (item.href === "/jobs" && pathname.startsWith("/jobs/"))
               const Icon = item.icon
-              const baseClasses = `flex flex-col items-center justify-center w-14 lg:w-16 h-16 border-b-2 transition-all duration-200 relative ${
+              const baseClasses = `flex flex-col items-center justify-center w-14 lg:w-16 h-16 transition-all duration-200 relative ${
                 isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`
 
               const trigger = (
@@ -204,9 +204,9 @@ export function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="hidden sm:flex rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:border-primary text-xs h-8 px-3 transition-all"
+                  className="hidden sm:flex text-primary hover:bg-primary/10 text-xs h-8 px-3"
                 >
                   <Plus className="w-4 h-4 mr-0.5" />
                   {tPost("postCta")}
@@ -215,7 +215,7 @@ export function Navbar() {
               <DropdownMenuContent
                 align="end"
                 sideOffset={10}
-                className="w-56 p-1.5 rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40"
+                className="w-56 p-1.5 rounded-2xl bg-background/95 backdrop-blur-2xl"
               >
                 <DropdownMenuLabel className="px-3 py-2 text-xs font-medium text-muted-foreground">
                   {tPost("createMenuLabel")}
