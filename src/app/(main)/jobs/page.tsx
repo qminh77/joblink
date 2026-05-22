@@ -41,6 +41,81 @@ export default function JobsPage() {
   const [appliedJobs, setAppliedJobs] = useState<Record<number, boolean>>({})
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState("")
+  const [selectedSalary, setSelectedSalary] = useState("")
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
+  const [selectedModes, setSelectedModes] = useState<string[]>([])
+  const [sortBy, setSortBy] = useState("newest")
+
+  const toggleType = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
+  }
+
+  const toggleMode = (mode: string) => {
+    setSelectedModes((prev) =>
+      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode],
+    )
+  }
+
+  const clearFilters = () => {
+    setSelectedLocation("")
+    setSelectedSalary("")
+    setSelectedTypes([])
+    setSelectedModes([])
+    setSearchQuery("")
+  }
+
+  const hasActiveFilters =
+    selectedLocation !== "" ||
+    selectedSalary !== "" ||
+    selectedTypes.length > 0 ||
+    selectedModes.length > 0 ||
+    searchQuery.trim() !== ""
+
+  const matchesSalary = (job: Job, range: string): boolean => {
+    if (!range) return true
+    if (range === "Thỏa thuận") return job.salary === "Thỏa thuận"
+    const maxMatch = job.salary.match(/([\d,.]+)\s*(Triệu|\$)/)
+    if (!maxMatch) return false
+    const num = parseFloat(maxMatch[1].replace(/,/g, ""))
+    const trongTriệu = maxMatch[2] === "$" ? num * 0.025 : num
+    if (range === "Dưới 10 Triệu") return trongTriệu < 10
+    if (range === "10 - 20 Triệu") return trongTriệu >= 10 && trongTriệu <= 20
+    if (range === "20 - 40 Triệu") return trongTriệu > 20 && trongTriệu <= 40
+    if (range === "Trên 40 Triệu") return trongTriệu > 40
+    return false
+  }
+
+  const filtered = jobs.filter((job) => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const matchesSearch =
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q) ||
+        job.tags.some((tag) => tag.toLowerCase().includes(q))
+      if (!matchesSearch) return false
+    }
+    if (selectedLocation && !job.location.toLowerCase().includes(selectedLocation.toLowerCase())) {
+      return false
+    }
+    if (selectedSalary && !matchesSalary(job, selectedSalary)) {
+      return false
+    }
+    if (selectedTypes.length > 0 && !selectedTypes.includes(job.type)) {
+      return false
+    }
+    if (selectedModes.length > 0 && !selectedModes.includes(job.mode)) {
+      return false
+    }
+    return true
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "newest") return 0
+    return 0
+  })
 
   const toggleSave = (id: number, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -79,19 +154,23 @@ export default function JobsPage() {
                 <h2 className="font-semibold text-foreground flex items-center gap-1.5">
                   <Filter className="w-4 h-4" /> Bộ lọc
                 </h2>
-                <button className="text-xs text-primary hover:opacity-80 transition-opacity">Xóa lọc</button>
+                <button onClick={clearFilters} className="text-xs text-primary hover:opacity-80 transition-opacity">Xóa lọc</button>
               </motion.div>
 
             <motion.div variants={fadeUp} className="mb-5">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Địa điểm</h3>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <select className="w-full h-10 pl-9 pr-3 bg-muted/40 border border-border/30 rounded-lg text-sm focus:outline-none focus:border-primary appearance-none text-foreground">
-                  <option>Tất cả địa điểm</option>
-                  <option>Hồ Chí Minh</option>
-                  <option>Hà Nội</option>
-                  <option>Đà Nẵng</option>
-                  <option>Remote</option>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full h-10 pl-9 pr-3 bg-muted/40 border border-border/30 rounded-lg text-sm focus:outline-none focus:border-primary appearance-none text-foreground"
+                >
+                  <option value="">Tất cả địa điểm</option>
+                  <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+                  <option value="Hà Nội">Hà Nội</option>
+                  <option value="Đà Nẵng">Đà Nẵng</option>
+                  <option value="Remote">Remote</option>
                 </select>
               </div>
             </motion.div>
@@ -100,13 +179,17 @@ export default function JobsPage() {
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Mức lương</h3>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <select className="w-full h-10 pl-9 pr-3 bg-muted/40 border border-border/30 rounded-lg text-sm focus:outline-none focus:border-primary appearance-none text-foreground">
-                  <option>Tất cả mức lương</option>
-                  <option>Dưới 10 Triệu</option>
-                  <option>10 - 20 Triệu</option>
-                  <option>20 - 40 Triệu</option>
-                  <option>Trên 40 Triệu</option>
-                  <option>Thỏa thuận</option>
+                <select
+                  value={selectedSalary}
+                  onChange={(e) => setSelectedSalary(e.target.value)}
+                  className="w-full h-10 pl-9 pr-3 bg-muted/40 border border-border/30 rounded-lg text-sm focus:outline-none focus:border-primary appearance-none text-foreground"
+                >
+                  <option value="">Tất cả mức lương</option>
+                  <option value="Dưới 10 Triệu">Dưới 10 Triệu</option>
+                  <option value="10 - 20 Triệu">10 - 20 Triệu</option>
+                  <option value="20 - 40 Triệu">20 - 40 Triệu</option>
+                  <option value="Trên 40 Triệu">Trên 40 Triệu</option>
+                  <option value="Thỏa thuận">Thỏa thuận</option>
                 </select>
               </div>
             </motion.div>
@@ -116,7 +199,11 @@ export default function JobsPage() {
               <div className="space-y-2.5">
                 {["Fulltime", "Parttime", "Internship", "Contract", "Freelance"].map((type) => (
                   <label key={type} className="flex items-center gap-2.5 cursor-pointer group">
-                    <Checkbox className="rounded-sm data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                    <Checkbox
+                      checked={selectedTypes.includes(type)}
+                      onCheckedChange={() => toggleType(type)}
+                      className="rounded-sm data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
                     <span className="text-sm text-foreground group-hover:text-primary transition-colors">{type}</span>
                   </label>
                 ))}
@@ -128,14 +215,41 @@ export default function JobsPage() {
               <div className="space-y-2.5">
                 {["Onsite", "Remote", "Hybrid"].map((mode) => (
                   <label key={mode} className="flex items-center gap-2.5 cursor-pointer group">
-                    <Checkbox className="rounded-sm data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                    <Checkbox
+                      checked={selectedModes.includes(mode)}
+                      onCheckedChange={() => toggleMode(mode)}
+                      className="rounded-sm data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
                     <span className="text-sm text-foreground group-hover:text-primary transition-colors">{mode}</span>
                   </label>
                 ))}
               </div>
             </motion.div>
 
-            <motion.div variants={fadeUp}><Button className="w-full rounded-xl text-sm">Áp dụng</Button></motion.div>
+            {hasActiveFilters && (
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-1.5">
+                {selectedLocation && (
+                  <Badge variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => setSelectedLocation("")}>
+                    {selectedLocation} ✕
+                  </Badge>
+                )}
+                {selectedSalary && (
+                  <Badge variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => setSelectedSalary("")}>
+                    {selectedSalary} ✕
+                  </Badge>
+                )}
+                {selectedTypes.map((t) => (
+                  <Badge key={t} variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => toggleType(t)}>
+                    {t} ✕
+                  </Badge>
+                ))}
+                {selectedModes.map((m) => (
+                  <Badge key={m} variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => toggleMode(m)}>
+                    {m} ✕
+                  </Badge>
+                ))}
+              </motion.div>
+            )}
             </motion.div>
           </Card>
         </aside>
@@ -153,20 +267,29 @@ export default function JobsPage() {
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Tìm thấy <span className="font-semibold text-foreground">1,200</span> công việc
+              Tìm thấy <span className="font-semibold text-foreground">{sorted.length}</span> công việc
             </p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Sắp xếp:</span>
-              <select className="h-9 px-3 bg-card border border-border/30 rounded-lg text-sm text-foreground focus:outline-none focus:border-primary appearance-none">
-                <option>Mới nhất</option>
-                <option>Phù hợp nhất</option>
-                <option>Lương cao nhất</option>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-9 px-3 bg-card border border-border/30 rounded-lg text-sm text-foreground focus:outline-none focus:border-primary appearance-none"
+              >
+                <option value="newest">Mới nhất</option>
               </select>
             </div>
           </div>
 
+          {sorted.length === 0 ? (
+            <div className="text-center py-16">
+              <Search className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+              <h3 className="font-headline font-bold text-lg text-foreground">Không tìm thấy công việc</h3>
+              <p className="text-sm text-muted-foreground mt-1">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm</p>
+            </div>
+          ) : (
           <motion.div variants={staggerSm} initial="hidden" animate="show" className="space-y-3">
-            {jobs.map((job) => (
+            {sorted.map((job) => (
               <motion.div variants={fadeUp} key={job.id}>
                 <Card className="bg-card rounded-xl p-5 border border-border/30 transition-all group">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -193,7 +316,7 @@ export default function JobsPage() {
                       <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {job.type} • {job.mode}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {job.tags.map((tag) => (
+                      {[...job.tags].sort((a, b) => a.localeCompare(b)).map((tag) => (
                         <Badge key={tag} variant="outline" className="border-border/30 text-xs font-normal">{tag}</Badge>
                       ))}
                       {job.urgent && (
@@ -226,6 +349,7 @@ export default function JobsPage() {
             </motion.div>
             ))}
           </motion.div>
+          )}
 
           <div className="flex justify-center pt-4">
             <nav className="flex items-center gap-2">

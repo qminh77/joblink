@@ -47,6 +47,7 @@ import { ReportDialog } from "@/features/reports/components/report-dialog"
 import { useCreateComment, useDeletePost, useToggleReaction } from "../hooks"
 import type { FeedPost } from "../types"
 import { CommentsThread } from "./comments-thread"
+import { ImageLightbox } from "@/components/ui/image-lightbox"
 import { PostComposer } from "./post-composer"
 
 type Props = {
@@ -77,6 +78,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
   const [showReport, setShowReport] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const toggle = useToggleReaction()
   const createComment = useCreateComment()
@@ -224,6 +226,22 @@ export function PostCard({ post, onShare, onSend }: Props) {
           <div className="mt-4 text-[13px] sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line font-body">
             {post.content}
           </div>
+
+          {post.media && typeof post.media === "object" && "url" in post.media ? (
+            <div className="mt-3 -mx-4 sm:-mx-0 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-border/30 bg-muted/10">
+              <button
+                type="button"
+                className="w-full cursor-pointer"
+                onClick={() => setLightboxUrl((post.media as { url: string }).url)}
+              >
+                <img
+                  src={(post.media as { url: string }).url}
+                  alt="Post media"
+                  className="w-full max-h-96 object-contain"
+                />
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="px-3 sm:px-4 py-3 border-b border-t border-border/30 flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">
@@ -368,6 +386,13 @@ export function PostCard({ post, onShare, onSend }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {lightboxUrl ? (
+        <ImageLightbox
+          src={lightboxUrl}
+          onClose={() => setLightboxUrl(null)}
+        />
+      ) : null}
     </motion.div>
   )
 }

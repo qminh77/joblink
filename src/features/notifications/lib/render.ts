@@ -79,8 +79,7 @@ export function getNotificationVisual(
     case "post_share":
       return {
         ...base,
-        href:
-          payload?.type === item.type ? `/posts/${payload.postId}` : "/home",
+        href: "/home",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

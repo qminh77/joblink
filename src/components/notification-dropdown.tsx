@@ -1,9 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { CheckCheck, ChevronRight } from "lucide-react"
+import { Bell, CheckCheck, ChevronRight } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,6 +18,7 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "@/features/notifications/hooks"
+import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
 import { getNotificationVisual } from "@/features/notifications/lib/render"
 import { formatRelativeTime, getInitials } from "@/lib/utils/format"
 
@@ -38,6 +41,7 @@ export function NotificationDropdown({
 }) {
   const t = useTranslations("notifications")
   const tTypes = useTranslations("notifications.types")
+  const router = useRouter()
   const { data: notifications = [] } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
@@ -98,12 +102,19 @@ export function NotificationDropdown({
                 const Icon = visual.icon
                 return (
                   <motion.div key={item.id} variants={fadeIn}>
-                    <Link
-                      href={visual.href}
-                      onClick={() => {
+                    <button
+                      type="button"
+                      onClick={async () => {
                         if (!item.isRead) markRead.mutate(item.id)
+                        const exists =
+                          await verifyNotificationTargetAction(item)
+                        if (exists) {
+                          router.push(visual.href)
+                        } else {
+                          toast(t("gone"))
+                        }
                       }}
-                      className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
+                      className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors w-full text-left ${
                         index < visible.length - 1
                           ? "border-b border-border/10"
                           : ""
@@ -143,7 +154,7 @@ export function NotificationDropdown({
                           ) : null}
                         </div>
                       </div>
-                    </Link>
+                    </button>
                   </motion.div>
                 )
               })}

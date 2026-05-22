@@ -94,6 +94,7 @@ export async function getPostCommentsAction(
 export async function createPostAction(input: {
   content: string
   visibility?: "public" | "connections" | "private"
+  mediaUrl?: string
 }): Promise<ActionResult<FeedPost>> {
   const te = await getTranslations("posts.errors")
   const parsed = createPostInputSchema(te).safeParse(input)
@@ -109,7 +110,10 @@ export async function createPostAction(input: {
     .insert({
       author_id: current.appUser.id,
       content: parsed.data.content,
-      post_type: "text",
+      post_type: parsed.data.mediaUrl ? "image" : "text",
+      media: parsed.data.mediaUrl
+        ? { url: parsed.data.mediaUrl, type: "image" }
+        : null,
       visibility: parsed.data.visibility,
     })
     .select("id, author_id, content, post_type, media, visibility, created_at")

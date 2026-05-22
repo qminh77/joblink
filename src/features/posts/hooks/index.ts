@@ -187,6 +187,7 @@ export function useCreatePost() {
     mutationFn: async (input: {
       content: string
       visibility?: "public" | "connections" | "private"
+      mediaUrl?: string
     }) => {
       const result = await createPostAction(input)
       if (!result.ok) throw new Error(result.error)

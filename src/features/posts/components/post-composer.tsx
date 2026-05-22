@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Globe, Image as ImageIcon, Lock, Users, X } from "lucide-react"
+import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Users, X } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -49,41 +49,88 @@ export function PostComposer({
   const [visibility, setVisibility] = useState<Visibility>(
     post?.visibility ?? "public",
   )
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // Reset state khi mở/đổi target — tránh giữ lại nội dung của lần trước.
   useEffect(() => {
     if (open) {
       setContent(post?.content ?? "")
       setVisibility(post?.visibility ?? "public")
+      setImageFile(null)
+      setImagePreview(null)
     }
   }, [open, post])
 
   const createPost = useCreatePost()
   const updatePost = useUpdatePost()
   const mutation = isEdit ? updatePost : createPost
-  const isPending = mutation.isPending
+  const isPending = mutation.isPending || uploading
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  function removeImage() {
+    setImageFile(null)
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImagePreview(null)
+    if (fileRef.current) fileRef.current.value = ""
+  }
 
   async function submit() {
     const text = content.trim()
-    if (!text || isPending) return
-    if (isEdit && post) {
-      const unchanged =
-        text === post.content && visibility === post.visibility
-      if (unchanged) {
-        onClose()
-        return
+    if ((!text && !imageFile) || isPending) return
+
+    setUploading(true)
+    try {
+      let mediaUrl: string | undefined
+      if (imageFile) {
+        const { uploadPostImageAction } = await import(
+          "@/features/posts/api/storage"
+        )
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(imageFile)
+        })
+        mediaUrl = await uploadPostImageAction(base64, user.id)
       }
-      await updatePost.mutateAsync({
-        postId: post.id,
-        content: text,
-        visibility,
-      })
-    } else {
-      await createPost.mutateAsync({ content: text, visibility })
+
+      if (isEdit && post) {
+        const unchanged =
+          text === post.content && visibility === post.visibility && !mediaUrl
+        if (unchanged) {
+          onClose()
+          return
+        }
+        await updatePost.mutateAsync({
+          postId: post.id,
+          content: text || post.content,
+          visibility,
+        })
+      } else {
+        await createPost.mutateAsync({
+          content: text,
+          visibility,
+          mediaUrl,
+        })
+      }
+
+      setContent("")
+      setVisibility("public")
+      removeImage()
+      onClose()
+    } finally {
+      setUploading(false)
     }
-    setContent("")
-    setVisibility("public")
-    onClose()
   }
 
   const currentVisIcon =
@@ -174,13 +221,42 @@ export function PostComposer({
                 })}
                 className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
+
+              {imagePreview && (
+                <div className="relative mt-3 rounded-xl overflow-hidden border border-border/30">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full max-h-64 object-contain bg-muted/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="p-4 border-t border-border/40 flex items-center justify-between">
               <div className="flex gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
                 <button
                   type="button"
                   aria-label={tHome("photoVideo")}
-                  className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-colors"
+                  onClick={() => fileRef.current?.click()}
+                  className={`p-2 rounded-xl transition-colors ${
+                    imageFile
+                      ? "text-blue-500 bg-blue-500/10"
+                      : "text-blue-500 hover:bg-blue-500/10"
+                  }`}
                 >
                   <ImageIcon className="w-5 h-5" />
                 </button>
@@ -194,16 +270,18 @@ export function PostComposer({
               </div>
               <Button
                 onClick={submit}
-                disabled={!content.trim() || isPending}
+                disabled={(!content.trim() && !imageFile) || isPending}
                 className="px-6 rounded-xl font-semibold"
               >
-                {isPending
-                  ? isEdit
-                    ? tPosts("updating")
-                    : tPosts("publishing")
-                  : isEdit
-                    ? tPosts("save")
-                    : tPosts("publish")}
+                {uploading ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{tPosts("publishing")}</>
+                ) : isPending ? (
+                  isEdit ? tPosts("updating") : tPosts("publishing")
+                ) : isEdit ? (
+                  tPosts("save")
+                ) : (
+                  tPosts("publish")
+                )}
               </Button>
             </div>
           </motion.div>

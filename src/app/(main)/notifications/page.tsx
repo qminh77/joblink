@@ -1,10 +1,11 @@
 "use client"
 
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Bell, CheckCheck } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
@@ -14,6 +15,7 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "@/features/notifications/hooks"
+import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
 import { getNotificationVisual } from "@/features/notifications/lib/render"
 import type { NotificationItem } from "@/features/notifications/types"
 import { btnTap, fadeUp, pageEntrance, slideLeft, staggerSm } from "@/lib/animations"
@@ -40,6 +42,7 @@ function filterItems(
 export default function NotificationsPage() {
   const t = useTranslations("notifications")
   const tTypes = useTranslations("notifications.types")
+  const router = useRouter()
   const [filter, setFilter] = useState<FilterValue>("all")
 
   const { data: notifications = [], isLoading } = useNotifications()
@@ -151,12 +154,19 @@ export default function NotificationsPage() {
 
                   return (
                     <motion.li key={item.id} variants={slideLeft}>
-                      <Link
-                        href={visual.href}
-                        onClick={() => {
+                      <button
+                        type="button"
+                        onClick={async () => {
                           if (!item.isRead) markRead.mutate(item.id)
+                          const exists =
+                            await verifyNotificationTargetAction(item)
+                          if (exists) {
+                            router.push(visual.href)
+                          } else {
+                            toast(t("gone"))
+                          }
                         }}
-                        className={`flex items-start gap-3 p-4 transition-colors hover:bg-muted/30 ${
+                        className={`flex items-start gap-3 p-4 transition-colors hover:bg-muted/30 w-full text-left ${
                           !item.isRead ? "bg-primary/[0.03]" : ""
                         }`}
                       >
@@ -187,7 +197,7 @@ export default function NotificationsPage() {
                             ) : null}
                           </div>
                         </div>
-                      </Link>
+                      </button>
                     </motion.li>
                   )
                 })}

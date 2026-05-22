@@ -558,6 +558,7 @@
       "post_share": "shared your post",
       "unknown": "has new activity"
     },
+    "gone": "The notification has changed",
     "errors": {
       "invalidId": "Invalid notification"
     }

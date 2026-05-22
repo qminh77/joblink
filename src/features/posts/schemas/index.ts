@@ -20,6 +20,7 @@ export function createPostInputSchema(t: Translator) {
       .min(1, t("contentRequired"))
       .max(3000, t("contentMax")),
     visibility: z.enum(POST_VISIBILITY).default("public"),
+    mediaUrl: z.string().url().optional(),
   })
 }
 
