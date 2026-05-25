@@ -90,7 +90,13 @@
     "sendComingSoon": "Tin nhắn sắp ra mắt",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
+      "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
       "contentMax": "Nội dung quá dài",
+      "imageTooLarge": "Ảnh vượt quá dung lượng cho phép ({max} MB)",
+      "imageInvalidType": "Định dạng ảnh không được hỗ trợ. Chấp nhận: {types}",
+      "imageUnauthorized": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
+      "uploadFailed": "Tải ảnh thất bại, vui lòng thử lại",
+      "mediaUnavailable": "Không thể tải ảnh",
       "invalidData": "Dữ liệu không hợp lệ",
       "invalidPost": "Bài viết không hợp lệ",
       "invalidComment": "Bình luận không hợp lệ",

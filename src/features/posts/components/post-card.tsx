@@ -49,6 +49,7 @@ import type { FeedPost } from "../types"
 import { CommentsThread } from "./comments-thread"
 import { ImageLightbox } from "@/components/ui/image-lightbox"
 import { PostComposer } from "./post-composer"
+import { PostMediaView } from "./post-media-view"
 
 type Props = {
   post: FeedPost
@@ -223,25 +224,13 @@ export function PostCard({ post, onShare, onSend }: Props) {
             </DropdownMenu>
           </div>
 
-          <div className="mt-4 text-[13px] sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line font-body">
-            {post.content}
-          </div>
-
-          {post.media && typeof post.media === "object" && "url" in post.media ? (
-            <div className="mt-3 -mx-4 sm:-mx-0 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-border/30 bg-muted/10">
-              <button
-                type="button"
-                className="w-full cursor-pointer"
-                onClick={() => setLightboxUrl((post.media as { url: string }).url)}
-              >
-                <img
-                  src={(post.media as { url: string }).url}
-                  alt="Post media"
-                  className="w-full max-h-96 object-contain"
-                />
-              </button>
+          {post.content ? (
+            <div className="mt-4 text-[13px] sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line font-body">
+              {post.content}
             </div>
           ) : null}
+
+          <PostMediaView media={post.media} onOpen={setLightboxUrl} />
         </div>
 
         <div className="px-3 sm:px-4 py-3 border-b border-t border-border/30 flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">

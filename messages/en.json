@@ -90,7 +90,13 @@
     "sendComingSoon": "Messaging coming soon",
     "errors": {
       "contentRequired": "Please enter some content",
+      "contentOrMediaRequired": "Please enter content or attach an image",
       "contentMax": "Content is too long",
+      "imageTooLarge": "Image exceeds the size limit ({max} MB)",
+      "imageInvalidType": "Unsupported image format. Allowed: {types}",
+      "imageUnauthorized": "Your session has expired, please sign in again",
+      "uploadFailed": "Failed to upload image, please try again",
+      "mediaUnavailable": "Image unavailable",
       "invalidData": "Invalid data",
       "invalidPost": "Invalid post",
       "invalidComment": "Invalid comment",

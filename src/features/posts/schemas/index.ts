@@ -13,15 +13,20 @@ const REACTION_TYPES = [
 ] as const
 
 export function createPostInputSchema(t: Translator) {
-  return z.object({
-    content: z
-      .string({ error: t("contentRequired") })
-      .trim()
-      .min(1, t("contentRequired"))
-      .max(3000, t("contentMax")),
-    visibility: z.enum(POST_VISIBILITY).default("public"),
-    mediaUrl: z.string().url().optional(),
-  })
+  return z
+    .object({
+      content: z
+        .string({ error: t("contentRequired") })
+        .trim()
+        .max(3000, t("contentMax"))
+        .default(""),
+      visibility: z.enum(POST_VISIBILITY).default("public"),
+      mediaUrl: z.string().url().optional(),
+    })
+    .refine((d) => d.content.length > 0 || !!d.mediaUrl, {
+      message: t("contentOrMediaRequired"),
+      path: ["content"],
+    })
 }
 
 export type PostInput = z.infer<ReturnType<typeof createPostInputSchema>>

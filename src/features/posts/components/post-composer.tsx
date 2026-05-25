@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Users, X } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ErrorAlert } from "@/components/ui/error-alert"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +19,13 @@ import { modalContent, modalOverlay } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
+import {
+  POST_IMAGE_ALLOWED_TYPES,
+  POST_IMAGE_MAX_BYTES,
+  PostImageError,
+  validatePostImage,
+  type PostImageErrorCode,
+} from "../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../hooks"
 import type { FeedPost } from "../types"
 
@@ -52,6 +61,7 @@ export function PostComposer({
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Reset state khi mở/đổi target — tránh giữ lại nội dung của lần trước.
@@ -61,8 +71,22 @@ export function PostComposer({
       setVisibility(post?.visibility ?? "public")
       setImageFile(null)
       setImagePreview(null)
+      setImageError(null)
     }
   }, [open, post])
+
+  function imageErrorMessage(code: PostImageErrorCode): string {
+    if (code === "tooLarge") {
+      const mb = (POST_IMAGE_MAX_BYTES / 1024 / 1024).toFixed(0)
+      return tPosts("errors.imageTooLarge", { max: mb })
+    }
+    if (code === "invalidType") {
+      const types = POST_IMAGE_ALLOWED_TYPES.map((t) => t.replace("image/", "")).join(", ")
+      return tPosts("errors.imageInvalidType", { types })
+    }
+    if (code === "unauthorized") return tPosts("errors.imageUnauthorized")
+    return tPosts("errors.uploadFailed")
+  }
 
   const createPost = useCreatePost()
   const updatePost = useUpdatePost()
@@ -71,8 +95,18 @@ export function PostComposer({
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    if (fileRef.current) fileRef.current.value = ""
     if (!file) return
-    if (!file.type.startsWith("image/")) return
+
+    const code = validatePostImage(file)
+    if (code) {
+      const msg = imageErrorMessage(code)
+      setImageError(msg)
+      toast.error(msg)
+      return
+    }
+
+    setImageError(null)
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
   }
@@ -81,6 +115,7 @@ export function PostComposer({
     setImageFile(null)
     if (imagePreview) URL.revokeObjectURL(imagePreview)
     setImagePreview(null)
+    setImageError(null)
     if (fileRef.current) fileRef.current.value = ""
   }
 
@@ -89,19 +124,23 @@ export function PostComposer({
     if ((!text && !imageFile) || isPending) return
 
     setUploading(true)
+    setImageError(null)
     try {
       let mediaUrl: string | undefined
       if (imageFile) {
-        const { uploadPostImageAction } = await import(
-          "@/features/posts/api/storage"
+        const { uploadPostImage } = await import(
+          "@/features/posts/api/storage-client"
         )
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(imageFile)
-        })
-        mediaUrl = await uploadPostImageAction(base64, user.id)
+        try {
+          mediaUrl = await uploadPostImage(imageFile, user.id)
+        } catch (err) {
+          const code: PostImageErrorCode =
+            err instanceof PostImageError ? err.code : "uploadFailed"
+          const msg = imageErrorMessage(code)
+          setImageError(msg)
+          toast.error(msg)
+          return
+        }
       }
 
       if (isEdit && post) {
@@ -238,13 +277,21 @@ export function PostComposer({
                   </button>
                 </div>
               )}
+
+              {imageError ? (
+                <ErrorAlert
+                  className="mt-3"
+                  message={imageError}
+                  onDismiss={() => setImageError(null)}
+                />
+              ) : null}
             </div>
             <div className="p-4 border-t border-border/40 flex items-center justify-between">
               <div className="flex gap-2">
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/*"
+                  accept={POST_IMAGE_ALLOWED_TYPES.join(",")}
                   className="hidden"
                   onChange={handleFileSelect}
                 />
