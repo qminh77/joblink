@@ -2,6 +2,7 @@ import {
   AtSign,
   Bell,
   MessageCircle,
+  MessageSquare,
   Share2,
   ThumbsUp,
   UserPlus,
@@ -48,6 +49,10 @@ const VISUALS: Record<
     icon: AtSign,
     iconClassName: "text-pink-500 bg-pink-500/10",
   },
+  new_message: {
+    icon: MessageSquare,
+    iconClassName: "text-indigo-500 bg-indigo-500/10",
+  },
 }
 
 const FALLBACK = {
@@ -86,6 +91,17 @@ export function getNotificationVisual(
       return {
         ...base,
         href: "/home",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "new_message":
+      return {
+        ...base,
+        href:
+          payload?.type === item.type
+            ? `/messages?c=${payload.conversationId}`
+            : "/messages",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

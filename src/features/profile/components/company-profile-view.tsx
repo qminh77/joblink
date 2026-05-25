@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
+import { MessageButton } from "@/features/messaging/components/message-button"
 import type { ConnectionRelation } from "@/features/network/types"
 import type { UserPostsPage } from "@/features/posts/types"
 import type { CompanyProfileDetail } from "@/features/profile/types"
@@ -114,11 +115,19 @@ export function CompanyProfileView({
                     </Link>
                   </Button>
                 ) : (
-                  <ConnectButton
-                    relation={relation}
-                    targetUserId={company.user_id}
-                    size="sm"
-                  />
+                  <>
+                    <ConnectButton
+                      relation={relation}
+                      targetUserId={company.user_id}
+                      size="sm"
+                    />
+                    {relation.kind === "accepted" ? (
+                      <MessageButton
+                        targetUserId={company.user_id}
+                        size="sm"
+                      />
+                    ) : null}
+                  </>
                 )}
               </div>
             </div>

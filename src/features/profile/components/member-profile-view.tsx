@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
+import { MessageButton } from "@/features/messaging/components/message-button"
 import type { ConnectionRelation } from "@/features/network/types"
 import type { UserPostsPage } from "@/features/posts/types"
 import { PROFILE_VISIBILITY_LABELS } from "@/features/profile/lib/constants"
@@ -126,11 +127,19 @@ export function MemberProfileView({
                     </Link>
                   </Button>
                 ) : (
-                  <ConnectButton
-                    relation={relation}
-                    targetUserId={profile.user_id}
-                    size="sm"
-                  />
+                  <>
+                    <ConnectButton
+                      relation={relation}
+                      targetUserId={profile.user_id}
+                      size="sm"
+                    />
+                    {relation.kind === "accepted" ? (
+                      <MessageButton
+                        targetUserId={profile.user_id}
+                        size="sm"
+                      />
+                    ) : null}
+                  </>
                 )}
               </div>
             </div>

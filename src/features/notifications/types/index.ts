@@ -39,6 +39,11 @@ export type CommentMentionPayload = ActorRef & {
   excerpt: string
 }
 
+export type NewMessagePayload = ActorRef & {
+  conversationId: number
+  excerpt: string
+}
+
 export type NotificationPayload =
   | ({ type: "connection_request" } & ConnectionRequestPayload)
   | ({ type: "connection_accepted" } & ConnectionAcceptedPayload)
@@ -46,6 +51,7 @@ export type NotificationPayload =
   | ({ type: "post_comment" } & PostCommentPayload)
   | ({ type: "post_share" } & PostSharePayload)
   | ({ type: "comment_mention" } & CommentMentionPayload)
+  | ({ type: "new_message" } & NewMessagePayload)
 
 export type NotificationItem = {
   id: number

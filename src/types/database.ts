@@ -215,6 +215,40 @@ export type NotificationType =
   | "post_comment"
   | "post_share"
   | "comment_mention"
+  | "new_message"
+
+export type ConversationRow = {
+  id: number
+  type: "direct"
+  created_at: string
+  updated_at: string
+}
+
+export type ConversationParticipantRow = {
+  conversation_id: number
+  user_id: number
+  joined_at: string
+  last_read_at: string | null
+}
+
+export type MessageRow = {
+  id: number
+  conversation_id: number
+  sender_id: number
+  content: string | null
+  media: Json | null
+  read_at: string | null
+  created_at: string
+  deleted_at: string | null
+}
+
+export type UserBlockRow = {
+  id: number
+  blocker_id: number
+  blocked_id: number
+  reason: string | null
+  created_at: string
+}
 
 export type NotificationRow = {
   id: number
@@ -361,6 +395,32 @@ export type Database = {
           resolved_at?: string | null
         }
       >
+      conversations: TableDef<
+        ConversationRow,
+        Omit<ConversationRow, "id" | "created_at" | "updated_at" | "type"> & {
+          type?: "direct"
+        }
+      >
+      conversation_participants: TableDef<
+        ConversationParticipantRow,
+        Omit<ConversationParticipantRow, "joined_at" | "last_read_at"> & {
+          last_read_at?: string | null
+        }
+      >
+      messages: TableDef<
+        MessageRow,
+        Omit<MessageRow, "id" | "created_at" | "deleted_at" | "read_at" | "media" | "content"> & {
+          content?: string | null
+          media?: Json | null
+          read_at?: string | null
+        }
+      >
+      user_blocks: TableDef<
+        UserBlockRow,
+        Omit<UserBlockRow, "id" | "created_at" | "reason"> & {
+          reason?: string | null
+        }
+      >
     }
     Views: Record<string, never>
     Functions: {
@@ -386,7 +446,37 @@ export type Database = {
         }
         Returns: Json
       }
+      get_messaging_overview: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      get_unread_conversations_count: {
+        Args: Record<string, never>
+        Returns: number
+      }
+      get_conversation_messages: {
+        Args: {
+          p_conversation_id: number
+          p_before_created_at?: string | null
+          p_before_id?: number | null
+          p_limit?: number
+        }
+        Returns: Json
+      }
+      find_or_create_direct_conversation: {
+        Args: { p_other_user_id: number }
+        Returns: Json
+      }
+      send_message: {
+        Args: { p_conversation_id: number; p_content: string }
+        Returns: Json
+      }
+      mark_conversation_read: {
+        Args: { p_conversation_id: number }
+        Returns: Json
+      }
     }
+
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

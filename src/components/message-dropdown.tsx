@@ -10,38 +10,10 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-
-const recentConversations = [
-  {
-    id: 1,
-    name: "Trần Hoàng",
-    initials: "TH",
-    message: "Chắc chắn rồi, tôi sẽ gửi bạn thông tin chi tiết.",
-    time: "2 phút trước",
-    online: true,
-    unread: 2,
-  },
-  {
-    id: 2,
-    name: "Lê Vy",
-    initials: "LV",
-    message: "Cảm ơn bạn, tôi sẽ xem xét!",
-    time: "1 giờ trước",
-    online: false,
-    unread: 0,
-  },
-  {
-    id: 3,
-    name: "Phạm Minh",
-    initials: "PM",
-    message: "Đã nhận được file rồi, cảm ơn bạn!",
-    time: "30 phút trước",
-    online: true,
-    unread: 0,
-  },
-]
+import { useMessagingOverview } from "@/features/messaging/hooks"
+import { formatRelativeTime, getInitials } from "@/lib/utils/format"
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -53,17 +25,35 @@ const fadeIn = {
   show: { opacity: 1, x: 0 },
 }
 
+const PREVIEW_LIMIT = 6
+
 export function MessageDropdown({
   children,
 }: {
   children: React.ReactNode
 }) {
   const t = useTranslations("messages")
-  const unreadCount = recentConversations.filter((c) => c.unread > 0).length
+  const { data } = useMessagingOverview()
+  // Dropdown chỉ hiển thị các conversation thật (đã có tin), không kèm
+  // placeholder connections — tránh nhiễu cho người đang xem nhanh inbox.
+  const allItems = (data?.items ?? []).filter(
+    (c) => c.conversationId != null,
+  )
+  const items = allItems.slice(0, PREVIEW_LIMIT)
+  const unreadConversations = allItems.filter((c) => c.unreadCount > 0).length
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
+        <span className="relative inline-flex">
+          {children}
+          {unreadConversations > 0 ? (
+            <span className="absolute top-2 right-2 lg:right-3 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center pointer-events-none">
+              {unreadConversations > 99 ? "99+" : unreadConversations}
+            </span>
+          ) : null}
+        </span>
+      </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         sideOffset={10}
@@ -71,73 +61,92 @@ export function MessageDropdown({
       >
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border/30">
           <div>
-            <h3 className="font-headline font-bold text-sm text-foreground">{t("title")}</h3>
-            <p className="text-[11px] text-muted-foreground">{t("dropdown.unreadSummary", { count: unreadCount })}</p>
+            <h3 className="font-headline font-bold text-sm text-foreground">
+              {t("title")}
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              {t("dropdown.unreadSummary", { count: unreadConversations })}
+            </p>
           </div>
           <Button
+            asChild
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-primary"
           >
-            <PenSquare className="w-4 h-4" />
+            <Link href="/network">
+              <PenSquare className="w-4 h-4" />
+            </Link>
           </Button>
         </div>
 
         <div className="max-h-80 overflow-y-auto">
-          <motion.div variants={stagger} initial="hidden" animate="show">
-            {recentConversations.map((conv, index) => (
-              <motion.div key={conv.id} variants={fadeIn}>
-                <Link
-                  href="/messages"
-                  className={`flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
-                    index < recentConversations.length - 1 ? "border-b border-border/10" : ""
-                  } ${conv.unread > 0 ? "bg-primary/[0.02]" : ""}`}
-                >
-                  <div className="relative shrink-0">
-                    <Avatar className="w-10 h-10 rounded-xl">
-
-                      <AvatarFallback className="text-xs font-semibold">
-                        {conv.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    {conv.online && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-background" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h4
-                        className={`text-sm truncate ${
-                          conv.unread > 0
-                            ? "font-bold text-foreground"
-                            : "font-semibold text-foreground"
-                        }`}
-                      >
-                        {conv.name}
-                      </h4>
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {conv.time}
-                      </span>
-                    </div>
-                    <p
-                      className={`text-xs truncate mt-0.5 ${
-                        conv.unread > 0
-                          ? "text-foreground/80 font-medium"
-                          : "text-muted-foreground"
-                      }`}
+          {items.length === 0 ? (
+            <div className="p-6 text-center text-xs text-muted-foreground">
+              {t("dropdown.empty")}
+            </div>
+          ) : (
+            <motion.div variants={stagger} initial="hidden" animate="show">
+              {items.map((conv, index) => {
+                const name = conv.displayName ?? "—"
+                return (
+                  <motion.div key={conv.conversationId} variants={fadeIn}>
+                    <Link
+                      href={`/messages?c=${conv.conversationId ?? ""}`}
+                      className={`flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
+                        index < items.length - 1
+                          ? "border-b border-border/10"
+                          : ""
+                      } ${conv.unreadCount > 0 ? "bg-primary/[0.02]" : ""}`}
                     >
-                      {conv.message}
-                    </p>
-                  </div>
-                  {conv.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
-                      {conv.unread}
-                    </div>
-                  )}
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+                      <div className="relative shrink-0">
+                        <Avatar className="w-10 h-10 rounded-xl">
+                          {conv.avatarUrl ? (
+                            <AvatarImage src={conv.avatarUrl} alt={name} />
+                          ) : null}
+                          <AvatarFallback className="text-xs font-semibold">
+                            {getInitials(name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4
+                            className={`text-sm truncate ${
+                              conv.unreadCount > 0
+                                ? "font-bold text-foreground"
+                                : "font-semibold text-foreground"
+                            }`}
+                          >
+                            {name}
+                          </h4>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {conv.lastCreatedAt
+                              ? formatRelativeTime(conv.lastCreatedAt)
+                              : ""}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-xs truncate mt-0.5 ${
+                            conv.unreadCount > 0
+                              ? "text-foreground/80 font-medium"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {conv.lastContent ?? t("noMessages")}
+                        </p>
+                      </div>
+                      {conv.unreadCount > 0 && (
+                        <div className="w-5 h-5 rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
+                          {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                        </div>
+                      )}
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
         </div>
 
         <Link

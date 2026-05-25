@@ -2,6 +2,7 @@ import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { CurrentUserProvider } from "@/features/auth/components/current-user-provider"
 import type { SessionUserSummary } from "@/features/auth/types"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
+import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
 import { Navbar } from "@/components/navbar"
 
 export default async function MainLayout({
@@ -25,6 +26,7 @@ export default async function MainLayout({
   return (
     <CurrentUserProvider user={sessionUser}>
       <RealtimeNotifications />
+      <RealtimeMessaging />
       <div className="min-h-screen bg-zinc-50/50 dark:bg-background font-body text-foreground pt-16">
         <Navbar />
         <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-24 md:pb-6">

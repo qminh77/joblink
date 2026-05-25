@@ -571,6 +571,7 @@
       "post_comment": "commented on your post",
       "post_share": "shared your post",
       "comment_mention": "mentioned you in a comment",
+      "new_message": "sent you a message",
       "unknown": "has new activity"
     },
     "gone": "The notification has changed",
@@ -602,9 +603,34 @@
     "inputPlaceholder": "Type a message...",
     "emptyTitle": "Your messages",
     "emptyDesc": "Select a conversation to start chatting, or search for friends to send a new message.",
+    "send": "Send",
+    "listEmpty": "No conversations yet",
+    "noMessages": "No messages yet",
+    "startConversation": "Start the conversation",
+    "findConnections": "Find new connections",
+    "button": {
+      "message": "Message",
+      "opening": "Opening..."
+    },
     "dropdown": {
       "unreadSummary": "{count} unread conversations",
-      "viewAll": "View all messages"
+      "viewAll": "View all messages",
+      "empty": "No conversations yet"
+    },
+    "errors": {
+      "invalidConversation": "Invalid conversation",
+      "invalidUser": "Invalid user",
+      "emptyContent": "Message cannot be empty",
+      "tooLong": "Message is too long (max 4000 characters)",
+      "notParticipant": "You are not part of this conversation",
+      "notConnected": "You are not connected yet — send a request first.",
+      "cannotMessageSelf": "You cannot message yourself",
+      "blocked": "Conversation is blocked",
+      "blockedByMe": "You have blocked this user",
+      "blockedMe": "You have been blocked by this user",
+      "rateLimited": "You are sending too fast, please try again shortly",
+      "unauthorized": "Please sign in again",
+      "unknown": "Something went wrong, please try again"
     }
   }
 }

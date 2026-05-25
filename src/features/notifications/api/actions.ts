@@ -68,6 +68,15 @@ export async function verifyNotificationTargetAction(
         .maybeSingle()
       return data != null
     }
+    case "new_message": {
+      if (!payload || payload.type !== item.type) return false
+      const { data } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", payload.conversationId)
+        .maybeSingle()
+      return data != null
+    }
     default:
       return true
   }
