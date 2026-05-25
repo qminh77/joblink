@@ -15,30 +15,26 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
   const obj = value as Record<string, unknown>
 
   if (Array.isArray(obj.items)) {
-    return (obj.items as unknown[])
-      .map((raw) => {
-        if (!raw || typeof raw !== "object") return null
-        const r = raw as Record<string, unknown>
-        const url = typeof r.url === "string" ? r.url : ""
-        if (!url) return null
-        return {
-          url,
-          width: typeof r.width === "number" ? r.width : undefined,
-          height: typeof r.height === "number" ? r.height : undefined,
-        }
-      })
-      .filter((x): x is MediaItem => x !== null)
+    const out: MediaItem[] = []
+    for (const raw of obj.items as unknown[]) {
+      const item = toMediaItem(raw)
+      if (item) out.push(item)
+    }
+    return out
   }
 
-  if (typeof obj.url === "string" && obj.url.length > 0) {
-    return [
-      {
-        url: obj.url,
-        width: typeof obj.width === "number" ? obj.width : undefined,
-        height: typeof obj.height === "number" ? obj.height : undefined,
-      },
-    ]
-  }
+  const fromLegacy = toMediaItem(obj)
+  return fromLegacy ? [fromLegacy] : []
+}
 
-  return []
+function toMediaItem(raw: unknown): MediaItem | null {
+  if (!raw || typeof raw !== "object") return null
+  const r = raw as Record<string, unknown>
+  const url = typeof r.url === "string" ? r.url : ""
+  if (!url) return null
+  // Build từng key có giá trị — tránh `width: undefined` vướng strict optional.
+  const item: MediaItem = { url }
+  if (typeof r.width === "number") item.width = r.width
+  if (typeof r.height === "number") item.height = r.height
+  return item
 }
