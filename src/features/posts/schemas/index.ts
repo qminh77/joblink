@@ -12,6 +12,8 @@ const REACTION_TYPES = [
   "funny",
 ] as const
 
+const MAX_MEDIA_ITEMS = 10
+
 export function createPostInputSchema(t: Translator) {
   return z
     .object({
@@ -21,9 +23,19 @@ export function createPostInputSchema(t: Translator) {
         .max(3000, t("contentMax"))
         .default(""),
       visibility: z.enum(POST_VISIBILITY).default("public"),
-      mediaUrl: z.string().url().optional(),
+      mediaItems: z
+        .array(
+          z.object({
+            url: z.string().url(),
+            width: z.number().int().positive().optional(),
+            height: z.number().int().positive().optional(),
+          }),
+        )
+        .max(MAX_MEDIA_ITEMS, t("tooManyImages"))
+        .optional()
+        .default([]),
     })
-    .refine((d) => d.content.length > 0 || !!d.mediaUrl, {
+    .refine((d) => d.content.length > 0 || d.mediaItems.length > 0, {
       message: t("contentOrMediaRequired"),
       path: ["content"],
     })

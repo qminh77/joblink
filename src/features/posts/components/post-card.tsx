@@ -29,9 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,8 +44,10 @@ import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import { useCreateComment, useDeletePost, useToggleReaction } from "../hooks"
 import type { FeedPost } from "../types"
+import { CommentInput } from "./comment-input"
 import { CommentsThread } from "./comments-thread"
 import { ImageLightbox } from "@/components/ui/image-lightbox"
+import type { MediaItem } from "../lib/media"
 import { PostComposer } from "./post-composer"
 import { PostMediaView } from "./post-media-view"
 
@@ -72,14 +72,15 @@ export function PostCard({ post, onShare, onSend }: Props) {
   const tFeed = useTranslations("feed")
   const tPosts = useTranslations("posts")
   const user = useCurrentUser()
-  const userInitials = getInitials(user.displayName, "JL")
 
   const [open, setOpen] = useState(false)
-  const [comment, setComment] = useState("")
   const [showReport, setShowReport] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<{
+    items: MediaItem[]
+    index: number
+  } | null>(null)
 
   const toggle = useToggleReaction()
   const createComment = useCreateComment()
@@ -87,14 +88,6 @@ export function PostCard({ post, onShare, onSend }: Props) {
 
   const isOwnPost = user.id === post.authorId
   const authorInitials = getInitials(post.author.displayName, "JL")
-
-  async function submitComment(e: React.FormEvent) {
-    e.preventDefault()
-    const text = comment.trim()
-    if (!text) return
-    setComment("")
-    createComment.mutate({ postId: post.id, content: text })
-  }
 
   return (
     <motion.div variants={fadeUp}>
@@ -230,7 +223,10 @@ export function PostCard({ post, onShare, onSend }: Props) {
             </div>
           ) : null}
 
-          <PostMediaView media={post.media} onOpen={setLightboxUrl} />
+          <PostMediaView
+            media={post.media}
+            onOpen={(items, index) => setLightbox({ items, index })}
+          />
         </div>
 
         <div className="px-3 sm:px-4 py-3 border-b border-t border-border/30 flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">
@@ -308,31 +304,12 @@ export function PostCard({ post, onShare, onSend }: Props) {
 
         {open ? (
           <div className="p-4 bg-muted/10 border-t border-border/30 space-y-3">
-            <form onSubmit={submitComment} className="flex gap-3">
-              <Avatar className="w-8 h-8">
-                {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
-                <AvatarFallback>{userInitials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 flex items-center gap-1.5">
-                <Input
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder={tFeed("writeComment")}
-                  className="h-9 rounded-full text-[13px]"
-                />
-                <Button
-                  type="submit"
-                  size="icon-sm"
-                  variant="ghost"
-                  disabled={!comment.trim() || createComment.isPending}
-                  aria-label={tFeed("send")}
-                  className="text-primary shrink-0"
-                >
-                  <Send />
-                </Button>
-              </div>
-            </form>
+            <CommentInput
+              isSubmitting={createComment.isPending}
+              onSubmit={(text) =>
+                createComment.mutate({ postId: post.id, content: text })
+              }
+            />
             <CommentsThread postId={post.id} enabled={open} />
           </div>
         ) : null}
@@ -376,10 +353,11 @@ export function PostCard({ post, onShare, onSend }: Props) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {lightboxUrl ? (
+      {lightbox ? (
         <ImageLightbox
-          src={lightboxUrl}
-          onClose={() => setLightboxUrl(null)}
+          items={lightbox.items}
+          initialIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
         />
       ) : null}
     </motion.div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Users, X } from "lucide-react"
+import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Plus, Users, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -20,6 +20,7 @@ import { getInitials } from "@/lib/utils/format"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
 import {
+  MAX_POST_IMAGES,
   POST_IMAGE_ALLOWED_TYPES,
   POST_IMAGE_MAX_BYTES,
   PostImageError,
@@ -28,6 +29,92 @@ import {
 } from "../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../hooks"
 import type { FeedPost } from "../types"
+
+type PendingImage = {
+  id: string
+  file: File
+  previewUrl: string
+}
+
+function ImagePreviewGrid({
+  images,
+  onRemove,
+  onAddMore,
+  addMoreLabel,
+}: {
+  images: PendingImage[]
+  onRemove: (id: string) => void
+  onAddMore?: () => void
+  addMoreLabel: string
+}) {
+  // 1 ảnh: hiển thị full-size như trước; 2+: grid 3 cột, ô vuông.
+  if (images.length === 1) {
+    const img = images[0]!
+    return (
+      <div className="relative mt-3 rounded-xl overflow-hidden border border-border/30">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img.previewUrl}
+          alt=""
+          className="w-full max-h-64 object-contain bg-muted/20"
+        />
+        <button
+          type="button"
+          onClick={() => onRemove(img.id)}
+          className="absolute top-2 right-2 p-1 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="remove"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        {onAddMore ? (
+          <button
+            type="button"
+            onClick={onAddMore}
+            className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur-sm text-foreground hover:bg-background transition-colors text-[12px] font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" /> {addMoreLabel}
+          </button>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 grid grid-cols-3 gap-1.5">
+      {images.map((img) => (
+        <div
+          key={img.id}
+          className="relative aspect-square rounded-lg overflow-hidden border border-border/30 bg-muted/20"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.previewUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <button
+            type="button"
+            onClick={() => onRemove(img.id)}
+            className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="remove"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ))}
+      {onAddMore ? (
+        <button
+          type="button"
+          onClick={onAddMore}
+          className="aspect-square rounded-lg border border-dashed border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors flex flex-col items-center justify-center gap-1 text-[11px]"
+        >
+          <Plus className="w-5 h-5" />
+          <span>{addMoreLabel}</span>
+        </button>
+      ) : null}
+    </div>
+  )
+}
 
 type Visibility = "public" | "connections" | "private"
 
@@ -58,8 +145,7 @@ export function PostComposer({
   const [visibility, setVisibility] = useState<Visibility>(
     post?.visibility ?? "public",
   )
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [images, setImages] = useState<PendingImage[]>([])
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -69,11 +155,21 @@ export function PostComposer({
     if (open) {
       setContent(post?.content ?? "")
       setVisibility(post?.visibility ?? "public")
-      setImageFile(null)
-      setImagePreview(null)
+      setImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+        return []
+      })
       setImageError(null)
     }
   }, [open, post])
+
+  // Cleanup blob URLs khi component unmount.
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function imageErrorMessage(code: PostImageErrorCode): string {
     if (code === "tooLarge") {
@@ -94,45 +190,90 @@ export function PostComposer({
   const isPending = mutation.isPending || uploading
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const picked = Array.from(e.target.files ?? [])
     if (fileRef.current) fileRef.current.value = ""
-    if (!file) return
+    if (picked.length === 0) return
 
-    const code = validatePostImage(file)
-    if (code) {
-      const msg = imageErrorMessage(code)
+    const remaining = MAX_POST_IMAGES - images.length
+    if (remaining <= 0) {
+      const msg = tPosts("errors.tooManyImages", { max: MAX_POST_IMAGES })
       setImageError(msg)
       toast.error(msg)
       return
     }
 
-    setImageError(null)
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    const accepted: PendingImage[] = []
+    let rejected: PostImageErrorCode | null = null
+    let truncated = false
+
+    for (const file of picked) {
+      if (accepted.length >= remaining) {
+        truncated = true
+        break
+      }
+      const code = validatePostImage(file)
+      if (code) {
+        rejected = code
+        continue
+      }
+      accepted.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })
+    }
+
+    if (accepted.length > 0) {
+      setImages((prev) => [...prev, ...accepted])
+      setImageError(null)
+    }
+    if (truncated) {
+      const msg = tPosts("errors.tooManyImages", { max: MAX_POST_IMAGES })
+      toast.warning(msg)
+    }
+    if (rejected) {
+      const msg = imageErrorMessage(rejected)
+      toast.error(msg)
+      if (accepted.length === 0) setImageError(msg)
+    }
   }
 
-  function removeImage() {
-    setImageFile(null)
-    if (imagePreview) URL.revokeObjectURL(imagePreview)
-    setImagePreview(null)
+  function removeImageAt(id: string) {
+    setImages((prev) => {
+      const found = prev.find((img) => img.id === id)
+      if (found) URL.revokeObjectURL(found.previewUrl)
+      return prev.filter((img) => img.id !== id)
+    })
+    setImageError(null)
+  }
+
+  function removeAllImages() {
+    setImages((prev) => {
+      prev.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+      return []
+    })
     setImageError(null)
     if (fileRef.current) fileRef.current.value = ""
   }
 
   async function submit() {
     const text = content.trim()
-    if ((!text && !imageFile) || isPending) return
+    const hasImages = images.length > 0
+    if ((!text && !hasImages) || isPending) return
 
     setUploading(true)
     setImageError(null)
     try {
-      let mediaUrl: string | undefined
-      if (imageFile) {
-        const { uploadPostImage } = await import(
+      let mediaItems: { url: string; width: number; height: number }[] = []
+      if (hasImages) {
+        const { uploadPostImages } = await import(
           "@/features/posts/api/storage-client"
         )
         try {
-          mediaUrl = await uploadPostImage(imageFile, user.id)
+          mediaItems = await uploadPostImages(
+            images.map((img) => img.file),
+            user.id,
+          )
         } catch (err) {
           const code: PostImageErrorCode =
             err instanceof PostImageError ? err.code : "uploadFailed"
@@ -145,7 +286,9 @@ export function PostComposer({
 
       if (isEdit && post) {
         const unchanged =
-          text === post.content && visibility === post.visibility && !mediaUrl
+          text === post.content &&
+          visibility === post.visibility &&
+          mediaItems.length === 0
         if (unchanged) {
           onClose()
           return
@@ -159,13 +302,13 @@ export function PostComposer({
         await createPost.mutateAsync({
           content: text,
           visibility,
-          mediaUrl,
+          mediaItems,
         })
       }
 
       setContent("")
       setVisibility("public")
-      removeImage()
+      removeAllImages()
       onClose()
     } finally {
       setUploading(false)
@@ -261,22 +404,18 @@ export function PostComposer({
                 className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
 
-              {imagePreview && (
-                <div className="relative mt-3 rounded-xl overflow-hidden border border-border/30">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full max-h-64 object-contain bg-muted/20"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+              {images.length > 0 ? (
+                <ImagePreviewGrid
+                  images={images}
+                  onRemove={removeImageAt}
+                  onAddMore={
+                    images.length < MAX_POST_IMAGES
+                      ? () => fileRef.current?.click()
+                      : undefined
+                  }
+                  addMoreLabel={tPosts("addMore")}
+                />
+              ) : null}
 
               {imageError ? (
                 <ErrorAlert
@@ -291,6 +430,7 @@ export function PostComposer({
                 <input
                   ref={fileRef}
                   type="file"
+                  multiple
                   accept={POST_IMAGE_ALLOWED_TYPES.join(",")}
                   className="hidden"
                   onChange={handleFileSelect}
@@ -299,11 +439,12 @@ export function PostComposer({
                   type="button"
                   aria-label={tHome("photoVideo")}
                   onClick={() => fileRef.current?.click()}
+                  disabled={images.length >= MAX_POST_IMAGES}
                   className={`p-2 rounded-xl transition-colors ${
-                    imageFile
+                    images.length > 0
                       ? "text-blue-500 bg-blue-500/10"
                       : "text-blue-500 hover:bg-blue-500/10"
-                  }`}
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <ImageIcon className="w-5 h-5" />
                 </button>
@@ -317,7 +458,7 @@ export function PostComposer({
               </div>
               <Button
                 onClick={submit}
-                disabled={(!content.trim() && !imageFile) || isPending}
+                disabled={(!content.trim() && images.length === 0) || isPending}
                 className="px-6 rounded-xl font-semibold"
               >
                 {uploading ? (

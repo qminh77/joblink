@@ -40,6 +40,7 @@
     "createTitle": "Create post",
     "whatsOnYourMind": "What's on your mind?",
     "publish": "Post",
+    "addMore": "Add photo",
     "postCta": "Post",
     "createMenuLabel": "Create new content",
     "createPost": "New post",
@@ -92,6 +93,7 @@
       "contentRequired": "Please enter some content",
       "contentOrMediaRequired": "Please enter content or attach an image",
       "contentMax": "Content is too long",
+      "tooManyImages": "A post can include at most {max} images",
       "imageTooLarge": "Image exceeds the size limit ({max} MB)",
       "imageInvalidType": "Unsupported image format. Allowed: {types}",
       "imageUnauthorized": "Your session has expired, please sign in again",
@@ -534,6 +536,12 @@
     "noComments": "No comments yet",
     "deleteComment": "Delete comment",
     "deleteCommentSuccess": "Comment deleted",
+    "reply": "Reply",
+    "cancelReply": "Cancel",
+    "replyingTo": "Replying to",
+    "writeReplyTo": "Reply to {name}…",
+    "mentionSearching": "Searching…",
+    "mentionNoResults": "No users found",
     "viewMoreComments": "View {count} more comments"
   },
   "notifications": {
@@ -562,6 +570,7 @@
       "post_reaction": "reacted to your post",
       "post_comment": "commented on your post",
       "post_share": "shared your post",
+      "comment_mention": "mentioned you in a comment",
       "unknown": "has new activity"
     },
     "gone": "The notification has changed",

@@ -18,6 +18,10 @@ import {
   createShareInputSchema,
 } from "../schemas"
 import {
+  extractMentionedUserIds,
+  mentionsToPlainText,
+} from "../lib/mentions"
+import {
   loadFeedPage,
   loadHomeStats,
   loadPostComments,
@@ -30,6 +34,13 @@ import type {
   HomeFeedStats,
   UserPostsPage,
 } from "../types"
+
+export type MentionableUser = {
+  userId: number
+  displayName: string
+  avatarUrl: string | null
+  headline: string | null
+}
 
 type ActionResult<T = void> =
   | { ok: true; data: T }
@@ -57,6 +68,17 @@ async function getPostAuthor(postId: number): Promise<number | null> {
     .is("deleted_at", null)
     .maybeSingle<{ author_id: number }>()
   return data?.author_id ?? null
+}
+
+async function getCommentAuthor(commentId: number): Promise<number | null> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("post_comments")
+    .select("user_id")
+    .eq("id", commentId)
+    .is("deleted_at", null)
+    .maybeSingle<{ user_id: number }>()
+  return data?.user_id ?? null
 }
 
 export async function getFeedPageAction(
@@ -94,7 +116,7 @@ export async function getPostCommentsAction(
 export async function createPostAction(input: {
   content: string
   visibility?: "public" | "connections" | "private"
-  mediaUrl?: string
+  mediaItems?: { url: string; width?: number; height?: number }[]
 }): Promise<ActionResult<FeedPost>> {
   const te = await getTranslations("posts.errors")
   const parsed = createPostInputSchema(te).safeParse(input)
@@ -105,15 +127,18 @@ export async function createPostAction(input: {
   const current = await requireCurrentUser()
   const supabase = await createClient()
 
+  const hasMedia = parsed.data.mediaItems.length > 0
+  const mediaPayload = hasMedia
+    ? { type: "image", items: parsed.data.mediaItems }
+    : null
+
   const { data: row, error } = await supabase
     .from("posts")
     .insert({
       author_id: current.appUser.id,
       content: parsed.data.content,
-      post_type: parsed.data.mediaUrl ? "image" : "text",
-      media: parsed.data.mediaUrl
-        ? { url: parsed.data.mediaUrl, type: "image" }
-        : null,
+      post_type: hasMedia ? "image" : "text",
+      media: mediaPayload,
       visibility: parsed.data.visibility,
     })
     .select("id, author_id, content, post_type, media, visibility, created_at")
@@ -257,24 +282,110 @@ export async function createCommentAction(input: {
     },
   }
 
-  const authorId = await getPostAuthor(parsed.data.postId)
-  if (authorId && authorId !== current.appUser.id) {
-    await createNotification({
-      userId: authorId,
-      type: "post_comment",
-      payload: {
-        type: "post_comment",
-        userId: current.appUser.id,
-        displayName: current.profile.displayName,
-        avatarUrl: current.profile.avatarUrl,
-        postId: parsed.data.postId,
-        commentId: data.id,
-        excerpt: excerpt(data.content),
-      },
-    })
+  const me = current.appUser.id
+  const previewExcerpt = excerpt(mentionsToPlainText(data.content))
+
+  // Bước 1: notify post author + parent comment author (nếu là reply).
+  const commentTargets = new Set<number>()
+  const postAuthorId = await getPostAuthor(parsed.data.postId)
+  if (postAuthorId && postAuthorId !== me) commentTargets.add(postAuthorId)
+  if (parsed.data.parentId) {
+    const parentAuthorId = await getCommentAuthor(parsed.data.parentId)
+    if (parentAuthorId && parentAuthorId !== me) commentTargets.add(parentAuthorId)
   }
 
+  const actor = {
+    userId: me,
+    displayName: current.profile.displayName,
+    avatarUrl: current.profile.avatarUrl,
+    postId: parsed.data.postId,
+    commentId: data.id,
+    excerpt: previewExcerpt,
+  }
+
+  // Bước 2: notify mention — chỉ gửi cho user chưa nằm trong commentTargets,
+  // tránh 1 người nhận trùng 2 noti cho cùng 1 comment.
+  const mentionedIds = extractMentionedUserIds(data.content)
+  const mentionTargets = new Set<number>()
+  for (const id of mentionedIds) {
+    if (id === me) continue
+    if (commentTargets.has(id)) continue
+    mentionTargets.add(id)
+  }
+
+  await Promise.all([
+    ...Array.from(commentTargets).map((userId) =>
+      createNotification({
+        userId,
+        type: "post_comment",
+        payload: { type: "post_comment", ...actor },
+      }),
+    ),
+    ...Array.from(mentionTargets).map((userId) =>
+      createNotification({
+        userId,
+        type: "comment_mention",
+        payload: { type: "comment_mention", ...actor },
+      }),
+    ),
+  ])
+
   return ok({ comment })
+}
+
+export async function searchMentionableUsersAction(
+  query: string,
+  limit = 8,
+): Promise<MentionableUser[]> {
+  const q = query.trim()
+  if (q.length === 0) return []
+
+  await requireCurrentUser()
+  const admin = createAdminClient()
+  const like = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`
+
+  const [memberRes, companyRes] = await Promise.all([
+    admin
+      .from("member_profiles")
+      .select("user_id, full_name, avatar_url, headline")
+      .ilike("full_name", like)
+      .is("deleted_at", null)
+      .limit(limit),
+    admin
+      .from("company_profiles")
+      .select("user_id, name, logo_url, industry")
+      .ilike("name", like)
+      .is("deleted_at", null)
+      .limit(limit),
+  ])
+
+  const out: MentionableUser[] = []
+  for (const m of memberRes.data ?? []) {
+    if (!m.full_name) continue
+    out.push({
+      userId: m.user_id,
+      displayName: m.full_name,
+      avatarUrl: m.avatar_url,
+      headline: m.headline,
+    })
+  }
+  for (const c of companyRes.data ?? []) {
+    if (!c.name) continue
+    out.push({
+      userId: c.user_id,
+      displayName: c.name,
+      avatarUrl: c.logo_url,
+      headline: c.industry,
+    })
+  }
+  // Sort theo độ khớp prefix > rồi đến substring; ngắt ở `limit`.
+  const ql = q.toLowerCase()
+  out.sort((a, b) => {
+    const ai = a.displayName.toLowerCase().indexOf(ql)
+    const bi = b.displayName.toLowerCase().indexOf(ql)
+    return ai - bi
+  })
+  return out.slice(0, limit)
 }
 
 export async function deleteCommentAction(

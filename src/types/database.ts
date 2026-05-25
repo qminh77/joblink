@@ -214,6 +214,7 @@ export type NotificationType =
   | "post_reaction"
   | "post_comment"
   | "post_share"
+  | "comment_mention"
 
 export type NotificationRow = {
   id: number

@@ -33,12 +33,19 @@ export type PostSharePayload = ActorRef & {
   excerpt: string | null
 }
 
+export type CommentMentionPayload = ActorRef & {
+  postId: number
+  commentId: number
+  excerpt: string
+}
+
 export type NotificationPayload =
   | ({ type: "connection_request" } & ConnectionRequestPayload)
   | ({ type: "connection_accepted" } & ConnectionAcceptedPayload)
   | ({ type: "post_reaction" } & PostReactionPayload)
   | ({ type: "post_comment" } & PostCommentPayload)
   | ({ type: "post_share" } & PostSharePayload)
+  | ({ type: "comment_mention" } & CommentMentionPayload)
 
 export type NotificationItem = {
   id: number

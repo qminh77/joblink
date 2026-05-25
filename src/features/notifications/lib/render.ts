@@ -1,4 +1,5 @@
 import {
+  AtSign,
   Bell,
   MessageCircle,
   Share2,
@@ -43,6 +44,10 @@ const VISUALS: Record<
     icon: Share2,
     iconClassName: "text-sky-500 bg-sky-500/10",
   },
+  comment_mention: {
+    icon: AtSign,
+    iconClassName: "text-pink-500 bg-pink-500/10",
+  },
 }
 
 const FALLBACK = {
@@ -77,6 +82,7 @@ export function getNotificationVisual(
     case "post_reaction":
     case "post_comment":
     case "post_share":
+    case "comment_mention":
       return {
         ...base,
         href: "/home",

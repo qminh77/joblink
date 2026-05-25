@@ -40,6 +40,7 @@
     "createTitle": "Tạo bài viết",
     "whatsOnYourMind": "Bạn đang nghĩ gì?",
     "publish": "Đăng",
+    "addMore": "Thêm ảnh",
     "postCta": "Đăng tin",
     "createMenuLabel": "Tạo nội dung mới",
     "createPost": "Đăng bài viết",
@@ -92,6 +93,7 @@
       "contentRequired": "Vui lòng nhập nội dung",
       "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
       "contentMax": "Nội dung quá dài",
+      "tooManyImages": "Mỗi bài chỉ được tối đa {max} ảnh",
       "imageTooLarge": "Ảnh vượt quá dung lượng cho phép ({max} MB)",
       "imageInvalidType": "Định dạng ảnh không được hỗ trợ. Chấp nhận: {types}",
       "imageUnauthorized": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
@@ -534,6 +536,12 @@
     "noComments": "Chưa có bình luận nào",
     "deleteComment": "Xoá bình luận",
     "deleteCommentSuccess": "Đã xoá bình luận",
+    "reply": "Trả lời",
+    "cancelReply": "Huỷ",
+    "replyingTo": "Đang trả lời",
+    "writeReplyTo": "Trả lời {name}…",
+    "mentionSearching": "Đang tìm…",
+    "mentionNoResults": "Không tìm thấy người dùng",
     "viewMoreComments": "Xem thêm {count} bình luận"
   },
   "notifications": {
@@ -562,6 +570,7 @@
       "post_reaction": "đã bày tỏ cảm xúc về bài viết của bạn",
       "post_comment": "đã bình luận bài viết của bạn",
       "post_share": "đã chia sẻ bài viết của bạn",
+      "comment_mention": "đã nhắc đến bạn trong một bình luận",
       "unknown": "có hoạt động mới"
     },
     "gone": "Thông báo đã thay đổi",

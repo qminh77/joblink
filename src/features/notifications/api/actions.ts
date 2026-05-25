@@ -36,7 +36,8 @@ export async function verifyNotificationTargetAction(
   switch (item.type) {
     case "post_reaction":
     case "post_comment":
-    case "post_share": {
+    case "post_share":
+    case "comment_mention": {
       if (!payload || payload.type !== item.type) return false
       const { data } = await supabase
         .from("posts")
