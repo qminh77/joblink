@@ -44,15 +44,41 @@ export function createPostInputSchema(t: Translator) {
 export type PostInput = z.infer<ReturnType<typeof createPostInputSchema>>
 
 export function createPostUpdateSchema(t: Translator) {
-  return z.object({
-    postId: z.number({ error: t("invalidPost") }).int().positive(t("invalidPost")),
-    content: z
-      .string({ error: t("contentRequired") })
-      .trim()
-      .min(1, t("contentRequired"))
-      .max(3000, t("contentMax")),
-    visibility: z.enum(POST_VISIBILITY),
-  })
+  return z
+    .object({
+      postId: z
+        .number({ error: t("invalidPost") })
+        .int()
+        .positive(t("invalidPost")),
+      content: z
+        .string({ error: t("contentRequired") })
+        .trim()
+        .max(3000, t("contentMax"))
+        .default(""),
+      visibility: z.enum(POST_VISIBILITY),
+      // undefined → giữ nguyên ảnh hiện tại; array (kể cả rỗng) → thay thế.
+      mediaItems: z
+        .array(
+          z.object({
+            url: z.string().url(),
+            width: z.number().int().positive().optional(),
+            height: z.number().int().positive().optional(),
+          }),
+        )
+        .max(MAX_MEDIA_ITEMS, t("tooManyImages"))
+        .optional(),
+    })
+    .refine(
+      (d) => {
+        // Khi caller chủ động set mediaItems (mảng) → cần content HOẶC media.
+        if (d.mediaItems !== undefined) {
+          return d.content.length > 0 || d.mediaItems.length > 0
+        }
+        // Không đụng media → vẫn cần content (vì không biết media cũ có không).
+        return d.content.length > 0
+      },
+      { message: t("contentOrMediaRequired"), path: ["content"] },
+    )
 }
 
 export type PostUpdateInput = z.infer<ReturnType<typeof createPostUpdateSchema>>

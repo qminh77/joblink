@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Link as LinkIcon, Share2, X } from "lucide-react"
@@ -10,25 +11,33 @@ import { modalContent, modalOverlay } from "@/lib/animations"
 import { useSharePost } from "../hooks"
 import type { FeedPost } from "../types"
 
-export function ShareModal({
+export function ShareModal(props: { post: FeedPost | null; onClose: () => void }) {
+  // Remount khi post thay đổi → state comment tự reset, không cần useEffect.
+  if (!props.post) return <AnimatePresence />
+  return <ShareModalInner key={props.post.id} post={props.post} onClose={props.onClose} />
+}
+
+function ShareModalInner({
   post,
   onClose,
 }: {
-  post: FeedPost | null
+  post: FeedPost
   onClose: () => void
 }) {
   const tPosts = useTranslations("posts")
   const share = useSharePost()
-  const open = post != null
+  const [comment, setComment] = useState("")
 
   async function handleShareToFeed() {
-    if (!post || share.isPending) return
-    await share.mutateAsync({ postId: post.id })
+    if (share.isPending) return
+    await share.mutateAsync({
+      postId: post.id,
+      commentContent: comment.trim() || null,
+    })
     onClose()
   }
 
   async function handleCopyLink() {
-    if (!post) return
     const url = `${window.location.origin}/posts/${post.id}`
     try {
       await navigator.clipboard.writeText(url)
@@ -41,8 +50,7 @@ export function ShareModal({
 
   return (
     <AnimatePresence>
-      {open ? (
-        <motion.div
+      <motion.div
           key="share-overlay"
           variants={modalOverlay}
           initial="hidden"
@@ -71,6 +79,16 @@ export function ShareModal({
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+            <div className="px-4 pt-3">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={tPosts("shareCommentPlaceholder")}
+                rows={2}
+                className="w-full text-sm bg-muted/40 border border-border/40 rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                disabled={share.isPending}
+              />
             </div>
             <div className="p-2 flex flex-col gap-1">
               <button
@@ -113,7 +131,6 @@ export function ShareModal({
             </div>
           </motion.div>
         </motion.div>
-      ) : null}
     </AnimatePresence>
   )
 }

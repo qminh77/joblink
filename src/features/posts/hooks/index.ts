@@ -209,6 +209,7 @@ export function useUpdatePost() {
       postId: number
       content: string
       visibility: "public" | "connections" | "private"
+      mediaItems?: { url: string; width?: number; height?: number }[]
     }) => {
       const result = await updatePostAction(input)
       if (!result.ok) throw new Error(result.error)
@@ -219,6 +220,8 @@ export function useUpdatePost() {
         ...p,
         content: updated.content,
         visibility: updated.visibility,
+        media: updated.media,
+        postType: updated.postType,
       }))
       toast.success(t("updateSuccess"))
     },
@@ -328,6 +331,7 @@ export function useDeleteComment() {
 
 export function useSharePost() {
   const qc = useQueryClient()
+  const prepend = usePrependPost()
   const t = useTranslations("posts")
   return useMutation({
     mutationFn: async (input: {
@@ -338,11 +342,18 @@ export function useSharePost() {
       if (!result.ok) throw new Error(result.error)
       return result.data
     },
-    onSuccess: ({ postId }) => {
-      applyToAllPostCaches(qc, postId, (p) => ({
-        ...p,
-        shareCount: p.shareCount + 1,
-      }))
+    onSuccess: ({ post }) => {
+      // Bump shareCount của post gốc trên tất cả các cache.
+      const media = post.media as { originalPostId?: number } | null
+      const originalId = media?.originalPostId
+      if (typeof originalId === "number") {
+        applyToAllPostCaches(qc, originalId, (p) => ({
+          ...p,
+          shareCount: p.shareCount + 1,
+        }))
+      }
+      // Prepend bài share (1 post thật) vào feed + profile của người chia sẻ.
+      prepend(post)
       toast.success(t("shareSuccess"))
     },
     onError: (e: Error) => toast.error(e.message),

@@ -28,6 +28,7 @@ import {
   type PostImageErrorCode,
 } from "../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../hooks"
+import { readMediaItems, readSharedOriginal } from "../lib/media"
 import type { FeedPost } from "../types"
 
 type PendingImage = {
@@ -36,13 +37,22 @@ type PendingImage = {
   previewUrl: string
 }
 
+type KeptImage = {
+  id: string
+  url: string
+  width?: number
+  height?: number
+}
+
+type PreviewImage = { id: string; previewUrl: string }
+
 function ImagePreviewGrid({
   images,
   onRemove,
   onAddMore,
   addMoreLabel,
 }: {
-  images: PendingImage[]
+  images: PreviewImage[]
   onRemove: (id: string) => void
   onAddMore?: () => void
   addMoreLabel: string
@@ -140,12 +150,14 @@ export function PostComposer({
   const userInitials = getInitials(user.displayName, "JL")
 
   const isEdit = post != null
+  const isSharedPost = post != null && readSharedOriginal(post.media) != null
 
   const [content, setContent] = useState(post?.content ?? "")
   const [visibility, setVisibility] = useState<Visibility>(
     post?.visibility ?? "public",
   )
   const [images, setImages] = useState<PendingImage[]>([])
+  const [keptImages, setKeptImages] = useState<KeptImage[]>([])
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -159,9 +171,26 @@ export function PostComposer({
         prev.forEach((img) => URL.revokeObjectURL(img.previewUrl))
         return []
       })
+      // Pre-load các ảnh hiện có của bài viết để có thể giữ/xoá khi edit.
+      // Bài share (media = { type: "shared", ... }) thì không có ảnh để edit.
+      if (post && !readSharedOriginal(post.media)) {
+        const items = readMediaItems(post.media)
+        setKeptImages(
+          items.map((it, i) => ({
+            id: `kept-${i}-${it.url}`,
+            url: it.url,
+            ...(it.width !== undefined ? { width: it.width } : {}),
+            ...(it.height !== undefined ? { height: it.height } : {}),
+          })),
+        )
+      } else {
+        setKeptImages([])
+      }
       setImageError(null)
     }
   }, [open, post])
+
+  const totalImages = keptImages.length + images.length
 
   // Cleanup blob URLs khi component unmount.
   useEffect(() => {
@@ -194,7 +223,7 @@ export function PostComposer({
     if (fileRef.current) fileRef.current.value = ""
     if (picked.length === 0) return
 
-    const remaining = MAX_POST_IMAGES - images.length
+    const remaining = MAX_POST_IMAGES - keptImages.length - images.length
     if (remaining <= 0) {
       const msg = tPosts("errors.tooManyImages", { max: MAX_POST_IMAGES })
       setImageError(msg)
@@ -239,6 +268,11 @@ export function PostComposer({
   }
 
   function removeImageAt(id: string) {
+    if (id.startsWith("kept-")) {
+      setKeptImages((prev) => prev.filter((img) => img.id !== id))
+      setImageError(null)
+      return
+    }
     setImages((prev) => {
       const found = prev.find((img) => img.id === id)
       if (found) URL.revokeObjectURL(found.previewUrl)
@@ -252,25 +286,27 @@ export function PostComposer({
       prev.forEach((img) => URL.revokeObjectURL(img.previewUrl))
       return []
     })
+    setKeptImages([])
     setImageError(null)
     if (fileRef.current) fileRef.current.value = ""
   }
 
   async function submit() {
     const text = content.trim()
-    const hasImages = images.length > 0
-    if ((!text && !hasImages) || isPending) return
+    const hasNewImages = images.length > 0
+    const hasAnyImage = totalImages > 0
+    if ((!text && !hasAnyImage) || isPending) return
 
     setUploading(true)
     setImageError(null)
     try {
-      let mediaItems: { url: string; width: number; height: number }[] = []
-      if (hasImages) {
+      let uploadedItems: { url: string; width: number; height: number }[] = []
+      if (hasNewImages) {
         const { uploadPostImages } = await import(
           "@/features/posts/api/storage-client"
         )
         try {
-          mediaItems = await uploadPostImages(
+          uploadedItems = await uploadPostImages(
             images.map((img) => img.file),
             user.id,
           )
@@ -285,24 +321,53 @@ export function PostComposer({
       }
 
       if (isEdit && post) {
-        const unchanged =
-          text === post.content &&
-          visibility === post.visibility &&
-          mediaItems.length === 0
-        if (unchanged) {
-          onClose()
-          return
+        // Bài share không hỗ trợ chỉnh ảnh: chỉ gửi content + visibility.
+        if (isSharedPost) {
+          const unchanged =
+            text === post.content && visibility === post.visibility
+          if (unchanged) {
+            onClose()
+            return
+          }
+          await updatePost.mutateAsync({
+            postId: post.id,
+            content: text,
+            visibility,
+          })
+        } else {
+          const keptItems: {
+            url: string
+            width?: number
+            height?: number
+          }[] = keptImages.map((k) => ({
+            url: k.url,
+            ...(k.width !== undefined ? { width: k.width } : {}),
+            ...(k.height !== undefined ? { height: k.height } : {}),
+          }))
+          const originalCount = readMediaItems(post.media).length
+          const mediaChanged =
+            keptImages.length !== originalCount || uploadedItems.length > 0
+          const unchanged =
+            text === post.content &&
+            visibility === post.visibility &&
+            !mediaChanged
+          if (unchanged) {
+            onClose()
+            return
+          }
+          const finalMedia = [...keptItems, ...uploadedItems]
+          await updatePost.mutateAsync({
+            postId: post.id,
+            content: text,
+            visibility,
+            mediaItems: finalMedia,
+          })
         }
-        await updatePost.mutateAsync({
-          postId: post.id,
-          content: text || post.content,
-          visibility,
-        })
       } else {
         await createPost.mutateAsync({
           content: text,
           visibility,
-          mediaItems,
+          mediaItems: uploadedItems,
         })
       }
 
@@ -404,12 +469,21 @@ export function PostComposer({
                 className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
 
-              {images.length > 0 ? (
+              {totalImages > 0 && !isSharedPost ? (
                 <ImagePreviewGrid
-                  images={images}
+                  images={[
+                    ...keptImages.map((k) => ({
+                      id: k.id,
+                      previewUrl: k.url,
+                    })),
+                    ...images.map((img) => ({
+                      id: img.id,
+                      previewUrl: img.previewUrl,
+                    })),
+                  ]}
                   onRemove={removeImageAt}
                   onAddMore={
-                    images.length < MAX_POST_IMAGES
+                    totalImages < MAX_POST_IMAGES
                       ? () => fileRef.current?.click()
                       : undefined
                   }
@@ -439,9 +513,11 @@ export function PostComposer({
                   type="button"
                   aria-label={tHome("photoVideo")}
                   onClick={() => fileRef.current?.click()}
-                  disabled={images.length >= MAX_POST_IMAGES}
+                  disabled={
+                    isSharedPost || totalImages >= MAX_POST_IMAGES
+                  }
                   className={`p-2 rounded-xl transition-colors ${
-                    images.length > 0
+                    totalImages > 0
                       ? "text-blue-500 bg-blue-500/10"
                       : "text-blue-500 hover:bg-blue-500/10"
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
@@ -458,7 +534,7 @@ export function PostComposer({
               </div>
               <Button
                 onClick={submit}
-                disabled={(!content.trim() && images.length === 0) || isPending}
+                disabled={(!content.trim() && totalImages === 0) || isPending}
                 className="px-6 rounded-xl font-semibold"
               >
                 {uploading ? (

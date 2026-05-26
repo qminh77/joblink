@@ -50,6 +50,8 @@ import { ImageLightbox } from "@/components/ui/image-lightbox"
 import type { MediaItem } from "../lib/media"
 import { PostComposer } from "./post-composer"
 import { PostMediaView } from "./post-media-view"
+import { SharedPostQuote } from "./shared-post-quote"
+import { readSharedOriginal } from "../lib/media"
 
 type Props = {
   post: FeedPost
@@ -88,6 +90,8 @@ export function PostCard({ post, onShare, onSend }: Props) {
 
   const isOwnPost = user.id === post.authorId
   const authorInitials = getInitials(post.author.displayName, "JL")
+  const sharedOriginal = readSharedOriginal(post.media)
+  const isSharedPost = sharedOriginal != null
 
   return (
     <motion.div variants={fadeUp}>
@@ -223,10 +227,17 @@ export function PostCard({ post, onShare, onSend }: Props) {
             </div>
           ) : null}
 
-          <PostMediaView
-            media={post.media}
-            onOpen={(items, index) => setLightbox({ items, index })}
-          />
+          {isSharedPost ? (
+            <SharedPostQuote
+              media={post.media}
+              onOpenLightbox={(items, index) => setLightbox({ items, index })}
+            />
+          ) : (
+            <PostMediaView
+              media={post.media}
+              onOpen={(items, index) => setLightbox({ items, index })}
+            />
+          )}
         </div>
 
         <div className="px-3 sm:px-4 py-3 border-b border-t border-border/30 flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">
