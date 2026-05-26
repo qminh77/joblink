@@ -1,0 +1,291 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+
+import { createAdminClient } from "@/lib/supabase/admin"
+import type {
+  ModerationActionType,
+  ReportStatus,
+  ReportTargetType,
+} from "@/types/database"
+
+import { requireAdmin } from "./admin-guard"
+import { writeAuditLog } from "./audit-log"
+import {
+  moderationActionSchema,
+  reportStatusSchema,
+  type ModerationActionInput,
+} from "../schemas"
+import type { AdminReportRow } from "../types"
+
+export type ListReportsParams = {
+  targetType?: ReportTargetType | "all"
+  status?: ReportStatus | "all"
+  limit?: number
+}
+
+export async function listAdminReports(
+  params: ListReportsParams = {},
+): Promise<AdminReportRow[]> {
+  await requireAdmin()
+  const supabase = createAdminClient()
+  const limit = Math.min(200, Math.max(10, params.limit ?? 100))
+
+  let query = supabase
+    .from("reports")
+    .select(
+      "id, reporter_id, target_type, target_id, reason, description, status, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  if (params.targetType && params.targetType !== "all") {
+    query = query.eq("target_type", params.targetType)
+  }
+  if (params.status && params.status !== "all") {
+    query = query.eq("status", params.status)
+  }
+
+  const { data } = await query
+  const rows = (data ?? []) as Array<{
+    id: number
+    reporter_id: number
+    target_type: ReportTargetType
+    target_id: number
+    reason: string
+    description: string | null
+    status: ReportStatus
+    created_at: string
+  }>
+
+  const reporterIds = [...new Set(rows.map((r) => r.reporter_id))]
+  const names: Record<number, string> = {}
+  if (reporterIds.length > 0) {
+    const [{ data: members }, { data: companies }, { data: users }] =
+      await Promise.all([
+        supabase
+          .from("member_profiles")
+          .select("user_id, full_name")
+          .in("user_id", reporterIds)
+          .is("deleted_at", null),
+        supabase
+          .from("company_profiles")
+          .select("user_id, name")
+          .in("user_id", reporterIds)
+          .is("deleted_at", null),
+        supabase.from("users").select("id, email").in("id", reporterIds),
+      ])
+    for (const m of members ?? []) names[m.user_id] = m.full_name
+    for (const c of companies ?? []) names[c.user_id] = c.name
+    for (const u of users ?? []) {
+      if (!names[u.id]) names[u.id] = u.email
+    }
+  }
+
+  return rows.map((r) => ({
+    id: r.id,
+    reporterId: r.reporter_id,
+    reporterName: names[r.reporter_id] ?? `user#${r.reporter_id}`,
+    targetType: r.target_type,
+    targetId: r.target_id,
+    reason: r.reason,
+    description: r.description,
+    status: r.status,
+    createdAt: r.created_at,
+  }))
+}
+
+export async function setReportStatus(
+  reportId: number,
+  status: ReportStatus,
+): Promise<{ ok: boolean; error?: string }> {
+  const parsed = reportStatusSchema.safeParse({ reportId, status })
+  if (!parsed.success) return { ok: false, error: "invalid_input" }
+  const current = await requireAdmin()
+  const supabase = createAdminClient()
+
+  const { data: prev } = await supabase
+    .from("reports")
+    .select("status")
+    .eq("id", reportId)
+    .maybeSingle<{ status: ReportStatus }>()
+  if (!prev) return { ok: false, error: "not_found" }
+
+  const payload = {
+    status,
+    resolved_by:
+      status === "resolved" || status === "dismissed"
+        ? current.appUser.id
+        : null,
+    resolved_at:
+      status === "resolved" || status === "dismissed"
+        ? new Date().toISOString()
+        : null,
+  }
+
+  const { error } = await supabase
+    .from("reports")
+    .update(payload as never)
+    .eq("id", reportId)
+  if (error) return { ok: false, error: "update_failed" }
+
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: `report.${status}`,
+    entityType: "reports",
+    entityId: reportId,
+    oldData: { status: prev.status },
+    newData: { status },
+  })
+
+  revalidatePath("/admin/reports")
+  revalidatePath("/admin/audit-log")
+  revalidatePath("/admin/dashboard")
+  return { ok: true }
+}
+
+const TARGET_TABLE: Record<ReportTargetType, string | null> = {
+  user: "users",
+  post: "posts",
+  comment: "post_comments",
+  job: "jobs",
+  company: "company_profiles",
+}
+
+export async function applyModerationAction(
+  input: ModerationActionInput,
+): Promise<{ ok: boolean; error?: string }> {
+  const parsed = moderationActionSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: "invalid_input" }
+  const current = await requireAdmin()
+  const supabase = createAdminClient()
+
+  const { data: report } = await supabase
+    .from("reports")
+    .select("id, target_type, target_id, status")
+    .eq("id", parsed.data.reportId)
+    .maybeSingle<{
+      id: number
+      target_type: ReportTargetType
+      target_id: number
+      status: ReportStatus
+    }>()
+  if (!report) return { ok: false, error: "not_found" }
+
+  const actionType = parsed.data.actionType as ModerationActionType
+
+  if (actionType !== "dismiss" && actionType !== "warn") {
+    const tbl = TARGET_TABLE[report.target_type]
+    if (!tbl) return { ok: false, error: "invalid_target" }
+
+    const supabaseAny = supabase as unknown as {
+      from: (t: string) => {
+        update: (p: Record<string, unknown>) => {
+          eq: (
+            col: string,
+            v: number,
+          ) => Promise<{ error: { message: string } | null }>
+        }
+      }
+    }
+
+    if (report.target_type === "user") {
+      if (actionType === "suspend") {
+        await supabaseAny
+          .from("users")
+          .update({ status: "suspended" })
+          .eq("id", report.target_id)
+      } else if (actionType === "ban") {
+        await supabaseAny
+          .from("users")
+          .update({ status: "banned" })
+          .eq("id", report.target_id)
+      } else if (actionType === "restore") {
+        await supabaseAny
+          .from("users")
+          .update({ status: "active" })
+          .eq("id", report.target_id)
+      }
+    } else if (
+      actionType === "hide" ||
+      actionType === "delete" ||
+      actionType === "restore"
+    ) {
+      if (report.target_type === "post" || report.target_type === "comment") {
+        const newStatus =
+          actionType === "restore"
+            ? "active"
+            : actionType === "hide"
+              ? "hidden"
+              : "deleted"
+        await supabaseAny
+          .from(tbl)
+          .update({
+            status: newStatus,
+            ...(actionType === "delete"
+              ? { deleted_at: new Date().toISOString() }
+              : { deleted_at: null }),
+          })
+          .eq("id", report.target_id)
+      } else if (report.target_type === "job") {
+        const newStatus = actionType === "restore" ? "active" : "removed"
+        await supabaseAny
+          .from(tbl)
+          .update({
+            status: newStatus,
+            ...(actionType === "delete"
+              ? { deleted_at: new Date().toISOString() }
+              : { deleted_at: null }),
+          })
+          .eq("id", report.target_id)
+      } else if (report.target_type === "company") {
+        if (actionType === "delete" || actionType === "hide") {
+          await supabaseAny
+            .from("company_profiles")
+            .update({ verification_status: "suspended" })
+            .eq("user_id", report.target_id)
+        } else if (actionType === "restore") {
+          await supabaseAny
+            .from("company_profiles")
+            .update({ verification_status: "verified" })
+            .eq("user_id", report.target_id)
+        }
+      }
+    }
+  }
+
+  await supabase.from("moderation_actions").insert({
+    report_id: parsed.data.reportId,
+    moderator_id: current.appUser.id,
+    target_type: report.target_type,
+    target_id: report.target_id,
+    action_type: actionType,
+    reason: parsed.data.reason,
+  })
+
+  const newReportStatus: ReportStatus =
+    actionType === "dismiss" ? "dismissed" : "resolved"
+
+  await supabase
+    .from("reports")
+    .update({
+      status: newReportStatus,
+      resolved_by: current.appUser.id,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("id", parsed.data.reportId)
+
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: `moderation.${actionType}`,
+    entityType: report.target_type,
+    entityId: report.target_id,
+    oldData: { reportStatus: report.status },
+    newData: { reportStatus: newReportStatus, actionType },
+    reason: parsed.data.reason,
+  })
+
+  revalidatePath("/admin/reports")
+  revalidatePath("/admin/audit-log")
+  revalidatePath("/admin/dashboard")
+  return { ok: true }
+}

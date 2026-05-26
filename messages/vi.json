@@ -147,7 +147,8 @@
       "submitting": "Đang đăng nhập...",
       "noAccount": "Chưa có tài khoản?",
       "register": "Đăng ký ngay",
-      "success": "Đăng nhập thành công"
+      "success": "Đăng nhập thành công",
+      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA"
     },
     "register": {
       "title": "Tạo tài khoản",
@@ -197,7 +198,8 @@
       "successWithSession": "Đăng ký thành công",
       "successNeedVerify": "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.",
       "successCompanyPending": "Đã gửi hồ sơ doanh nghiệp. Tài khoản sẽ kích hoạt sau khi Admin phê duyệt — vui lòng đợi email thông báo.",
-      "companyPendingNotice": "Tài khoản doanh nghiệp cần Admin phê duyệt sau khi đăng ký trước khi có thể đăng nhập."
+      "companyPendingNotice": "Tài khoản doanh nghiệp cần Admin phê duyệt sau khi đăng ký trước khi có thể đăng nhập.",
+      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA"
     },
     "forgotPassword": {
       "title": "Quên mật khẩu?",
@@ -224,7 +226,8 @@
       "accountSuspended": "Tài khoản đã bị tạm khóa. Vui lòng liên hệ Admin.",
       "accountBanned": "Tài khoản đã bị cấm.",
       "taxIdAlreadyExists": "Mã số thuế này đã được đăng ký.",
-      "registrationFailed": "Đăng ký không thành công, vui lòng thử lại."
+      "registrationFailed": "Đăng ký không thành công, vui lòng thử lại.",
+      "recaptchaFailed": "Xác thực reCAPTCHA thất bại. Vui lòng thử lại."
     },
     "validation": {
       "emailRequired": "Vui lòng nhập email",
@@ -930,10 +933,68 @@
       "dashboard": "Tổng quan",
       "users": "Người dùng",
       "companies": "Doanh nghiệp",
+      "jobs": "Tin tuyển dụng",
       "reports": "Báo cáo",
+      "appeals": "Khiếu nại",
       "auditLog": "Nhật ký",
       "settings": "Cài đặt",
       "lookups": "Danh mục"
+    },
+    "jobs": {
+      "title": "Quản lý tin tuyển dụng",
+      "subtitle": "Xem & xử lý tin từ tất cả công ty",
+      "searchPlaceholder": "Tìm theo tiêu đề...",
+      "filterStatus": "Trạng thái",
+      "allStatuses": "Tất cả",
+      "statuses": {
+        "draft": "Bản nháp",
+        "active": "Đang đăng",
+        "closed": "Đã đóng",
+        "expired": "Hết hạn",
+        "removed": "Đã gỡ"
+      },
+      "company": "Công ty",
+      "createdAt": "Tạo",
+      "applications": "Đơn",
+      "open": "Mở tin",
+      "remove": "Gỡ tin",
+      "restore": "Khôi phục",
+      "confirmTitle": "Xác nhận thao tác",
+      "reason": "Lý do (ghi vào audit log)",
+      "submit": "Xác nhận",
+      "submitting": "Đang xử lý...",
+      "empty": "Không có tin nào",
+      "total": "{count} tin",
+      "success": {
+        "removed": "Đã gỡ tin",
+        "restored": "Đã khôi phục tin"
+      }
+    },
+    "appeals": {
+      "title": "Khiếu nại của người dùng",
+      "subtitle": "Xét lại các quyết định kiểm duyệt",
+      "filterStatus": "Trạng thái",
+      "allStatuses": "Tất cả",
+      "statuses": {
+        "pending": "Chờ xử lý",
+        "accepted": "Đã chấp nhận",
+        "rejected": "Đã từ chối"
+      },
+      "appellant": "Người khiếu nại",
+      "reason": "Lý do",
+      "reviewed": "Xét lúc",
+      "accept": "Chấp nhận",
+      "reject": "Từ chối",
+      "note": "Ghi chú",
+      "confirmTitle": "Phản hồi khiếu nại",
+      "submit": "Xác nhận",
+      "submitting": "Đang xử lý...",
+      "empty": "Không có khiếu nại nào",
+      "total": "{count} khiếu nại",
+      "success": {
+        "accepted": "Đã chấp nhận khiếu nại",
+        "rejected": "Đã từ chối khiếu nại"
+      }
     },
     "errors": {
       "forbidden": "Bạn không có quyền truy cập trang này",
@@ -1121,6 +1182,19 @@
       "saveAll": "Lưu thay đổi",
       "saving": "Đang lưu...",
       "saved": "Đã lưu cài đặt",
+      "smtpTest": {
+        "title": "Kiểm tra SMTP",
+        "description": "Sau khi lưu cấu hình, gửi email kiểm tra để xác nhận SMTP hoạt động.",
+        "recipient": "Email nhận thử",
+        "recipientPlaceholder": "Mặc định: email của bạn",
+        "verify": "Kiểm tra kết nối",
+        "send": "Gửi email thử",
+        "sending": "Đang gửi...",
+        "verifying": "Đang kiểm tra...",
+        "connectionOk": "Kết nối SMTP thành công",
+        "sendOk": "Đã gửi email thử thành công",
+        "failed": "Thao tác thất bại: {error}"
+      },
       "groups": {
         "site_identity": "Thương hiệu",
         "regional": "Khu vực",
@@ -1161,7 +1235,8 @@
         "job_types": "Loại công việc",
         "work_modes": "Hình thức",
         "job_positions": "Vị trí",
-        "report_types": "Loại báo cáo"
+        "report_types": "Loại báo cáo",
+        "skills": "Kỹ năng"
       },
       "code": "Mã",
       "name": "Tên",
@@ -1184,6 +1259,10 @@
         "created": "Đã tạo mới",
         "updated": "Đã cập nhật",
         "deleted": "Đã xoá"
+      },
+      "errors": {
+        "code_required": "Trường mã không được để trống",
+        "province_required": "Vui lòng chọn tỉnh/thành"
       }
     }
   }

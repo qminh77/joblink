@@ -9,6 +9,7 @@ import {
   Eye,
   HelpCircle,
   Settings,
+  Shield,
   User,
   Users,
 } from "lucide-react"
@@ -146,6 +147,30 @@ export function ProfileDropdown() {
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />
+
+          {user.role === "admin" ? (
+            <DropdownMenuGroup>
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.1 }}
+              >
+                <DropdownMenuItem
+                  onClick={() => router.push("/admin/dashboard")}
+                  className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                >
+                  <Shield className="w-4.5 h-4.5 text-primary mr-3 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">
+                      {tNav("admin")}
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              </motion.div>
+              <DropdownMenuSeparator className="my-1 bg-border/20" />
+            </DropdownMenuGroup>
+          ) : null}
 
           <DropdownMenuGroup>
             <motion.div

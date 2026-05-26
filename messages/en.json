@@ -147,7 +147,8 @@
       "submitting": "Signing in...",
       "noAccount": "Don't have an account?",
       "register": "Sign up",
-      "success": "Signed in successfully"
+      "success": "Signed in successfully",
+      "protectedByRecaptcha": "Protected by Google reCAPTCHA"
     },
     "register": {
       "title": "Create an account",
@@ -197,7 +198,8 @@
       "successWithSession": "Signed up successfully",
       "successNeedVerify": "Signed up successfully. Please check your email to verify your account.",
       "successCompanyPending": "Business profile submitted. Your account will be activated after Admin approval — please wait for our email.",
-      "companyPendingNotice": "Business accounts require Admin approval after registration before they can sign in."
+      "companyPendingNotice": "Business accounts require Admin approval after registration before they can sign in.",
+      "protectedByRecaptcha": "Protected by Google reCAPTCHA"
     },
     "forgotPassword": {
       "title": "Forgot password?",
@@ -224,7 +226,8 @@
       "accountSuspended": "This account has been suspended. Please contact an Admin.",
       "accountBanned": "This account has been banned.",
       "taxIdAlreadyExists": "This Tax ID is already registered.",
-      "registrationFailed": "Registration failed, please try again."
+      "registrationFailed": "Registration failed, please try again.",
+      "recaptchaFailed": "reCAPTCHA verification failed. Please try again."
     },
     "validation": {
       "emailRequired": "Please enter your email",
@@ -930,10 +933,68 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "companies": "Companies",
+      "jobs": "Jobs",
       "reports": "Reports",
+      "appeals": "Appeals",
       "auditLog": "Audit log",
       "settings": "Settings",
       "lookups": "Lookups"
+    },
+    "jobs": {
+      "title": "Job listings management",
+      "subtitle": "View & moderate jobs across companies",
+      "searchPlaceholder": "Search by title...",
+      "filterStatus": "Status",
+      "allStatuses": "All",
+      "statuses": {
+        "draft": "Draft",
+        "active": "Active",
+        "closed": "Closed",
+        "expired": "Expired",
+        "removed": "Removed"
+      },
+      "company": "Company",
+      "createdAt": "Created",
+      "applications": "Applications",
+      "open": "Open",
+      "remove": "Remove",
+      "restore": "Restore",
+      "confirmTitle": "Confirm action",
+      "reason": "Reason (audited)",
+      "submit": "Confirm",
+      "submitting": "Processing...",
+      "empty": "No jobs found",
+      "total": "{count} jobs",
+      "success": {
+        "removed": "Job removed",
+        "restored": "Job restored"
+      }
+    },
+    "appeals": {
+      "title": "User appeals",
+      "subtitle": "Review moderation decisions",
+      "filterStatus": "Status",
+      "allStatuses": "All",
+      "statuses": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "appellant": "Appellant",
+      "reason": "Reason",
+      "reviewed": "Reviewed at",
+      "accept": "Accept",
+      "reject": "Reject",
+      "note": "Note",
+      "confirmTitle": "Respond to appeal",
+      "submit": "Confirm",
+      "submitting": "Processing...",
+      "empty": "No appeals",
+      "total": "{count} appeals",
+      "success": {
+        "accepted": "Appeal accepted",
+        "rejected": "Appeal rejected"
+      }
     },
     "errors": {
       "forbidden": "You do not have access to this page",
@@ -1121,6 +1182,19 @@
       "saveAll": "Save changes",
       "saving": "Saving...",
       "saved": "Settings saved",
+      "smtpTest": {
+        "title": "SMTP test",
+        "description": "After saving, send a test email to verify SMTP is working.",
+        "recipient": "Test recipient",
+        "recipientPlaceholder": "Default: your email",
+        "verify": "Verify connection",
+        "send": "Send test email",
+        "sending": "Sending...",
+        "verifying": "Verifying...",
+        "connectionOk": "SMTP connection OK",
+        "sendOk": "Test email sent",
+        "failed": "Failed: {error}"
+      },
       "groups": {
         "site_identity": "Branding",
         "regional": "Regional",
@@ -1161,7 +1235,8 @@
         "job_types": "Job types",
         "work_modes": "Work modes",
         "job_positions": "Job positions",
-        "report_types": "Report types"
+        "report_types": "Report types",
+        "skills": "Skills"
       },
       "code": "Code",
       "name": "Name",
@@ -1184,6 +1259,10 @@
         "created": "Created",
         "updated": "Updated",
         "deleted": "Deleted"
+      },
+      "errors": {
+        "code_required": "Code is required",
+        "province_required": "Please select a province"
       }
     }
   }

@@ -107,6 +107,7 @@ export type AdminLookupKind =
   | "work_modes"
   | "job_positions"
   | "report_types"
+  | "skills"
 
 export type AdminLookupRow = {
   id: number

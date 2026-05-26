@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import { Lock, Mail } from "lucide-react"
+import { Lock, Mail, ShieldCheck } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -17,15 +19,25 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { verifyAuthRecaptchaAction } from "@/features/system-settings/api/actions"
+import {
+  useRecaptcha,
+  type RecaptchaConfig,
+} from "@/features/system-settings/components/use-recaptcha"
 
 import { useLogin } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
 
 import { PasswordInput } from "./password-input"
 
-export function LoginForm() {
+export function LoginForm({
+  recaptcha,
+}: {
+  recaptcha?: RecaptchaConfig
+} = {}) {
   const t = useTranslations("auth.login")
   const tv = useTranslations("auth.validation")
+  const tErr = useTranslations("auth.errors")
   const schema = createLoginSchema(tv)
 
   const form = useForm<LoginInput>({
@@ -34,8 +46,22 @@ export function LoginForm() {
   })
 
   const login = useLogin()
+  const { enabled: captchaEnabled, getToken } = useRecaptcha(
+    recaptcha ?? { enabled: false, siteKey: null },
+  )
+  const [verifying, setVerifying] = useState(false)
 
-  function onSubmit(values: LoginInput) {
+  async function onSubmit(values: LoginInput) {
+    if (captchaEnabled) {
+      setVerifying(true)
+      const token = await getToken("login")
+      const verification = await verifyAuthRecaptchaAction(token, "login")
+      setVerifying(false)
+      if (!verification.ok) {
+        toast.error(tErr("recaptchaFailed"))
+        return
+      }
+    }
     login.mutate(values)
   }
 
@@ -127,11 +153,18 @@ export function LoginForm() {
 
         <Button
           type="submit"
-          disabled={login.isPending}
+          disabled={login.isPending || verifying}
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
-          {login.isPending ? t("submitting") : t("submit")}
+          {login.isPending || verifying ? t("submitting") : t("submit")}
         </Button>
+
+        {captchaEnabled ? (
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
+            <ShieldCheck className="w-3 h-3" />
+            {t("protectedByRecaptcha")}
+          </p>
+        ) : null}
       </form>
     </Form>
   )

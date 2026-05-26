@@ -388,6 +388,20 @@ export type ModerationActionRow = {
   created_at: string
 }
 
+export type AppealStatus = "pending" | "accepted" | "rejected"
+
+export type AppealRow = {
+  id: number
+  appellant_id: number
+  report_id: number | null
+  moderation_action_id: number | null
+  reason: string
+  status: AppealStatus
+  reviewed_by: number | null
+  reviewed_at: string | null
+  created_at: string
+}
+
 export type JobApplicationRow = {
   id: number
   job_id: number
@@ -576,6 +590,21 @@ export type Database = {
       system_settings: TableDef<
         SystemSettingsRow,
         Omit<SystemSettingsRow, "id" | "created_at" | "updated_at">
+      >
+      appeals: TableDef<
+        AppealRow,
+        Omit<
+          AppealRow,
+          | "id"
+          | "created_at"
+          | "status"
+          | "reviewed_by"
+          | "reviewed_at"
+        > & {
+          status?: AppealStatus
+          reviewed_by?: number | null
+          reviewed_at?: string | null
+        }
       >
     }
     Views: Record<string, never>

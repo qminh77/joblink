@@ -1,15 +1,20 @@
-"use client"
-
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { getTranslations } from "next-intl/server"
 
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RegisterForm } from "@/features/auth/components/register-form"
+import { loadPublicAuthSettings } from "@/features/system-settings/api/public-settings"
 
-export default function RegisterPage() {
-  const t = useTranslations("auth.register")
+export const dynamic = "force-dynamic"
+
+export default async function RegisterPage() {
+  const [t, settings] = await Promise.all([
+    getTranslations("auth.register"),
+    loadPublicAuthSettings(),
+  ])
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center font-body text-foreground relative bg-background py-8">
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
@@ -33,13 +38,11 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-headline font-extrabold tracking-tight mb-2">
                 {t("title")}
               </h1>
-              <p className="text-muted-foreground text-sm">
-                {t("subtitle")}
-              </p>
+              <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
             </div>
 
             <div className="w-full">
-              <RegisterForm />
+              <RegisterForm recaptcha={settings.recaptcha} />
             </div>
 
             <p className="mt-8 text-center text-sm font-medium text-muted-foreground">
