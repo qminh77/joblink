@@ -13,7 +13,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useMessagingOverview } from "@/features/messaging/hooks"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -34,6 +35,7 @@ export function MessageDropdown({
 }) {
   const t = useTranslations("messages")
   const { data } = useMessagingOverview()
+  const formatRel = useRelativeTimeFormatter()
   // Dropdown chỉ hiển thị các conversation thật (đã có tin), không kèm
   // placeholder connections — tránh nhiễu cho người đang xem nhanh inbox.
   const allItems = (data?.items ?? []).filter(
@@ -122,7 +124,7 @@ export function MessageDropdown({
                           </h4>
                           <span className="text-[10px] text-muted-foreground shrink-0">
                             {conv.lastCreatedAt
-                              ? formatRelativeTime(conv.lastCreatedAt)
+                              ? formatRel(conv.lastCreatedAt)
                               : ""}
                           </span>
                         </div>

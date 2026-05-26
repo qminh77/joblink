@@ -20,7 +20,8 @@ import {
 } from "@/features/notifications/hooks"
 import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
 import { getNotificationVisual } from "@/features/notifications/lib/render"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 const DROPDOWN_LIMIT = 6
 
@@ -45,6 +46,7 @@ export function NotificationDropdown({
   const { data: notifications = [] } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
+  const formatRel = useRelativeTimeFormatter()
 
   const unreadCount = notifications.filter((item) => !item.isRead).length
   const visible = notifications.slice(0, DROPDOWN_LIMIT)
@@ -147,7 +149,7 @@ export function NotificationDropdown({
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[10px] text-muted-foreground">
-                            {formatRelativeTime(item.createdAt)}
+                            {formatRel(item.createdAt)}
                           </span>
                           {!item.isRead ? (
                             <span className="w-1.5 h-1.5 rounded-full bg-primary" />

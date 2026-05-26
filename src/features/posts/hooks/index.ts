@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import {
   useInfiniteQuery,
   useMutation,
@@ -404,7 +404,13 @@ export function useDeletePost() {
  */
 export function useRealtimeFeed(allowedAuthorIds: number[]) {
   const qc = useQueryClient()
-  const filterKey = allowedAuthorIds.join(",")
+  const filterKey = useMemo(
+    () =>
+      Array.from(new Set(allowedAuthorIds))
+        .sort((a, b) => a - b)
+        .join(","),
+    [allowedAuthorIds],
+  )
   useEffect(() => {
     if (!filterKey) return
     const supabase = createBrowserClient()
@@ -433,18 +439,37 @@ export function useRealtimeFeed(allowedAuthorIds: number[]) {
 /**
  * Subscribe realtime cho engagement (reactions/comments/shares) trên các post
  * đang hiển thị trong feed. Khi có thay đổi, invalidate feed để counters cập
- * nhật từ server (đơn giản, không phải build delta logic phức tạp ở client).
+ * nhật từ server.
+ *
+ * Tối ưu:
+ *   • Sort + dedupe filterKey → không re-subscribe khi React Query thêm
+ *     page mới với cùng tập post ID hiện hữu.
+ *   • Debounce invalidate feed 800ms → gộp nhiều event (vd burst reaction
+ *     của nhiều user) thành 1 lần refetch.
+ *   • Per-post comments key chỉ invalidate khi ai đó có thread đang mở
+ *     (React Query tự skip nếu không có observer enabled).
  */
 export function useRealtimeEngagement(visiblePostIds: number[]) {
   const qc = useQueryClient()
-  const filterKey = visiblePostIds.join(",")
+  const filterKey = useMemo(
+    () => Array.from(new Set(visiblePostIds)).sort((a, b) => a - b).join(","),
+    [visiblePostIds],
+  )
+  const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     if (!filterKey) return
-    const supabase = createBrowserClient()
-    const invalidateFeed = () => {
-      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
+
+    const scheduleInvalidate = () => {
+      if (pendingTimer.current != null) return
+      pendingTimer.current = setTimeout(() => {
+        pendingTimer.current = null
+        qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
+      }, 800)
     }
-    const channel = supabase.channel("home-feed-engagement")
+
+    const supabase = createBrowserClient()
+    const channel = supabase.channel(`home-feed-engagement-${filterKey.length}`)
     for (const table of ["post_reactions", "post_comments", "post_shares"]) {
       channel.on(
         "postgres_changes",
@@ -455,7 +480,7 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
           filter: `post_id=in.(${filterKey})`,
         },
         (payload) => {
-          invalidateFeed()
+          scheduleInvalidate()
           if (table === "post_comments") {
             const row =
               (payload.new as { post_id?: number } | null) ??
@@ -472,6 +497,10 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
     channel.subscribe()
 
     return () => {
+      if (pendingTimer.current != null) {
+        clearTimeout(pendingTimer.current)
+        pendingTimer.current = null
+      }
       void supabase.removeChannel(channel)
     }
   }, [filterKey, qc])

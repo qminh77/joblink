@@ -38,7 +38,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { btnTap, fadeUp } from "@/lib/animations"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { ReportDialog } from "@/features/reports/components/report-dialog"
 
@@ -90,6 +91,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
 
   const isOwnPost = user.id === post.authorId
   const authorInitials = getInitials(post.author.displayName, "JL")
+  const createdRel = useRelativeTime(post.createdAt)
   const sharedOriginal = readSharedOriginal(post.media)
   const isSharedPost = sharedOriginal != null
 
@@ -120,7 +122,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
                   </p>
                 ) : null}
                 <p className="text-[10px] sm:text-[11px] text-muted-foreground flex items-center mt-1">
-                  {formatRelativeTime(post.createdAt)}{" "}
+                  {createdRel}{" "}
                   <span className="mx-1">•</span>{" "}
                   {visibilityIcon(post.visibility)}
                 </p>

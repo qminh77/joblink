@@ -56,7 +56,6 @@ export async function HomeContent() {
 
         <PostsFeed
           initialPage={{ posts: feed.posts, nextCursor: feed.next_cursor }}
-          contacts={feed.suggestions}
           realtimeAuthorIds={realtimeAuthorIds}
         />
       </div>

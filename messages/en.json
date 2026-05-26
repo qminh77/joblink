@@ -55,6 +55,12 @@
     "copyLinkHint": "Copy the post URL to share",
     "sendViaMessage": "Send via message",
     "searchPersonPlaceholder": "Search for someone...",
+    "sendNotePlaceholder": "Add a message (optional)...",
+    "sendSuccess": "Message sent",
+    "sendEmpty": "You don't have any connections yet.",
+    "sendNoMatch": "No matching person found.",
+    "sendActionSent": "Sent",
+    "sendActionSending": "Sending...",
     "createSuccess": "Post published",
     "deletePost": "Delete post",
     "deletePostHint": "Hide this post from your feed",
@@ -91,7 +97,6 @@
     "originalDeleted": "The original post has been deleted",
     "copyLinkSuccess": "Link copied",
     "copyLinkError": "Could not copy link",
-    "sendComingSoon": "Messaging coming soon",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentOrMediaRequired": "Please enter content or attach an image",
@@ -604,6 +609,7 @@
     "online": "Active now",
     "offline": "Offline",
     "inputPlaceholder": "Type a message...",
+    "opening": "Opening conversation...",
     "emptyTitle": "Your messages",
     "emptyDesc": "Select a conversation to start chatting, or search for friends to send a new message.",
     "send": "Send",
@@ -614,6 +620,12 @@
     "button": {
       "message": "Message",
       "opening": "Opening..."
+    },
+    "dock": {
+      "minimize": "Minimize",
+      "expand": "Expand",
+      "close": "Close window",
+      "clearSearch": "Clear search"
     },
     "dropdown": {
       "unreadSummary": "{count} unread conversations",

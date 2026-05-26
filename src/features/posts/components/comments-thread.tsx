@@ -8,7 +8,8 @@ import { MessageSquare, Trash2 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { fadeUp, staggerSm } from "@/lib/animations"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
 import type { FeedComment } from "../types"
@@ -218,6 +219,7 @@ function CommentRow({
   const deleteComment = useDeleteComment()
   const isOwn = comment.userId === currentUserId
   const initials = getInitials(comment.author.displayName, "JL")
+  const createdRel = useRelativeTime(comment.createdAt)
   const pendingDelete =
     deleteComment.isPending && deleteComment.variables === comment.id
   const avatarSize = compact ? "w-6 h-6" : "w-7 h-7"
@@ -247,7 +249,7 @@ function CommentRow({
           <CommentBody content={comment.content} />
         </div>
         <div className="flex items-center gap-3 mt-0.5 ml-3 text-[10.5px] text-muted-foreground">
-          <span>{formatRelativeTime(comment.createdAt)}</span>
+          <span>{createdRel}</span>
           <button
             type="button"
             onClick={onReply}

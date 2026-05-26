@@ -7,7 +7,8 @@ import { Search } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 import type { ConversationItem } from "../types"
 
@@ -26,6 +27,7 @@ export function ConversationList({
 }: Props) {
   const t = useTranslations("messages")
   const [q, setQ] = useState("")
+  const formatRel = useRelativeTimeFormatter()
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -61,7 +63,7 @@ export function ConversationList({
             const isPending = pendingOtherUserId === conv.otherUserId
             const last = conv.lastContent ?? t("noMessages")
             const time = conv.lastCreatedAt
-              ? formatRelativeTime(conv.lastCreatedAt)
+              ? formatRel(conv.lastCreatedAt)
               : ""
             const name = conv.displayName ?? "—"
             const key =

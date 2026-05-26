@@ -40,8 +40,18 @@ export function MessagingPageClient({ initialOverview }: Props) {
   })()
   const [showMobileList, setShowMobileList] = useState(selectedId == null)
 
+  // Placeholder hiển thị ngay khi user click 1 connection chưa có conversation
+  // — giúp ChatPanel xuất hiện tức thì, không phải chờ ensure RPC (~700-900ms).
+  // Khi ensure xong, URL update → selectedId match → bỏ placeholder.
+  const [pendingPlaceholder, setPendingPlaceholder] =
+    useState<ConversationItem | null>(null)
+
+  const matched = items.find((c) => c.conversationId === selectedId) ?? null
   const selected =
-    items.find((c) => c.conversationId === selectedId) ?? null
+    matched ??
+    (pendingPlaceholder && pendingPlaceholder.conversationId == null
+      ? pendingPlaceholder
+      : null)
 
   const handleSelect = (conv: ConversationItem) => {
     setShowMobileList(false)
@@ -53,14 +63,21 @@ export function MessagingPageClient({ initialOverview }: Props) {
     }
 
     if (conv.conversationId != null) {
+      setPendingPlaceholder(null)
       navigate(conv.conversationId)
       return
     }
 
-    // Placeholder cho connection chưa có conversation: tạo rồi mở.
+    // Placeholder cho connection chưa có conversation: hiển thị panel ngay
+    // (header + skeleton), chạy ensure ở background.
+    setPendingPlaceholder(conv)
     ensure.mutate(conv.otherUserId, {
-      onSuccess: navigate,
+      onSuccess: (cid) => {
+        setPendingPlaceholder(null)
+        navigate(cid)
+      },
       onError: (err) => {
+        setPendingPlaceholder(null)
         toast.error(translateMessagingError(tErr, err.message))
       },
     })
@@ -79,7 +96,7 @@ export function MessagingPageClient({ initialOverview }: Props) {
       variants={pageEntrance}
       initial="hidden"
       animate="show"
-      className="h-[calc(100vh-7rem)] flex gap-0"
+      className="h-[calc(100dvh-9rem)] md:h-[calc(100dvh-7rem)] flex gap-0"
     >
       <motion.div
         variants={slideLeft}

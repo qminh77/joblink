@@ -55,6 +55,12 @@
     "copyLinkHint": "Sao chép URL bài viết để gửi",
     "sendViaMessage": "Gửi qua tin nhắn",
     "searchPersonPlaceholder": "Tìm kiếm người để gửi...",
+    "sendNotePlaceholder": "Viết tin nhắn kèm theo (tuỳ chọn)...",
+    "sendSuccess": "Đã gửi tin nhắn",
+    "sendEmpty": "Bạn chưa có kết nối nào để gửi.",
+    "sendNoMatch": "Không tìm thấy người phù hợp.",
+    "sendActionSent": "Đã gửi",
+    "sendActionSending": "Đang gửi...",
     "createSuccess": "Đã đăng bài",
     "deletePost": "Xoá bài viết",
     "deletePostHint": "Ẩn bài viết khỏi bảng tin",
@@ -91,7 +97,6 @@
     "originalDeleted": "Bài viết gốc đã bị xoá",
     "copyLinkSuccess": "Đã sao chép liên kết",
     "copyLinkError": "Không thể sao chép liên kết",
-    "sendComingSoon": "Tin nhắn sắp ra mắt",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
@@ -604,6 +609,7 @@
     "online": "Đang hoạt động",
     "offline": "Không hoạt động",
     "inputPlaceholder": "Nhập tin nhắn...",
+    "opening": "Đang mở cuộc trò chuyện...",
     "emptyTitle": "Tin nhắn của bạn",
     "emptyDesc": "Chọn một cuộc hội thoại để bắt đầu trò chuyện hoặc tìm kiếm bạn bè để gửi tin nhắn mới.",
     "send": "Gửi",
@@ -614,6 +620,12 @@
     "button": {
       "message": "Nhắn tin",
       "opening": "Đang mở..."
+    },
+    "dock": {
+      "minimize": "Thu nhỏ",
+      "expand": "Mở rộng",
+      "close": "Đóng cửa sổ",
+      "clearSearch": "Xoá tìm kiếm"
     },
     "dropdown": {
       "unreadSummary": "{count} cuộc hội thoại chưa đọc",

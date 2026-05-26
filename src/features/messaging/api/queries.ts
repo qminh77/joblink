@@ -11,7 +11,9 @@ import type {
 } from "../types"
 
 const OVERVIEW_LIMIT = 50
-const MESSAGES_PAGE = 40
+// Mở chat: chỉ load "tin gần nhất" đủ cho 1-2 màn hình → cảm giác mở nhanh.
+// Cuộn lên load tiếp qua cursor (p_before_created_at/p_before_id).
+const MESSAGES_PAGE = 15
 
 const EMPTY_OVERVIEW: MessagingOverview = {
   items: [],

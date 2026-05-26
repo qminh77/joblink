@@ -12,15 +12,13 @@ import type { FeedPage, FeedPost } from "../types"
 import { PostCard } from "./post-card"
 import { SendModal } from "./send-modal"
 import { ShareModal } from "./share-modal"
-import type { NetworkUserCard } from "@/features/network/types"
 
 type Props = {
   initialPage: FeedPage
-  contacts: NetworkUserCard[]
   realtimeAuthorIds: number[]
 }
 
-export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
+export function PostsFeed({ initialPage, realtimeAuthorIds }: Props) {
   const tFeed = useTranslations("feed")
   const {
     data,
@@ -97,11 +95,7 @@ export function PostsFeed({ initialPage, contacts, realtimeAuthorIds }: Props) {
       </motion.div>
 
       <ShareModal post={shareTarget} onClose={() => setShareTarget(null)} />
-      <SendModal
-        open={sendTarget != null}
-        onClose={() => setSendTarget(null)}
-        contacts={contacts}
-      />
+      <SendModal post={sendTarget} onClose={() => setSendTarget(null)} />
     </>
   )
 }

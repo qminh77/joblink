@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl"
 import { ImageOff } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { readSharedOriginal } from "../lib/media"
 import type { FeedPost } from "../types"
 import { PostMediaView } from "./post-media-view"
@@ -32,6 +33,7 @@ export function SharedPostQuote({
   }
 
   const initials = getInitials(original.author.displayName, "JL")
+  const createdRel = useRelativeTime(original.createdAt ?? null)
 
   return (
     <div className="mt-3 rounded-2xl border border-border/40 bg-muted/10 overflow-hidden">
@@ -59,7 +61,7 @@ export function SharedPostQuote({
             ) : null}
             {original.createdAt ? (
               <p className="text-[10px] text-muted-foreground mt-1">
-                {formatRelativeTime(original.createdAt)}
+                {createdRel}
               </p>
             ) : null}
           </div>

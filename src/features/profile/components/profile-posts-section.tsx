@@ -121,11 +121,7 @@ export function ProfilePostsSection({
       </div>
 
       <ShareModal post={shareTarget} onClose={() => setShareTarget(null)} />
-      <SendModal
-        open={sendTarget != null}
-        onClose={() => setSendTarget(null)}
-        contacts={[]}
-      />
+      <SendModal post={sendTarget} onClose={() => setSendTarget(null)} />
     </div>
   )
 }

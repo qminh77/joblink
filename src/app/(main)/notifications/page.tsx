@@ -19,7 +19,8 @@ import { verifyNotificationTargetAction } from "@/features/notifications/api/act
 import { getNotificationVisual } from "@/features/notifications/lib/render"
 import type { NotificationItem } from "@/features/notifications/types"
 import { btnTap, fadeUp, pageEntrance, slideLeft, staggerSm } from "@/lib/animations"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 type FilterValue = "all" | "unread" | "connect"
 
@@ -48,6 +49,7 @@ export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
+  const formatRel = useRelativeTimeFormatter()
 
   const unreadCount = notifications.filter((item) => !item.isRead).length
   const visible = filterItems(notifications, filter)
@@ -190,7 +192,7 @@ export default function NotificationsPage() {
                           <p className="text-sm text-foreground/90">{sentence}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground">
-                              {formatRelativeTime(item.createdAt)}
+                              {formatRel(item.createdAt)}
                             </span>
                             {!item.isRead ? (
                               <span className="w-2 h-2 rounded-full bg-primary" />

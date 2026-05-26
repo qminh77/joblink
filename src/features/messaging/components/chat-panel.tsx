@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { motion } from "framer-motion"
@@ -14,7 +14,8 @@ import {
 
 import { btnTap, fadeUp, staggerSm } from "@/lib/animations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { formatRelativeTime, getInitials } from "@/lib/utils/format"
+import { getInitials } from "@/lib/utils/format"
+import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import {
@@ -34,47 +35,92 @@ type Props = {
 export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
   const t = useTranslations("messages")
   const tErr = useTranslations("messages.errors")
+  const formatRel = useRelativeTimeFormatter()
 
-  // ChatPanel chỉ được render khi user chọn 1 conversation đã tồn tại — nên
-  // conversationId ở đây bao giờ cũng là số. TS chưa thu hẹp được vì type
-  // gốc cho phép null (placeholder), assert tại điểm vào duy nhất.
-  const conversationId = conversation.conversationId as number
+  // Placeholder mode: user vừa click 1 connection chưa có conversation. Server
+  // action `ensure` đang chạy ở parent — ta vẫn render panel ngay (header +
+  // skeleton + composer disabled) để cảm giác phản hồi tức thời, không phải
+  // đợi 700-900ms RPC mới thấy gì.
+  const conversationId = conversation.conversationId
+  const isOpening = conversationId == null
   useActiveConversation(conversationId)
 
-  const { data, isLoading } = useConversationMessages(conversationId)
+  const { data, isLoading: isLoadingMessages } = useConversationMessages(
+    conversationId,
+  )
   const messages = data?.items ?? []
+  const isLoading = isOpening || isLoadingMessages
 
   const send = useSendMessage(currentUserId)
   const markRead = useMarkConversationRead()
 
   const [draft, setDraft] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
+  // Ghi nhớ message cuối đã được mark-read để tránh gọi mutate trùng lặp khi
+  // chính user gửi tin (lastMessageId tăng nhưng không có gì để đánh dấu).
+  const lastReadIdRef = useRef<number | null>(null)
+  // Ghi nhớ "user đang ở gần bottom" để chỉ auto-scroll khi họ thật sự đang
+  // theo dõi cuộc trò chuyện — tránh giật lên xuống khi user đang scroll lên
+  // đọc tin cũ.
+  const stickToBottomRef = useRef(true)
 
-  // Mark read khi mở convo + mỗi khi có tin mới đến (nếu user đang xem)
-  const lastMessageId = messages.at(-1)?.id ?? null
+  const lastMessage = messages.at(-1) ?? null
+  const lastMessageId = lastMessage?.id ?? null
+  const lastSenderId = lastMessage?.senderId ?? null
+
+  // Mark read khi: (1) lần đầu mở convo và có unread, (2) có tin mới từ
+  // người kia đến trong lúc đang xem. Không gọi khi mới tự gửi tin.
   useEffect(() => {
-    if (conversation.unreadCount > 0 || lastMessageId != null) {
+    if (conversationId == null) return
+    if (lastMessageId == null) return
+    if (lastMessageId === lastReadIdRef.current) return
+
+    const isFirstLoad = lastReadIdRef.current === null
+    const isNewIncoming = lastSenderId !== currentUserId && !isFirstLoad
+    lastReadIdRef.current = lastMessageId
+
+    if (isFirstLoad && conversation.unreadCount > 0) {
+      markRead.mutate(conversationId)
+    } else if (isNewIncoming) {
       markRead.mutate(conversationId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, lastMessageId])
+  }, [conversationId, lastMessageId, lastSenderId, currentUserId])
 
-  // Auto-scroll xuống đáy khi list đổi
+  // Reset bookmark khi đổi conversation.
+  useEffect(() => {
+    lastReadIdRef.current = null
+    stickToBottomRef.current = true
+  }, [conversationId])
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = distanceFromBottom < 120
+  }, [])
+
+  // Auto-scroll xuống đáy: chỉ khi user đang ở gần bottom hoặc đổi convo.
+  // Đồng thời, tin mình tự gửi luôn cuộn xuống (UX chat thông thường).
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollTop = el.scrollHeight
-  }, [messages.length, conversationId])
+    if (stickToBottomRef.current || lastSenderId === currentUserId) {
+      el.scrollTop = el.scrollHeight
+      stickToBottomRef.current = true
+    }
+  }, [messages.length, conversationId, lastSenderId, currentUserId])
 
   const canSend = useMemo(() => {
+    if (conversationId == null) return false
     if (!conversation.isConnected) return false
     if (conversation.blockedByMe || conversation.blockedMe) return false
     return draft.trim().length > 0 && !send.isPending
-  }, [conversation, draft, send.isPending])
+  }, [conversationId, conversation, draft, send.isPending])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canSend) return
+    if (!canSend || conversationId == null) return
     const content = draft.trim()
     setDraft("")
     send.mutate({ conversationId, content })
@@ -121,7 +167,11 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
         </button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-2 overscroll-contain"
+      >
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -154,7 +204,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
                 <div key={msg.id}>
                   {showTime && (
                     <div className="text-center text-[10px] text-muted-foreground py-1">
-                      {formatRelativeTime(msg.createdAt)}
+                      {formatRel(msg.createdAt)}
                     </div>
                   )}
                   <motion.div
@@ -191,23 +241,29 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
 
       <form
         onSubmit={handleSend}
-        className="p-3 border-t border-border/40 shrink-0 flex items-center gap-2"
+        className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-border/40 shrink-0 flex items-center gap-2"
       >
         <div className="flex-1 flex items-center bg-muted rounded-full px-4 focus-within:ring-1 focus-within:ring-primary transition-all">
           <input
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            enterKeyHint="send"
             placeholder={
-              conversation.blockedByMe
-                ? tErr("blockedByMe")
-                : conversation.blockedMe
-                  ? tErr("blockedMe")
-                  : !conversation.isConnected
-                    ? tErr("notConnected")
-                    : t("inputPlaceholder")
+              isOpening
+                ? t("opening")
+                : conversation.blockedByMe
+                  ? tErr("blockedByMe")
+                  : conversation.blockedMe
+                    ? tErr("blockedMe")
+                    : !conversation.isConnected
+                      ? tErr("notConnected")
+                      : t("inputPlaceholder")
             }
             disabled={
+              isOpening ||
               !conversation.isConnected ||
               conversation.blockedByMe ||
               conversation.blockedMe

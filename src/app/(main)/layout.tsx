@@ -3,6 +3,7 @@ import { CurrentUserProvider } from "@/features/auth/components/current-user-pro
 import type { SessionUserSummary } from "@/features/auth/types"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
 import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
+import { MessagingDock } from "@/features/messaging/components/messaging-dock"
 import { Navbar } from "@/components/navbar"
 
 export default async function MainLayout({
@@ -33,6 +34,7 @@ export default async function MainLayout({
           {children}
         </main>
       </div>
+      <MessagingDock />
     </CurrentUserProvider>
   )
 }
