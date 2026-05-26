@@ -16,15 +16,27 @@ import {
   useNotifications,
 } from "@/features/notifications/hooks"
 import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
-import { getNotificationVisual } from "@/features/notifications/lib/render"
+import {
+  getNotificationLabelParams,
+  getNotificationVisual,
+} from "@/features/notifications/lib/render"
 import type { NotificationItem } from "@/features/notifications/types"
 import { btnTap, fadeUp, pageEntrance, slideLeft, staggerSm } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
-type FilterValue = "all" | "unread" | "connect"
+type FilterValue = "all" | "unread" | "connect" | "jobs"
 
-const CONNECT_TYPES = new Set(["connection_request", "connection_accepted"])
+const CONNECT_TYPES = new Set<NotificationItem["type"]>([
+  "connection_request",
+  "connection_accepted",
+])
+const JOBS_TYPES = new Set<NotificationItem["type"]>([
+  "company_followed",
+  "job_application_received",
+  "application_status_changed",
+  "application_withdrawn",
+])
 
 function filterItems(
   items: NotificationItem[],
@@ -35,6 +47,8 @@ function filterItems(
       return items.filter((item) => !item.isRead)
     case "connect":
       return items.filter((item) => CONNECT_TYPES.has(item.type))
+    case "jobs":
+      return items.filter((item) => JOBS_TYPES.has(item.type))
     default:
       return items
   }
@@ -43,6 +57,7 @@ function filterItems(
 export default function NotificationsPage() {
   const t = useTranslations("notifications")
   const tTypes = useTranslations("notifications.types")
+  const tStatus = useTranslations("notifications.appStatus")
   const router = useRouter()
   const [filter, setFilter] = useState<FilterValue>("all")
 
@@ -115,6 +130,12 @@ export default function NotificationsPage() {
           >
             {t("tabs.connect")}
           </TabsTrigger>
+          <TabsTrigger
+            value="jobs"
+            className="rounded-lg text-sm px-3 whitespace-nowrap"
+          >
+            {t("filters.jobs")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={filter} className="mt-4">
@@ -143,6 +164,9 @@ export default function NotificationsPage() {
                 {visible.map((item) => {
                   const visual = getNotificationVisual(item)
                   const Icon = visual.icon
+                  const labelParams = getNotificationLabelParams(item, (s) =>
+                    tStatus(s),
+                  )
                   const sentence = (
                     <>
                       {visual.actorName ? (
@@ -150,7 +174,7 @@ export default function NotificationsPage() {
                           {visual.actorName}
                         </span>
                       ) : null}{" "}
-                      {tTypes(item.type)}
+                      {tTypes(item.type, labelParams)}
                     </>
                   )
 

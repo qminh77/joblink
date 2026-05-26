@@ -1,12 +1,15 @@
 import {
   AtSign,
   Bell,
+  Briefcase,
   MessageCircle,
   MessageSquare,
+  Send,
   Share2,
   ThumbsUp,
   UserPlus,
   Users,
+  XCircle,
   type LucideIcon,
 } from "lucide-react"
 
@@ -19,6 +22,32 @@ export type NotificationVisual = {
   actorName: string | null
   actorAvatarUrl: string | null
   actorUserId: number | null
+}
+
+/**
+ * Trả về tham số dùng cho ICU message của `notifications.types.{type}`. Một số
+ * type cần `{jobTitle}` / `{status}` để tạo câu hoàn chỉnh. Trả empty object
+ * cho type không cần param — next-intl `t()` chấp nhận tham số dư.
+ */
+export function getNotificationLabelParams(
+  item: NotificationItem,
+  translateAppStatus: (status: string) => string,
+): Record<string, string> {
+  const payload = item.payload
+  if (!payload) return {}
+  switch (item.type) {
+    case "job_application_received":
+    case "application_withdrawn":
+      return payload.type === item.type ? { jobTitle: payload.jobTitle } : {}
+    case "application_status_changed":
+      if (payload.type !== item.type) return {}
+      return {
+        jobTitle: payload.jobTitle,
+        status: translateAppStatus(payload.newStatus),
+      }
+    default:
+      return {}
+  }
 }
 
 const VISUALS: Record<
@@ -53,7 +82,24 @@ const VISUALS: Record<
     icon: MessageSquare,
     iconClassName: "text-indigo-500 bg-indigo-500/10",
   },
+  company_followed: {
+    icon: UserPlus,
+    iconClassName: "text-emerald-500 bg-emerald-500/10",
+  },
+  job_application_received: {
+    icon: Send,
+    iconClassName: "text-blue-500 bg-blue-500/10",
+  },
+  application_status_changed: {
+    icon: Briefcase,
+    iconClassName: "text-amber-500 bg-amber-500/10",
+  },
+  application_withdrawn: {
+    icon: XCircle,
+    iconClassName: "text-rose-500 bg-rose-500/10",
+  },
 }
+
 
 const FALLBACK = {
   icon: Bell,
@@ -102,6 +148,39 @@ export function getNotificationVisual(
           payload?.type === item.type
             ? `/messages?c=${payload.conversationId}`
             : "/messages",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "company_followed":
+      // Recipient = company owner; click → xem profile follower.
+      return {
+        ...base,
+        href:
+          payload?.type === item.type
+            ? `/profile/${payload.userId}`
+            : "/profile",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "job_application_received":
+    case "application_withdrawn":
+      // Recruiter → dashboard tab applicants. Pipeline link kèm jobId để filter
+      // sau (chưa hỗ trợ, fallback dashboard).
+      return {
+        ...base,
+        href: "/company/dashboard",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "application_status_changed":
+      // Applicant → trang job để xem trạng thái mới (badge hiển thị).
+      return {
+        ...base,
+        href:
+          payload?.type === item.type ? `/jobs/${payload.jobId}` : "/jobs",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

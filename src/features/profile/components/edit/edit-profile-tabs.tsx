@@ -10,6 +10,7 @@ import type { MemberProfileDetail } from "@/features/profile/types"
 import type { ProvinceRow } from "@/types/database"
 import { fadeUp } from "@/lib/animations"
 
+import { AvatarCoverEditor } from "./avatar-cover-editor"
 import { BasicInfoForm } from "./basic-info-form"
 import { EducationsSection } from "./educations-section"
 import { ExperiencesSection } from "./experiences-section"
@@ -25,7 +26,17 @@ export function EditProfileTabs({
   const t = useTranslations("profile")
 
   return (
-    <Tabs defaultValue="info">
+    <div className="space-y-5">
+      <motion.div variants={fadeUp} initial="hidden" animate="show">
+        <AvatarCoverEditor
+          userId={profile.user_id}
+          fullName={profile.full_name}
+          avatarUrl={profile.avatar_url}
+          coverUrl={profile.cover_url}
+        />
+      </motion.div>
+
+      <Tabs defaultValue="info">
       <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto flex-nowrap">
         <TabsTrigger
           value="info"
@@ -113,6 +124,7 @@ export function EditProfileTabs({
           </Card>
         </motion.div>
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   )
 }

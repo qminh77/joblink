@@ -53,7 +53,6 @@ export function BasicInfoForm({
       fullName: profile.full_name,
       headline: profile.headline ?? "",
       about: profile.about ?? "",
-      avatarUrl: profile.avatar_url ?? "",
       website: profile.website ?? "",
       provinceId: profile.province?.id ?? null,
       districtId: profile.district?.id ?? null,
@@ -98,25 +97,6 @@ export function BasicInfoForm({
                     value={field.value ?? ""}
                     className="h-10 rounded-xl"
                     placeholder={t("headlinePlaceholder")}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="avatarUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("avatarUrl")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    className="h-10 rounded-xl"
-                    placeholder="https://..."
                   />
                 </FormControl>
                 <FormMessage />

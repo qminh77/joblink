@@ -72,7 +72,6 @@ export async function updateMemberProfileAction(
       full_name: parsed.data.fullName,
       headline: emptyToNull(parsed.data.headline),
       about: emptyToNull(parsed.data.about),
-      avatar_url: emptyToNull(parsed.data.avatarUrl),
       website: emptyToNull(parsed.data.website),
       province_id: parsed.data.provinceId ?? null,
       district_id: parsed.data.districtId ?? null,
@@ -80,6 +79,37 @@ export async function updateMemberProfileAction(
       open_to_work: parsed.data.openToWork,
       updated_at: new Date().toISOString(),
     })
+    .eq("user_id", current.appUser.id)
+
+  if (error) return fail(error.message)
+  revalidateProfile(current.appUser.id)
+  return ok(undefined)
+}
+
+// Cập nhật riêng avatar/cover — gọi sau khi client upload xong file lên storage.
+// Tách action riêng để không phải submit toàn bộ BasicInfoForm chỉ để đổi ảnh.
+export async function updateMemberMediaAction(input: {
+  avatarUrl?: string | null
+  coverUrl?: string | null
+}): Promise<ActionResult> {
+  const te = await getTranslations("profile.errors")
+  const current = await requireCurrentUser()
+  if (current.appUser.role !== "member") return fail(te("memberOnly"))
+
+  const patch: {
+    avatar_url?: string | null
+    cover_url?: string | null
+    updated_at?: string
+  } = {}
+  if (input.avatarUrl !== undefined) patch.avatar_url = emptyToNull(input.avatarUrl)
+  if (input.coverUrl !== undefined) patch.cover_url = emptyToNull(input.coverUrl)
+  if (Object.keys(patch).length === 0) return ok(undefined)
+  patch.updated_at = new Date().toISOString()
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("member_profiles")
+    .update(patch)
     .eq("user_id", current.appUser.id)
 
   if (error) return fail(error.message)

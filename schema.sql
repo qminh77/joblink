@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS member_profiles (
     user_id            BIGINT NOT NULL,
     full_name          VARCHAR(255) NOT NULL,
     avatar_url         TEXT NULL,
+    cover_url          TEXT NULL,
     headline           VARCHAR(255) NULL,
     about              TEXT NULL,
     province_id        BIGINT NULL,

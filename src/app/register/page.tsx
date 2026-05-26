@@ -22,7 +22,7 @@ export default function RegisterPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-[480px] px-4 py-4 relative z-10">
+      <div className="w-full max-w-[560px] px-4 py-4 relative z-10">
         <div className="bg-white dark:bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col items-center">
             <div className="mb-6">

@@ -83,7 +83,16 @@ export function MemberProfileView({
 
       <motion.div variants={fadeUp}>
         <Card className="overflow-hidden rounded-2xl border-border/40 p-0 gap-0">
-          <div className="h-28 bg-gradient-to-r from-primary/80 to-blue-400" />
+          {profile.cover_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.cover_url}
+              alt=""
+              className="w-full h-36 sm:h-44 object-cover bg-muted"
+            />
+          ) : (
+            <div className="h-28 bg-gradient-to-r from-primary/80 to-blue-400" />
+          )}
           <div className="px-6 pb-6">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div className="flex items-end gap-4">

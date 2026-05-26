@@ -44,6 +44,36 @@ export type NewMessagePayload = ActorRef & {
   excerpt: string
 }
 
+export type CompanyFollowedPayload = ActorRef & {
+  // companyUserId trùng với recipient (notification.user_id) — không cần lưu
+  // riêng, nhưng giữ field actor để render avatar + link tới /profile/{actor}.
+}
+
+export type JobApplicationReceivedPayload = ActorRef & {
+  jobId: number
+  jobTitle: string
+  applicationId: number
+}
+
+export type ApplicationStatusChangedPayload = ActorRef & {
+  jobId: number
+  jobTitle: string
+  applicationId: number
+  newStatus:
+    | "applied"
+    | "reviewed"
+    | "interview"
+    | "offered"
+    | "hired"
+    | "rejected"
+}
+
+export type ApplicationWithdrawnPayload = ActorRef & {
+  jobId: number
+  jobTitle: string
+  applicationId: number
+}
+
 export type NotificationPayload =
   | ({ type: "connection_request" } & ConnectionRequestPayload)
   | ({ type: "connection_accepted" } & ConnectionAcceptedPayload)
@@ -52,6 +82,10 @@ export type NotificationPayload =
   | ({ type: "post_share" } & PostSharePayload)
   | ({ type: "comment_mention" } & CommentMentionPayload)
   | ({ type: "new_message" } & NewMessagePayload)
+  | ({ type: "company_followed" } & CompanyFollowedPayload)
+  | ({ type: "job_application_received" } & JobApplicationReceivedPayload)
+  | ({ type: "application_status_changed" } & ApplicationStatusChangedPayload)
+  | ({ type: "application_withdrawn" } & ApplicationWithdrawnPayload)
 
 export type NotificationItem = {
   id: number

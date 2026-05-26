@@ -1,10 +1,23 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import { Briefcase, Lock, Mail, User } from "lucide-react"
+import {
+  AtSign,
+  Briefcase,
+  Building2,
+  FileBadge,
+  Info,
+  Layers,
+  Lock,
+  Mail,
+  MapPin,
+  User,
+  UserSquare,
+  Users,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -17,10 +30,23 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 
 import { useRegister } from "../hooks"
-import { createRegisterSchema, type RegisterInput } from "../schemas"
+import {
+  COMPANY_SIZE_OPTIONS,
+  createRegisterSchema,
+  type CompanySize,
+  type RegisterInput,
+} from "../schemas"
 
 import { PasswordInput } from "./password-input"
 
@@ -28,6 +54,13 @@ type RegisterFormValues = {
   role: "member" | "company"
   fullName: string
   companyName: string
+  taxId: string
+  industry: string
+  size: CompanySize | ""
+  representativeName: string
+  representativeTitle: string
+  businessAddress: string
+  businessEmail: string
   email: string
   password: string
   acceptTerms: boolean
@@ -37,15 +70,26 @@ const defaultValues: RegisterFormValues = {
   role: "member",
   fullName: "",
   companyName: "",
+  taxId: "",
+  industry: "",
+  size: "",
+  representativeName: "",
+  representativeTitle: "",
+  businessAddress: "",
+  businessEmail: "",
   email: "",
   password: "",
   acceptTerms: false,
 }
 
+const INPUT_CLASS =
+  "pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+
 export function RegisterForm() {
   const t = useTranslations("auth.register")
   const tv = useTranslations("auth.validation")
-  const registerSchema = createRegisterSchema(tv)
+  const tSize = useTranslations("auth.register.sizeOptions")
+  const registerSchema = useMemo(() => createRegisterSchema(tv), [tv])
 
   const form = useForm<RegisterFormValues>({
     defaultValues,
@@ -55,6 +99,13 @@ export function RegisterForm() {
           ? {
               role: "company",
               companyName: values.companyName,
+              taxId: values.taxId,
+              industry: values.industry,
+              size: values.size as CompanySize,
+              representativeName: values.representativeName,
+              representativeTitle: values.representativeTitle || undefined,
+              businessAddress: values.businessAddress,
+              businessEmail: values.businessEmail,
               email: values.email,
               password: values.password,
               acceptTerms: values.acceptTerms as true,
@@ -94,6 +145,13 @@ export function RegisterForm() {
         ? {
             role: "company",
             companyName: values.companyName,
+            taxId: values.taxId,
+            industry: values.industry,
+            size: values.size as CompanySize,
+            representativeName: values.representativeName,
+            representativeTitle: values.representativeTitle || undefined,
+            businessAddress: values.businessAddress,
+            businessEmail: values.businessEmail,
             email: values.email,
             password: values.password,
             acceptTerms: true,
@@ -160,7 +218,7 @@ export function RegisterForm() {
                       {...field}
                       autoComplete="name"
                       placeholder={t("fullNamePlaceholder")}
-                      className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                      className={INPUT_CLASS}
                     />
                   </FormControl>
                 </div>
@@ -169,31 +227,243 @@ export function RegisterForm() {
             )}
           />
         ) : (
-          <FormField
-            control={form.control}
-            name="companyName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-foreground/80">
-                  {t("companyName")}
-                </FormLabel>
-                <div className="relative group">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                    <Briefcase className="w-5 h-5" />
-                  </span>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      autoComplete="organization"
-                      placeholder={t("companyNamePlaceholder")}
-                      className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <>
+            <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs leading-relaxed text-foreground/80 flex gap-2">
+              <Info className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+              <span>{t("companyPendingNotice")}</span>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("companyInfoSection")}
+              </p>
+
+              <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-foreground/80">
+                      {t("companyName")}
+                    </FormLabel>
+                    <div className="relative group">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                        <Briefcase className="w-5 h-5" />
+                      </span>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoComplete="organization"
+                          placeholder={t("companyNamePlaceholder")}
+                          className={INPUT_CLASS}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="taxId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-foreground/80">
+                      {t("taxId")}
+                    </FormLabel>
+                    <div className="relative group">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                        <FileBadge className="w-5 h-5" />
+                      </span>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          placeholder={t("taxIdPlaceholder")}
+                          className={INPUT_CLASS}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("industry")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                          <Building2 className="w-5 h-5" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder={t("industryPlaceholder")}
+                            className={INPUT_CLASS}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="size"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("size")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
+                          <Users className="w-5 h-5" />
+                        </span>
+                        <Select
+                          value={field.value || undefined}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger
+                              className={`${INPUT_CLASS} w-full text-left`}
+                            >
+                              <SelectValue placeholder={t("sizePlaceholder")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {COMPANY_SIZE_OPTIONS.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {tSize(option)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="businessAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-foreground/80">
+                      {t("businessAddress")}
+                    </FormLabel>
+                    <div className="relative group">
+                      <span className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                        <MapPin className="w-5 h-5" />
+                      </span>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          rows={2}
+                          placeholder={t("businessAddressPlaceholder")}
+                          className="pl-11 pt-3 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="businessEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-foreground/80">
+                      {t("businessEmail")}
+                    </FormLabel>
+                    <div className="relative group">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                        <AtSign className="w-5 h-5" />
+                      </span>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder={t("businessEmailPlaceholder")}
+                          className={INPUT_CLASS}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="representativeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("representativeName")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                          <UserSquare className="w-5 h-5" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            autoComplete="name"
+                            placeholder={t("representativeNamePlaceholder")}
+                            className={INPUT_CLASS}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="representativeTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("representativeTitle")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                          <Layers className="w-5 h-5" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder={t("representativeTitlePlaceholder")}
+                            className={INPUT_CLASS}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+              {t("companyAccountSection")}
+            </p>
+          </>
         )}
 
         <FormField
@@ -214,7 +484,7 @@ export function RegisterForm() {
                     type="email"
                     autoComplete="email"
                     placeholder="name@company.com"
-                    className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className={INPUT_CLASS}
                   />
                 </FormControl>
               </div>
@@ -240,7 +510,7 @@ export function RegisterForm() {
                     {...field}
                     autoComplete="new-password"
                     placeholder={t("passwordPlaceholder")}
-                    className="pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className={INPUT_CLASS}
                   />
                 </FormControl>
               </div>

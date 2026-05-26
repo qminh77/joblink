@@ -77,6 +77,29 @@ export async function verifyNotificationTargetAction(
         .maybeSingle()
       return data != null
     }
+    case "company_followed": {
+      // Click → /profile/{actor}; chỉ cần actor user còn tồn tại.
+      if (!payload || payload.type !== item.type) return false
+      const { data } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", payload.userId)
+        .is("deleted_at", null)
+        .maybeSingle()
+      return data != null
+    }
+    case "job_application_received":
+    case "application_withdrawn":
+    case "application_status_changed": {
+      if (!payload || payload.type !== item.type) return false
+      const { data } = await supabase
+        .from("jobs")
+        .select("id")
+        .eq("id", payload.jobId)
+        .is("deleted_at", null)
+        .maybeSingle()
+      return data != null
+    }
     default:
       return true
   }

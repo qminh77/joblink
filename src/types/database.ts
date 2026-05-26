@@ -112,6 +112,7 @@ export type MemberProfileRow = {
   user_id: number
   full_name: string
   avatar_url: string | null
+  cover_url: string | null
   headline: string | null
   about: string | null
   province_id: number | null
@@ -216,6 +217,10 @@ export type NotificationType =
   | "post_share"
   | "comment_mention"
   | "new_message"
+  | "company_followed"
+  | "job_application_received"
+  | "application_status_changed"
+  | "application_withdrawn"
 
 export type ConversationRow = {
   id: number
@@ -266,6 +271,139 @@ export type NotificationPreferenceRow = {
   type: NotificationType
   in_app_enabled: boolean
   email_enabled: boolean
+}
+
+export type JobTypeRow = {
+  id: number
+  code: string
+  name: string
+  name_en: string | null
+  sort_order: number
+  is_active: boolean
+  is_system: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type WorkModeRow = {
+  id: number
+  code: string
+  name: string
+  name_en: string | null
+  sort_order: number
+  is_active: boolean
+  is_system: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type JobPositionRow = {
+  id: number
+  code: string
+  name: string
+  name_en: string | null
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type JobRow = {
+  id: number
+  company_user_id: number
+  title: string
+  description: string
+  requirements: string | null
+  province_id: number | null
+  district_id: number | null
+  salary_min: number | null
+  salary_max: number | null
+  salary_visible: boolean
+  job_type_id: number
+  work_mode_id: number
+  job_position_id: number | null
+  status: "draft" | "active" | "closed" | "expired" | "removed"
+  expires_at: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type SavedJobRow = {
+  user_id: number
+  job_id: number
+  created_at: string
+}
+
+export type AuditLogRow = {
+  id: number
+  actor_id: number | null
+  action: string
+  entity_type: string | null
+  entity_id: number | null
+  old_data: Json | null
+  new_data: Json | null
+  reason: string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export type AdminAuditLogView = AuditLogRow & {
+  actor_email: string | null
+  actor_name: string | null
+}
+
+export type SystemSettingsRow = {
+  id: number
+  setting_key: string
+  setting_group: string
+  value: Json | null
+  encrypted: boolean
+  updated_by: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type ModerationActionType =
+  | "hide"
+  | "delete"
+  | "warn"
+  | "suspend"
+  | "ban"
+  | "restore"
+  | "dismiss"
+
+export type ModerationActionRow = {
+  id: number
+  report_id: number | null
+  moderator_id: number
+  target_type: ReportTargetType
+  target_id: number
+  action_type: ModerationActionType
+  reason: string
+  created_at: string
+}
+
+export type JobApplicationRow = {
+  id: number
+  job_id: number
+  applicant_id: number
+  resume_url: string | null
+  cover_letter: string | null
+  status:
+    | "applied"
+    | "reviewed"
+    | "interview"
+    | "offered"
+    | "hired"
+    | "rejected"
+    | "withdrawn"
+  applied_at: string
+  updated_at: string
 }
 
 export type CompanyProfileRow = {
@@ -421,6 +559,24 @@ export type Database = {
           reason?: string | null
         }
       >
+      job_types: TableDef<JobTypeRow>
+      work_modes: TableDef<WorkModeRow>
+      job_positions: TableDef<JobPositionRow>
+      jobs: TableDef<JobRow>
+      saved_jobs: TableDef<SavedJobRow, Omit<SavedJobRow, "created_at">>
+      job_applications: TableDef<JobApplicationRow>
+      audit_logs: TableDef<
+        AuditLogRow,
+        Omit<AuditLogRow, "id" | "created_at"> & { created_at?: string }
+      >
+      moderation_actions: TableDef<
+        ModerationActionRow,
+        Omit<ModerationActionRow, "id" | "created_at">
+      >
+      system_settings: TableDef<
+        SystemSettingsRow,
+        Omit<SystemSettingsRow, "id" | "created_at" | "updated_at">
+      >
     }
     Views: Record<string, never>
     Functions: {
@@ -473,6 +629,109 @@ export type Database = {
       }
       mark_conversation_read: {
         Args: { p_conversation_id: number }
+        Returns: Json
+      }
+      get_company_public_overview: {
+        Args: { p_company_user_id: number; p_jobs_limit?: number }
+        Returns: Json
+      }
+      toggle_follow_company: {
+        Args: { p_company_user_id: number }
+        Returns: Json
+      }
+      get_company_dashboard_overview: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      get_company_jobs: {
+        Args: {
+          p_status?: string
+          p_search?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      get_company_applicants: {
+        Args: {
+          p_job_id?: number | null
+          p_status?: string
+          p_search?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      update_application_status: {
+        Args: {
+          p_application_id: number
+          p_new_status: string
+          p_note?: string | null
+        }
+        Returns: Json
+      }
+      update_job_status: {
+        Args: { p_job_id: number; p_new_status: string }
+        Returns: Json
+      }
+      create_job: {
+        Args: {
+          p_title: string
+          p_description: string
+          p_requirements: string | null
+          p_province_id: number | null
+          p_district_id: number | null
+          p_salary_min: number | null
+          p_salary_max: number | null
+          p_salary_visible: boolean
+          p_job_type_id: number
+          p_work_mode_id: number
+          p_job_position_id: number | null
+          p_status: string
+          p_expires_at: string | null
+          p_skills: string[] | null
+        }
+        Returns: Json
+      }
+      get_jobs_list: {
+        Args: {
+          p_search?: string | null
+          p_province_id?: number | null
+          p_job_type_ids?: number[] | null
+          p_work_mode_ids?: number[] | null
+          p_salary_min?: number | null
+          p_company_user_id?: number | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      get_job_detail: {
+        Args: { p_job_id: number }
+        Returns: Json
+      }
+      apply_to_job: {
+        Args: {
+          p_job_id: number
+          p_cover_letter: string | null
+          p_resume_url: string | null
+        }
+        Returns: Json
+      }
+      withdraw_application: {
+        Args: { p_application_id: number }
+        Returns: Json
+      }
+      toggle_saved_job: {
+        Args: { p_job_id: number }
+        Returns: Json
+      }
+      get_my_saved_jobs: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      get_admin_dashboard: {
+        Args: Record<string, never>
         Returns: Json
       }
     }

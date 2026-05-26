@@ -19,7 +19,10 @@ import {
   useNotifications,
 } from "@/features/notifications/hooks"
 import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
-import { getNotificationVisual } from "@/features/notifications/lib/render"
+import {
+  getNotificationLabelParams,
+  getNotificationVisual,
+} from "@/features/notifications/lib/render"
 import { getInitials } from "@/lib/utils/format"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
@@ -42,6 +45,7 @@ export function NotificationDropdown({
 }) {
   const t = useTranslations("notifications")
   const tTypes = useTranslations("notifications.types")
+  const tStatus = useTranslations("notifications.appStatus")
   const router = useRouter()
   const { data: notifications = [] } = useNotifications()
   const markRead = useMarkNotificationRead()
@@ -102,6 +106,9 @@ export function NotificationDropdown({
               {visible.map((item, index) => {
                 const visual = getNotificationVisual(item)
                 const Icon = visual.icon
+                const labelParams = getNotificationLabelParams(item, (s) =>
+                  tStatus(s),
+                )
                 return (
                   <motion.div key={item.id} variants={fadeIn}>
                     <button
@@ -145,7 +152,7 @@ export function NotificationDropdown({
                               {visual.actorName}{" "}
                             </span>
                           ) : null}
-                          {tTypes(item.type)}
+                          {tTypes(item.type, labelParams)}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[10px] text-muted-foreground">

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import type {
   ForgotPasswordInput,
   LoginInput,
-  RegisterInput,
+  MemberRegisterInput,
 } from "../schemas"
 
 export async function signInWithPasswordClient(input: LoginInput) {
@@ -19,13 +19,8 @@ export async function signInWithPasswordClient(input: LoginInput) {
   return data
 }
 
-export async function signUpWithPasswordClient(input: RegisterInput) {
+export async function signUpMemberClient(input: MemberRegisterInput) {
   const supabase = createClient()
-
-  const metadata: Record<string, string> =
-    input.role === "company"
-      ? { role: "company", company_name: input.companyName }
-      : { role: "member", full_name: input.fullName }
 
   const redirectTo =
     typeof window !== "undefined"
@@ -36,7 +31,7 @@ export async function signUpWithPasswordClient(input: RegisterInput) {
     email: input.email,
     password: input.password,
     options: {
-      data: metadata,
+      data: { role: "member", full_name: input.fullName },
       emailRedirectTo: redirectTo,
     },
   })

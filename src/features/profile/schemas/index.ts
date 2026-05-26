@@ -40,7 +40,6 @@ export function createMemberProfileSchema(t: Translator) {
       .max(255, t("fullNameMax")),
     headline: optionalText(255),
     about: optionalText(4000),
-    avatarUrl: optionalUrl(t),
     website: optionalUrl(t),
     provinceId: z.number().int().positive().nullable(),
     districtId: z.number().int().positive().nullable(),
