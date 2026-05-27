@@ -1342,7 +1342,28 @@ BEGIN
               EXISTS (
                   SELECT 1 FROM public.post_reactions r
                    WHERE r.post_id = f.id AND r.user_id = v_me
-              ) AS "viewerReacted"
+              ) AS "viewerReacted",
+              CASE
+                WHEN f.post_type = 'poll' THEN (
+                  SELECT COALESCE(jsonb_agg(
+                    jsonb_build_object(
+                      'id', po.id,
+                      'optionText', po.option_text,
+                      'voteCount', po.vote_count,
+                      'viewerVoted', CASE
+                        WHEN v_me IS NULL THEN FALSE
+                        ELSE EXISTS (
+                          SELECT 1 FROM public.poll_votes pv
+                           WHERE pv.option_id = po.id AND pv.user_id = v_me
+                        )
+                      END
+                    ) ORDER BY po.id
+                  ), '[]'::jsonb)
+                  FROM public.poll_options po
+                  WHERE po.post_id = f.id
+                )
+                ELSE NULL
+              END AS "pollOptions"
             FROM feed f
             JOIN public.users au ON au.id = f.author_id
             LEFT JOIN public.member_profiles  amp ON amp.user_id = f.author_id AND amp.deleted_at IS NULL
@@ -1487,7 +1508,28 @@ BEGIN
                     SELECT 1 FROM public.post_reactions r
                      WHERE r.post_id = f.id AND r.user_id = v_me
                 )
-              END AS "viewerReacted"
+              END AS "viewerReacted",
+              CASE
+                WHEN f.post_type = 'poll' THEN (
+                  SELECT COALESCE(jsonb_agg(
+                    jsonb_build_object(
+                      'id', po.id,
+                      'optionText', po.option_text,
+                      'voteCount', po.vote_count,
+                      'viewerVoted', CASE
+                        WHEN v_me IS NULL THEN FALSE
+                        ELSE EXISTS (
+                          SELECT 1 FROM public.poll_votes pv
+                           WHERE pv.option_id = po.id AND pv.user_id = v_me
+                        )
+                      END
+                    ) ORDER BY po.id
+                  ), '[]'::jsonb)
+                  FROM public.poll_options po
+                  WHERE po.post_id = f.id
+                )
+                ELSE NULL
+              END AS "pollOptions"
             FROM feed f
             JOIN public.users au ON au.id = f.author_id
             LEFT JOIN public.member_profiles  amp ON amp.user_id = f.author_id AND amp.deleted_at IS NULL
@@ -1508,6 +1550,26 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_user_posts(BIGINT, TIMESTAMPTZ, INT)
     TO anon, authenticated;
 
+-- =============================================================================
+-- 14c. POLL VOTE COUNT INCREMENT — atomic counter update
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.increment_poll_vote_count(
+    p_option_id BIGINT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+    UPDATE public.poll_options
+       SET vote_count = vote_count + 1
+     WHERE id = p_option_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.increment_poll_vote_count(BIGINT)
+    TO authenticated;
 
 
 -- #############################################################################
@@ -2815,6 +2877,99 @@ CREATE POLICY post_shares_delete_own
 
 -- =============================================================================
 -- END MIGRATION 20260529_023
+-- =============================================================================
+
+-- =============================================================================
+-- 16c-bis. POLL TABLES RLS (migration 20260530_024)
+-- =============================================================================
+ALTER TABLE public.poll_options ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS poll_options_admin_all      ON public.poll_options;
+DROP POLICY IF EXISTS poll_options_select_visible ON public.poll_options;
+DROP POLICY IF EXISTS poll_options_insert_own     ON public.poll_options;
+DROP POLICY IF EXISTS poll_options_update_own     ON public.poll_options;
+DROP POLICY IF EXISTS poll_options_delete_own     ON public.poll_options;
+
+CREATE POLICY poll_options_admin_all
+  ON public.poll_options
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY poll_options_select_visible
+  ON public.poll_options
+  FOR SELECT
+  USING (public.can_view_post(post_id));
+
+CREATE POLICY poll_options_insert_own
+  ON public.poll_options
+  FOR INSERT
+  WITH CHECK (
+    post_id IN (
+      SELECT p.id FROM public.posts p
+       WHERE p.author_id = public.auth_user_id()
+    )
+  );
+
+CREATE POLICY poll_options_update_own
+  ON public.poll_options
+  FOR UPDATE
+  USING (
+    post_id IN (
+      SELECT p.id FROM public.posts p
+       WHERE p.author_id = public.auth_user_id()
+    )
+  )
+  WITH CHECK (
+    post_id IN (
+      SELECT p.id FROM public.posts p
+       WHERE p.author_id = public.auth_user_id()
+    )
+  );
+
+CREATE POLICY poll_options_delete_own
+  ON public.poll_options
+  FOR DELETE
+  USING (
+    post_id IN (
+      SELECT p.id FROM public.posts p
+       WHERE p.author_id = public.auth_user_id()
+    )
+  );
+
+ALTER TABLE public.poll_votes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS poll_votes_admin_all      ON public.poll_votes;
+DROP POLICY IF EXISTS poll_votes_select_visible ON public.poll_votes;
+DROP POLICY IF EXISTS poll_votes_insert_own     ON public.poll_votes;
+DROP POLICY IF EXISTS poll_votes_delete_own     ON public.poll_votes;
+
+CREATE POLICY poll_votes_admin_all
+  ON public.poll_votes
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY poll_votes_select_visible
+  ON public.poll_votes
+  FOR SELECT
+  USING (public.can_view_post(post_id));
+
+CREATE POLICY poll_votes_insert_own
+  ON public.poll_votes
+  FOR INSERT
+  WITH CHECK (
+    user_id = public.auth_user_id()
+    AND public.can_view_post(post_id)
+  );
+
+CREATE POLICY poll_votes_delete_own
+  ON public.poll_votes
+  FOR DELETE
+  USING (user_id = public.auth_user_id());
+
+-- =============================================================================
+-- END MIGRATION 20260530_024
 -- =============================================================================
 
 

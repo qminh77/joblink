@@ -52,6 +52,21 @@ export type PostRow = {
   deleted_at: string | null
 }
 
+export type PollOptionRow = {
+  id: number
+  post_id: number
+  option_text: string
+  vote_count: number
+}
+
+export type PollVoteRow = {
+  id: number
+  post_id: number
+  option_id: number
+  user_id: number
+  voted_at: string
+}
+
 export type PostReactionType =
   | "like"
   | "celebrate"
@@ -221,6 +236,7 @@ export type NotificationType =
   | "job_application_received"
   | "application_status_changed"
   | "application_withdrawn"
+  | "poll_vote"
 
 export type ConversationRow = {
   id: number
@@ -529,6 +545,16 @@ export type Database = {
         },
         Partial<PostCommentRow> & { deleted_at?: string | null }
       >
+      poll_options: TableDef<
+        PollOptionRow,
+        Omit<PollOptionRow, "id" | "vote_count"> & {
+          vote_count?: number
+        }
+      >
+      poll_votes: TableDef<
+        PollVoteRow,
+        Omit<PollVoteRow, "id" | "voted_at">
+      >
       post_shares: TableDef<
         PostShareRow,
         Omit<PostShareRow, "id" | "created_at"> & {
@@ -769,6 +795,10 @@ export type Database = {
       get_admin_dashboard: {
         Args: Record<string, never>
         Returns: Json
+      }
+      increment_poll_vote_count: {
+        Args: { p_option_id: number }
+        Returns: undefined
       }
     }
 

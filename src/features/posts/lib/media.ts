@@ -17,7 +17,7 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
   if (!value || typeof value !== "object" || Array.isArray(value)) return []
   const obj = value as Record<string, unknown>
 
-  if (obj.type === "shared") return []
+  if (obj.type === "shared" || obj.type === "poll") return []
 
   if (Array.isArray(obj.items)) {
     const out: MediaItem[] = []

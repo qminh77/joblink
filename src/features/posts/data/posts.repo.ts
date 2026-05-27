@@ -3,12 +3,13 @@ import "server-only"
 import type { createClient } from "@/lib/supabase/server"
 import type {
   Json,
+  PollOptionRow,
   PostReactionType,
   PostType,
   PostVisibility,
 } from "@/types/database"
 
-import type { MentionableUser } from "../types"
+import type { MentionableUser, PollOption } from "../types"
 
 // Lớp data-access của posts: nơi DUY NHẤT biết tên bảng/cột + câu select.
 // Mọi hàm chạy bằng client RLS (anon key + JWT của user) → RLS là hàng rào
@@ -239,4 +240,138 @@ export async function searchMentionableProfiles(
     return ai - bi
   })
   return out.slice(0, limit)
+}
+
+export async function insertPollOptions(
+  supabase: Supabase,
+  postId: number,
+  options: string[],
+) {
+  const rows = options.map((text) => ({
+    post_id: postId,
+    option_text: text,
+  }))
+  return supabase
+    .from("poll_options")
+    .insert(rows)
+    .select("id, post_id, option_text, vote_count")
+    .returns<PollOptionRow[]>()
+}
+
+export async function findPollByPostId(
+  supabase: Supabase,
+  postId: number,
+): Promise<PollOptionRow[]> {
+  const { data } = await supabase
+    .from("poll_options")
+    .select("id, post_id, option_text, vote_count")
+    .eq("post_id", postId)
+    .order("id", { ascending: true })
+    .returns<PollOptionRow[]>()
+
+  return data ?? []
+}
+
+export async function findViewerPollVotes(
+  supabase: Supabase,
+  postId: number,
+  userId: number,
+): Promise<number[]> {
+  const { data } = await supabase
+    .from("poll_votes")
+    .select("option_id")
+    .eq("post_id", postId)
+    .eq("user_id", userId)
+    .returns<{ option_id: number }[]>()
+
+  return data?.map((r) => r.option_id) ?? []
+}
+
+export function insertPollVote(
+  supabase: Supabase,
+  postId: number,
+  optionId: number,
+  userId: number,
+) {
+  return supabase
+    .from("poll_votes")
+    .insert({ post_id: postId, option_id: optionId, user_id: userId })
+}
+
+export function incrementOptionVoteCount(
+  supabase: Supabase,
+  optionId: number,
+) {
+  return supabase.rpc("increment_poll_vote_count", {
+    p_option_id: optionId,
+  })
+}
+
+export async function findPollOptionById(
+  supabase: Supabase,
+  optionId: number,
+): Promise<{ id: number; option_text: string } | null> {
+  const { data } = await supabase
+    .from("poll_options")
+    .select("id, option_text")
+    .eq("id", optionId)
+    .single<{ id: number; option_text: string }>()
+
+  return data
+}
+
+export async function replacePollOptions(
+  supabase: Supabase,
+  postId: number,
+  options: { id?: number; optionText: string }[],
+) {
+  const existing = await findPollByPostId(supabase, postId)
+  const existingById = new Map(existing.map((o) => [o.id, o]))
+  const incomingIds = new Set(
+    options.map((o) => o.id).filter((id): id is number => id != null),
+  )
+
+  const toDelete = existing.filter((o) => !incomingIds.has(o.id))
+  const toInsert: string[] = []
+  const toUpdate: { id: number; text: string }[] = []
+
+  for (const opt of options) {
+    if (opt.id && existingById.has(opt.id)) {
+      const existingOpt = existingById.get(opt.id)!
+      if (existingOpt.option_text !== opt.optionText) {
+        toUpdate.push({ id: opt.id, text: opt.optionText })
+      }
+    } else {
+      toInsert.push(opt.optionText)
+    }
+  }
+
+  const ops: Promise<unknown>[] = []
+
+  for (const opt of toDelete) {
+    ops.push(
+      supabase.from("poll_options").delete().eq("id", opt.id) as unknown as Promise<unknown>,
+    )
+  }
+
+  for (const opt of toUpdate) {
+    ops.push(
+      supabase
+        .from("poll_options")
+        .update({ option_text: opt.text })
+        .eq("id", opt.id) as unknown as Promise<unknown>,
+    )
+  }
+
+  if (toInsert.length > 0) {
+    ops.push(
+      supabase
+        .from("poll_options")
+        .insert(toInsert.map((t) => ({ post_id: postId, option_text: t }))) as unknown as Promise<unknown>,
+    )
+  }
+
+  await Promise.all(ops)
+
+  return findPollByPostId(supabase, postId)
 }

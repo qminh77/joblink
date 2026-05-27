@@ -17,19 +17,29 @@ import type { Json, PostType, PostVisibility } from "@/types/database"
 import {
   createCommentIdSchema,
   createCommentInputSchema,
+  createPollInputSchema,
   createPostIdSchema,
   createPostInputSchema,
   createPostUpdateSchema,
   createReactionInputSchema,
   createShareInputSchema,
+  createUpdatePollSchema,
+  createVoteInputSchema,
 } from "../schemas"
 import {
   deleteReaction,
+  findPollByPostId,
+  findPollOptionById,
   findReaction,
+  findViewerPollVotes,
+  incrementOptionVoteCount,
   insertComment,
+  insertPollOptions,
+  insertPollVote,
   insertPost,
   insertReaction,
   insertShareRecord,
+  replacePollOptions,
   searchMentionableProfiles,
   softDeleteComment,
   softDeletePost,
@@ -37,9 +47,11 @@ import {
 } from "../data/posts.repo"
 import { loadOriginalSnapshot } from "../data/posts.privileged"
 import { authorRefFrom, newFeedComment, newFeedPost } from "../lib/map"
+import { buildPollMedia, readPollData } from "../lib/poll"
 import { buildSharedMedia } from "../lib/media"
 import {
   notifyComment,
+  notifyPollVote,
   notifyReaction,
   notifyShare,
 } from "../services/post-notifications"
@@ -113,11 +125,71 @@ export async function createPostAction(input: {
   content: string
   visibility?: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
+  options?: string[]
 }): Promise<ActionResult<FeedPost>> {
   return action("posts.errors", async (t) => {
-    const data = parse(createPostInputSchema(t), input)
     const current = await requireCurrentUser()
     const supabase = await createClient()
+
+    const hasPoll = Array.isArray(input.options) && input.options.length >= 2
+
+    if (hasPoll) {
+      const data = parse(createPollInputSchema(t), input)
+
+      const row = unwrap(
+        await insertPost(supabase, {
+          authorId: current.appUser.id,
+          content: data.content,
+          postType: "poll",
+          media: null,
+          visibility: data.visibility,
+        }),
+        "createFailed",
+      )
+
+      const inserted = unwrap(
+        await insertPollOptions(supabase, row.id, data.options),
+        "createFailed",
+      )
+
+      const pollOptions = inserted.map((o) => ({
+        id: o.id,
+        optionText: o.option_text,
+        voteCount: o.vote_count,
+      }))
+
+      const pollMedia = buildPollMedia(pollOptions, 0)
+
+      const updated = unwrap(
+        await updatePost(supabase, row.id, current.appUser.id, {
+          content: row.content,
+          visibility: row.visibility,
+          media: pollMedia,
+        }),
+        "createFailed",
+      )
+
+      revalidatePath("/home")
+
+      return newFeedPost({
+        id: row.id,
+        authorId: current.appUser.id,
+        content: row.content,
+        postType: "poll",
+        media: updated.media,
+        visibility: row.visibility,
+        createdAt: row.created_at,
+        author: authorRefFrom(current),
+        pollOptions: inserted.map((o) => ({
+          id: o.id,
+          optionText: o.option_text,
+          voteCount: o.vote_count,
+          viewerVoted: false,
+        })),
+      })
+    }
+
+    const data = parse(createPostInputSchema(t), input)
 
     const hasMedia = data.mediaItems.length > 0
     const row = unwrap(
@@ -180,6 +252,46 @@ export async function toggleReactionAction(
       current,
     })
     return { reacted: true }
+  })
+}
+
+export async function voteAction(
+  postId: number,
+  optionId: number,
+): Promise<ActionResult<{ optionId: number; postId: number }>> {
+  return action("posts.errors", async (t) => {
+    const data = parse(createVoteInputSchema(t), { postId, optionId })
+    const current = await requireCurrentUser()
+    const supabase = await createClient()
+    const me = current.appUser.id
+
+    const existingVotes = await findViewerPollVotes(supabase, data.postId, me)
+    if (existingVotes.length > 0) {
+      throw ActionError.key("alreadyVoted")
+    }
+
+    assertOk(
+      await insertPollVote(supabase, data.postId, data.optionId, me),
+      "voteFailed",
+    )
+
+    assertOk(
+      await incrementOptionVoteCount(supabase, data.optionId),
+      "voteFailed",
+    )
+
+    const option = await findPollOptionById(supabase, data.optionId)
+    if (option) {
+      await notifyPollVote({
+        postId: data.postId,
+        optionText: option.option_text,
+        current,
+      })
+    }
+
+    revalidatePath("/home")
+
+    return { optionId: data.optionId, postId: data.postId }
   })
 }
 
@@ -298,6 +410,7 @@ export async function updatePostAction(input: {
   content: string
   visibility: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
+  options?: { id?: number; optionText: string }[]
 }): Promise<
   ActionResult<{
     postId: number
@@ -306,12 +419,73 @@ export async function updatePostAction(input: {
     media: Json | null
     postType: PostType
     updatedAt: string
+    pollOptions?: { id: number; optionText: string; voteCount: number }[]
   }>
 > {
   return action("posts.errors", async (t) => {
-    const data = parse(createPostUpdateSchema(t), input)
     const current = await requireCurrentUser()
     const supabase = await createClient()
+
+    if (input.options) {
+      const data = parse(createUpdatePollSchema(t), input)
+
+      // Check if removing voted options
+      const existingOptions = await findPollByPostId(supabase, data.postId)
+      const incomingIds = new Set(
+        data.options.map((o) => o.id).filter((id): id is number => id != null),
+      )
+      for (const opt of existingOptions) {
+        if (opt.vote_count > 0 && !incomingIds.has(opt.id)) {
+          throw ActionError.key("votedOptionRemoveBlocked")
+        }
+      }
+
+      const updatedOptions = await replacePollOptions(
+        supabase,
+        data.postId,
+        data.options,
+      )
+
+      const totalVotes = updatedOptions.reduce(
+        (sum, o) => sum + o.vote_count,
+        0,
+      )
+      const pollOptions = updatedOptions.map((o) => ({
+        id: o.id,
+        optionText: o.option_text,
+        voteCount: o.vote_count,
+      }))
+      const pollMedia = buildPollMedia(pollOptions, totalVotes)
+
+      const patch: {
+        content: string
+        visibility: PostVisibility
+        media: Json
+      } = {
+        content: data.content,
+        visibility: data.visibility,
+        media: pollMedia,
+      }
+
+      const row = unwrap(
+        await updatePost(supabase, data.postId, current.appUser.id, patch),
+        "updateFailed",
+      )
+
+      revalidatePath("/home")
+
+      return {
+        postId: row.id,
+        content: row.content,
+        visibility: row.visibility,
+        media: row.media,
+        postType: "poll",
+        updatedAt: row.updated_at,
+        pollOptions,
+      }
+    }
+
+    const data = parse(createPostUpdateSchema(t), input)
 
     const patch: {
       content: string

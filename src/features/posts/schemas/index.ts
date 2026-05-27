@@ -130,4 +130,71 @@ export function createShareInputSchema(t: Translator) {
   })
 }
 
+export function createPollInputSchema(t: Translator) {
+  return z
+    .object({
+      content: z
+        .string({ error: t("contentRequired") })
+        .trim()
+        .max(3000, t("contentMax"))
+        .default(""),
+      visibility: z.enum(POST_VISIBILITY).default("public"),
+      options: z
+        .array(
+          z
+            .string({ error: t("optionRequired") })
+            .trim()
+            .min(1, t("optionRequired"))
+            .max(255, t("optionMax")),
+        )
+        .min(2, t("minOptions"))
+        .max(10, t("maxOptions")),
+    })
+    .refine(
+      (d) => d.content.length > 0 || d.options.length >= 2,
+      { message: t("contentOrMediaRequired"), path: ["content"] },
+    )
+}
+
+export type PollInput = z.infer<ReturnType<typeof createPollInputSchema>>
+
+export function createVoteInputSchema(t: Translator) {
+  return z.object({
+    postId: createPostIdSchema(t),
+    optionId: z
+      .number({ error: t("invalidOption") })
+      .int()
+      .positive(t("invalidOption")),
+  })
+}
+
+export type VoteInput = z.infer<ReturnType<typeof createVoteInputSchema>>
+
+export function createUpdatePollSchema(t: Translator) {
+  return z.object({
+    postId: createPostIdSchema(t),
+    content: z
+      .string({ error: t("contentRequired") })
+      .trim()
+      .max(3000, t("contentMax"))
+      .default(""),
+    visibility: z.enum(POST_VISIBILITY),
+    options: z
+      .array(
+        z.object({
+          id: z.number().int().positive().optional(),
+          optionText: z
+            .string()
+            .trim()
+            .min(1, t("optionRequired"))
+            .max(255, t("optionMax")),
+        }),
+      )
+      .min(2, t("minOptions"))
+      .max(10, t("maxOptions")),
+  })
+}
+
+export type UpdatePollInput = z.infer<ReturnType<typeof createUpdatePollSchema>>
+
 export type ShareInput = z.infer<ReturnType<typeof createShareInputSchema>>

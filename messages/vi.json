@@ -97,6 +97,15 @@
     "originalDeleted": "Bài viết gốc đã bị xoá",
     "copyLinkSuccess": "Đã sao chép liên kết",
     "copyLinkError": "Không thể sao chép liên kết",
+    "poll": "Bình chọn",
+    "vote": "Bỏ phiếu",
+    "voteSuccess": "Đã ghi nhận phiếu bầu",
+    "totalVotes": "{count} lượt bình chọn",
+    "addOption": "Thêm lựa chọn",
+    "removeOption": "Xoá lựa chọn",
+    "pollOption": "Lựa chọn {n}",
+    "minOptions": "Cần ít nhất 2 lựa chọn",
+    "maxOptions": "Tối đa 10 lựa chọn",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
@@ -110,12 +119,19 @@
       "invalidData": "Dữ liệu không hợp lệ",
       "invalidPost": "Bài viết không hợp lệ",
       "invalidComment": "Bình luận không hợp lệ",
+      "invalidOption": "Lựa chọn không hợp lệ",
+      "optionRequired": "Vui lòng nhập nội dung lựa chọn",
+      "optionMax": "Lựa chọn quá dài (tối đa 255 ký tự)",
       "createFailed": "Không thể tạo bài viết",
       "updateFailed": "Không thể cập nhật bài viết",
       "shareFailed": "Không thể chia sẻ bài viết",
       "commentFailed": "Không thể đăng bình luận",
       "loadCommentsFailed": "Không thể tải bình luận",
       "deleteCommentFailed": "Không thể xoá bình luận",
+      "voteFailed": "Không thể ghi nhận phiếu bầu",
+      "alreadyVoted": "Bạn đã bình chọn trong cuộc thăm dò này",
+      "votedOptionRemoveBlocked": "Không thể xoá lựa chọn đã có phiếu bầu",
+      "pollAndMedia": "Không thể thêm ảnh vào bài bình chọn",
       "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     }
   },
@@ -884,6 +900,7 @@
       "job_application_received": "đã ứng tuyển vào {jobTitle}",
       "application_status_changed": "đã cập nhật đơn của bạn tại {jobTitle} thành {status}",
       "application_withdrawn": "đã rút đơn ứng tuyển vào {jobTitle}",
+      "poll_vote": "đã bình chọn trong cuộc thăm dò của bạn",
       "unknown": "có hoạt động mới"
     },
     "appStatus": {

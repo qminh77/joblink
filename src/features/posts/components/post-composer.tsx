@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Plus, Users, X } from "lucide-react"
+import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Minus, Plus, Users, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -29,6 +29,7 @@ import {
 } from "../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../hooks"
 import { readMediaItems, readSharedOriginal } from "../lib/media"
+import { readPollData } from "../lib/poll"
 import type { FeedPost } from "../types"
 
 type PendingImage = {
@@ -158,6 +159,8 @@ export function PostComposer({
   )
   const [images, setImages] = useState<PendingImage[]>([])
   const [keptImages, setKeptImages] = useState<KeptImage[]>([])
+  const [pollMode, setPollMode] = useState(false)
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""])
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -187,8 +190,27 @@ export function PostComposer({
         setKeptImages([])
       }
       setImageError(null)
+
+      if (post?.postType === "poll" && !readSharedOriginal(post.media)) {
+        const pollData = readPollData(post.media)
+        setPollMode(true)
+        setPollOptions(
+          pollData?.options.map((o) => o.optionText) ?? ["", ""],
+        )
+      } else {
+        setPollMode(false)
+        setPollOptions(["", ""])
+      }
     }
   }, [open, post])
+
+  const hasExistingPoll =
+    isEdit && post?.postType === "poll" && !isSharedPost
+
+  const activePollOptions = pollOptions
+    .map((o) => o.trim())
+    .filter((o) => o.length > 0)
+  const hasValidPoll = pollMode && activePollOptions.length >= 2
 
   const totalImages = keptImages.length + images.length
 
@@ -295,7 +317,13 @@ export function PostComposer({
     const text = content.trim()
     const hasNewImages = images.length > 0
     const hasAnyImage = totalImages > 0
-    if ((!text && !hasAnyImage) || isPending) return
+
+    if ((!text && !hasAnyImage && !hasValidPoll) || isPending) return
+
+    if (hasValidPoll && hasAnyImage) {
+      toast.error(tPosts("errors.pollAndMedia"))
+      return
+    }
 
     setUploading(true)
     setImageError(null)
@@ -321,8 +349,33 @@ export function PostComposer({
       }
 
       if (isEdit && post) {
-        // Bài share không hỗ trợ chỉnh ảnh: chỉ gửi content + visibility.
-        if (isSharedPost) {
+        // Poll post: content + visibility + options
+        if (post.postType === "poll") {
+          const pollData = readPollData(post.media)
+          const origOptions = pollData?.options ?? []
+          const optionsChanged =
+            activePollOptions.length !== origOptions.length ||
+            activePollOptions.some(
+              (o, i) => o !== (origOptions[i]?.optionText ?? ""),
+            )
+          const unchanged =
+            text === post.content &&
+            visibility === post.visibility &&
+            !optionsChanged
+          if (unchanged) {
+            onClose()
+            return
+          }
+          await updatePost.mutateAsync({
+            postId: post.id,
+            content: text,
+            visibility,
+            options: activePollOptions.map((opt, i) => ({
+              id: pollData?.options[i]?.id,
+              optionText: opt,
+            })),
+          })
+        } else if (isSharedPost) {
           const unchanged =
             text === post.content && visibility === post.visibility
           if (unchanged) {
@@ -363,6 +416,12 @@ export function PostComposer({
             mediaItems: finalMedia,
           })
         }
+      } else if (hasValidPoll) {
+        await createPost.mutateAsync({
+          content: text,
+          visibility,
+          options: activePollOptions,
+        })
       } else {
         await createPost.mutateAsync({
           content: text,
@@ -469,6 +528,58 @@ export function PostComposer({
                 className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
 
+              {pollMode && !hasExistingPoll ? (
+                <div className="mt-3 space-y-2">
+                  {pollOptions.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />
+                      <input
+                        value={opt}
+                        onChange={(e) => {
+                          const next = [...pollOptions]
+                          next[i] = e.target.value
+                          setPollOptions(next)
+                        }}
+                        placeholder={tPosts("pollOption", { n: i + 1 })}
+                        maxLength={255}
+                        className="flex-1 bg-transparent border border-border/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
+                      />
+                      {pollOptions.length > 2 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPollOptions((prev) =>
+                              prev.filter((_, idx) => idx !== i),
+                            )
+                          }}
+                          className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          aria-label={tPosts("removeOption")}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                  {pollOptions.length < 10 ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPollOptions((prev) => [...prev, ""])
+                      }
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{tPosts("addOption")}</span>
+                    </button>
+                  ) : null}
+                  <p className="text-[11px] text-muted-foreground">
+                    {pollOptions.filter((o) => o.trim()).length < 2
+                      ? tPosts("minOptions")
+                      : null}
+                  </p>
+                </div>
+              ) : null}
+
               {totalImages > 0 && !isSharedPost ? (
                 <ImagePreviewGrid
                   images={[
@@ -512,9 +623,12 @@ export function PostComposer({
                 <button
                   type="button"
                   aria-label={tHome("photoVideo")}
-                  onClick={() => fileRef.current?.click()}
+                  onClick={() => {
+                    setPollMode(false)
+                    fileRef.current?.click()
+                  }}
                   disabled={
-                    isSharedPost || totalImages >= MAX_POST_IMAGES
+                    isSharedPost || totalImages >= MAX_POST_IMAGES || pollMode
                   }
                   className={`p-2 rounded-xl transition-colors ${
                     totalImages > 0
@@ -527,14 +641,29 @@ export function PostComposer({
                 <button
                   type="button"
                   aria-label={tHome("poll")}
-                  className="p-2 text-orange-500 hover:bg-orange-500/10 rounded-xl transition-colors"
+                  onClick={() => {
+                    if (hasExistingPoll) return
+                    setPollMode((v) => !v)
+                    if (!pollMode) {
+                      removeAllImages()
+                    }
+                  }}
+                  disabled={hasExistingPoll || totalImages > 0 || isSharedPost}
+                  className={`p-2 rounded-xl transition-colors ${
+                    pollMode
+                      ? "text-orange-500 bg-orange-500/10"
+                      : "text-orange-500 hover:bg-orange-500/10"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <BarChart2 className="w-5 h-5" />
                 </button>
               </div>
               <Button
                 onClick={submit}
-                disabled={(!content.trim() && totalImages === 0) || isPending}
+                disabled={
+                  (!content.trim() && totalImages === 0 && !hasValidPoll) ||
+                  isPending
+                }
                 className="px-6 rounded-xl font-semibold"
               >
                 {uploading ? (
