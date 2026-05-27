@@ -27,9 +27,10 @@ import type { ConnectionRelation } from "@/features/network/types"
 import type { UserPostsPage } from "@/features/posts/types"
 import type { CompanyProfileDetail } from "@/features/profile/types"
 import { getInitials } from "@/lib/utils/format"
-import { fadeUp, pageEntrance } from "@/lib/animations"
+import { fadeUp, pageEntrance, staggerMd } from "@/lib/animations"
 
 import { ProfilePostsSection } from "./profile-posts-section"
+import { SectionCard } from "./section-card"
 
 const VERIFICATION_LABELS: Record<CompanyProfileDetail["verification_status"], { label: string; tone: string }> = {
   pending: { label: "Chờ xác minh", tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
@@ -102,20 +103,6 @@ export function CompanyProfileView({
                       <MapPin className="w-3.5 h-3.5" /> {locationText}
                     </p>
                   ) : null}
-                  <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5" />
-                      {tCompanies("followerCount", {
-                        count: company.followerCount,
-                      })}
-                    </span>
-                    <span aria-hidden>·</span>
-                    <span>
-                      {tProfile("stats.connections", {
-                        count: company.connectionCount,
-                      })}
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -148,22 +135,37 @@ export function CompanyProfileView({
                 )}
               </div>
             </div>
+
+            <div className="mt-6 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {tCompanies("followerCount", { count: company.followerCount })}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {tProfile("stats.connections", {
+                  count: company.connectionCount,
+                })}
+              </span>
+            </div>
           </div>
         </Card>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <motion.div
+        variants={staggerMd}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-5"
+      >
         <div className="lg:col-span-2 space-y-5">
           {company.about ? (
             <motion.div variants={fadeUp}>
-              <Card className="rounded-2xl border-border/40 p-5">
-                <h2 className="font-headline font-bold text-base text-foreground mb-3">
-                  Giới thiệu
-                </h2>
+              <SectionCard title="Giới thiệu">
                 <p className="text-sm text-foreground/90 whitespace-pre-line">
                   {company.about}
                 </p>
-              </Card>
+              </SectionCard>
             </motion.div>
           ) : null}
 
@@ -177,62 +179,64 @@ export function CompanyProfileView({
         </div>
 
         <motion.div variants={fadeUp}>
-          <Card className="rounded-2xl border-border/40 p-5 h-fit space-y-3 text-sm">
-            <h2 className="font-headline font-bold text-base text-foreground">
-              Thông tin doanh nghiệp
-            </h2>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="w-4 h-4" />
-              <span className="text-foreground">
-                {company.business_email || company.email}
-              </span>
+          <SectionCard
+            title="Thông tin doanh nghiệp"
+            icon={<Building2 className="w-4 h-4 text-primary" />}
+          >
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Mail className="w-4 h-4" />
+                <span className="text-foreground">
+                  {company.business_email || company.email}
+                </span>
+              </div>
+              {company.phone ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-4 h-4" />
+                  <a
+                    href={`tel:${company.phone}`}
+                    className="text-foreground hover:text-primary transition-colors"
+                  >
+                    {company.phone}
+                  </a>
+                </div>
+              ) : null}
+              {company.website ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Globe className="w-4 h-4" />
+                  <a
+                    href={company.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:opacity-80 transition-opacity break-all"
+                  >
+                    {company.website}
+                  </a>
+                </div>
+              ) : null}
+              {company.business_address ? (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <Building2 className="w-4 h-4 mt-0.5" />
+                  <span className="text-foreground/90">
+                    {company.business_address}
+                  </span>
+                </div>
+              ) : null}
+              {company.representative_name ? (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <UserSquare className="w-4 h-4 mt-0.5" />
+                  <span className="text-foreground/90">
+                    {company.representative_name}
+                    {company.representative_title
+                      ? ` · ${company.representative_title}`
+                      : ""}
+                  </span>
+                </div>
+              ) : null}
             </div>
-            {company.phone ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="w-4 h-4" />
-                <a
-                  href={`tel:${company.phone}`}
-                  className="text-foreground hover:text-primary transition-colors"
-                >
-                  {company.phone}
-                </a>
-              </div>
-            ) : null}
-            {company.website ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Globe className="w-4 h-4" />
-                <a
-                  href={company.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary hover:opacity-80 transition-opacity break-all"
-                >
-                  {company.website}
-                </a>
-              </div>
-            ) : null}
-            {company.business_address ? (
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <Building2 className="w-4 h-4 mt-0.5" />
-                <span className="text-foreground/90">
-                  {company.business_address}
-                </span>
-              </div>
-            ) : null}
-            {company.representative_name ? (
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <UserSquare className="w-4 h-4 mt-0.5" />
-                <span className="text-foreground/90">
-                  {company.representative_name}
-                  {company.representative_title
-                    ? ` · ${company.representative_title}`
-                    : ""}
-                </span>
-              </div>
-            ) : null}
-          </Card>
+          </SectionCard>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

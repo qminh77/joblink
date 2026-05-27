@@ -632,6 +632,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_profile_detail: {
+        Args: {
+          p_target_user_id: number
+        }
+        Returns: Json
+      }
       get_messaging_overview: {
         Args: { p_limit?: number }
         Returns: Json

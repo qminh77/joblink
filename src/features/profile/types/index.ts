@@ -1,3 +1,4 @@
+import type { ConnectionRelation } from "@/features/network/types"
 import type {
   CompanyProfileRow,
   MemberEducationRow,
@@ -34,5 +35,11 @@ export type CompanyProfileDetail = CompanyProfileRow & {
 export type AnyProfileDetail =
   | { kind: "member"; data: MemberProfileDetail }
   | { kind: "company"; data: CompanyProfileDetail }
+
+export type ProfilePageData = {
+  detail: AnyProfileDetail
+  relation: ConnectionRelation
+  isOwner: boolean
+}
 
 export type ProfileVisibilityValue = ProfileVisibility

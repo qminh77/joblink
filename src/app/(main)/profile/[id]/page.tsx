@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import { loadConnectionRelation } from "@/features/network/api/queries"
 import { loadUserPosts } from "@/features/posts/api/queries"
 import { loadProfileById } from "@/features/profile/api/queries"
 import { CompanyProfileView } from "@/features/profile/components/company-profile-view"
@@ -19,20 +18,19 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const targetId = Number.parseInt(id, 10)
   if (!Number.isFinite(targetId) || targetId <= 0) notFound()
 
-  const [result, relation, postsPage] = await Promise.all([
+  const [result, postsPage] = await Promise.all([
     loadProfileById(targetId),
-    loadConnectionRelation(targetId),
     loadUserPosts(targetId),
   ])
 
   if (!result) notFound()
 
-  const isOwner = result.data.user_id === current.appUser.id
+  const { detail, relation, isOwner } = result
 
-  if (result.kind === "company") {
+  if (detail.kind === "company") {
     return (
       <CompanyProfileView
-        company={result.data}
+        company={detail.data}
         isOwner={isOwner}
         relation={relation}
         postsPage={postsPage}
@@ -42,7 +40,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <MemberProfileView
-      profile={result.data}
+      profile={detail.data}
       relation={relation}
       postsPage={postsPage}
     />

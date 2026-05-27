@@ -1,6 +1,7 @@
 import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
+import type { ConnectionRelation } from "@/features/network/types"
 import { createClient } from "@/lib/supabase/server"
 import type {
   AppUserRow,
@@ -13,9 +14,9 @@ import type {
 } from "@/types/database"
 
 import type {
-  AnyProfileDetail,
   CompanyProfileDetail,
   MemberProfileDetail,
+  ProfilePageData,
 } from "../types"
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>
@@ -69,39 +70,82 @@ export async function loadDistrictsByProvince(provinceId: number) {
   return data ?? []
 }
 
+type ProfileDetailRpc = {
+  kind: "member" | "company"
+  isOwner: boolean
+  relation: ConnectionRelation
+  profile: Record<string, unknown>
+  email: string
+  province: { id: number; name: string } | null
+  district: { id: number; name: string } | null
+  profileViewCount: number
+  connectionCount: number
+  isVisible?: boolean
+  experiences?: MemberExperienceRow[]
+  educations?: MemberEducationRow[]
+  skills?: SkillRow[]
+  followerCount?: number
+  isFollowing?: boolean
+}
+
+/**
+ * Tải toàn bộ dữ liệu trang hồ sơ (/profile/[id]) trong MỘT round-trip qua RPC
+ * `get_profile_detail` — thay cho waterfall users + profile + exp/edu/skills +
+ * follower + connection trước đây. Trả kèm `relation` để trang không phải gọi
+ * `loadConnectionRelation` riêng.
+ */
 export async function loadProfileById(
   targetUserId: number,
-): Promise<AnyProfileDetail | null> {
+): Promise<ProfilePageData | null> {
   const supabase = await createClient()
-  const current = await getCurrentUser()
-  if (!current) return null
+  const { data, error } = await supabase.rpc("get_profile_detail", {
+    p_target_user_id: targetUserId,
+  })
 
-  const { data: target } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", targetUserId)
-    .is("deleted_at", null)
-    .maybeSingle<AppUserRow>()
+  if (error) {
+    console.error("[loadProfileById] RPC error", error)
+    return null
+  }
+  if (!data) return null
 
-  if (!target) return null
+  const r = data as unknown as ProfileDetailRpc
 
-  if (target.role === "company") {
-    const company = await loadCompanyProfileDetail(
-      supabase,
-      target,
-      current.appUser.id,
-    )
-    if (!company) return null
-    return { kind: "company", data: company }
+  if (r.kind === "company") {
+    const detail: CompanyProfileDetail = {
+      ...(r.profile as unknown as CompanyProfileRow),
+      email: r.email,
+      province: r.province,
+      district: r.district,
+      profileViewCount: r.profileViewCount,
+      connectionCount: r.connectionCount,
+      followerCount: r.followerCount ?? 0,
+      isFollowing: r.isFollowing ?? false,
+    }
+    return {
+      detail: { kind: "company", data: detail },
+      relation: r.relation,
+      isOwner: r.isOwner,
+    }
   }
 
-  const member = await loadMemberProfileDetail(
-    supabase,
-    target,
-    current.appUser.id,
-  )
-  if (!member) return null
-  return { kind: "member", data: member }
+  const detail: MemberProfileDetail = {
+    ...(r.profile as unknown as MemberProfileRow),
+    email: r.email,
+    province: r.province,
+    district: r.district,
+    experiences: r.experiences ?? [],
+    educations: r.educations ?? [],
+    skills: r.skills ?? [],
+    profileViewCount: r.profileViewCount,
+    connectionCount: r.connectionCount,
+    isOwner: r.isOwner,
+    isVisible: r.isVisible ?? true,
+  }
+  return {
+    detail: { kind: "member", data: detail },
+    relation: r.relation,
+    isOwner: r.isOwner,
+  }
 }
 
 export async function loadOwnMemberProfile(): Promise<MemberProfileDetail | null> {

@@ -4,6 +4,14 @@
 -- Charset: UTF8
 -- Thiết kế theo SRS Joblink v1.0 (phiên bản đơn giản hoá 19/05/2026)
 --
+-- ⮕ ĐÂY LÀ SCHEMA HỢP NHẤT (AUTHORITATIVE): bao gồm toàn bộ bảng, index, trigger,
+--   view, RPC, RLS, realtime và storage đã gộp từ supabase/migrations (đến
+--   20260528_021). Xem file này thay vì đọc từng migration.
+-- ⮕ ĐÃ LOẠI các bảng framework dư thừa không dùng trong stack Next.js + Supabase:
+--   cache, cache_locks, personal_access_tokens, password_reset_tokens,
+--   email_verification_tokens, và cột users.remember_token. Reset mật khẩu /
+--   xác minh email do Supabase Auth (auth.users) quản lý.
+--
 -- Nguyên tắc thiết kế:
 --   • 3 vai trò cố định ở cột users.role: 'member' | 'company' | 'admin'
 --     (không có bảng roles/permissions/module_settings — phân quyền cố định trong code)
@@ -20,6 +28,7 @@
 
 -- Supabase-compatible extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;   -- GIN trgm cho ILIKE search (profile/job)
 
 -- Helper: polymorphic row_to_jsonb (dùng trong RPC home feed)
 CREATE OR REPLACE FUNCTION row_to_jsonb(ANYELEMENT)
@@ -29,6 +38,43 @@ IMMUTABLE
 AS $$
   SELECT to_jsonb($1);
 $$;
+
+-- =============================================================================
+-- Helper functions cho RLS / RPC — ánh xạ auth.uid() (Supabase) → public.users
+--   • auth_user_id() → id của user hiện tại trong public.users
+--   • is_admin()     → user hiện tại có role = 'admin' không
+-- SECURITY DEFINER + search_path cố định để dùng an toàn trong RLS policies.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.auth_user_id()
+RETURNS BIGINT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT u.id FROM public.users u
+   WHERE u.auth_id = auth.uid()
+     AND u.deleted_at IS NULL
+   LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.role = 'admin'
+       AND u.deleted_at IS NULL
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.auth_user_id() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin()     TO anon, authenticated;
 
 -- =============================================================================
 -- 1. USERS & AUTH  (M01)
@@ -48,7 +94,6 @@ CREATE TABLE IF NOT EXISTS users (
     two_fa_secret     VARCHAR(255) NULL,
     locale            VARCHAR(10)  NOT NULL DEFAULT 'vi',
     last_login_at     TIMESTAMPTZ NULL,
-    remember_token    VARCHAR(100) NULL,
     -- Counter cache duy trì bằng trigger; tránh count(*) trên hot path home feed.
     connection_count   INT NOT NULL DEFAULT 0,
     profile_view_count INT NOT NULL DEFAULT 0,
@@ -103,28 +148,8 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 -- =============================================================================
-
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT NOT NULL,
-    token      VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    used_at    TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_password_reset_token UNIQUE (token),
-    CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS email_verification_tokens (
-    id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT NOT NULL,
-    token      VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    used_at    TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_email_verify_token UNIQUE (token),
-    CONSTRAINT fk_email_verify_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+-- Lưu ý: KHÔNG có password_reset_tokens / email_verification_tokens —
+-- Supabase Auth (auth.users) tự quản lý reset mật khẩu & xác minh email.
 
 CREATE INDEX IF NOT EXISTS idx_users_email       ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role        ON users(role);
@@ -335,6 +360,7 @@ CREATE TABLE IF NOT EXISTS company_profiles (
     representative_title   VARCHAR(160) NULL,
     business_address       TEXT NULL,
     business_email         VARCHAR(255) NULL,
+    phone                  VARCHAR(20)  NULL,
     verification_documents JSONB NULL,
     verification_status    VARCHAR(30)  NOT NULL DEFAULT 'pending',
     verification_note      TEXT NULL,
@@ -836,49 +862,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_users() RETURNS trigger AS $$
+-- SECURITY DEFINER: trigger ghi audit_logs phải bypass RLS của caller
+-- (audit_logs không mở INSERT cho authenticated). SET search_path chống hijack.
+CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_users() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 BEGIN
   IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
-    INSERT INTO audit_logs(action, entity_type, entity_id, old_data)
+    INSERT INTO public.audit_logs(action, entity_type, entity_id, old_data)
     VALUES('soft_delete', 'users', NEW.id,
            jsonb_build_object('email', OLD.email, 'role', OLD.role, 'status', OLD.status));
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_posts() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_posts() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 BEGIN
   IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
-    INSERT INTO audit_logs(action, entity_type, entity_id, old_data)
+    INSERT INTO public.audit_logs(action, entity_type, entity_id, old_data)
     VALUES('soft_delete', 'posts', NEW.id,
            jsonb_build_object('author_id', OLD.author_id, 'status', OLD.status));
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_jobs() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_jobs() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 BEGIN
   IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
-    INSERT INTO audit_logs(action, entity_type, entity_id, old_data)
+    INSERT INTO public.audit_logs(action, entity_type, entity_id, old_data)
     VALUES('soft_delete', 'jobs', NEW.id,
            jsonb_build_object('company_user_id', OLD.company_user_id, 'title', OLD.title, 'status', OLD.status));
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_company_profiles() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION joblink_audit_soft_delete_company_profiles() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 BEGIN
   IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
-    INSERT INTO audit_logs(action, entity_type, entity_id, old_data)
+    INSERT INTO public.audit_logs(action, entity_type, entity_id, old_data)
     VALUES('soft_delete', 'company_profiles', NEW.id,
            jsonb_build_object('user_id', OLD.user_id, 'name', OLD.name, 'verification_status', OLD.verification_status));
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_users_set_updated_at
 BEFORE UPDATE ON users
@@ -1060,9 +1092,13 @@ CREATE INDEX IF NOT EXISTS idx_post_reactions_post_user
     ON public.post_reactions(post_id, user_id);
 
 -- Counter cache triggers
+-- SECURITY DEFINER: counter đụng cả 2 user (requester + receiver), vượt quá
+-- phạm vi RLS "chỉ sửa row của mình" → cần quyền owner.
 CREATE OR REPLACE FUNCTION public.connections_counter_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
 AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
@@ -1110,6 +1146,8 @@ CREATE TRIGGER trg_connections_counter
 CREATE OR REPLACE FUNCTION public.profile_view_counter_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
 AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
@@ -1470,40 +1508,3028 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_user_posts(BIGINT, TIMESTAMPTZ, INT)
     TO anon, authenticated;
 
+
+
+-- #############################################################################
+-- 15. NETWORK PERFORMANCE — pg_trgm + indexes + get_network_overview (M04)
+-- #############################################################################
 -- =============================================================================
--- 15. LARAVEL FRAMEWORK TABLES — cache, queue, sanctum tokens
--- Các bảng này Laravel runtime cần. Nếu hosting chạy Octane/queue thì bắt buộc.
+-- JOBLINK MIGRATION 20260520_004 — NETWORK PERFORMANCE LAYER 1
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS cache (
-    key        VARCHAR(255) PRIMARY KEY,
-    value      TEXT NOT NULL,
-    expiration INT NOT NULL
-);
+-- Mục tiêu:
+--   • Cải thiện hiệu năng network page bằng RPC duy nhất trả về suggestions,
+--     connections và invitations.
+--   • Thêm composite index phục vụ lookup theo status/role/created_at.
+--   • Thêm ngữ cảnh tìm kiếm văn bản với GIN trgm cho profile search.
+-- =============================================================================
 
-CREATE TABLE IF NOT EXISTS cache_locks (
-    key        VARCHAR(255) PRIMARY KEY,
-    owner      VARCHAR(255) NOT NULL,
-    expiration INT NOT NULL
-);
+-- -----------------------------------------------------------------------------
+-- 1. Extension hỗ trợ tìm kiếm %ilike% nhanh hơn
+-- -----------------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-CREATE TABLE IF NOT EXISTS personal_access_tokens (
-    id              BIGSERIAL PRIMARY KEY,
-    tokenable_type  VARCHAR(255) NOT NULL,
-    tokenable_id    BIGINT NOT NULL,
-    name            VARCHAR(255) NOT NULL,
-    token           VARCHAR(64)  NOT NULL UNIQUE,
-    abilities       TEXT NULL,
-    last_used_at    TIMESTAMPTZ NULL,
-    expires_at      TIMESTAMPTZ NULL,
-    created_at      TIMESTAMPTZ NULL,
-    updated_at      TIMESTAMPTZ NULL,
-    CONSTRAINT fk_pat_tokenable_user FOREIGN KEY (tokenable_id) REFERENCES users(id) ON DELETE CASCADE
-);
+-- -----------------------------------------------------------------------------
+-- 2. Index hot path cho người dùng
+-- -----------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_users_active_recent
+    ON public.users(status, role, deleted_at, created_at DESC)
+    WHERE deleted_at IS NULL
+      AND status = 'active'
+      AND role <> 'admin';
 
-CREATE INDEX IF NOT EXISTS idx_pat_tokenable ON personal_access_tokens(tokenable_type, tokenable_id);
+-- -----------------------------------------------------------------------------
+-- 3. Index cho connections network queries
+-- -----------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_connections_req_status_requested_at
+    ON public.connections(requester_id, status, receiver_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_connections_recv_status_requested_at
+    ON public.connections(receiver_id, status, requester_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_connections_req_status_responded_at
+    ON public.connections(requester_id, status, receiver_id, responded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_connections_recv_status_responded_at
+    ON public.connections(receiver_id, status, requester_id, responded_at DESC);
+
+-- -----------------------------------------------------------------------------
+-- 4. Index cho profile search (search query và suggestion lookup)
+-- -----------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_member_profiles_full_name_trgm
+    ON public.member_profiles USING gin (full_name gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_member_profiles_headline_trgm
+    ON public.member_profiles USING gin (headline gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_company_profiles_name_trgm
+    ON public.company_profiles USING gin (name gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_company_profiles_industry_trgm
+    ON public.company_profiles USING gin (industry gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 5. Single RPC cho network overview
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_network_overview(
+    p_suggestion_limit INT DEFAULT 24
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_excluded_ids BIGINT[];
+    v_suggestions JSONB;
+    v_connections JSONB;
+    v_incoming JSONB;
+    v_outgoing JSONB;
+BEGIN
+    SELECT u.id
+      INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object(
+            'suggestions', '[]'::jsonb,
+            'connections', '[]'::jsonb,
+            'incoming', '[]'::jsonb,
+            'outgoing', '[]'::jsonb
+        );
+    END IF;
+
+    SELECT COALESCE(array_agg(DISTINCT other_id), '{}')
+      INTO v_excluded_ids
+      FROM (
+          SELECT CASE WHEN c.requester_id = v_me THEN c.receiver_id
+                      ELSE c.requester_id END AS other_id
+            FROM public.connections c
+           WHERE c.requester_id = v_me OR c.receiver_id = v_me
+      ) sub;
+
+    WITH suggestion_candidates AS (
+        SELECT u.id, u.role
+          FROM public.users u
+         WHERE u.deleted_at IS NULL
+           AND u.status = 'active'
+           AND u.role <> 'admin'
+           AND u.id <> v_me
+           AND NOT (u.id = ANY(v_excluded_ids))
+         ORDER BY u.created_at DESC
+         LIMIT p_suggestion_limit
+    )
+    SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)
+      INTO v_suggestions
+      FROM (
+          SELECT
+              row_number() OVER () AS ord,
+              c.id AS "userId",
+              c.role,
+              COALESCE(mp.full_name, cp.name) AS "displayName",
+              COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+              COALESCE(mp.headline, cp.industry) AS "headline",
+              NULLIF(
+                  concat_ws(', ',
+                      COALESCE(md.name, cd.name),
+                      COALESCE(mpr.name, cpr.name)
+                  ),
+                  ''
+              ) AS "location"
+            FROM suggestion_candidates c
+            LEFT JOIN public.member_profiles mp
+              ON mp.user_id = c.id AND mp.deleted_at IS NULL
+            LEFT JOIN public.company_profiles cp
+              ON cp.user_id = c.id AND cp.deleted_at IS NULL
+            LEFT JOIN public.provinces mpr ON mpr.id = mp.province_id
+            LEFT JOIN public.districts md  ON md.id  = mp.district_id
+            LEFT JOIN public.provinces cpr ON cpr.id = cp.province_id
+            LEFT JOIN public.districts cd  ON cd.id = cp.district_id
+      ) s;
+
+    WITH accepted_connections AS (
+        SELECT c.id,
+               c.requester_id,
+               c.receiver_id,
+               COALESCE(c.responded_at, c.requested_at) AS connected_at,
+               CASE WHEN c.requester_id = v_me THEN c.receiver_id ELSE c.requester_id END AS other_id
+          FROM public.connections c
+         WHERE c.status = 'accepted'
+           AND (c.requester_id = v_me OR c.receiver_id = v_me)
+         ORDER BY c.responded_at DESC NULLS LAST, c.requested_at DESC
+    )
+    SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)
+      INTO v_connections
+      FROM (
+          SELECT
+              row_number() OVER () AS ord,
+              ac.id AS "connectionId",
+              ac.connected_at AS "connectedAt",
+              COALESCE(mp.full_name, cp.name) AS "displayName",
+              COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+              COALESCE(mp.headline, cp.industry) AS "headline",
+              NULLIF(
+                  concat_ws(', ',
+                      COALESCE(md.name, cd.name),
+                      COALESCE(mpr.name, cpr.name)
+                  ),
+                  ''
+              ) AS "location",
+              u.role,
+              ac.other_id AS "userId"
+            FROM accepted_connections ac
+            JOIN public.users u ON u.id = ac.other_id
+            LEFT JOIN public.member_profiles mp
+              ON mp.user_id = ac.other_id AND mp.deleted_at IS NULL
+            LEFT JOIN public.company_profiles cp
+              ON cp.user_id = ac.other_id AND cp.deleted_at IS NULL
+            LEFT JOIN public.provinces mpr ON mpr.id = mp.province_id
+            LEFT JOIN public.districts md  ON md.id  = mp.district_id
+            LEFT JOIN public.provinces cpr ON cpr.id = cp.province_id
+            LEFT JOIN public.districts cd  ON cd.id = cp.district_id
+      ) s;
+
+    WITH incoming_requests AS (
+        SELECT c.id,
+               c.requester_id AS other_id,
+               c.requested_at,
+               c.requester_id AS requester_id,
+               c.receiver_id AS receiver_id
+          FROM public.connections c
+         WHERE c.status = 'pending'
+           AND c.receiver_id = v_me
+         ORDER BY c.requested_at DESC
+    )
+    SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)
+      INTO v_incoming
+      FROM (
+          SELECT
+              row_number() OVER () AS ord,
+              ir.id AS "connectionId",
+              ir.requested_at AS "requestedAt",
+              COALESCE(mp.full_name, cp.name) AS "displayName",
+              COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+              COALESCE(mp.headline, cp.industry) AS "headline",
+              NULLIF(
+                  concat_ws(', ',
+                      COALESCE(md.name, cd.name),
+                      COALESCE(mpr.name, cpr.name)
+                  ),
+                  ''
+              ) AS "location",
+              u.role,
+              ir.other_id AS "userId",
+              'incoming' AS direction
+            FROM incoming_requests ir
+            JOIN public.users u ON u.id = ir.other_id
+            LEFT JOIN public.member_profiles mp
+              ON mp.user_id = ir.other_id AND mp.deleted_at IS NULL
+            LEFT JOIN public.company_profiles cp
+              ON cp.user_id = ir.other_id AND cp.deleted_at IS NULL
+            LEFT JOIN public.provinces mpr ON mpr.id = mp.province_id
+            LEFT JOIN public.districts md  ON md.id = mp.district_id
+            LEFT JOIN public.provinces cpr ON cpr.id = cp.province_id
+            LEFT JOIN public.districts cd  ON cd.id = cp.district_id
+      ) s;
+
+    WITH outgoing_requests AS (
+        SELECT c.id,
+               c.receiver_id AS other_id,
+               c.requested_at,
+               c.requester_id AS requester_id,
+               c.receiver_id AS receiver_id
+          FROM public.connections c
+         WHERE c.status = 'pending'
+           AND c.requester_id = v_me
+         ORDER BY c.requested_at DESC
+    )
+    SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)
+      INTO v_outgoing
+      FROM (
+          SELECT
+              row_number() OVER () AS ord,
+              orq.id AS "connectionId",
+              orq.requested_at AS "requestedAt",
+              COALESCE(mp.full_name, cp.name) AS "displayName",
+              COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+              COALESCE(mp.headline, cp.industry) AS "headline",
+              NULLIF(
+                  concat_ws(', ',
+                      COALESCE(md.name, cd.name),
+                      COALESCE(mpr.name, cpr.name)
+                  ),
+                  ''
+              ) AS "location",
+              u.role,
+              orq.other_id AS "userId",
+              'outgoing' AS direction
+            FROM outgoing_requests orq
+            JOIN public.users u ON u.id = orq.other_id
+            LEFT JOIN public.member_profiles mp
+              ON mp.user_id = orq.other_id AND mp.deleted_at IS NULL
+            LEFT JOIN public.company_profiles cp
+              ON cp.user_id = orq.other_id AND cp.deleted_at IS NULL
+            LEFT JOIN public.provinces mpr ON mpr.id = mp.province_id
+            LEFT JOIN public.districts md  ON md.id = mp.district_id
+            LEFT JOIN public.provinces cpr ON cpr.id = cp.province_id
+            LEFT JOIN public.districts cd  ON cd.id = cp.district_id
+      ) s;
+
+    RETURN jsonb_build_object(
+        'suggestions', v_suggestions,
+        'connections', v_connections,
+        'incoming', v_incoming,
+        'outgoing', v_outgoing
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_network_overview(INT)
+    TO authenticated;
 
 -- =============================================================================
--- 16. SEED DATA — dữ liệu khởi tạo tối thiểu
+-- END MIGRATION 20260520_004
+-- =============================================================================
+
+
+-- #############################################################################
+-- 16. MESSAGING — indexes + after-insert trigger + get_conversation_messages (M06)
+-- #############################################################################
+-- Lấy lịch sử conversation theo created_at DESC (newest-first cursor)
+CREATE INDEX IF NOT EXISTS idx_messages_conv_created_desc
+    ON public.messages(conversation_id, created_at DESC, id DESC)
+    WHERE deleted_at IS NULL;
+
+-- Đếm unread per conversation: COUNT WHERE created_at > last_read_at AND sender_id <> me
+CREATE INDEX IF NOT EXISTS idx_messages_conv_sender_created
+    ON public.messages(conversation_id, sender_id, created_at)
+    WHERE deleted_at IS NULL;
+
+-- Lấy danh sách conversation của user theo "vừa có hoạt động"
+CREATE INDEX IF NOT EXISTS idx_conversations_updated_desc
+    ON public.conversations(updated_at DESC);
+
+-- conversation_participants per user (đã có idx_conv_participants_user, partial cho hot path)
+CREATE INDEX IF NOT EXISTS idx_conv_participants_user_lastread
+    ON public.conversation_participants(user_id, last_read_at);
+
+-- -----------------------------------------------------------------------------
+-- 2. Trigger: khi message mới insert → bump conversations.updated_at và auto
+--    update last_read_at của sender (vì chính họ vừa "đọc" tin của mình).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.joblink_after_message_insert()
+RETURNS trigger AS $$
+BEGIN
+    UPDATE public.conversations
+       SET updated_at = NEW.created_at
+     WHERE id = NEW.conversation_id;
+
+    UPDATE public.conversation_participants
+       SET last_read_at = NEW.created_at
+     WHERE conversation_id = NEW.conversation_id
+       AND user_id = NEW.sender_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_messages_after_insert ON public.messages;
+CREATE TRIGGER trg_messages_after_insert
+AFTER INSERT ON public.messages
+FOR EACH ROW EXECUTE FUNCTION public.joblink_after_message_insert();
+
+-- -----------------------------------------------------------------------------
+-- 5. RPC: get_conversation_messages — phân trang DESC theo created_at + id
+--    Trả về thêm "otherUserId" để client biết hiển thị tên/avatar.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_conversation_messages(
+    p_conversation_id BIGINT,
+    p_before_created_at TIMESTAMPTZ DEFAULT NULL,
+    p_before_id BIGINT DEFAULT NULL,
+    p_limit INT DEFAULT 40
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_is_participant BOOLEAN;
+    v_other_user_id BIGINT;
+    v_items JSONB;
+    v_has_more BOOLEAN;
+    v_limit INT;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'hasMore', FALSE, 'otherUserId', NULL);
+    END IF;
+
+    SELECT EXISTS(
+        SELECT 1 FROM public.conversation_participants
+         WHERE conversation_id = p_conversation_id AND user_id = v_me
+    ) INTO v_is_participant;
+
+    IF NOT v_is_participant THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'hasMore', FALSE, 'otherUserId', NULL);
+    END IF;
+
+    SELECT cp.user_id INTO v_other_user_id
+      FROM public.conversation_participants cp
+     WHERE cp.conversation_id = p_conversation_id AND cp.user_id <> v_me
+     LIMIT 1;
+
+    v_limit := GREATEST(LEAST(COALESCE(p_limit, 40), 100), 1);
+
+    WITH page AS (
+        SELECT m.id,
+               m.sender_id,
+               m.content,
+               m.media,
+               m.read_at,
+               m.created_at
+          FROM public.messages m
+         WHERE m.conversation_id = p_conversation_id
+           AND m.deleted_at IS NULL
+           AND (
+               p_before_created_at IS NULL
+               OR m.created_at < p_before_created_at
+               OR (m.created_at = p_before_created_at AND m.id < COALESCE(p_before_id, 9223372036854775807))
+           )
+         ORDER BY m.created_at DESC, m.id DESC
+         LIMIT v_limit + 1
+    ),
+    sliced AS (
+        SELECT * FROM page LIMIT v_limit
+    )
+    SELECT
+        COALESCE(jsonb_agg(jsonb_build_object(
+            'id', s.id,
+            'senderId', s.sender_id,
+            'content', s.content,
+            'media', s.media,
+            'readAt', s.read_at,
+            'createdAt', s.created_at
+        ) ORDER BY s.created_at ASC, s.id ASC), '[]'::jsonb),
+        (SELECT COUNT(*) FROM page) > v_limit
+      INTO v_items, v_has_more
+      FROM sliced s;
+
+    RETURN jsonb_build_object(
+        'items', v_items,
+        'hasMore', COALESCE(v_has_more, FALSE),
+        'otherUserId', v_other_user_id
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_conversation_messages(BIGINT, TIMESTAMPTZ, BIGINT, INT) TO authenticated;
+
+
+-- #############################################################################
+-- 16b. MESSAGING PERF — indexes + get_unread_conversations_count + get_messaging_overview (final)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260526_015 — MESSAGING PERF
+-- =============================================================================
+-- Mục tiêu:
+--   • Index hot path còn thiếu cho rate-limit + mark-as-read.
+--   • Tối ưu get_unread_conversations_count: thay vì COUNT DISTINCT toàn bộ
+--     JOIN, dùng EXISTS-per-participant → giảm rows quét.
+--   • get_messaging_overview: gộp user_blocks lookups vào 1 CTE thay vì 2
+--     subquery EXISTS per row (giảm planner work khi list dài).
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Index bổ sung
+-- -----------------------------------------------------------------------------
+-- Rate-limit window: SELECT COUNT WHERE sender_id = me AND created_at >= now()-1m
+CREATE INDEX IF NOT EXISTS idx_messages_sender_created
+    ON public.messages(sender_id, created_at DESC)
+    WHERE deleted_at IS NULL;
+
+-- mark_conversation_read UPDATE đụng vào "tin chưa đọc của người kia": có
+-- (conversation_id, sender_id) sẵn nhưng thêm partial cho read_at IS NULL
+-- để rút ngắn scan khi convo lớn.
+CREATE INDEX IF NOT EXISTS idx_messages_unread_per_conv
+    ON public.messages(conversation_id, sender_id)
+    WHERE read_at IS NULL AND deleted_at IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 2. RPC: get_unread_conversations_count v2
+--    Trước: COUNT(DISTINCT m.conversation_id) JOIN messages (quét toàn bộ
+--    messages chưa đọc của user). Sau: EXISTS-per-participant (chạy 1 lookup
+--    nhanh cho mỗi conversation user tham gia, dừng ngay khi gặp tin chưa đọc).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_unread_conversations_count()
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_count INT;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN RETURN 0; END IF;
+
+    SELECT COUNT(*)::INT
+      INTO v_count
+      FROM public.conversation_participants cp
+     WHERE cp.user_id = v_me
+       AND EXISTS (
+           SELECT 1
+             FROM public.messages m
+            WHERE m.conversation_id = cp.conversation_id
+              AND m.deleted_at IS NULL
+              AND m.sender_id <> v_me
+              AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+            LIMIT 1
+       );
+
+    RETURN COALESCE(v_count, 0);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_unread_conversations_count() TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 3. RPC: get_messaging_overview v3 — gộp user_blocks CTE.
+--    Vẫn trả về items dạng cũ (placeholder + conversation), nhưng dùng 1 CTE
+--    `blocks` ánh xạ (other_id → blocked_by_me|blocked_me) thay vì 2 EXISTS
+--    subquery per row. Khi list 50 conversation, đỡ ~100 lần lookup user_blocks.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_messaging_overview(
+    p_limit INT DEFAULT 50
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_items JSONB;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'unreadConversations', 0);
+    END IF;
+
+    WITH my_conv AS (
+        SELECT cp.conversation_id, cp.last_read_at
+          FROM public.conversation_participants cp
+         WHERE cp.user_id = v_me
+    ),
+    other_part AS (
+        SELECT mc.conversation_id, cp.user_id AS other_user_id, mc.last_read_at
+          FROM my_conv mc
+          JOIN public.conversation_participants cp
+            ON cp.conversation_id = mc.conversation_id
+           AND cp.user_id <> v_me
+    ),
+    last_msg AS (
+        SELECT DISTINCT ON (m.conversation_id)
+               m.conversation_id,
+               m.id          AS last_message_id,
+               m.sender_id   AS last_sender_id,
+               m.content     AS last_content,
+               m.media       AS last_media,
+               m.created_at  AS last_created_at
+          FROM public.messages m
+         WHERE m.deleted_at IS NULL
+           AND m.conversation_id IN (SELECT conversation_id FROM my_conv)
+         ORDER BY m.conversation_id, m.created_at DESC, m.id DESC
+    ),
+    unread AS (
+        SELECT m.conversation_id, COUNT(*)::INT AS unread_count
+          FROM public.messages m
+          JOIN my_conv mc ON mc.conversation_id = m.conversation_id
+         WHERE m.deleted_at IS NULL
+           AND m.sender_id <> v_me
+           AND (mc.last_read_at IS NULL OR m.created_at > mc.last_read_at)
+         GROUP BY m.conversation_id
+    ),
+    my_connections AS (
+        SELECT CASE WHEN cn.requester_id = v_me THEN cn.receiver_id
+                    ELSE cn.requester_id END AS other_id,
+               COALESCE(cn.responded_at, cn.requested_at) AS connected_at
+          FROM public.connections cn
+         WHERE cn.status = 'accepted'
+           AND (cn.requester_id = v_me OR cn.receiver_id = v_me)
+    ),
+    connections_without_convo AS (
+        SELECT mc.other_id, mc.connected_at
+          FROM my_connections mc
+         WHERE mc.other_id NOT IN (SELECT other_user_id FROM other_part)
+    ),
+    -- Gộp danh sách other_id để 1 lần quét user_blocks duy nhất.
+    all_others AS (
+        SELECT other_user_id AS other_id FROM other_part
+        UNION
+        SELECT other_id FROM connections_without_convo
+    ),
+    blocks AS (
+        SELECT
+            a.other_id,
+            COALESCE(bool_or(ub.blocker_id = v_me AND ub.blocked_id = a.other_id), FALSE)
+                AS blocked_by_me,
+            COALESCE(bool_or(ub.blocker_id = a.other_id AND ub.blocked_id = v_me), FALSE)
+                AS blocked_me
+          FROM all_others a
+          LEFT JOIN public.user_blocks ub
+            ON (ub.blocker_id = v_me AND ub.blocked_id = a.other_id)
+            OR (ub.blocker_id = a.other_id AND ub.blocked_id = v_me)
+         GROUP BY a.other_id
+    ),
+    convo_rows AS (
+        SELECT
+            c.id                              AS "conversationId",
+            c.updated_at                      AS "updatedAt",
+            op.other_user_id                  AS "otherUserId",
+            COALESCE(mp.full_name, cp.name)   AS "displayName",
+            COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+            COALESCE(mp.headline, cp.industry)   AS "headline",
+            u.role                            AS role,
+            lm.last_message_id                AS "lastMessageId",
+            lm.last_sender_id                 AS "lastSenderId",
+            lm.last_content                   AS "lastContent",
+            lm.last_media                     AS "lastMedia",
+            lm.last_created_at                AS "lastCreatedAt",
+            COALESCE(unr.unread_count, 0)     AS "unreadCount",
+            TRUE                              AS "isConnected",
+            COALESCE(b.blocked_by_me, FALSE)  AS "blockedByMe",
+            COALESCE(b.blocked_me, FALSE)     AS "blockedMe",
+            COALESCE(lm.last_created_at, c.updated_at) AS sort_key
+          FROM other_part op
+          JOIN public.conversations c   ON c.id = op.conversation_id
+          JOIN public.users u           ON u.id = op.other_user_id
+          LEFT JOIN public.member_profiles mp
+            ON mp.user_id = op.other_user_id AND mp.deleted_at IS NULL
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = op.other_user_id AND cp.deleted_at IS NULL
+          LEFT JOIN last_msg lm ON lm.conversation_id = op.conversation_id
+          LEFT JOIN unread   unr ON unr.conversation_id = op.conversation_id
+          LEFT JOIN blocks   b   ON b.other_id = op.other_user_id
+    ),
+    placeholder_rows AS (
+        SELECT
+            NULL::BIGINT                      AS "conversationId",
+            cwc.connected_at                  AS "updatedAt",
+            cwc.other_id                      AS "otherUserId",
+            COALESCE(mp.full_name, cp.name)   AS "displayName",
+            COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+            COALESCE(mp.headline, cp.industry)   AS "headline",
+            u.role                            AS role,
+            NULL::BIGINT                      AS "lastMessageId",
+            NULL::BIGINT                      AS "lastSenderId",
+            NULL::TEXT                        AS "lastContent",
+            NULL::JSONB                       AS "lastMedia",
+            NULL::TIMESTAMPTZ                 AS "lastCreatedAt",
+            0::INT                            AS "unreadCount",
+            TRUE                              AS "isConnected",
+            COALESCE(b.blocked_by_me, FALSE)  AS "blockedByMe",
+            COALESCE(b.blocked_me, FALSE)     AS "blockedMe",
+            cwc.connected_at                  AS sort_key
+          FROM connections_without_convo cwc
+          JOIN public.users u ON u.id = cwc.other_id
+          LEFT JOIN public.member_profiles mp
+            ON mp.user_id = cwc.other_id AND mp.deleted_at IS NULL
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = cwc.other_id AND cp.deleted_at IS NULL
+          LEFT JOIN blocks b ON b.other_id = cwc.other_id
+         WHERE u.deleted_at IS NULL
+    ),
+    all_rows AS (
+        SELECT * FROM convo_rows
+        UNION ALL
+        SELECT * FROM placeholder_rows
+    )
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'conversationId',  ar."conversationId",
+            'updatedAt',       ar."updatedAt",
+            'otherUserId',     ar."otherUserId",
+            'displayName',     ar."displayName",
+            'avatarUrl',       ar."avatarUrl",
+            'headline',        ar."headline",
+            'role',            ar.role,
+            'lastMessageId',   ar."lastMessageId",
+            'lastSenderId',    ar."lastSenderId",
+            'lastContent',     ar."lastContent",
+            'lastMedia',       ar."lastMedia",
+            'lastCreatedAt',   ar."lastCreatedAt",
+            'unreadCount',     ar."unreadCount",
+            'isConnected',     ar."isConnected",
+            'blockedByMe',     ar."blockedByMe",
+            'blockedMe',       ar."blockedMe"
+        )
+        ORDER BY ar.sort_key DESC NULLS LAST
+    ), '[]'::jsonb)
+      INTO v_items
+      FROM (
+          SELECT * FROM all_rows
+           ORDER BY sort_key DESC NULLS LAST
+           LIMIT p_limit
+      ) ar;
+
+    RETURN jsonb_build_object(
+        'items', v_items,
+        'unreadConversations', COALESCE((
+            SELECT COUNT(*)::INT FROM jsonb_array_elements(v_items) e
+             WHERE (e->>'unreadCount')::INT > 0
+        ), 0)
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_messaging_overview(INT) TO authenticated;
+
+-- =============================================================================
+-- END MIGRATION 20260526_015
+-- =============================================================================
+
+
+-- #############################################################################
+-- 16c. MESSAGING MUTATIONS (SECURITY DEFINER) — find_or_create / send_message / mark_conversation_read
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260524_014 — MESSAGING RPC SECURITY DEFINER
+-- =============================================================================
+-- Vấn đề: `find_or_create_direct_conversation` (SECURITY INVOKER) INSERT vào
+-- `conversations` qua RLS → "new row violates row-level security policy".
+-- Có thể do RLS policy `conversations_insert_any` chưa tồn tại / sai cấu hình.
+--
+-- Cách sửa: chuyển 3 RPC mutate (find_or_create, send_message,
+-- mark_conversation_read) sang SECURITY DEFINER. RPC đã tự validate (check
+-- auth, participant, connection, block, rate-limit) nên an toàn hơn là phụ
+-- thuộc RLS — không phá vỡ mô hình bảo mật.
+--
+-- Quy ước: dùng `SET search_path = public` để không bị attack qua schema
+-- trỏ trước (Postgres best practice cho SECURITY DEFINER).
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. find_or_create_direct_conversation
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(
+    p_other_user_id BIGINT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_conv_id BIGINT;
+    v_ok BOOLEAN;
+    v_blocked BOOLEAN;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF v_me = p_other_user_id THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'cannotMessageSelf');
+    END IF;
+
+    SELECT EXISTS(
+        SELECT 1 FROM public.connections cn
+         WHERE cn.status = 'accepted'
+           AND ((cn.requester_id = v_me AND cn.receiver_id = p_other_user_id)
+             OR (cn.requester_id = p_other_user_id AND cn.receiver_id = v_me))
+    ) INTO v_ok;
+
+    IF NOT v_ok THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notConnected');
+    END IF;
+
+    SELECT EXISTS(
+        SELECT 1 FROM public.user_blocks ub
+         WHERE (ub.blocker_id = v_me AND ub.blocked_id = p_other_user_id)
+            OR (ub.blocker_id = p_other_user_id AND ub.blocked_id = v_me)
+    ) INTO v_blocked;
+
+    IF v_blocked THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'blocked');
+    END IF;
+
+    SELECT c.id INTO v_conv_id
+      FROM public.conversations c
+     WHERE c.type = 'direct'
+       AND EXISTS(
+           SELECT 1 FROM public.conversation_participants cp1
+            WHERE cp1.conversation_id = c.id AND cp1.user_id = v_me
+       )
+       AND EXISTS(
+           SELECT 1 FROM public.conversation_participants cp2
+            WHERE cp2.conversation_id = c.id AND cp2.user_id = p_other_user_id
+       )
+       AND (
+           SELECT COUNT(*) FROM public.conversation_participants cp3
+            WHERE cp3.conversation_id = c.id
+       ) = 2
+     LIMIT 1;
+
+    IF v_conv_id IS NULL THEN
+        INSERT INTO public.conversations(type) VALUES ('direct')
+        RETURNING id INTO v_conv_id;
+
+        INSERT INTO public.conversation_participants(conversation_id, user_id)
+        VALUES (v_conv_id, v_me), (v_conv_id, p_other_user_id);
+    END IF;
+
+    RETURN jsonb_build_object('ok', TRUE, 'conversationId', v_conv_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.find_or_create_direct_conversation(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 2. send_message
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.send_message(
+    p_conversation_id BIGINT,
+    p_content TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_other BIGINT;
+    v_ok BOOLEAN;
+    v_blocked BOOLEAN;
+    v_recent INT;
+    v_new_id BIGINT;
+    v_created_at TIMESTAMPTZ;
+    v_trim TEXT;
+BEGIN
+    v_trim := btrim(COALESCE(p_content, ''));
+    IF v_trim = '' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'emptyContent');
+    END IF;
+    IF char_length(v_trim) > 4000 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'tooLong');
+    END IF;
+
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF NOT EXISTS(
+        SELECT 1 FROM public.conversation_participants
+         WHERE conversation_id = p_conversation_id AND user_id = v_me
+    ) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notParticipant');
+    END IF;
+
+    SELECT cp.user_id INTO v_other
+      FROM public.conversation_participants cp
+     WHERE cp.conversation_id = p_conversation_id AND cp.user_id <> v_me
+     LIMIT 1;
+
+    SELECT EXISTS(
+        SELECT 1 FROM public.connections cn
+         WHERE cn.status = 'accepted'
+           AND ((cn.requester_id = v_me AND cn.receiver_id = v_other)
+             OR (cn.requester_id = v_other AND cn.receiver_id = v_me))
+    ) INTO v_ok;
+
+    IF NOT v_ok THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notConnected');
+    END IF;
+
+    SELECT EXISTS(
+        SELECT 1 FROM public.user_blocks ub
+         WHERE (ub.blocker_id = v_me AND ub.blocked_id = v_other)
+            OR (ub.blocker_id = v_other AND ub.blocked_id = v_me)
+    ) INTO v_blocked;
+
+    IF v_blocked THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'blocked');
+    END IF;
+
+    SELECT COUNT(*)::INT INTO v_recent
+      FROM public.messages m
+     WHERE m.sender_id = v_me
+       AND m.created_at >= NOW() - INTERVAL '1 minute';
+
+    IF v_recent >= 60 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'rateLimited');
+    END IF;
+
+    INSERT INTO public.messages(conversation_id, sender_id, content)
+    VALUES (p_conversation_id, v_me, v_trim)
+    RETURNING id, created_at INTO v_new_id, v_created_at;
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'message', jsonb_build_object(
+            'id', v_new_id,
+            'senderId', v_me,
+            'content', v_trim,
+            'media', NULL,
+            'readAt', NULL,
+            'createdAt', v_created_at
+        ),
+        'recipientId', v_other
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.send_message(BIGINT, TEXT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 3. mark_conversation_read
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.mark_conversation_read(
+    p_conversation_id BIGINT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_me BIGINT;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    -- Chỉ user tự mark conversation MÌNH tham gia
+    IF NOT EXISTS(
+        SELECT 1 FROM public.conversation_participants
+         WHERE conversation_id = p_conversation_id AND user_id = v_me
+    ) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notParticipant');
+    END IF;
+
+    UPDATE public.conversation_participants
+       SET last_read_at = NOW()
+     WHERE conversation_id = p_conversation_id
+       AND user_id = v_me;
+
+    UPDATE public.messages
+       SET read_at = NOW()
+     WHERE conversation_id = p_conversation_id
+       AND sender_id <> v_me
+       AND read_at IS NULL
+       AND deleted_at IS NULL;
+
+    RETURN jsonb_build_object('ok', TRUE);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.mark_conversation_read(BIGINT) TO authenticated;
+
+-- =============================================================================
+-- END MIGRATION 20260524_014
+-- =============================================================================
+
+
+-- #############################################################################
+-- 17. ROW LEVEL SECURITY — messaging tables (is_my_conversation + policies)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260524_012 — FIX RLS RECURSION TRÊN MESSAGING TABLES
+-- =============================================================================
+-- Vấn đề: policy `conversation_participants_select` trong rls_policies.sql có
+-- subquery EXISTS query lại chính `conversation_participants` → infinite
+-- recursion khi Postgres đánh giá RLS.
+--
+-- Cách sửa:
+--   • Tạo helper SECURITY DEFINER `is_my_conversation(conv_id)` — bypass RLS
+--     khi check "user hiện tại có phải participant của conversation X không".
+--   • Recreate policies SELECT của 3 bảng (conversations, conversation_part-
+--     icipants, messages) dùng helper này, không subquery vòng tròn.
+--   • Idempotent: DROP POLICY IF EXISTS rồi CREATE.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Helper bypass RLS: kiểm tra user hiện tại có phải participant không
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_my_conversation(p_conversation_id BIGINT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS(
+    SELECT 1
+      FROM public.conversation_participants cp
+      JOIN public.users u ON u.id = cp.user_id
+     WHERE cp.conversation_id = p_conversation_id
+       AND u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_my_conversation(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 2. conversation_participants — policy SELECT không tự query lại chính nó
+-- -----------------------------------------------------------------------------
+ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS conversation_participants_select       ON public.conversation_participants;
+DROP POLICY IF EXISTS conversation_participants_admin_all    ON public.conversation_participants;
+DROP POLICY IF EXISTS conversation_participants_insert_own   ON public.conversation_participants;
+
+CREATE POLICY conversation_participants_admin_all
+  ON public.conversation_participants
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Cho phép user xem TẤT CẢ participant của các conversation mà mình là thành
+-- viên (cần để biết "người đối diện" trong direct chat).
+CREATE POLICY conversation_participants_select
+  ON public.conversation_participants
+  FOR SELECT
+  USING (public.is_my_conversation(conversation_id));
+
+CREATE POLICY conversation_participants_insert_own
+  ON public.conversation_participants
+  FOR INSERT
+  WITH CHECK (user_id = public.auth_user_id());
+
+-- Cho phép user cập nhật last_read_at của chính mình
+DROP POLICY IF EXISTS conversation_participants_update_own ON public.conversation_participants;
+CREATE POLICY conversation_participants_update_own
+  ON public.conversation_participants
+  FOR UPDATE
+  USING (user_id = public.auth_user_id())
+  WITH CHECK (user_id = public.auth_user_id());
+
+-- -----------------------------------------------------------------------------
+-- 3. conversations — dùng helper, không subquery cp trực tiếp
+-- -----------------------------------------------------------------------------
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS conversations_admin_all          ON public.conversations;
+DROP POLICY IF EXISTS conversations_select_participant ON public.conversations;
+DROP POLICY IF EXISTS conversations_insert_any         ON public.conversations;
+
+CREATE POLICY conversations_admin_all
+  ON public.conversations
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY conversations_select_participant
+  ON public.conversations
+  FOR SELECT
+  USING (public.is_my_conversation(id));
+
+CREATE POLICY conversations_insert_any
+  ON public.conversations
+  FOR INSERT
+  WITH CHECK (TRUE);
+
+-- Cho phép trigger sau-insert message cập nhật updated_at của conversation.
+-- Trigger chạy với quyền SECURITY DEFINER của joblink_after_message_insert(),
+-- nhưng để dev tools (REST) cũng làm được khi cần, mở UPDATE cho participant.
+DROP POLICY IF EXISTS conversations_update_participant ON public.conversations;
+CREATE POLICY conversations_update_participant
+  ON public.conversations
+  FOR UPDATE
+  USING (public.is_my_conversation(id))
+  WITH CHECK (public.is_my_conversation(id));
+
+-- -----------------------------------------------------------------------------
+-- 4. messages — dùng helper thay cho EXISTS query cp
+-- -----------------------------------------------------------------------------
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS messages_admin_all          ON public.messages;
+DROP POLICY IF EXISTS messages_select_participant ON public.messages;
+DROP POLICY IF EXISTS messages_insert_own         ON public.messages;
+DROP POLICY IF EXISTS messages_update_own         ON public.messages;
+
+CREATE POLICY messages_admin_all
+  ON public.messages
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY messages_select_participant
+  ON public.messages
+  FOR SELECT
+  USING (public.is_my_conversation(conversation_id));
+
+CREATE POLICY messages_insert_own
+  ON public.messages
+  FOR INSERT
+  WITH CHECK (
+    sender_id = public.auth_user_id()
+    AND public.is_my_conversation(conversation_id)
+  );
+
+CREATE POLICY messages_update_own
+  ON public.messages
+  FOR UPDATE
+  USING (sender_id = public.auth_user_id() AND deleted_at IS NULL)
+  WITH CHECK (sender_id = public.auth_user_id());
+
+-- Cho phép participant đánh dấu đã đọc (read_at) các message của người kia.
+-- mark_conversation_read RPC sẽ UPDATE read_at cho messages sender_id <> me.
+DROP POLICY IF EXISTS messages_update_read ON public.messages;
+CREATE POLICY messages_update_read
+  ON public.messages
+  FOR UPDATE
+  USING (public.is_my_conversation(conversation_id))
+  WITH CHECK (public.is_my_conversation(conversation_id));
+
+-- =============================================================================
+-- END MIGRATION 20260524_012
+-- =============================================================================
+
+
+-- #############################################################################
+-- 16d. MESSAGING REALTIME — messages / conversations / participants
+-- #############################################################################
+-- -----------------------------------------------------------------------------
+-- 9. Realtime: bật replication cho messages, conversations,
+--    conversation_participants để client subscribe được postgres_changes.
+-- -----------------------------------------------------------------------------
+ALTER TABLE public.messages                  REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.conversations             REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.conversation_participants REPLICA IDENTITY DEFAULT;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+    ) THEN
+        EXECUTE 'CREATE PUBLICATION supabase_realtime';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime' AND schemaname = 'public'
+           AND tablename = 'messages'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.messages';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime' AND schemaname = 'public'
+           AND tablename = 'conversations'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime' AND schemaname = 'public'
+           AND tablename = 'conversation_participants'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_participants';
+    END IF;
+END
+$$;
+
+-- =============================================================================
+
+
+-- #############################################################################
+-- 18. REALTIME STREAMS — notifications / connections / profile_view_logs (M07,M04)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260521_005 — REALTIME STREAMS (M07 + M04)
+-- =============================================================================
+-- Mục tiêu:
+--   • Bật replication cho notifications + connections vào publication
+--     `supabase_realtime` để client subscribe được postgres_changes.
+--   • Đặt REPLICA IDENTITY DEFAULT (theo primary key) trên các bảng này — bắt
+--     buộc cho Supabase Realtime để chuyển payload UPDATE/DELETE.
+--   • Idempotent: chạy lại nhiều lần không lỗi.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Đảm bảo publication tồn tại (Supabase tạo sẵn, fallback an toàn)
+-- -----------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+    ) THEN
+        EXECUTE 'CREATE PUBLICATION supabase_realtime';
+    END IF;
+END
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 2. REPLICA IDENTITY — Supabase yêu cầu để stream UPDATE/DELETE đúng
+-- -----------------------------------------------------------------------------
+ALTER TABLE public.notifications      REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.connections        REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.profile_view_logs  REPLICA IDENTITY DEFAULT;
+
+-- -----------------------------------------------------------------------------
+-- 3. Add bảng vào publication (idempotent qua check pg_publication_tables)
+-- -----------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'notifications'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'connections'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.connections';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'profile_view_logs'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.profile_view_logs';
+    END IF;
+END
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 4. Bổ sung index hỗ trợ unread badge (đã có idx_notifications_user_unread
+--    trên (user_id, read_at, created_at) trong schema.sql) — thêm partial
+--    index riêng cho read_at IS NULL để count(*) WHERE read_at IS NULL nhanh
+--    hơn với volume lớn.
+-- -----------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread_only
+    ON public.notifications(user_id, created_at DESC)
+    WHERE read_at IS NULL;
+
+-- =============================================================================
+-- END MIGRATION 20260521_005
+-- =============================================================================
+
+
+-- #############################################################################
+-- 18b. REALTIME ENGAGEMENT — post reactions / comments / shares (M03)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260521_007 — REALTIME ENGAGEMENT (M03)
+-- =============================================================================
+-- Bật replication realtime cho engagement của posts:
+--   • post_reactions — like/unlike → cập nhật reactionCount/viewerReacted
+--   • post_comments  — bình luận mới/xoá → cập nhật commentCount + thread
+--   • post_shares    — chia sẻ → cập nhật shareCount
+-- Idempotent: chạy lại nhiều lần không lỗi.
+-- =============================================================================
+
+-- REPLICA IDENTITY DEFAULT bắt buộc cho Supabase Realtime để stream
+-- UPDATE/DELETE payload đầy đủ theo primary key.
+ALTER TABLE public.post_reactions REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.post_comments  REPLICA IDENTITY DEFAULT;
+ALTER TABLE public.post_shares    REPLICA IDENTITY DEFAULT;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+    ) THEN
+        EXECUTE 'CREATE PUBLICATION supabase_realtime';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'post_reactions'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.post_reactions';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'post_comments'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.post_comments';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'post_shares'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.post_shares';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+         WHERE pubname = 'supabase_realtime'
+           AND schemaname = 'public'
+           AND tablename = 'posts'
+    ) THEN
+        EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.posts';
+    END IF;
+END
+$$;
+
+-- =============================================================================
+-- END MIGRATION 20260521_007
+-- =============================================================================
+
+
+-- #############################################################################
+-- 19. COMPANY PUBLIC PAGE — index + toggle_follow_company (M04)
+-- #############################################################################
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Index hot path
+-- -----------------------------------------------------------------------------
+-- List/đếm active jobs của 1 công ty theo "mới nhất". Partial index giảm size
+-- vì non-active job không bao giờ xuất hiện ở trang public.
+CREATE INDEX IF NOT EXISTS idx_jobs_company_active_created
+    ON public.jobs(company_user_id, created_at DESC)
+    WHERE status = 'active' AND deleted_at IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 3. RPC: toggle_follow_company
+--    Idempotent: gọi 2 lần ⇒ về trạng thái ban đầu. Trả luôn count mới để UI
+--    optimistic không cần fetch lại overview.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.toggle_follow_company(
+    p_company_user_id BIGINT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_target_role TEXT;
+    v_target_status TEXT;
+    v_existing BIGINT;
+    v_is_following BOOLEAN;
+    v_count INT;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF v_me = p_company_user_id THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'selfFollow');
+    END IF;
+
+    SELECT u.role, u.status
+      INTO v_target_role, v_target_status
+      FROM public.users u
+     WHERE u.id = p_company_user_id
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_target_role IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'companyNotFound');
+    END IF;
+    IF v_target_role <> 'company' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany');
+    END IF;
+    IF v_target_status <> 'active' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'companyInactive');
+    END IF;
+
+    SELECT id INTO v_existing
+      FROM public.follows
+     WHERE follower_id = v_me
+       AND followable_type = 'company'
+       AND followable_id = p_company_user_id
+     LIMIT 1;
+
+    IF v_existing IS NOT NULL THEN
+        DELETE FROM public.follows WHERE id = v_existing;
+        v_is_following := FALSE;
+    ELSE
+        INSERT INTO public.follows(follower_id, followable_type, followable_id)
+        VALUES (v_me, 'company', p_company_user_id)
+        ON CONFLICT (follower_id, followable_type, followable_id) DO NOTHING;
+        v_is_following := TRUE;
+    END IF;
+
+    SELECT COUNT(*)::INT
+      INTO v_count
+      FROM public.follows
+     WHERE followable_type = 'company'
+       AND followable_id = p_company_user_id;
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'isFollowing', v_is_following,
+        'followerCount', v_count
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.toggle_follow_company(BIGINT) TO authenticated;
+
+
+
+-- #############################################################################
+-- 20. COMPANY DASHBOARD — recruiter RPCs (M05)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260527_017 — COMPANY DASHBOARD (M05 owner-facing)
+-- =============================================================================
+-- Mục tiêu:
+--   • Index hot path cho dashboard recruiter (jobs theo status, applications
+--     join jobs theo công ty).
+--   • RPC tổng hợp `get_company_dashboard_overview` — 1 round trip cho tab
+--     Tổng quan (stats + recent jobs + recent applicants).
+--   • RPC `get_company_jobs` — phân trang + lọc theo status + search.
+--   • RPC `get_company_applicants` — phân trang + lọc theo job_id/status +
+--     search theo tên ứng viên. Dùng cho cả tab Ứng viên và tab Pipeline.
+--   • RPC `update_application_status` + `update_job_status` — owner-only,
+--     insert history row, ghi nhận `changed_by`.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Index hot path
+-- -----------------------------------------------------------------------------
+-- Lọc applications theo job + status (pipeline view). Đã có idx_job_apps_job
+-- và idx_job_apps_status riêng — thêm composite + applied_at DESC để pipeline
+-- sort newest-first không cần resort.
+CREATE INDEX IF NOT EXISTS idx_job_apps_job_status_applied
+    ON public.job_applications(job_id, status, applied_at DESC);
+
+-- Lọc jobs của 1 công ty theo status + created_at DESC (jobs tab).
+CREATE INDEX IF NOT EXISTS idx_jobs_company_status_created
+    ON public.jobs(company_user_id, status, created_at DESC)
+    WHERE deleted_at IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 2. RPC: get_company_dashboard_overview
+--    Yêu cầu: viewer phải là chính company user (owner-only). Trả NULL nếu
+--    role != company hoặc không khớp.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_company_dashboard_overview()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_active_jobs INT;
+    v_total_apps INT;
+    v_apps_this_month INT;
+    v_hires_total INT;
+    v_recent_jobs JSONB;
+    v_recent_apps JSONB;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL OR v_role <> 'company' THEN
+        RETURN NULL;
+    END IF;
+
+    -- Stats
+    SELECT COUNT(*)::INT
+      INTO v_active_jobs
+      FROM public.jobs j
+     WHERE j.company_user_id = v_me
+       AND j.status = 'active'
+       AND j.deleted_at IS NULL;
+
+    SELECT COUNT(*)::INT
+      INTO v_total_apps
+      FROM public.job_applications a
+      JOIN public.jobs j ON j.id = a.job_id
+     WHERE j.company_user_id = v_me
+       AND j.deleted_at IS NULL;
+
+    SELECT COUNT(*)::INT
+      INTO v_apps_this_month
+      FROM public.job_applications a
+      JOIN public.jobs j ON j.id = a.job_id
+     WHERE j.company_user_id = v_me
+       AND j.deleted_at IS NULL
+       AND a.applied_at >= date_trunc('month', NOW());
+
+    SELECT COUNT(*)::INT
+      INTO v_hires_total
+      FROM public.job_applications a
+      JOIN public.jobs j ON j.id = a.job_id
+     WHERE j.company_user_id = v_me
+       AND j.deleted_at IS NULL
+       AND a.status = 'hired';
+
+    -- Recent jobs (5)
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'id', x.id,
+            'title', x.title,
+            'status', x.status,
+            'createdAt', x.created_at,
+            'expiresAt', x.expires_at,
+            'applicantCount', x.applicant_count
+        ) ORDER BY x.created_at DESC
+    ), '[]'::jsonb)
+    INTO v_recent_jobs
+    FROM (
+        SELECT j.id, j.title, j.status, j.created_at, j.expires_at,
+               COALESCE((
+                   SELECT COUNT(*)::INT FROM public.job_applications a
+                    WHERE a.job_id = j.id
+               ), 0) AS applicant_count
+          FROM public.jobs j
+         WHERE j.company_user_id = v_me
+           AND j.deleted_at IS NULL
+         ORDER BY j.created_at DESC
+         LIMIT 5
+    ) x;
+
+    -- Recent applicants (5)
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'applicationId', x.application_id,
+            'applicantId', x.applicant_id,
+            'displayName', x.display_name,
+            'avatarUrl', x.avatar_url,
+            'headline', x.headline,
+            'jobId', x.job_id,
+            'jobTitle', x.job_title,
+            'status', x.status,
+            'appliedAt', x.applied_at
+        ) ORDER BY x.applied_at DESC
+    ), '[]'::jsonb)
+    INTO v_recent_apps
+    FROM (
+        SELECT a.id AS application_id,
+               a.applicant_id,
+               COALESCE(mp.full_name, cp.name, u.email) AS display_name,
+               COALESCE(mp.avatar_url, cp.logo_url) AS avatar_url,
+               COALESCE(mp.headline, cp.industry) AS headline,
+               j.id AS job_id,
+               j.title AS job_title,
+               a.status,
+               a.applied_at
+          FROM public.job_applications a
+          JOIN public.jobs j ON j.id = a.job_id
+          JOIN public.users u ON u.id = a.applicant_id
+          LEFT JOIN public.member_profiles mp
+            ON mp.user_id = a.applicant_id AND mp.deleted_at IS NULL
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = a.applicant_id AND cp.deleted_at IS NULL
+         WHERE j.company_user_id = v_me
+           AND j.deleted_at IS NULL
+         ORDER BY a.applied_at DESC
+         LIMIT 5
+    ) x;
+
+    RETURN jsonb_build_object(
+        'stats', jsonb_build_object(
+            'activeJobs', v_active_jobs,
+            'totalApplications', v_total_apps,
+            'applicationsThisMonth', v_apps_this_month,
+            'hireRate', CASE
+                WHEN v_total_apps > 0
+                THEN ROUND((v_hires_total::NUMERIC / v_total_apps) * 100, 1)
+                ELSE 0
+            END
+        ),
+        'recentJobs', v_recent_jobs,
+        'recentApplicants', v_recent_apps
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_company_dashboard_overview() TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 3. RPC: get_company_jobs
+--    Filter: status ('all'|'active'|'draft'|'closed'|'expired'), search (ILIKE
+--    trên title). Phân trang offset/limit (đủ cho dashboard, không cần cursor).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_company_jobs(
+    p_status TEXT DEFAULT 'all',
+    p_search TEXT DEFAULT NULL,
+    p_limit INT DEFAULT 20,
+    p_offset INT DEFAULT 0
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_items JSONB;
+    v_total INT;
+    v_lim INT;
+    v_off INT;
+    v_q TEXT;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL OR v_role <> 'company' THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0);
+    END IF;
+
+    v_lim := GREATEST(LEAST(COALESCE(p_limit, 20), 100), 1);
+    v_off := GREATEST(COALESCE(p_offset, 0), 0);
+    v_q := NULLIF(btrim(COALESCE(p_search, '')), '');
+
+    WITH base AS (
+        SELECT j.*
+          FROM public.jobs j
+         WHERE j.company_user_id = v_me
+           AND j.deleted_at IS NULL
+           AND (p_status = 'all' OR j.status = p_status)
+           AND (v_q IS NULL OR j.title ILIKE '%' || v_q || '%')
+    ),
+    counted AS (
+        SELECT COUNT(*)::INT AS total FROM base
+    ),
+    page AS (
+        SELECT b.id, b.title, b.status, b.created_at, b.expires_at,
+               COALESCE((
+                   SELECT COUNT(*)::INT FROM public.job_applications a
+                    WHERE a.job_id = b.id
+               ), 0) AS applicant_count
+          FROM base b
+         ORDER BY b.created_at DESC
+         LIMIT v_lim OFFSET v_off
+    )
+    SELECT
+        COALESCE(jsonb_agg(jsonb_build_object(
+            'id', p.id,
+            'title', p.title,
+            'status', p.status,
+            'createdAt', p.created_at,
+            'expiresAt', p.expires_at,
+            'applicantCount', p.applicant_count
+        ) ORDER BY p.created_at DESC), '[]'::jsonb),
+        (SELECT total FROM counted)
+      INTO v_items, v_total
+      FROM page p;
+
+    RETURN jsonb_build_object('items', v_items, 'total', COALESCE(v_total, 0));
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_company_jobs(TEXT, TEXT, INT, INT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 4. RPC: get_company_applicants
+--    Filter: job_id (optional), status (optional, 'all' để bỏ qua), search.
+--    Trả thêm thông tin job_title để hiển thị inline.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_company_applicants(
+    p_job_id BIGINT DEFAULT NULL,
+    p_status TEXT DEFAULT 'all',
+    p_search TEXT DEFAULT NULL,
+    p_limit INT DEFAULT 50,
+    p_offset INT DEFAULT 0
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_items JSONB;
+    v_total INT;
+    v_lim INT;
+    v_off INT;
+    v_q TEXT;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL OR v_role <> 'company' THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0);
+    END IF;
+
+    v_lim := GREATEST(LEAST(COALESCE(p_limit, 50), 200), 1);
+    v_off := GREATEST(COALESCE(p_offset, 0), 0);
+    v_q := NULLIF(btrim(COALESCE(p_search, '')), '');
+
+    WITH base AS (
+        SELECT a.id AS application_id,
+               a.applicant_id,
+               a.status,
+               a.applied_at,
+               a.cover_letter,
+               a.resume_url,
+               j.id AS job_id,
+               j.title AS job_title,
+               COALESCE(mp.full_name, cp.name, u.email) AS display_name,
+               COALESCE(mp.avatar_url, cp.logo_url) AS avatar_url,
+               COALESCE(mp.headline, cp.industry) AS headline
+          FROM public.job_applications a
+          JOIN public.jobs j ON j.id = a.job_id
+          JOIN public.users u ON u.id = a.applicant_id
+          LEFT JOIN public.member_profiles mp
+            ON mp.user_id = a.applicant_id AND mp.deleted_at IS NULL
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = a.applicant_id AND cp.deleted_at IS NULL
+         WHERE j.company_user_id = v_me
+           AND j.deleted_at IS NULL
+           AND (p_job_id IS NULL OR a.job_id = p_job_id)
+           AND (p_status = 'all' OR a.status = p_status)
+           AND (
+               v_q IS NULL
+               OR COALESCE(mp.full_name, cp.name, u.email) ILIKE '%' || v_q || '%'
+               OR j.title ILIKE '%' || v_q || '%'
+           )
+    ),
+    counted AS (
+        SELECT COUNT(*)::INT AS total FROM base
+    ),
+    page AS (
+        SELECT * FROM base
+         ORDER BY applied_at DESC
+         LIMIT v_lim OFFSET v_off
+    )
+    SELECT
+        COALESCE(jsonb_agg(jsonb_build_object(
+            'applicationId', p.application_id,
+            'applicantId', p.applicant_id,
+            'displayName', p.display_name,
+            'avatarUrl', p.avatar_url,
+            'headline', p.headline,
+            'jobId', p.job_id,
+            'jobTitle', p.job_title,
+            'status', p.status,
+            'appliedAt', p.applied_at,
+            'coverLetter', p.cover_letter,
+            'resumeUrl', p.resume_url
+        ) ORDER BY p.applied_at DESC), '[]'::jsonb),
+        (SELECT total FROM counted)
+      INTO v_items, v_total
+      FROM page p;
+
+    RETURN jsonb_build_object('items', v_items, 'total', COALESCE(v_total, 0));
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_company_applicants(BIGINT, TEXT, TEXT, INT, INT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 5. RPC: update_application_status
+--    Owner-only (chính công ty tạo job). Insert vào history bằng cùng
+--    transaction. Trigger history riêng có thể có sau; tạm thời insert trực
+--    tiếp để giữ atomicity.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_application_status(
+    p_application_id BIGINT,
+    p_new_status TEXT,
+    p_note TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_company_user_id BIGINT;
+    v_old_status TEXT;
+    v_now TIMESTAMPTZ;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF p_new_status NOT IN ('applied','reviewed','interview','offered','hired','rejected','withdrawn') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidStatus');
+    END IF;
+
+    SELECT j.company_user_id, a.status
+      INTO v_company_user_id, v_old_status
+      FROM public.job_applications a
+      JOIN public.jobs j ON j.id = a.job_id
+     WHERE a.id = p_application_id
+       AND j.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_company_user_id IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'applicationNotFound');
+    END IF;
+
+    IF v_company_user_id <> v_me THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notOwner');
+    END IF;
+
+    -- Withdrawn chỉ ứng viên tự đổi; recruiter không được dùng.
+    IF p_new_status = 'withdrawn' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'cannotWithdraw');
+    END IF;
+
+    IF v_old_status = p_new_status THEN
+        RETURN jsonb_build_object('ok', TRUE, 'noop', TRUE, 'status', v_old_status);
+    END IF;
+
+    v_now := NOW();
+
+    UPDATE public.job_applications
+       SET status = p_new_status,
+           updated_at = v_now
+     WHERE id = p_application_id;
+
+    INSERT INTO public.application_status_history(
+        application_id, old_status, new_status, changed_by, note, changed_at
+    ) VALUES (
+        p_application_id, v_old_status, p_new_status, v_me,
+        NULLIF(btrim(COALESCE(p_note, '')), ''), v_now
+    );
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'noop', FALSE,
+        'status', p_new_status,
+        'oldStatus', v_old_status
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_application_status(BIGINT, TEXT, TEXT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 6. RPC: update_job_status
+--    Owner-only. Cho phép: draft → active, active → closed, closed → active,
+--    active → draft. Không cho chỉnh sang 'expired' (do hệ thống tự set) hay
+--    'removed' (soft delete riêng).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_job_status(
+    p_job_id BIGINT,
+    p_new_status TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_company_user_id BIGINT;
+    v_old_status TEXT;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF p_new_status NOT IN ('draft','active','closed') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidStatus');
+    END IF;
+
+    SELECT j.company_user_id, j.status
+      INTO v_company_user_id, v_old_status
+      FROM public.jobs j
+     WHERE j.id = p_job_id
+       AND j.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_company_user_id IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobNotFound');
+    END IF;
+
+    IF v_company_user_id <> v_me THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notOwner');
+    END IF;
+
+    IF v_old_status = 'removed' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobRemoved');
+    END IF;
+
+    IF v_old_status = p_new_status THEN
+        RETURN jsonb_build_object('ok', TRUE, 'noop', TRUE, 'status', v_old_status);
+    END IF;
+
+    UPDATE public.jobs
+       SET status = p_new_status,
+           updated_at = NOW()
+     WHERE id = p_job_id;
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'noop', FALSE,
+        'status', p_new_status,
+        'oldStatus', v_old_status
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_job_status(BIGINT, TEXT) TO authenticated;
+
+-- =============================================================================
+-- END MIGRATION 20260527_017
+-- =============================================================================
+
+
+-- #############################################################################
+-- 21. JOBS & APPLICATIONS — candidate-facing RPCs (M05)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260527_018 — JOBS (M05 candidate-facing) + APPLICATIONS
+-- =============================================================================
+-- Mục tiêu:
+--   • Index hot path cho job listing + ILIKE search title.
+--   • RPCs:
+--       - create_job()            → recruiter đăng tin (kèm skills)
+--       - get_jobs_list()         → list/search có filter cho ứng viên
+--       - get_job_detail()        → 1 round-trip cho /jobs/[id]
+--       - apply_to_job()          → member ứng tuyển + notify recruiter
+--       - withdraw_application()  → member rút đơn
+--       - toggle_saved_job()      → member bookmark/unbookmark
+--       - get_my_saved_jobs()     → list bookmarks của member
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Index hot path
+-- -----------------------------------------------------------------------------
+-- ILIKE trên title cho search. pg_trgm đã enable ở migration network_perf.
+CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm
+    ON public.jobs USING gin (title gin_trgm_ops)
+    WHERE deleted_at IS NULL;
+
+-- Sort hot path: status='active' + created_at DESC. Đã có idx_jobs_active_company
+-- nhưng thiếu created_at — thêm partial.
+CREATE INDEX IF NOT EXISTS idx_jobs_active_created
+    ON public.jobs(created_at DESC)
+    WHERE status = 'active' AND deleted_at IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 2. RPC: create_job
+--    Recruiter only. Skills truyền theo tên (array). RPC sẽ find-or-create
+--    rows trong public.skills rồi insert job_skills.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.create_job(
+    p_title TEXT,
+    p_description TEXT,
+    p_requirements TEXT,
+    p_province_id BIGINT,
+    p_district_id BIGINT,
+    p_salary_min BIGINT,
+    p_salary_max BIGINT,
+    p_salary_visible BOOLEAN,
+    p_job_type_id BIGINT,
+    p_work_mode_id BIGINT,
+    p_job_position_id BIGINT,
+    p_status TEXT,
+    p_expires_at TIMESTAMPTZ,
+    p_skills TEXT[]
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_status TEXT;
+    v_job_id BIGINT;
+    v_skill_name TEXT;
+    v_skill_id BIGINT;
+BEGIN
+    SELECT u.id, u.role, u.status INTO v_me, v_role, v_status
+      FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+    IF v_role <> 'company' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany');
+    END IF;
+    IF v_status <> 'active' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'companyInactive');
+    END IF;
+
+    -- Validate cơ bản (RPC server-side, khớp với client zod).
+    IF btrim(COALESCE(p_title, '')) = '' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidTitle');
+    END IF;
+    IF char_length(btrim(p_title)) > 255 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'titleTooLong');
+    END IF;
+    IF btrim(COALESCE(p_description, '')) = '' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidDescription');
+    END IF;
+    IF p_salary_min IS NOT NULL AND p_salary_max IS NOT NULL
+       AND p_salary_min > p_salary_max THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidSalaryRange');
+    END IF;
+    IF p_status NOT IN ('draft', 'active') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidStatus');
+    END IF;
+
+    -- FK guards: tránh insert lỗi.
+    IF NOT EXISTS(SELECT 1 FROM public.job_types WHERE id = p_job_type_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidJobType');
+    END IF;
+    IF NOT EXISTS(SELECT 1 FROM public.work_modes WHERE id = p_work_mode_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidWorkMode');
+    END IF;
+    IF p_province_id IS NOT NULL
+       AND NOT EXISTS(SELECT 1 FROM public.provinces WHERE id = p_province_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidProvince');
+    END IF;
+
+    INSERT INTO public.jobs(
+        company_user_id, title, description, requirements,
+        province_id, district_id, salary_min, salary_max, salary_visible,
+        job_type_id, work_mode_id, job_position_id, status, expires_at
+    ) VALUES (
+        v_me,
+        btrim(p_title),
+        btrim(p_description),
+        NULLIF(btrim(COALESCE(p_requirements, '')), ''),
+        p_province_id, p_district_id, p_salary_min, p_salary_max,
+        COALESCE(p_salary_visible, TRUE),
+        p_job_type_id, p_work_mode_id, p_job_position_id, p_status, p_expires_at
+    )
+    RETURNING id INTO v_job_id;
+
+    -- Skills: find-or-create theo name (case-sensitive UNIQUE), bỏ qua duplicate.
+    IF p_skills IS NOT NULL THEN
+        FOREACH v_skill_name IN ARRAY p_skills LOOP
+            v_skill_name := btrim(v_skill_name);
+            CONTINUE WHEN v_skill_name = '' OR char_length(v_skill_name) > 100;
+
+            SELECT id INTO v_skill_id FROM public.skills
+             WHERE name = v_skill_name LIMIT 1;
+
+            IF v_skill_id IS NULL THEN
+                INSERT INTO public.skills(name) VALUES (v_skill_name)
+                ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                RETURNING id INTO v_skill_id;
+            END IF;
+
+            INSERT INTO public.job_skills(job_id, skill_id, is_required)
+            VALUES (v_job_id, v_skill_id, TRUE)
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+    END IF;
+
+    RETURN jsonb_build_object('ok', TRUE, 'jobId', v_job_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_job(
+    TEXT, TEXT, TEXT, BIGINT, BIGINT, BIGINT, BIGINT, BOOLEAN,
+    BIGINT, BIGINT, BIGINT, TEXT, TIMESTAMPTZ, TEXT[]
+) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 3. RPC: get_jobs_list
+--    Public job board. Filter: search (ILIKE title), province, job types,
+--    work modes, salary range. Pagination offset/limit. Trả thêm
+--    viewerSaved/viewerApplied để UI hiển thị state đúng.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_jobs_list(
+    p_search TEXT DEFAULT NULL,
+    p_province_id BIGINT DEFAULT NULL,
+    p_job_type_ids BIGINT[] DEFAULT NULL,
+    p_work_mode_ids BIGINT[] DEFAULT NULL,
+    p_salary_min BIGINT DEFAULT NULL,
+    p_company_user_id BIGINT DEFAULT NULL,
+    p_limit INT DEFAULT 20,
+    p_offset INT DEFAULT 0
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_items JSONB;
+    v_total INT;
+    v_lim INT;
+    v_off INT;
+    v_q TEXT;
+BEGIN
+    SELECT u.id INTO v_me FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+
+    v_lim := GREATEST(LEAST(COALESCE(p_limit, 20), 100), 1);
+    v_off := GREATEST(COALESCE(p_offset, 0), 0);
+    v_q := NULLIF(btrim(COALESCE(p_search, '')), '');
+
+    WITH base AS (
+        SELECT j.id, j.title, j.salary_min, j.salary_max, j.salary_visible,
+               j.created_at, j.expires_at,
+               j.company_user_id,
+               j.province_id, j.district_id,
+               j.job_type_id, j.work_mode_id,
+               pv.name AS province_name,
+               dt.name AS district_name,
+               jt.name AS job_type_name,
+               wm.name AS work_mode_name,
+               COALESCE(cp.name, u.email) AS company_name,
+               cp.logo_url AS company_logo_url,
+               cp.verification_status AS company_verification_status
+          FROM public.jobs j
+          JOIN public.users u ON u.id = j.company_user_id
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
+          LEFT JOIN public.provinces pv ON pv.id = j.province_id
+          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+          LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+         WHERE j.status = 'active'
+           AND j.deleted_at IS NULL
+           AND (j.expires_at IS NULL OR j.expires_at > NOW())
+           AND (v_q IS NULL OR j.title ILIKE '%' || v_q || '%')
+           AND (p_province_id IS NULL OR j.province_id = p_province_id)
+           AND (p_job_type_ids IS NULL OR j.job_type_id = ANY(p_job_type_ids))
+           AND (p_work_mode_ids IS NULL OR j.work_mode_id = ANY(p_work_mode_ids))
+           AND (p_salary_min IS NULL OR COALESCE(j.salary_max, j.salary_min) >= p_salary_min)
+           AND (p_company_user_id IS NULL OR j.company_user_id = p_company_user_id)
+    ),
+    counted AS (SELECT COUNT(*)::INT AS total FROM base),
+    page AS (
+        SELECT * FROM base
+         ORDER BY created_at DESC
+         LIMIT v_lim OFFSET v_off
+    )
+    SELECT
+        COALESCE(jsonb_agg(jsonb_build_object(
+            'id', p.id,
+            'title', p.title,
+            'salaryMin', p.salary_min,
+            'salaryMax', p.salary_max,
+            'salaryVisible', p.salary_visible,
+            'createdAt', p.created_at,
+            'expiresAt', p.expires_at,
+            'companyUserId', p.company_user_id,
+            'companyName', p.company_name,
+            'companyLogoUrl', p.company_logo_url,
+            'companyVerified', p.company_verification_status = 'verified',
+            'provinceName', p.province_name,
+            'districtName', p.district_name,
+            'jobTypeName', p.job_type_name,
+            'workModeName', p.work_mode_name,
+            'viewerSaved', v_me IS NOT NULL AND EXISTS(
+                SELECT 1 FROM public.saved_jobs s
+                 WHERE s.user_id = v_me AND s.job_id = p.id
+            ),
+            'viewerApplied', v_me IS NOT NULL AND EXISTS(
+                SELECT 1 FROM public.job_applications a
+                 WHERE a.applicant_id = v_me AND a.job_id = p.id
+            )
+        ) ORDER BY p.created_at DESC), '[]'::jsonb),
+        (SELECT total FROM counted)
+      INTO v_items, v_total
+      FROM page p;
+
+    RETURN jsonb_build_object('items', v_items, 'total', COALESCE(v_total, 0));
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_jobs_list(
+    TEXT, BIGINT, BIGINT[], BIGINT[], BIGINT, BIGINT, INT, INT
+) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 4. RPC: get_job_detail
+--    1 round-trip cho trang /jobs/[id]: job core, company, skills, viewer
+--    state (isOwner, viewerSaved, viewerApplied, applicationStatus).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_job_detail(p_job_id BIGINT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_job JSONB;
+    v_skills JSONB;
+    v_viewer JSONB;
+    v_company_user_id BIGINT;
+BEGIN
+    SELECT u.id INTO v_me FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+
+    SELECT jsonb_build_object(
+        'id', j.id,
+        'title', j.title,
+        'description', j.description,
+        'requirements', j.requirements,
+        'salaryMin', j.salary_min,
+        'salaryMax', j.salary_max,
+        'salaryVisible', j.salary_visible,
+        'status', j.status,
+        'createdAt', j.created_at,
+        'expiresAt', j.expires_at,
+        'companyUserId', j.company_user_id,
+        'companyName', COALESCE(cp.name, u.email),
+        'companyLogoUrl', cp.logo_url,
+        'companyIndustry', cp.industry,
+        'companyAbout', cp.about,
+        'companySize', cp.size,
+        'companyVerified', cp.verification_status = 'verified',
+        'provinceName', pv.name,
+        'districtName', dt.name,
+        'jobTypeName', jt.name,
+        'workModeName', wm.name,
+        'jobPositionName', jp.name
+    ), j.company_user_id
+    INTO v_job, v_company_user_id
+    FROM public.jobs j
+    JOIN public.users u ON u.id = j.company_user_id
+    LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
+    LEFT JOIN public.provinces pv ON pv.id = j.province_id
+    LEFT JOIN public.districts dt ON dt.id = j.district_id
+    LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+    LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+    LEFT JOIN public.job_positions jp ON jp.id = j.job_position_id
+    WHERE j.id = p_job_id
+      AND j.deleted_at IS NULL;
+
+    IF v_job IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT COALESCE(jsonb_agg(s.name ORDER BY s.name), '[]'::jsonb)
+      INTO v_skills
+      FROM public.job_skills js
+      JOIN public.skills s ON s.id = js.skill_id
+     WHERE js.job_id = p_job_id;
+
+    -- Viewer state
+    IF v_me IS NULL THEN
+        v_viewer := jsonb_build_object(
+            'isOwner', FALSE,
+            'viewerSaved', FALSE,
+            'viewerApplied', FALSE,
+            'applicationStatus', NULL,
+            'applicationId', NULL
+        );
+    ELSE
+        v_viewer := jsonb_build_object(
+            'isOwner', v_me = v_company_user_id,
+            'viewerSaved', EXISTS(
+                SELECT 1 FROM public.saved_jobs s
+                 WHERE s.user_id = v_me AND s.job_id = p_job_id
+            ),
+            'viewerApplied', EXISTS(
+                SELECT 1 FROM public.job_applications a
+                 WHERE a.applicant_id = v_me AND a.job_id = p_job_id
+            ),
+            'applicationStatus', (
+                SELECT a.status FROM public.job_applications a
+                 WHERE a.applicant_id = v_me AND a.job_id = p_job_id LIMIT 1
+            ),
+            'applicationId', (
+                SELECT a.id FROM public.job_applications a
+                 WHERE a.applicant_id = v_me AND a.job_id = p_job_id LIMIT 1
+            )
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'job', v_job,
+        'skills', v_skills,
+        'viewer', v_viewer
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_job_detail(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 5. RPC: apply_to_job
+--    Member-only. Job phải active + chưa hết hạn. UNIQUE (job_id, applicant_id)
+--    chặn nộp trùng. Insert history row vì applied là trạng thái khởi tạo.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.apply_to_job(
+    p_job_id BIGINT,
+    p_cover_letter TEXT,
+    p_resume_url TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_job_status TEXT;
+    v_job_expires TIMESTAMPTZ;
+    v_application_id BIGINT;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+    IF v_role <> 'member' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'memberOnly');
+    END IF;
+
+    SELECT status, expires_at INTO v_job_status, v_job_expires
+      FROM public.jobs
+     WHERE id = p_job_id AND deleted_at IS NULL LIMIT 1;
+
+    IF v_job_status IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobNotFound');
+    END IF;
+    IF v_job_status <> 'active' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobNotActive');
+    END IF;
+    IF v_job_expires IS NOT NULL AND v_job_expires <= NOW() THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobExpired');
+    END IF;
+
+    IF EXISTS(SELECT 1 FROM public.job_applications
+               WHERE job_id = p_job_id AND applicant_id = v_me) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'alreadyApplied');
+    END IF;
+
+    IF p_cover_letter IS NOT NULL AND char_length(p_cover_letter) > 5000 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'coverLetterTooLong');
+    END IF;
+
+    INSERT INTO public.job_applications(
+        job_id, applicant_id, resume_url, cover_letter, status
+    ) VALUES (
+        p_job_id, v_me,
+        NULLIF(btrim(COALESCE(p_resume_url, '')), ''),
+        NULLIF(btrim(COALESCE(p_cover_letter, '')), ''),
+        'applied'
+    )
+    RETURNING id INTO v_application_id;
+
+    INSERT INTO public.application_status_history(
+        application_id, old_status, new_status, changed_by, note
+    ) VALUES (
+        v_application_id, NULL, 'applied', v_me, NULL
+    );
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'applicationId', v_application_id,
+        'status', 'applied'
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.apply_to_job(BIGINT, TEXT, TEXT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 6. RPC: withdraw_application
+--    Member-only, chỉ chủ đơn được rút. Không cho rút khi đã 'hired' (kết quả
+--    cuối) — tránh xoá nhầm trên dashboard recruiter.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.withdraw_application(p_application_id BIGINT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_applicant BIGINT;
+    v_old_status TEXT;
+BEGIN
+    SELECT u.id INTO v_me FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    SELECT applicant_id, status INTO v_applicant, v_old_status
+      FROM public.job_applications WHERE id = p_application_id LIMIT 1;
+    IF v_applicant IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'applicationNotFound');
+    END IF;
+    IF v_applicant <> v_me THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notOwner');
+    END IF;
+    IF v_old_status IN ('withdrawn','hired','rejected') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'cannotWithdrawNow');
+    END IF;
+
+    UPDATE public.job_applications
+       SET status = 'withdrawn', updated_at = NOW()
+     WHERE id = p_application_id;
+
+    INSERT INTO public.application_status_history(
+        application_id, old_status, new_status, changed_by, note
+    ) VALUES (
+        p_application_id, v_old_status, 'withdrawn', v_me, NULL
+    );
+
+    RETURN jsonb_build_object('ok', TRUE, 'status', 'withdrawn');
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.withdraw_application(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 7. RPC: toggle_saved_job  (idempotent bookmark)
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.toggle_saved_job(p_job_id BIGINT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_existing INT;
+    v_saved BOOLEAN;
+BEGIN
+    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+    IF v_role <> 'member' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'memberOnly');
+    END IF;
+
+    IF NOT EXISTS(SELECT 1 FROM public.jobs
+                   WHERE id = p_job_id AND deleted_at IS NULL) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobNotFound');
+    END IF;
+
+    SELECT 1 INTO v_existing FROM public.saved_jobs
+     WHERE user_id = v_me AND job_id = p_job_id LIMIT 1;
+
+    IF v_existing IS NOT NULL THEN
+        DELETE FROM public.saved_jobs
+         WHERE user_id = v_me AND job_id = p_job_id;
+        v_saved := FALSE;
+    ELSE
+        INSERT INTO public.saved_jobs(user_id, job_id)
+        VALUES (v_me, p_job_id)
+        ON CONFLICT DO NOTHING;
+        v_saved := TRUE;
+    END IF;
+
+    RETURN jsonb_build_object('ok', TRUE, 'saved', v_saved);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.toggle_saved_job(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 8. RPC: get_my_saved_jobs
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_my_saved_jobs(
+    p_limit INT DEFAULT 20,
+    p_offset INT DEFAULT 0
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_items JSONB;
+    v_total INT;
+    v_lim INT;
+    v_off INT;
+BEGIN
+    SELECT u.id INTO v_me FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0);
+    END IF;
+
+    v_lim := GREATEST(LEAST(COALESCE(p_limit, 20), 100), 1);
+    v_off := GREATEST(COALESCE(p_offset, 0), 0);
+
+    WITH base AS (
+        SELECT s.created_at AS saved_at,
+               j.id, j.title, j.salary_min, j.salary_max, j.salary_visible,
+               j.status, j.created_at AS job_created_at, j.expires_at,
+               j.company_user_id,
+               COALESCE(cp.name, u.email) AS company_name,
+               cp.logo_url AS company_logo_url,
+               pv.name AS province_name,
+               dt.name AS district_name,
+               jt.name AS job_type_name,
+               wm.name AS work_mode_name
+          FROM public.saved_jobs s
+          JOIN public.jobs j ON j.id = s.job_id AND j.deleted_at IS NULL
+          JOIN public.users u ON u.id = j.company_user_id
+          LEFT JOIN public.company_profiles cp
+            ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
+          LEFT JOIN public.provinces pv ON pv.id = j.province_id
+          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+          LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+         WHERE s.user_id = v_me
+    ),
+    counted AS (SELECT COUNT(*)::INT AS total FROM base),
+    page AS (
+        SELECT * FROM base ORDER BY saved_at DESC LIMIT v_lim OFFSET v_off
+    )
+    SELECT
+        COALESCE(jsonb_agg(jsonb_build_object(
+            'id', p.id,
+            'title', p.title,
+            'salaryMin', p.salary_min,
+            'salaryMax', p.salary_max,
+            'salaryVisible', p.salary_visible,
+            'jobStatus', p.status,
+            'savedAt', p.saved_at,
+            'createdAt', p.job_created_at,
+            'expiresAt', p.expires_at,
+            'companyUserId', p.company_user_id,
+            'companyName', p.company_name,
+            'companyLogoUrl', p.company_logo_url,
+            'provinceName', p.province_name,
+            'districtName', p.district_name,
+            'jobTypeName', p.job_type_name,
+            'workModeName', p.work_mode_name
+        ) ORDER BY p.saved_at DESC), '[]'::jsonb),
+        (SELECT total FROM counted)
+      INTO v_items, v_total
+      FROM page p;
+
+    RETURN jsonb_build_object('items', v_items, 'total', COALESCE(v_total, 0));
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_my_saved_jobs(INT, INT) TO authenticated;
+
+-- =============================================================================
+-- END MIGRATION 20260527_018
+-- =============================================================================
+
+
+-- #############################################################################
+-- 21b. COMPANY PHONE — add column + get_company_public_overview (final, with phone)
+-- #############################################################################
+-- =============================================================================
+-- JOBLINK MIGRATION 20260528_021 — COMPANY PHONE + PUBLIC OVERVIEW PHONE
+-- =============================================================================
+-- Mục tiêu:
+--   • Thêm cột `phone` cho company_profiles (số điện thoại liên hệ doanh nghiệp).
+--   • Cập nhật RPC `get_company_public_overview` để trả thêm `phone` cho trang
+--     public + view hồ sơ công ty.
+-- Lưu ý: bảng follows, RLS follows, RPC toggle_follow_company đã tồn tại từ
+--   migration 016 — không đụng tới ở đây.
+-- =============================================================================
+
+ALTER TABLE public.company_profiles
+    ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NULL;
+
+-- -----------------------------------------------------------------------------
+-- Recreate get_company_public_overview để thêm trường `phone`.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_company_public_overview(
+    p_company_user_id BIGINT,
+    p_jobs_limit INT DEFAULT 8
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_company JSONB;
+    v_jobs JSONB;
+    v_follower_count INT;
+    v_jobs_count INT;
+    v_is_following BOOLEAN;
+    v_jobs_lim INT;
+BEGIN
+    v_jobs_lim := GREATEST(LEAST(COALESCE(p_jobs_limit, 8), 50), 1);
+
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    SELECT jsonb_build_object(
+        'userId', u.id,
+        'companyId', cp.id,
+        'name', cp.name,
+        'slug', cp.slug,
+        'logoUrl', cp.logo_url,
+        'about', cp.about,
+        'website', cp.website,
+        'phone', cp.phone,
+        'industry', cp.industry,
+        'size', cp.size,
+        'openToHire', cp.open_to_hire,
+        'verificationStatus', cp.verification_status,
+        'provinceName', pv.name,
+        'districtName', dt.name,
+        'businessAddress', cp.business_address,
+        'businessEmail', cp.business_email,
+        'representativeName', cp.representative_name,
+        'representativeTitle', cp.representative_title,
+        'createdAt', cp.created_at
+    )
+    INTO v_company
+    FROM public.users u
+    JOIN public.company_profiles cp
+      ON cp.user_id = u.id AND cp.deleted_at IS NULL
+    LEFT JOIN public.provinces pv ON pv.id = cp.province_id
+    LEFT JOIN public.districts dt ON dt.id = cp.district_id
+    WHERE u.id = p_company_user_id
+      AND u.deleted_at IS NULL
+      AND u.role = 'company'
+      AND u.status = 'active';
+
+    IF v_company IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT COUNT(*)::INT
+      INTO v_jobs_count
+      FROM public.jobs j
+     WHERE j.company_user_id = p_company_user_id
+       AND j.status = 'active'
+       AND j.deleted_at IS NULL
+       AND (j.expires_at IS NULL OR j.expires_at > NOW());
+
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'id', x.id,
+            'title', x.title,
+            'salaryMin', x.salary_min,
+            'salaryMax', x.salary_max,
+            'salaryVisible', x.salary_visible,
+            'provinceName', x.province_name,
+            'districtName', x.district_name,
+            'jobTypeName', x.job_type_name,
+            'workModeName', x.work_mode_name,
+            'createdAt', x.created_at
+        ) ORDER BY x.created_at DESC
+    ), '[]'::jsonb)
+    INTO v_jobs
+    FROM (
+        SELECT j.id, j.title, j.salary_min, j.salary_max, j.salary_visible,
+               pv.name AS province_name,
+               dt.name AS district_name,
+               jt.name AS job_type_name,
+               wm.name AS work_mode_name,
+               j.created_at
+          FROM public.jobs j
+          LEFT JOIN public.provinces pv ON pv.id = j.province_id
+          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+          LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+         WHERE j.company_user_id = p_company_user_id
+           AND j.status = 'active'
+           AND j.deleted_at IS NULL
+           AND (j.expires_at IS NULL OR j.expires_at > NOW())
+         ORDER BY j.created_at DESC
+         LIMIT v_jobs_lim
+    ) x;
+
+    SELECT COUNT(*)::INT
+      INTO v_follower_count
+      FROM public.follows f
+     WHERE f.followable_type = 'company'
+       AND f.followable_id = p_company_user_id;
+
+    IF v_me IS NULL OR v_me = p_company_user_id THEN
+        v_is_following := FALSE;
+    ELSE
+        SELECT EXISTS(
+            SELECT 1 FROM public.follows f
+             WHERE f.follower_id = v_me
+               AND f.followable_type = 'company'
+               AND f.followable_id = p_company_user_id
+        ) INTO v_is_following;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'company', v_company,
+        'jobsCount', v_jobs_count,
+        'followerCount', v_follower_count,
+        'isFollowing', COALESCE(v_is_following, FALSE),
+        'isOwner', COALESCE(v_me = p_company_user_id, FALSE),
+        'jobs', v_jobs
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_company_public_overview(BIGINT, INT) TO authenticated;
+
+-- =============================================================================
+-- END MIGRATION 20260528_021
+-- =============================================================================
+
+
+-- #############################################################################
+-- 22. ADMIN MODULE — get_admin_dashboard + v_admin_audit_log (M12)
+-- #############################################################################
+-- =============================================================================
+-- Admin module — single-roundtrip dashboard RPC
+-- Idempotent. Re-runnable safely.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.get_admin_dashboard()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+DECLARE
+    v_caller_role TEXT;
+    v_seven_days  TIMESTAMPTZ := NOW() - INTERVAL '7 days';
+    v_stats       JSONB;
+    v_role_dist   JSONB;
+    v_status_dist JSONB;
+    v_verif_dist  JSONB;
+    v_recent_acts JSONB;
+BEGIN
+    SELECT u.role INTO v_caller_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_caller_role IS DISTINCT FROM 'admin' THEN
+        RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT jsonb_build_object(
+        'totalUsers',         (SELECT COUNT(*)::INT FROM public.users WHERE deleted_at IS NULL),
+        'newUsers7d',         (SELECT COUNT(*)::INT FROM public.users WHERE deleted_at IS NULL AND created_at >= v_seven_days),
+        'totalCompanies',     (SELECT COUNT(*)::INT FROM public.users WHERE role = 'company' AND deleted_at IS NULL),
+        'pendingCompanies',   (SELECT COUNT(*)::INT FROM public.company_profiles WHERE verification_status IN ('pending','pending_update') AND deleted_at IS NULL),
+        'totalJobs',          (SELECT COUNT(*)::INT FROM public.jobs WHERE deleted_at IS NULL),
+        'activeJobs',         (SELECT COUNT(*)::INT FROM public.jobs WHERE status = 'active' AND deleted_at IS NULL),
+        'totalApplications',  (SELECT COUNT(*)::INT FROM public.job_applications),
+        'pendingReports',     (SELECT COUNT(*)::INT FROM public.reports WHERE status IN ('pending','in_review')),
+        'totalPosts',         (SELECT COUNT(*)::INT FROM public.posts WHERE deleted_at IS NULL AND status = 'active'),
+        'totalConnections',   (SELECT COUNT(*)::INT FROM public.connections WHERE status = 'accepted')
+    ) INTO v_stats;
+
+    SELECT COALESCE(jsonb_object_agg(role, cnt), '{}'::jsonb)
+      INTO v_role_dist
+      FROM (
+          SELECT role, COUNT(*)::INT AS cnt
+            FROM public.users
+           WHERE deleted_at IS NULL
+           GROUP BY role
+      ) r;
+
+    SELECT COALESCE(jsonb_object_agg(status, cnt), '{}'::jsonb)
+      INTO v_status_dist
+      FROM (
+          SELECT status, COUNT(*)::INT AS cnt
+            FROM public.users
+           WHERE deleted_at IS NULL
+           GROUP BY status
+      ) s;
+
+    SELECT COALESCE(jsonb_object_agg(verification_status, cnt), '{}'::jsonb)
+      INTO v_verif_dist
+      FROM (
+          SELECT verification_status, COUNT(*)::INT AS cnt
+            FROM public.company_profiles
+           WHERE deleted_at IS NULL
+           GROUP BY verification_status
+      ) v;
+
+    SELECT COALESCE(jsonb_agg(row_to_jsonb(x) ORDER BY x.created_at DESC), '[]'::jsonb)
+      INTO v_recent_acts
+      FROM (
+          SELECT a.id,
+                 a.action,
+                 a.entity_type AS "entityType",
+                 a.entity_id   AS "entityId",
+                 a.reason,
+                 a.created_at  AS "createdAt",
+                 jsonb_build_object(
+                     'id',          au.id,
+                     'email',       au.email,
+                     'displayName', COALESCE(mp.full_name, cp.name, au.email)
+                 ) AS actor
+            FROM public.audit_logs a
+            LEFT JOIN public.users au           ON au.id = a.actor_id
+            LEFT JOIN public.member_profiles mp ON mp.user_id = au.id AND mp.deleted_at IS NULL
+            LEFT JOIN public.company_profiles cp ON cp.user_id = au.id AND cp.deleted_at IS NULL
+           ORDER BY a.created_at DESC
+           LIMIT 10
+      ) x;
+
+    RETURN jsonb_build_object(
+        'stats',          v_stats,
+        'roleDist',       v_role_dist,
+        'statusDist',     v_status_dist,
+        'verificationDist', v_verif_dist,
+        'recentActions',  v_recent_acts
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_admin_dashboard() TO authenticated;
+
+-- Optional convenience view: most-recent audit log entries with actor name
+CREATE OR REPLACE VIEW public.v_admin_audit_log AS
+SELECT a.id,
+       a.actor_id,
+       au.email AS actor_email,
+       COALESCE(mp.full_name, cp.name, au.email) AS actor_name,
+       a.action,
+       a.entity_type,
+       a.entity_id,
+       a.old_data,
+       a.new_data,
+       a.reason,
+       a.ip_address,
+       a.user_agent,
+       a.created_at
+FROM public.audit_logs a
+LEFT JOIN public.users au            ON au.id = a.actor_id
+LEFT JOIN public.member_profiles mp  ON mp.user_id = au.id AND mp.deleted_at IS NULL
+LEFT JOIN public.company_profiles cp ON cp.user_id = au.id AND cp.deleted_at IS NULL;
+
+
+-- #############################################################################
+-- 23. STORAGE BUCKETS & RLS — post-media + uploads (avatar/cover/post)
+-- #############################################################################
+-- =============================================================================
+-- Storage bucket cho post media
+-- =============================================================================
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'post-media',
+  'post-media',
+  TRUE,
+  10485760,
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "authenticated users can upload"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'post-media');
+
+CREATE POLICY "everyone can view"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'post-media');
+
+CREATE POLICY "owner can delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'post-media' AND owner_id = auth.uid());
+-- =============================================================================
+-- Storage: tách sang bucket `uploads` với layout phân tầng theo thời gian / user
+-- Path mới:  uploads/post-media/<YYYY>/<MM>/<userId>/<uuid>.<ext>
+-- Giữ bucket `post-media` cũ để URL ảnh đã đăng vẫn truy cập được (read-only).
+-- =============================================================================
+
+-- 1. Bucket --------------------------------------------------------------------
+-- ON CONFLICT DO UPDATE: nếu bucket đã tồn tại (vd: bị tạo nháp qua dashboard
+-- với public=false), migration vẫn ép về đúng cấu hình. Đây là nguyên nhân
+-- phổ biến gây lỗi "khung ảnh trống" — bucket private khiến URL public 400.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'uploads',
+  'uploads',
+  TRUE,
+  10485760,
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE
+  SET public = EXCLUDED.public,
+      file_size_limit = EXCLUDED.file_size_limit,
+      allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- 2. RLS policies --------------------------------------------------------------
+-- Authenticated user chỉ được ghi vào folder của chính mình:
+--   post-media/<YYYY>/<MM>/<userId>/...
+-- => path_tokens[1]='post-media' AND path_tokens[4] = id user trong public.users
+--    (khớp với requireCurrentUser(): public.users.auth_id = auth.uid()).
+-- Lưu ý: server actions chạy bằng service_role nên bypass RLS — các policy
+-- này là lớp phòng thủ cho trường hợp client gọi storage trực tiếp.
+
+DROP POLICY IF EXISTS "uploads: authenticated insert into own folder" ON storage.objects;
+DROP POLICY IF EXISTS "uploads: public read" ON storage.objects;
+DROP POLICY IF EXISTS "uploads: owner delete" ON storage.objects;
+
+CREATE POLICY "uploads: authenticated insert into own folder"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'uploads'
+    AND path_tokens[1] = 'post-media'
+    AND path_tokens[4] = (
+      SELECT id::text FROM public.users WHERE auth_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "uploads: public read"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'uploads');
+
+CREATE POLICY "uploads: owner delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'uploads'
+    AND path_tokens[4] = (
+      SELECT id::text FROM public.users WHERE auth_id = auth.uid()
+    )
+  );
+
+-- 3. Index --------------------------------------------------------------------
+-- KHÔNG CREATE INDEX ON storage.objects ở đây: trên Supabase managed, role
+-- `postgres` không sở hữu storage.objects (thuộc `supabase_storage_admin`),
+-- nên CREATE INDEX sẽ lỗi "must be owner of table objects".
+--
+-- Truy vấn theo prefix path (`name LIKE 'post-media/2026/05/<userId>/%'`) vẫn
+-- nhanh nhờ các index mặc định Supabase đã tạo sẵn trên storage.objects:
+--   * UNIQUE (bucket_id, name)         -- bucketid_objname
+--   * (name text_pattern_ops)          -- name_prefix_search  -> prefix LIKE
+--   * GIN (path_tokens)                -- tìm theo từng tầng folder
+--
+-- Nếu sau này thực sự cần partial index riêng cho bucket `uploads`, tạo qua
+-- Supabase dashboard (chạy với quyền supabase_storage_admin) thay vì migration.
+-- =============================================================================
+-- JOBLINK MIGRATION 20260528_019 — Member avatar + cover upload
+-- =============================================================================
+-- Mục tiêu:
+--   • Thêm cột cover_url cho member_profiles (ảnh bìa, kiểu LinkedIn).
+--   • Cho phép authenticated upload vào hai prefix mới trên bucket `uploads`:
+--       member-avatar/<YYYY>/<MM>/<userId>/<uuid>.<ext>
+--       member-cover/<YYYY>/<MM>/<userId>/<uuid>.<ext>
+--     (cùng cấu trúc với post-media — gom theo tháng để dễ dọn rác sau này.)
+--   • Đồng bộ với migration 20260523_010: policy cũ chỉ cho path_tokens[1]='post-media',
+--     ta phải DROP & CREATE lại với điều kiện ANY trong các prefix hợp lệ.
+-- =============================================================================
+
+-- 1. Schema -------------------------------------------------------------------
+ALTER TABLE public.member_profiles
+  ADD COLUMN IF NOT EXISTS cover_url TEXT NULL;
+
+COMMENT ON COLUMN public.member_profiles.cover_url IS
+  'URL ảnh bìa hồ sơ thành viên (lưu trong storage bucket uploads, prefix member-cover/).';
+
+-- 2. Storage RLS --------------------------------------------------------------
+-- Drop policies cũ (chỉ whitelist post-media) rồi tạo lại với danh sách prefix.
+DROP POLICY IF EXISTS "uploads: authenticated insert into own folder" ON storage.objects;
+DROP POLICY IF EXISTS "uploads: owner delete" ON storage.objects;
+
+CREATE POLICY "uploads: authenticated insert into own folder"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'uploads'
+    AND path_tokens[1] IN ('post-media', 'member-avatar', 'member-cover')
+    AND path_tokens[4] = (
+      SELECT id::text FROM public.users WHERE auth_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "uploads: owner delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'uploads'
+    AND path_tokens[1] IN ('post-media', 'member-avatar', 'member-cover')
+    AND path_tokens[4] = (
+      SELECT id::text FROM public.users WHERE auth_id = auth.uid()
+    )
+  );
+
+-- =============================================================================
+-- 24. SEED DATA — dữ liệu khởi tạo tối thiểu
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
