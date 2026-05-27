@@ -6,8 +6,9 @@ import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Briefcase, Loader2, Search } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { slideLeft, staggerSm } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
@@ -48,8 +49,8 @@ export function JobsTab({ initialData }: Props) {
   const items = data?.items ?? []
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-2">
+    <Card className="border-border/40 rounded-2xl overflow-hidden p-0 gap-0">
+      <div className="flex flex-wrap items-center gap-2 p-4 pb-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -66,7 +67,7 @@ export function JobsTab({ initialData }: Props) {
               type="button"
               variant={status === s ? "default" : "outline"}
               size="sm"
-              className="rounded-full h-8 text-xs"
+              className="rounded-full text-xs"
               onClick={() => setStatus(s)}
             >
               {t(`jobsFilter.${s}`)}
@@ -78,7 +79,7 @@ export function JobsTab({ initialData }: Props) {
         ) : null}
       </div>
 
-      <Card className="bg-card border-border/30 rounded-xl overflow-hidden">
+      <CardContent className="p-0">
         {items.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             {t("emptyJobs")}
@@ -94,20 +95,20 @@ export function JobsTab({ initialData }: Props) {
               <motion.div
                 key={job.id}
                 variants={slideLeft}
-                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+                className="flex items-center justify-between px-4 py-3 gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-5 h-5 text-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Briefcase className="w-4.5 h-4.5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/jobs/${job.id}`}
-                      className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate block"
+                      className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block leading-tight"
                     >
                       {job.title}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       {t("jobMeta", {
                         applicants: job.applicantCount,
                         views: job.viewCount,
@@ -117,16 +118,16 @@ export function JobsTab({ initialData }: Props) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${JOB_STATUS_TONE[job.status]}`}
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold border-0 ${JOB_STATUS_TONE[job.status]}`}
                   >
                     {t(`jobStatus.${job.status}`)}
-                  </span>
+                  </Badge>
                   {job.status === "draft" || job.status === "closed" ? (
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="outline"
-                      className="h-7 text-[11px] rounded-lg"
                       disabled={updateStatus.isPending}
                       onClick={() =>
                         updateStatus.mutate({
@@ -139,9 +140,8 @@ export function JobsTab({ initialData }: Props) {
                     </Button>
                   ) : job.status === "active" ? (
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="outline"
-                      className="h-7 text-[11px] rounded-lg"
                       disabled={updateStatus.isPending}
                       onClick={() =>
                         updateStatus.mutate({
@@ -158,8 +158,7 @@ export function JobsTab({ initialData }: Props) {
             ))}
           </motion.div>
         )}
-      </Card>
-    </>
+      </CardContent>
+    </Card>
   )
 }
-

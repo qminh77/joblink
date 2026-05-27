@@ -75,18 +75,18 @@ export function DashboardClient({
       animate="show"
       className="space-y-6"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
-          <h1 className="font-headline font-bold text-2xl text-foreground">
+          <h1 className="font-headline font-bold text-xl text-foreground">
             {t("heading")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {companyName} • {t("subheading")}
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {companyName} &bull; {t("subheading")}
           </p>
         </div>
         <Link href="/company/post-job">
           <motion.span {...btnTap}>
-            <Button className="rounded-lg">
+            <Button size="sm">
               <Plus className="w-4 h-4 mr-1.5" />
               {t("postJob")}
             </Button>
@@ -98,27 +98,27 @@ export function DashboardClient({
         variants={staggerSm}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-1"
       >
         {statCards.map((s) => (
           <motion.div key={s.label} variants={fadeUp}>
-            <Card className="bg-card border-border/30 rounded-xl p-4">
+            <Card className="bg-card border-border/40 rounded-2xl p-4 hover:bg-muted/30 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">
+                  <p className="text-[11px] text-muted-foreground font-medium">
                     {s.label}
                   </p>
-                  <h3 className="font-headline font-bold text-2xl text-foreground mt-1">
+                  <h3 className="font-headline font-bold text-xl text-foreground mt-1 tabular-nums">
                     {s.value}
                   </h3>
                   {"caption" in s && s.caption ? (
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-[10px] text-muted-foreground mt-0.5 block">
                       {s.caption}
                     </span>
                   ) : null}
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <s.icon className="w-5 h-5 text-primary" />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <s.icon className="w-4 h-4 text-primary" />
                 </div>
               </div>
             </Card>
@@ -127,33 +127,33 @@ export function DashboardClient({
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto max-w-full">
-          <TabsTrigger value="overview" className="rounded-lg text-sm px-4">
+        <TabsList className="bg-muted/60 p-1 rounded-2xl overflow-x-auto max-w-full">
+          <TabsTrigger value="overview" className="rounded-lg text-xs sm:text-sm px-3 sm:px-4">
             {t("tabOverview")}
           </TabsTrigger>
-          <TabsTrigger value="jobs" className="rounded-lg text-sm px-4">
+          <TabsTrigger value="jobs" className="rounded-lg text-xs sm:text-sm px-3 sm:px-4">
             {t("tabJobs")}
           </TabsTrigger>
-          <TabsTrigger value="applicants" className="rounded-lg text-sm px-4">
+          <TabsTrigger value="applicants" className="rounded-lg text-xs sm:text-sm px-3 sm:px-4">
             {t("tabApplicants")}
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="rounded-lg text-sm px-4">
+          <TabsTrigger value="pipeline" className="rounded-lg text-xs sm:text-sm px-3 sm:px-4">
             {t("tabPipeline")}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-4">
+        <TabsContent value="overview" className="mt-4">
           <OverviewTab
             recentJobs={initialOverview.recentJobs}
             recentApplicants={initialOverview.recentApplicants}
           />
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-4 space-y-4">
+        <TabsContent value="jobs" className="mt-4">
           <JobsTab initialData={initialJobs} />
         </TabsContent>
 
-        <TabsContent value="applicants" className="mt-4 space-y-4">
+        <TabsContent value="applicants" className="mt-4">
           <ApplicantsTab initialData={initialApplicants} />
         </TabsContent>
 

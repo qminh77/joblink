@@ -62,8 +62,7 @@ export function CompanyFollowButton({
     <div className="flex flex-col items-end gap-1">
       <Button
         type="button"
-        variant={isFollowing ? "secondary" : "default"}
-        className="rounded-lg"
+        variant="ghost"
         onClick={handleClick}
         disabled={disabled || toggle.isPending}
       >

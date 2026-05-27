@@ -40,20 +40,20 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40 sticky top-0 bg-card">
-              <h2 className="font-headline font-bold text-lg">{t("title")}</h2>
+              <h2 className="font-headline font-bold text-base">{t("title")}</h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"
                 aria-label={t("close")}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-5">
               <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12">
+                <Avatar className="w-11 h-11 border border-border/40">
                   {applicant.avatarUrl ? (
                     <AvatarImage src={applicant.avatarUrl} alt={applicant.displayName} />
                   ) : null}
@@ -74,7 +74,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border/40 p-3 text-sm">
+              <div className="rounded-lg border border-border/40 p-3 bg-muted/30 text-sm">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("appliedForLabel")}
                 </p>
@@ -95,7 +95,6 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                     asChild
                     variant="outline"
                     size="sm"
-                    className="rounded-lg"
                   >
                     <a
                       href={applicant.resumeUrl}
@@ -118,7 +117,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   <UserSquare className="w-3.5 h-3.5" /> {t("coverLetterLabel")}
                 </p>
                 {applicant.coverLetter ? (
-                  <p className="text-sm text-foreground/90 whitespace-pre-line rounded-xl bg-muted/40 p-3">
+                  <p className="text-sm text-foreground/90 whitespace-pre-line rounded-lg bg-muted/40 p-3">
                     {applicant.coverLetter}
                   </p>
                 ) : (

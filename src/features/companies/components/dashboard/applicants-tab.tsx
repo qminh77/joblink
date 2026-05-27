@@ -7,8 +7,9 @@ import { useTranslations } from "next-intl"
 import { CalendarClock, FileText, Loader2, Search } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -76,140 +77,141 @@ export function ApplicantsTab({ initialData }: Props) {
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            className="pl-9 h-9 rounded-full bg-muted border-none text-sm"
-            placeholder={t("searchApplicantsPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          {STATUS_OPTIONS.map((s) => (
-            <Button
-              key={s}
-              type="button"
-              variant={status === s ? "default" : "outline"}
-              size="sm"
-              className="rounded-full h-8 text-xs"
-              onClick={() => setStatus(s)}
-            >
-              {s === "all"
-                ? t("appsFilter.all")
-                : t(`appStatus.${s}`)}
-            </Button>
-          ))}
-        </div>
-        {isFetching ? (
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        ) : null}
-      </div>
-
-      <Card className="bg-card border-border/30 rounded-xl overflow-hidden">
-        {items.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            {t("emptyApplicants")}
+      <Card className="border-border/40 rounded-2xl overflow-hidden p-0 gap-0">
+        <div className="flex flex-wrap items-center gap-2 p-4 pb-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              className="pl-9 h-9 rounded-full bg-muted border-none text-sm"
+              placeholder={t("searchApplicantsPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        ) : (
-          <motion.div
-            variants={staggerSm}
-            initial="hidden"
-            animate="show"
-            className="divide-y divide-border/30"
-          >
-            {items.map((app) => (
-              <motion.div
-                key={app.applicationId}
-                variants={slideLeft}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+          <div className="flex items-center gap-1 flex-wrap">
+            {STATUS_OPTIONS.map((s) => (
+              <Button
+                key={s}
+                type="button"
+                variant={status === s ? "default" : "outline"}
+                size="sm"
+                className="rounded-full text-xs"
+                onClick={() => setStatus(s)}
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Avatar className="w-10 h-10 shrink-0">
-                    {app.avatarUrl ? (
-                      <AvatarImage src={app.avatarUrl} alt={app.displayName} />
-                    ) : null}
-                    <AvatarFallback>
-                      {getInitials(app.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/profile/${app.applicantId}`}
-                      className="font-semibold text-sm text-foreground hover:text-primary truncate block"
-                    >
-                      {app.displayName}
-                    </Link>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {app.headline ? `${app.headline} • ` : ""}
+                {s === "all"
+                  ? t("appsFilter.all")
+                  : t(`appStatus.${s}`)}
+              </Button>
+            ))}
+          </div>
+          {isFetching ? (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          ) : null}
+        </div>
+
+        <CardContent className="p-0">
+          {items.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              {t("emptyApplicants")}
+            </div>
+          ) : (
+            <motion.div
+              variants={staggerSm}
+              initial="hidden"
+              animate="show"
+              className="divide-y divide-border/30"
+            >
+              {items.map((app) => (
+                <motion.div
+                  key={app.applicationId}
+                  variants={slideLeft}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Avatar className="w-9 h-9 shrink-0">
+                      {app.avatarUrl ? (
+                        <AvatarImage src={app.avatarUrl} alt={app.displayName} />
+                      ) : null}
+                      <AvatarFallback className="text-xs">
+                        {getInitials(app.displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
                       <Link
-                        href={`/jobs/${app.jobId}`}
-                        className="hover:text-primary"
+                        href={`/profile/${app.applicantId}`}
+                        className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block leading-tight"
                       >
-                        {app.jobTitle}
+                        {app.displayName}
                       </Link>
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {t("appliedAt", { time: formatRel(app.appliedAt) })}
-                    </p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {app.headline ? `${app.headline} • ` : ""}
+                        <Link
+                          href={`/jobs/${app.jobId}`}
+                          className="hover:text-primary"
+                        >
+                          {app.jobTitle}
+                        </Link>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("appliedAt", { time: formatRel(app.appliedAt) })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap sm:justify-end sm:shrink-0 pl-12 sm:pl-0">
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${APP_STATUS_TONE[app.status]}`}
-                  >
-                    {t(`appStatus.${app.status}`)}
-                  </span>
-                  <Select
-                    value={app.status}
-                    onValueChange={(value) => {
-                      if (value === app.status) return
-                      update.mutate({
-                        applicationId: app.applicationId,
-                        newStatus: value,
-                      })
-                    }}
-                    disabled={
-                      update.isPending || app.status === "withdrawn"
-                    }
-                  >
-                    <SelectTrigger className="h-8 w-32 text-xs rounded-lg">
-                      <SelectValue placeholder={t("changeStatus")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {APP_STATUS_TRANSITIONS.map((s) => (
-                        <SelectItem key={s} value={s} className="text-xs">
-                          {t(`appStatus.${s}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-lg text-xs"
-                    onClick={() => setDetailApp(app)}
-                  >
-                    <FileText className="w-3 h-3 mr-1" />
-                    {t("viewDetail")}
-                  </Button>
-                  {!TERMINAL_STATUSES.has(app.status) ? (
+                  <div className="flex items-center gap-2 flex-wrap sm:justify-end sm:shrink-0 pl-12 sm:pl-0">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-semibold border-0 ${APP_STATUS_TONE[app.status]}`}
+                    >
+                      {t(`appStatus.${app.status}`)}
+                    </Badge>
+                    <Select
+                      value={app.status}
+                      onValueChange={(value) => {
+                        if (value === app.status) return
+                        update.mutate({
+                          applicationId: app.applicationId,
+                          newStatus: value,
+                        })
+                      }}
+                      disabled={
+                        update.isPending || app.status === "withdrawn"
+                      }
+                    >
+                      <SelectTrigger className="h-7 w-28 text-xs rounded-lg">
+                        <SelectValue placeholder={t("changeStatus")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {APP_STATUS_TRANSITIONS.map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">
+                            {t(`appStatus.${s}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="h-8 rounded-lg text-xs"
-                      onClick={() => setInterviewApp(app)}
+                      size="xs"
+                      onClick={() => setDetailApp(app)}
                     >
-                      <CalendarClock className="w-3 h-3 mr-1" />
-                      {t("scheduleInterview")}
+                      <FileText className="w-3 h-3 mr-1" />
+                      {t("viewDetail")}
                     </Button>
-                  ) : null}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+                    {!TERMINAL_STATUSES.has(app.status) ? (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => setInterviewApp(app)}
+                      >
+                        <CalendarClock className="w-3 h-3 mr-1" />
+                        {t("scheduleInterview")}
+                      </Button>
+                    ) : null}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </CardContent>
       </Card>
 
       <ApplicantDetailDialog

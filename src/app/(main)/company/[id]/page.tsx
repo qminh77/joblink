@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation"
 
 import { CompanyPublicPage } from "@/features/companies/components/company-public-page"
+import { loadCompanyPublicOverview } from "@/features/companies/api/queries"
+import { loadUserPosts } from "@/features/posts/api/queries"
 
 export const dynamic = "force-dynamic"
 
@@ -13,5 +15,12 @@ export default async function CompanyDetailPage({ params }: PageProps) {
   const companyUserId = Number(id)
   if (!Number.isInteger(companyUserId) || companyUserId <= 0) notFound()
 
-  return <CompanyPublicPage companyUserId={companyUserId} />
+  const [overview, postsPage] = await Promise.all([
+    loadCompanyPublicOverview(companyUserId),
+    loadUserPosts(companyUserId),
+  ])
+
+  if (!overview) notFound()
+
+  return <CompanyPublicPage overview={overview} postsPage={postsPage} />
 }

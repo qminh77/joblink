@@ -89,8 +89,8 @@ export function InterviewScheduleDialog({
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40">
               <div className="min-w-0">
-                <h2 className="font-headline font-bold text-lg truncate flex items-center gap-2">
-                  <CalendarClock className="w-5 h-5 text-primary" />
+                <h2 className="font-headline font-bold text-base truncate flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-primary" />
                   {t("title")}
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
@@ -100,10 +100,10 @@ export function InterviewScheduleDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"
                 aria-label={t("close")}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -172,18 +172,20 @@ export function InterviewScheduleDialog({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onClose}
                   disabled={schedule.isPending}
+                  className="rounded-lg"
                 >
                   {t("cancel")}
                 </Button>
                 <Button
                   type="submit"
                   disabled={schedule.isPending || !scheduledAt}
+                  className="rounded-lg"
                 >
                   {schedule.isPending ? (
                     <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />

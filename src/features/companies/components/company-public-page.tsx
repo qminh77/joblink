@@ -1,11 +1,13 @@
+"use client"
+
 import Link from "next/link"
-import { notFound } from "next/navigation"
-import { getTranslations } from "next-intl/server"
+import { motion } from "framer-motion"
 import {
   BadgeCheck,
   Briefcase,
   Building2,
   Globe,
+  Info,
   LayoutDashboard,
   Mail,
   MapPin,
@@ -19,14 +21,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { SectionCard } from "@/features/profile/components/section-card"
+import { fadeUp, pageEntrance, staggerMd } from "@/lib/animations"
+import { formatRelativeTime } from "@/lib/utils/format"
+import { useTranslations } from "next-intl"
 
-import { loadCompanyPublicOverview } from "../api/queries"
-import type { CompanyActiveJobPreview } from "../types"
+import type { CompanyPublicOverview, CompanyActiveJobPreview } from "../types"
 
 import { CompanyFollowButton } from "./company-follow-button"
+import { ProfilePostsSection } from "@/features/profile/components/profile-posts-section"
+import type { UserPostsPage } from "@/features/posts/types"
 
 type Props = {
-  companyUserId: number
+  overview: CompanyPublicOverview
+  postsPage: UserPostsPage
 }
 
 const VERIFICATION_TONE: Record<string, string> = {
@@ -50,11 +58,8 @@ function formatSalary(job: CompanyActiveJobPreview): string | null {
   return numberFormatter.format(min ?? max ?? 0)
 }
 
-export async function CompanyPublicPage({ companyUserId }: Props) {
-  const overview = await loadCompanyPublicOverview(companyUserId)
-  if (!overview) notFound()
-
-  const t = await getTranslations("companies.public")
+export function CompanyPublicPage({ overview, postsPage }: Props) {
+  const t = useTranslations("companies.public")
   const { company, jobsCount, followerCount, isFollowing, isOwner, jobs } =
     overview
 
@@ -65,269 +70,306 @@ export async function CompanyPublicPage({ companyUserId }: Props) {
     .filter(Boolean)
     .join(", ")
 
+  const hasContact =
+    !!company.businessEmail ||
+    !!company.phone ||
+    !!company.businessAddress ||
+    !!company.representativeName
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Card className="bg-card border-border/30 rounded-xl overflow-hidden">
-        <div className="h-40 bg-gradient-to-r from-primary/20 via-primary/5 to-purple-500/20" />
-        <div className="px-6 pb-6 -mt-12 relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 mb-4">
-            <Avatar className="w-24 h-24 rounded-2xl border-4 border-card shadow-lg">
-              {company.logoUrl ? (
-                <AvatarImage src={company.logoUrl} alt={company.name} />
-              ) : null}
-              <AvatarFallback className="rounded-2xl bg-primary/20 text-2xl font-bold">
-                <Building2 className="w-10 h-10 text-primary" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 pt-2 sm:pt-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">
-                  {company.name}
-                </h1>
-                {verificationLabel ? (
-                  <Badge
-                    variant="secondary"
-                    className={`text-xs gap-1 ${
-                      VERIFICATION_TONE[company.verificationStatus] ?? ""
-                    }`}
-                  >
-                    <BadgeCheck className="w-3 h-3" />
-                    {verificationLabel}
-                  </Badge>
-                ) : null}
-                {company.openToHire ? (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-xs"
-                  >
-                    {t("openToHire")}
-                  </Badge>
-                ) : null}
-              </div>
-              {company.industry ? (
-                <p className="text-muted-foreground text-sm mt-1">
-                  {company.industry}
-                </p>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                {location ? (
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" /> {location}
-                  </span>
-                ) : null}
-                {company.website ? (
-                  <a
-                    href={company.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-primary hover:opacity-80 transition-opacity"
-                  >
-                    <Globe className="w-3.5 h-3.5" /> {t("website")}
-                  </a>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-              {isOwner ? (
-                <>
-                  <Button className="rounded-lg" asChild>
-                    <Link href="/company/dashboard">
-                      <LayoutDashboard className="w-4 h-4 mr-1.5" />
-                      {t("dashboard")}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="rounded-lg" asChild>
-                    <Link href="/settings">
-                      <Pencil className="w-4 h-4 mr-1.5" />
-                      {t("editProfile")}
-                    </Link>
-                  </Button>
-                </>
-              ) : (
-                <CompanyFollowButton
-                  companyUserId={company.userId}
-                  initialIsFollowing={isFollowing}
-                  initialFollowerCount={followerCount}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 py-4 border-t border-border/30 text-center">
-            <div>
-              <p className="text-xl font-bold text-foreground">
-                {numberFormatter.format(jobsCount)}
-              </p>
-              <p className="text-xs text-muted-foreground">{t("statJobs")}</p>
-            </div>
-            <div className="border-x border-border/30">
-              <p className="text-xl font-bold text-foreground">
-                {numberFormatter.format(followerCount)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("statFollowers")}
-              </p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">
-                {company.size ?? "—"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("statEmployees")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="bg-card border-border/30 rounded-xl p-6">
-        <h2 className="text-lg font-bold text-foreground mb-3">{t("about")}</h2>
-        {company.about ? (
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-            {company.about}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground italic">
-            {t("aboutEmpty")}
-          </p>
-        )}
-      </Card>
-
-      <Card className="bg-card border-border/30 rounded-xl p-6">
-        <h2 className="text-lg font-bold text-foreground mb-4">
-          {t("contactHeading")}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          {company.businessEmail ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="w-4 h-4 shrink-0" />
-              <a
-                href={`mailto:${company.businessEmail}`}
-                className="text-foreground hover:text-primary transition-colors break-all"
-              >
-                {company.businessEmail}
-              </a>
-            </div>
-          ) : null}
-          {company.phone ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Phone className="w-4 h-4 shrink-0" />
-              <a
-                href={`tel:${company.phone}`}
-                className="text-foreground hover:text-primary transition-colors"
-              >
-                {company.phone}
-              </a>
-            </div>
-          ) : null}
-          {company.businessAddress ? (
-            <div className="flex items-start gap-2 text-muted-foreground sm:col-span-2">
-              <Building2 className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="text-foreground/90">
-                {company.businessAddress}
-              </span>
-            </div>
-          ) : null}
-          {company.representativeName ? (
-            <div className="flex items-start gap-2 text-muted-foreground sm:col-span-2">
-              <UserSquare className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="text-foreground/90">
-                {t("representativeLabel")}: {company.representativeName}
-                {company.representativeTitle
-                  ? ` · ${company.representativeTitle}`
-                  : ""}
-              </span>
-            </div>
-          ) : null}
-          {!company.businessEmail &&
-          !company.phone &&
-          !company.businessAddress &&
-          !company.representativeName ? (
-            <p className="text-sm text-muted-foreground italic sm:col-span-2">
-              {t("contactEmpty")}
-            </p>
-          ) : null}
-        </div>
-      </Card>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">
-            {t("activeJobsHeading", { count: jobsCount })}
-          </h2>
-          {jobsCount > jobs.length ? (
-            <Link
-              href={`/jobs?company=${company.userId}`}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              {t("viewAllJobs")}
-            </Link>
-          ) : null}
-        </div>
-
-        {jobs.length === 0 ? (
-          <Card className="bg-card border-border/30 rounded-xl p-6 text-center">
-            <Briefcase className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">{t("noActiveJobs")}</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {jobs.map((job) => {
-              const jobLocation = [job.districtName, job.provinceName]
-                .filter(Boolean)
-                .join(", ")
-              const salary = formatSalary(job)
-              return (
-                <Card
-                  key={job.id}
-                  className="bg-card border-border/30 rounded-xl p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/jobs/${job.id}`}
-                        className="font-semibold text-foreground hover:text-primary transition-colors"
+    <motion.div
+      variants={pageEntrance}
+      initial="hidden"
+      animate="show"
+      className="max-w-5xl mx-auto space-y-5"
+    >
+      <motion.div variants={fadeUp}>
+        <Card className="overflow-hidden rounded-2xl border-border/40 p-0 gap-0">
+          <div className="h-36 md:h-48 bg-gradient-to-r from-primary/20 via-primary/5 to-purple-500/20" />
+          <div className="px-6 pb-4">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+              <div className="flex items-end gap-5">
+                <Avatar className="w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-card -mt-14 md:-mt-16">
+                  {company.logoUrl ? (
+                    <AvatarImage src={company.logoUrl} alt={company.name} />
+                  ) : null}
+                  <AvatarFallback className="rounded-2xl bg-primary/20 text-2xl font-bold">
+                    <Building2 className="w-10 h-10 text-primary" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1 min-w-0 pb-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="font-headline font-bold text-xl sm:text-2xl text-foreground break-words">
+                      {company.name}
+                    </h1>
+                    {verificationLabel ? (
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs gap-1 ${
+                          VERIFICATION_TONE[company.verificationStatus] ?? ""
+                        }`}
                       >
-                        {job.title}
-                      </Link>
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        {jobLocation ? (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" /> {jobLocation}
-                          </span>
-                        ) : null}
-                        {job.jobTypeName ? (
-                          <span className="flex items-center gap-1">
-                            <Briefcase className="w-3 h-3" /> {job.jobTypeName}
-                          </span>
-                        ) : null}
-                        {job.workModeName ? (
-                          <span className="flex items-center gap-1">
-                            <Users className="w-3 h-3" /> {job.workModeName}
-                          </span>
-                        ) : null}
-                        {salary ? (
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                            {salary}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg shrink-0 text-xs"
-                      asChild
-                    >
-                      <Link href={`/jobs/${job.id}`}>{t("jobDetails")}</Link>
-                    </Button>
+                        <BadgeCheck className="w-3 h-3" />
+                        {verificationLabel}
+                      </Badge>
+                    ) : null}
+                    {company.openToHire ? (
+                      <Badge
+                        variant="secondary"
+                        className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-xs"
+                      >
+                        {t("openToHire")}
+                      </Badge>
+                    ) : null}
                   </div>
-                </Card>
-              )
-            })}
+                  {company.industry ? (
+                    <p className="text-sm text-muted-foreground">
+                      {company.industry}
+                    </p>
+                  ) : null}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {location ? (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5" /> {location}
+                      </span>
+                    ) : null}
+                    {company.website ? (
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-primary hover:opacity-80 transition-opacity"
+                      >
+                        <Globe className="w-3.5 h-3.5" /> {t("website")}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                {isOwner ? (
+                  <>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/company/dashboard">
+                        <LayoutDashboard className="w-4 h-4 mr-1.5" />
+                        {t("dashboard")}
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/settings">
+                        <Pencil className="w-4 h-4 mr-1.5" />
+                        {t("editProfile")}
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <CompanyFollowButton
+                    companyUserId={company.userId}
+                    initialIsFollowing={isFollowing}
+                    initialFollowerCount={followerCount}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5" />
+                {numberFormatter.format(jobsCount)} {t("statJobs")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {numberFormatter.format(followerCount)} {t("statFollowers")}
+              </span>
+              {company.size ? (
+                <span className="flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5" />
+                  {company.size} {t("statEmployees")}
+                </span>
+              ) : null}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        variants={staggerMd}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-5"
+      >
+        <div className="lg:col-span-2 space-y-5">
+          <motion.div variants={fadeUp}>
+            <ProfilePostsSection
+              targetUserId={company.userId}
+              isOwner={isOwner}
+              initialPage={postsPage}
+            />
+          </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-headline font-bold text-lg text-foreground">
+                {t("activeJobsHeading", { count: jobsCount })}
+              </h2>
+              {jobsCount > jobs.length ? (
+                <Link
+                  href={`/jobs?company=${company.userId}`}
+                  className="text-xs font-semibold text-primary hover:underline"
+                >
+                  {t("viewAllJobs")}
+                </Link>
+              ) : null}
+            </div>
+          </motion.div>
+
+          <motion.div variants={fadeUp}>
+            {jobs.length === 0 ? (
+              <Card className="rounded-2xl border-border/40 p-8 text-center">
+                <Briefcase className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  {t("noActiveJobs")}
+                </p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {jobs.map((job) => {
+                  const jobLocation = [job.districtName, job.provinceName]
+                    .filter(Boolean)
+                    .join(", ")
+                  const salary = formatSalary(job)
+                  return (
+                    <Card
+                      key={job.id}
+                      className="rounded-2xl border-border/40 p-5 flex flex-col justify-between h-full group"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <Link
+                            href={`/jobs/${job.id}`}
+                            className="font-headline font-bold text-base text-foreground group-hover:text-primary transition-colors"
+                          >
+                            {job.title}
+                          </Link>
+                        </div>
+                        <div className="space-y-1.5 mb-4">
+                          {jobLocation ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5 shrink-0" />
+                              <span>{jobLocation}</span>
+                            </div>
+                          ) : null}
+                          {job.jobTypeName ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                              <span>{job.jobTypeName}</span>
+                            </div>
+                          ) : null}
+                          {job.workModeName ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Users className="w-3.5 h-3.5 shrink-0" />
+                              <span>{job.workModeName}</span>
+                            </div>
+                          ) : null}
+                          {salary ? (
+                            <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                              <span>{salary}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                        <span className="text-xs text-muted-foreground">
+                          {formatRelativeTime(job.createdAt)}
+                        </span>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-primary font-semibold h-auto p-0"
+                          asChild
+                        >
+                          <Link href={`/jobs/${job.id}`}>
+                            {t("jobDetails")}
+                          </Link>
+                        </Button>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        <div className="space-y-5">
+          {company.about ? (
+            <motion.div variants={fadeUp}>
+              <SectionCard
+                title={t("about")}
+                icon={<Info className="w-4 h-4 text-primary" />}
+              >
+                <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                  {company.about}
+                </p>
+              </SectionCard>
+            </motion.div>
+          ) : null}
+
+          {hasContact ? (
+            <motion.div variants={fadeUp}>
+              <SectionCard
+                title={t("contactHeading")}
+                icon={<Mail className="w-4 h-4 text-primary" />}
+              >
+                <div className="space-y-3 text-sm">
+                  {company.businessEmail ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="w-4 h-4 shrink-0" />
+                      <a
+                        href={`mailto:${company.businessEmail}`}
+                        className="text-foreground hover:text-primary transition-colors break-all"
+                      >
+                        {company.businessEmail}
+                      </a>
+                    </div>
+                  ) : null}
+                  {company.phone ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="w-4 h-4 shrink-0" />
+                      <a
+                        href={`tel:${company.phone}`}
+                        className="text-foreground hover:text-primary transition-colors"
+                      >
+                        {company.phone}
+                      </a>
+                    </div>
+                  ) : null}
+                  {company.businessAddress ? (
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <Building2 className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span className="text-foreground/90">
+                        {company.businessAddress}
+                      </span>
+                    </div>
+                  ) : null}
+                  {company.representativeName ? (
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <UserSquare className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span className="text-foreground/90">
+                        {t("representativeLabel")}: {company.representativeName}
+                        {company.representativeTitle
+                          ? ` · ${company.representativeTitle}`
+                          : ""}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              </SectionCard>
+            </motion.div>
+          ) : null}
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
