@@ -26,6 +26,7 @@ import {
   updatePostAction,
   voteAction,
 } from "../api/actions"
+import { buildPollMedia } from "../lib/poll"
 import type {
   FeedComment,
   FeedPage,
@@ -348,13 +349,29 @@ export function useVote() {
 
       applyToAllPostCaches(qc, postId, (p) => {
         if (p.postType !== "poll" || !p.pollOptions) return p
+
+        const updatedPollOptions = p.pollOptions.map((o) => ({
+          ...o,
+          voteCount: o.id === optionId ? o.voteCount + 1 : o.voteCount,
+          viewerVoted: o.id === optionId,
+        }))
+
+        const updatedTotalVotes = updatedPollOptions.reduce(
+          (sum, o) => sum + o.voteCount,
+          0,
+        )
+
         return {
           ...p,
-          pollOptions: p.pollOptions.map((o) => ({
-            ...o,
-            voteCount: o.id === optionId ? o.voteCount + 1 : o.voteCount,
-            viewerVoted: o.id === optionId,
-          })),
+          pollOptions: updatedPollOptions,
+          media: buildPollMedia(
+            updatedPollOptions.map(({ id, optionText, voteCount }) => ({
+              id,
+              optionText,
+              voteCount,
+            })),
+            updatedTotalVotes,
+          ),
         }
       })
 
@@ -373,6 +390,10 @@ export function useVote() {
     },
     onSuccess: () => {
       toast.success(t("voteSuccess"))
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
+      qc.invalidateQueries({ queryKey: ["user-posts"] })
     },
   })
 }
