@@ -24,6 +24,7 @@ import {
   sharePostAction,
   toggleReactionAction,
   updatePostAction,
+  voteAction,
 } from "../api/actions"
 import type {
   FeedComment,
@@ -188,6 +189,7 @@ export function useCreatePost() {
       content: string
       visibility?: "public" | "connections" | "private"
       mediaItems?: { url: string; width?: number; height?: number }[]
+      options?: string[]
     }) => {
       const result = await createPostAction(input)
       if (!result.ok) throw new Error(result.error)
@@ -210,19 +212,34 @@ export function useUpdatePost() {
       content: string
       visibility: "public" | "connections" | "private"
       mediaItems?: { url: string; width?: number; height?: number }[]
+      options?: { id?: number; optionText: string }[]
     }) => {
       const result = await updatePostAction(input)
       if (!result.ok) throw new Error(result.error)
       return result.data
     },
     onSuccess: (updated) => {
-      applyToAllPostCaches(qc, updated.postId, (p) => ({
-        ...p,
-        content: updated.content,
-        visibility: updated.visibility,
-        media: updated.media,
-        postType: updated.postType,
-      }))
+      applyToAllPostCaches(qc, updated.postId, (p) => {
+        const upd = updated as Record<string, unknown>
+        const newOpts = upd.pollOptions as
+          | { id: number; optionText: string; voteCount: number }[]
+          | undefined
+        return {
+          ...p,
+          content: updated.content,
+          visibility: updated.visibility,
+          media: updated.media,
+          postType: updated.postType,
+          pollOptions: newOpts
+            ? newOpts.map((o) => ({
+                id: o.id,
+                optionText: o.optionText,
+                voteCount: o.voteCount,
+                viewerVoted: false,
+              }))
+            : p.pollOptions,
+        }
+      })
       toast.success(t("updateSuccess"))
     },
     onError: (e: Error) => toast.error(e.message),
@@ -303,6 +320,60 @@ export function useCreateComment() {
       )
     },
     onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useVote() {
+  const qc = useQueryClient()
+  const t = useTranslations("posts")
+  return useMutation({
+    mutationFn: async ({
+      postId,
+      optionId,
+    }: {
+      postId: number
+      optionId: number
+    }) => {
+      const result = await voteAction(postId, optionId)
+      if (!result.ok) throw new Error(result.error)
+      return result.data
+    },
+    onMutate: async ({ postId, optionId }) => {
+      await qc.cancelQueries({ queryKey: FEED_QUERY_KEY })
+      await qc.cancelQueries({ queryKey: ["user-posts"] })
+      const previousFeed = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
+      const previousUserPosts = qc.getQueriesData<UserPostsCache>({
+        queryKey: ["user-posts"],
+      })
+
+      applyToAllPostCaches(qc, postId, (p) => {
+        if (p.postType !== "poll" || !p.pollOptions) return p
+        return {
+          ...p,
+          pollOptions: p.pollOptions.map((o) => ({
+            ...o,
+            voteCount: o.id === optionId ? o.voteCount + 1 : o.voteCount,
+            viewerVoted: o.id === optionId,
+          })),
+        }
+      })
+
+      return { previousFeed, previousUserPosts }
+    },
+    onError: (e: Error, _vars, context) => {
+      if (context?.previousFeed) {
+        qc.setQueryData(FEED_QUERY_KEY, context.previousFeed)
+      }
+      if (context?.previousUserPosts) {
+        for (const [key, data] of context.previousUserPosts) {
+          qc.setQueryData(key, data)
+        }
+      }
+      toast.error(e.message)
+    },
+    onSuccess: () => {
+      toast.success(t("voteSuccess"))
+    },
   })
 }
 
@@ -470,7 +541,7 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
 
     const supabase = createBrowserClient()
     const channel = supabase.channel(`home-feed-engagement-${filterKey.length}`)
-    for (const table of ["post_reactions", "post_comments", "post_shares"]) {
+    for (const table of ["post_reactions", "post_comments", "post_shares", "poll_votes"]) {
       channel.on(
         "postgres_changes",
         {

@@ -97,6 +97,15 @@
     "originalDeleted": "The original post has been deleted",
     "copyLinkSuccess": "Link copied",
     "copyLinkError": "Could not copy link",
+    "poll": "Poll",
+    "vote": "Vote",
+    "voteSuccess": "Vote recorded",
+    "totalVotes": "{count} votes",
+    "addOption": "Add option",
+    "removeOption": "Remove option",
+    "pollOption": "Option {n}",
+    "minOptions": "At least 2 options required",
+    "maxOptions": "Maximum 10 options allowed",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentOrMediaRequired": "Please enter content or attach an image",
@@ -110,12 +119,19 @@
       "invalidData": "Invalid data",
       "invalidPost": "Invalid post",
       "invalidComment": "Invalid comment",
+      "invalidOption": "Invalid option",
+      "optionRequired": "Option text is required",
+      "optionMax": "Option is too long (max 255)",
       "createFailed": "Could not create post",
       "updateFailed": "Could not update post",
       "shareFailed": "Could not share post",
       "commentFailed": "Could not post comment",
       "loadCommentsFailed": "Could not load comments",
       "deleteCommentFailed": "Could not delete comment",
+      "voteFailed": "Could not record vote",
+      "alreadyVoted": "You already voted on this poll",
+      "votedOptionRemoveBlocked": "Cannot remove an option that has votes",
+      "pollAndMedia": "Cannot add images to a poll post",
       "unexpected": "Something went wrong, please try again"
     }
   },
@@ -886,6 +902,7 @@
       "job_application_received": "applied to {jobTitle}",
       "application_status_changed": "updated your application for {jobTitle} to {status}",
       "application_withdrawn": "withdrew their application for {jobTitle}",
+      "poll_vote": "voted on your poll",
       "unknown": "has new activity"
     },
     "appStatus": {

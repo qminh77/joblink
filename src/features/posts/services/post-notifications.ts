@@ -111,3 +111,25 @@ export async function notifyShare(opts: {
     },
   })
 }
+
+export async function notifyPollVote(opts: {
+  postId: number
+  optionText: string
+  current: CurrentUser
+}): Promise<void> {
+  const me = opts.current.appUser.id
+  const authorId = await getPostAuthorId(opts.postId)
+  if (!authorId || authorId === me) return
+  await createNotification({
+    userId: authorId,
+    type: "poll_vote",
+    payload: {
+      type: "poll_vote",
+      userId: me,
+      displayName: opts.current.profile.displayName,
+      avatarUrl: opts.current.profile.avatarUrl,
+      postId: opts.postId,
+      optionText: opts.optionText,
+    },
+  })
+}

@@ -51,6 +51,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox"
 import type { MediaItem } from "../lib/media"
 import { PostComposer } from "./post-composer"
 import { PostMediaView } from "./post-media-view"
+import { PollView } from "./poll-view"
 import { SharedPostQuote } from "./shared-post-quote"
 import { readSharedOriginal } from "../lib/media"
 
@@ -229,7 +230,9 @@ export function PostCard({ post, onShare, onSend }: Props) {
             </div>
           ) : null}
 
-          {isSharedPost ? (
+          {post.postType === "poll" ? (
+            <PollView post={post} />
+          ) : isSharedPost ? (
             <SharedPostQuote
               media={post.media}
               onOpenLightbox={(items, index) => setLightbox({ items, index })}

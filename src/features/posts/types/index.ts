@@ -15,6 +15,13 @@ export type FeedAuthor = {
   headline: string | null
 }
 
+export type PollOption = {
+  id: number
+  optionText: string
+  voteCount: number
+  viewerVoted: boolean
+}
+
 export type FeedPost = {
   id: number
   authorId: number
@@ -28,6 +35,7 @@ export type FeedPost = {
   commentCount: number
   shareCount: number
   viewerReacted: boolean
+  pollOptions?: PollOption[]
 }
 
 export type HomeFeedStats = {
