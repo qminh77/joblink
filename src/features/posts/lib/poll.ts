@@ -38,16 +38,13 @@ export function mergePollData(
 ): PollData | null {
   const fromMedia = readPollData(media)
   if (!fromMedia) return null
-  if (!pollOptions || pollOptions.length === 0) return fromMedia
 
-  const optsById = new Map(pollOptions.map((o) => [o.id, o]))
-  const merged = fromMedia.options.map((o) => {
-    const live = optsById.get(o.id)
-    return live ?? o
-  })
+  if (pollOptions && pollOptions.length > 0) {
+    const totalVotes = pollOptions.reduce((sum, o) => sum + o.voteCount, 0)
+    return { options: pollOptions, totalVotes }
+  }
 
-  const totalVotes = merged.reduce((sum, o) => sum + o.voteCount, 0)
-  return { options: merged, totalVotes }
+  return fromMedia
 }
 
 export function buildPollMedia(

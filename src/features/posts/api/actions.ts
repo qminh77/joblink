@@ -289,8 +289,6 @@ export async function voteAction(
       })
     }
 
-    revalidatePath("/home")
-
     return { optionId: data.optionId, postId: data.postId }
   })
 }
