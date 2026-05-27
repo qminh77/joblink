@@ -447,7 +447,8 @@
       "submit": "Đổi mật khẩu",
       "submitting": "Đang xử lý...",
       "success": "Đã đổi mật khẩu thành công",
-      "wrongCurrent": "Mật khẩu hiện tại không chính xác"
+      "wrongCurrent": "Mật khẩu hiện tại không chính xác",
+      "updateFailed": "Không thể đổi mật khẩu, vui lòng thử lại"
     },
     "locale": {
       "title": "Ngôn ngữ",
@@ -495,7 +496,8 @@
     },
     "errors": {
       "privacyMemberOnly": "Tùy chọn này chỉ áp dụng cho tài khoản thành viên",
-      "openToHireCompanyOnly": "Tùy chọn này chỉ áp dụng cho tài khoản công ty"
+      "openToHireCompanyOnly": "Tùy chọn này chỉ áp dụng cho tài khoản công ty",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
     "company": {
       "title": "Hồ sơ công ty",
@@ -902,7 +904,8 @@
     },
     "gone": "Thông báo đã thay đổi",
     "errors": {
-      "invalidId": "Thông báo không hợp lệ"
+      "invalidId": "Thông báo không hợp lệ",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     }
   },
   "reports": {

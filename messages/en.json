@@ -447,7 +447,8 @@
       "submit": "Change password",
       "submitting": "Processing...",
       "success": "Password changed successfully",
-      "wrongCurrent": "Current password is incorrect"
+      "wrongCurrent": "Current password is incorrect",
+      "updateFailed": "Could not change password, please try again"
     },
     "locale": {
       "title": "Language",
@@ -495,7 +496,8 @@
     },
     "errors": {
       "privacyMemberOnly": "This option only applies to member accounts",
-      "openToHireCompanyOnly": "This option only applies to company accounts"
+      "openToHireCompanyOnly": "This option only applies to company accounts",
+      "unexpected": "Something went wrong, please try again"
     },
     "company": {
       "title": "Company profile",
@@ -902,7 +904,8 @@
     },
     "gone": "The notification has changed",
     "errors": {
-      "invalidId": "Invalid notification"
+      "invalidId": "Invalid notification",
+      "unexpected": "Something went wrong, please try again"
     }
   },
   "reports": {
