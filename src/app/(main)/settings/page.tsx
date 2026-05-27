@@ -4,6 +4,7 @@ import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import {
   loadOwnCompanyProfile,
   loadOwnMemberProfile,
+  loadProvinces,
 } from "@/features/profile/api/queries"
 import type { SessionUserSummary } from "@/features/auth/types"
 import { SettingsTabs } from "@/features/settings/components/settings-tabs"
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
     status: current.appUser.status,
     displayName: current.profile.displayName,
     avatarUrl: current.profile.avatarUrl,
+    coverUrl: current.profile.coverUrl,
     headline: current.profile.headline,
   }
 
@@ -27,6 +29,8 @@ export default async function SettingsPage() {
     current.appUser.role === "member" ? await loadOwnMemberProfile() : null
   const company =
     current.appUser.role === "company" ? await loadOwnCompanyProfile() : null
+  const provinces =
+    current.appUser.role === "company" ? await loadProvinces() : []
 
   const profile =
     member !== null
@@ -47,6 +51,7 @@ export default async function SettingsPage() {
       <SettingsTabs
         user={sessionUser}
         profile={profile}
+        provinces={provinces}
         locale={current.appUser.locale}
       />
     </div>

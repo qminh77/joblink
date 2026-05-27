@@ -16,6 +16,7 @@ type Props = {
   initialStats: HomeFeedStats
   displayName: string
   avatarUrl: string | null
+  coverUrl: string | null
   headline: string | null
 }
 
@@ -23,6 +24,7 @@ export function HomeStatsCard({
   initialStats,
   displayName,
   avatarUrl,
+  coverUrl,
   headline,
 }: Props) {
   const tHome = useTranslations("home")
@@ -41,7 +43,16 @@ export function HomeStatsCard({
 
   return (
     <Card className="overflow-hidden bg-card border-border/40 rounded-2xl p-0 gap-0">
-      <div className="h-16 bg-gradient-to-r from-primary/80 to-blue-400" />
+      {coverUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={coverUrl}
+          alt=""
+          className="h-16 w-full object-cover bg-muted"
+        />
+      ) : (
+        <div className="h-16 bg-gradient-to-r from-primary/80 to-blue-400" />
+      )}
       <CardContent className="p-0">
         <div className="relative w-16 h-16 rounded-full border-[3px] border-card -mt-8 mx-auto overflow-hidden bg-muted">
           <Avatar className="w-full h-full">

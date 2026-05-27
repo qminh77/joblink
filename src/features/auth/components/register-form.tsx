@@ -9,11 +9,14 @@ import {
   Briefcase,
   Building2,
   FileBadge,
+  FileText,
+  Globe,
   Info,
   Layers,
   Lock,
   Mail,
   MapPin,
+  Phone,
   ShieldCheck,
   User,
   UserSquare,
@@ -69,6 +72,9 @@ type RegisterFormValues = {
   representativeTitle: string
   businessAddress: string
   businessEmail: string
+  website: string
+  phone: string
+  about: string
   email: string
   password: string
   acceptTerms: boolean
@@ -85,6 +91,9 @@ const defaultValues: RegisterFormValues = {
   representativeTitle: "",
   businessAddress: "",
   businessEmail: "",
+  website: "",
+  phone: "",
+  about: "",
   email: "",
   password: "",
   acceptTerms: false,
@@ -123,6 +132,9 @@ export function RegisterForm({
               representativeTitle: values.representativeTitle || undefined,
               businessAddress: values.businessAddress,
               businessEmail: values.businessEmail,
+              website: values.website || undefined,
+              phone: values.phone || undefined,
+              about: values.about || undefined,
               email: values.email,
               password: values.password,
               acceptTerms: values.acceptTerms as true,
@@ -485,6 +497,87 @@ export function RegisterForm({
                   )}
                 />
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("website")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                          <Globe className="w-5 h-5" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            inputMode="url"
+                            placeholder={t("websitePlaceholder")}
+                            className={INPUT_CLASS}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-foreground/80">
+                        {t("phone")}
+                      </FormLabel>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                          <Phone className="w-5 h-5" />
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder={t("phonePlaceholder")}
+                            className={INPUT_CLASS}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="about"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-foreground/80">
+                      {t("about")}
+                    </FormLabel>
+                    <div className="relative group">
+                      <span className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+                        <FileText className="w-5 h-5" />
+                      </span>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          rows={3}
+                          placeholder={t("aboutPlaceholder")}
+                          className="pl-11 pt-3 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">

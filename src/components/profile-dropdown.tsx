@@ -57,7 +57,16 @@ export function ProfileDropdown() {
         className="w-72 p-0 rounded-2xl bg-background/95 backdrop-blur-2xl overflow-hidden"
       >
         <div className="relative">
-          <div className="h-16 bg-gradient-to-r from-primary/15 to-primary/5" />
+          {user.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.coverUrl}
+              alt=""
+              className="h-16 w-full object-cover bg-muted"
+            />
+          ) : (
+            <div className="h-16 bg-gradient-to-r from-primary/15 to-primary/5" />
+          )}
           <div className="px-4 pb-3 -mt-8">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-muted">

@@ -199,7 +199,13 @@
       "successNeedVerify": "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.",
       "successCompanyPending": "Đã gửi hồ sơ doanh nghiệp. Tài khoản sẽ kích hoạt sau khi Admin phê duyệt — vui lòng đợi email thông báo.",
       "companyPendingNotice": "Tài khoản doanh nghiệp cần Admin phê duyệt sau khi đăng ký trước khi có thể đăng nhập.",
-      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA"
+      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA",
+      "website": "Website",
+      "websitePlaceholder": "https://congty.com",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "VD: 028 1234 5678",
+      "about": "Giới thiệu công ty (tuỳ chọn)",
+      "aboutPlaceholder": "Mô tả ngắn về công ty, lĩnh vực hoạt động, ..."
     },
     "forgotPassword": {
       "title": "Quên mật khẩu?",
@@ -253,7 +259,8 @@
       "businessEmailRequired": "Vui lòng nhập email doanh nghiệp",
       "businessEmailInvalid": "Email doanh nghiệp không hợp lệ",
       "textTooLong": "Nội dung quá dài",
-      "termsRequired": "Bạn cần đồng ý với điều khoản dịch vụ"
+      "termsRequired": "Bạn cần đồng ý với điều khoản dịch vụ",
+      "websiteInvalid": "Website không hợp lệ (cần bắt đầu bằng http:// hoặc https://)"
     }
   },
   "profile": {
@@ -368,13 +375,36 @@
       "endDateAfterStart": "Ngày kết thúc phải sau ngày bắt đầu",
       "skillNameRequired": "Vui lòng nhập tên kỹ năng",
       "skillNameMax": "Tên kỹ năng tối đa 80 ký tự",
-      "urlInvalid": "Đường dẫn không hợp lệ"
+      "urlInvalid": "Đường dẫn không hợp lệ",
+      "phoneMax": "Số điện thoại tối đa 20 ký tự"
     },
     "errors": {
       "memberOnly": "Chỉ thành viên mới có thể thực hiện thao tác này",
       "companyOnly": "Chỉ tài khoản công ty mới có thể thực hiện thao tác này",
       "invalidData": "Dữ liệu không hợp lệ",
       "missingId": "Thiếu ID cần cập nhật"
+    },
+    "company": {
+      "name": "Tên công ty",
+      "logoUrl": "Logo (URL)",
+      "website": "Website",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "VD: 028 1234 5678",
+      "businessEmail": "Email doanh nghiệp",
+      "industry": "Ngành nghề",
+      "size": "Quy mô",
+      "sizePlaceholder": "Chọn quy mô",
+      "province": "Tỉnh/Thành",
+      "selectProvince": "Chọn tỉnh/thành",
+      "taxId": "Mã số thuế",
+      "businessAddress": "Địa chỉ doanh nghiệp",
+      "businessAddressPlaceholder": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành",
+      "representativeName": "Họ tên người đại diện",
+      "representativeTitle": "Chức vụ người đại diện",
+      "representativeTitlePlaceholder": "CEO, Trưởng phòng nhân sự, ...",
+      "about": "Giới thiệu công ty",
+      "aboutPlaceholder": "Mô tả về công ty, lĩnh vực hoạt động, văn hoá, ...",
+      "openToHire": "Đang tuyển dụng"
     }
   },
   "settings": {
@@ -384,7 +414,8 @@
       "account": "Tài khoản",
       "privacy": "Quyền riêng tư",
       "notifications": "Thông báo",
-      "language": "Ngôn ngữ"
+      "language": "Ngôn ngữ",
+      "company": "Hồ sơ công ty"
     },
     "account": {
       "title": "Thông tin tài khoản",
@@ -463,6 +494,10 @@
     "errors": {
       "privacyMemberOnly": "Tùy chọn này chỉ áp dụng cho tài khoản thành viên",
       "openToHireCompanyOnly": "Tùy chọn này chỉ áp dụng cho tài khoản công ty"
+    },
+    "company": {
+      "title": "Hồ sơ công ty",
+      "subtitle": "Cập nhật thông tin doanh nghiệp hiển thị với ứng viên và người theo dõi."
     }
   },
   "companies": {
@@ -482,7 +517,10 @@
       "activeJobsHeading": "Việc làm đang tuyển ({count})",
       "viewAllJobs": "Xem tất cả",
       "noActiveJobs": "Hiện công ty chưa đăng việc làm nào.",
-      "jobDetails": "Xem chi tiết"
+      "jobDetails": "Xem chi tiết",
+      "contactHeading": "Thông tin liên hệ",
+      "contactEmpty": "Công ty chưa cập nhật thông tin liên hệ.",
+      "representativeLabel": "Người đại diện"
     },
     "errors": {
       "invalidCompany": "Công ty không hợp lệ",
@@ -792,7 +830,7 @@
     "comment": "Bình luận",
     "share": "Chia sẻ",
     "send": "Gửi",
-    "reply": "Phản hồi",
+    "reply": "Trả lời",
     "commentsCount": "{count} bình luận",
     "sharesCount": "{count} chia sẻ",
     "writeComment": "Viết bình luận...",
@@ -803,7 +841,6 @@
     "noComments": "Chưa có bình luận nào",
     "deleteComment": "Xoá bình luận",
     "deleteCommentSuccess": "Đã xoá bình luận",
-    "reply": "Trả lời",
     "cancelReply": "Huỷ",
     "replyingTo": "Đang trả lời",
     "writeReplyTo": "Trả lời {name}…",

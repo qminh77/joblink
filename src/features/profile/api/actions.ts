@@ -394,6 +394,7 @@ export async function updateCompanyProfileAction(
       about: emptyToNull(parsed.data.about),
       logo_url: emptyToNull(parsed.data.logoUrl),
       website: emptyToNull(parsed.data.website),
+      phone: emptyToNull(parsed.data.phone),
       industry: emptyToNull(parsed.data.industry),
       size: emptyToNull(parsed.data.size),
       province_id: parsed.data.provinceId ?? null,

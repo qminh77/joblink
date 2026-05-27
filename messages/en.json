@@ -199,7 +199,13 @@
       "successNeedVerify": "Signed up successfully. Please check your email to verify your account.",
       "successCompanyPending": "Business profile submitted. Your account will be activated after Admin approval — please wait for our email.",
       "companyPendingNotice": "Business accounts require Admin approval after registration before they can sign in.",
-      "protectedByRecaptcha": "Protected by Google reCAPTCHA"
+      "protectedByRecaptcha": "Protected by Google reCAPTCHA",
+      "website": "Website",
+      "websitePlaceholder": "https://company.com",
+      "phone": "Phone number",
+      "phonePlaceholder": "e.g. 028 1234 5678",
+      "about": "About the company (optional)",
+      "aboutPlaceholder": "A short description of your company and what you do, ..."
     },
     "forgotPassword": {
       "title": "Forgot password?",
@@ -253,7 +259,8 @@
       "businessEmailRequired": "Please enter the business email",
       "businessEmailInvalid": "Invalid business email",
       "textTooLong": "Text is too long",
-      "termsRequired": "You must agree to the terms of service"
+      "termsRequired": "You must agree to the terms of service",
+      "websiteInvalid": "Invalid website (must start with http:// or https://)"
     }
   },
   "profile": {
@@ -368,13 +375,36 @@
       "endDateAfterStart": "End date must be after start date",
       "skillNameRequired": "Please enter the skill name",
       "skillNameMax": "Skill name up to 80 characters",
-      "urlInvalid": "Invalid URL"
+      "urlInvalid": "Invalid URL",
+      "phoneMax": "Phone number must be at most 20 characters"
     },
     "errors": {
       "memberOnly": "Only members can perform this action",
       "companyOnly": "Only company accounts can perform this action",
       "invalidData": "Invalid data",
       "missingId": "Missing ID to update"
+    },
+    "company": {
+      "name": "Company name",
+      "logoUrl": "Logo (URL)",
+      "website": "Website",
+      "phone": "Phone number",
+      "phonePlaceholder": "e.g. 028 1234 5678",
+      "businessEmail": "Business email",
+      "industry": "Industry",
+      "size": "Company size",
+      "sizePlaceholder": "Select size",
+      "province": "Province/City",
+      "selectProvince": "Select province/city",
+      "taxId": "Tax ID",
+      "businessAddress": "Business address",
+      "businessAddressPlaceholder": "Street, ward, district, province/city",
+      "representativeName": "Representative name",
+      "representativeTitle": "Representative title",
+      "representativeTitlePlaceholder": "CEO, HR Manager, ...",
+      "about": "About the company",
+      "aboutPlaceholder": "Describe your company, what you do, your culture, ...",
+      "openToHire": "Open to hire"
     }
   },
   "settings": {
@@ -384,7 +414,8 @@
       "account": "Account",
       "privacy": "Privacy",
       "notifications": "Notifications",
-      "language": "Language"
+      "language": "Language",
+      "company": "Company profile"
     },
     "account": {
       "title": "Account information",
@@ -463,6 +494,10 @@
     "errors": {
       "privacyMemberOnly": "This option only applies to member accounts",
       "openToHireCompanyOnly": "This option only applies to company accounts"
+    },
+    "company": {
+      "title": "Company profile",
+      "subtitle": "Update the business information shown to candidates and followers."
     }
   },
   "companies": {
@@ -482,7 +517,10 @@
       "activeJobsHeading": "Active jobs ({count})",
       "viewAllJobs": "View all",
       "noActiveJobs": "This company has no open positions.",
-      "jobDetails": "View details"
+      "jobDetails": "View details",
+      "contactHeading": "Contact information",
+      "contactEmpty": "This company hasn't added contact information yet.",
+      "representativeLabel": "Representative"
     },
     "errors": {
       "invalidCompany": "Invalid company",
@@ -803,7 +841,6 @@
     "noComments": "No comments yet",
     "deleteComment": "Delete comment",
     "deleteCommentSuccess": "Comment deleted",
-    "reply": "Reply",
     "cancelReply": "Cancel",
     "replyingTo": "Replying to",
     "writeReplyTo": "Reply to {name}…",

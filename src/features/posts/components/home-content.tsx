@@ -33,6 +33,7 @@ export async function HomeContent() {
           initialStats={feed.stats}
           displayName={user.profile.displayName}
           avatarUrl={user.profile.avatarUrl}
+          coverUrl={user.profile.coverUrl}
           headline={user.profile.headline}
         />
 

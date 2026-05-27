@@ -10,7 +10,9 @@ import {
   Mail,
   MapPin,
   Pencil,
+  Phone,
   ShieldCheck,
+  UserSquare,
   Users,
 } from "lucide-react"
 
@@ -18,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { CompanyFollowButton } from "@/features/companies/components/company-follow-button"
 import { ConnectButton } from "@/features/network/components/connect-button"
 import { MessageButton } from "@/features/messaging/components/message-button"
 import type { ConnectionRelation } from "@/features/network/types"
@@ -48,6 +51,7 @@ export function CompanyProfileView({
   postsPage: UserPostsPage
 }) {
   const tProfile = useTranslations("profile")
+  const tCompanies = useTranslations("companies.public")
   const initials = getInitials(company.name, "JL")
   const verification = VERIFICATION_LABELS[company.verification_status]
   const locationText = [company.district?.name, company.province?.name]
@@ -98,12 +102,20 @@ export function CompanyProfileView({
                       <MapPin className="w-3.5 h-3.5" /> {locationText}
                     </p>
                   ) : null}
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
-                    <Users className="w-3.5 h-3.5" />
-                    {tProfile("stats.connections", {
-                      count: company.connectionCount,
-                    })}
-                  </p>
+                  <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      {tCompanies("followerCount", {
+                        count: company.followerCount,
+                      })}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {tProfile("stats.connections", {
+                        count: company.connectionCount,
+                      })}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -116,6 +128,11 @@ export function CompanyProfileView({
                   </Button>
                 ) : (
                   <>
+                    <CompanyFollowButton
+                      companyUserId={company.user_id}
+                      initialIsFollowing={company.isFollowing}
+                      initialFollowerCount={company.followerCount}
+                    />
                     <ConnectButton
                       relation={relation}
                       targetUserId={company.user_id}
@@ -170,6 +187,17 @@ export function CompanyProfileView({
                 {company.business_email || company.email}
               </span>
             </div>
+            {company.phone ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Phone className="w-4 h-4" />
+                <a
+                  href={`tel:${company.phone}`}
+                  className="text-foreground hover:text-primary transition-colors"
+                >
+                  {company.phone}
+                </a>
+              </div>
+            ) : null}
             {company.website ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Globe className="w-4 h-4" />
@@ -188,6 +216,17 @@ export function CompanyProfileView({
                 <Building2 className="w-4 h-4 mt-0.5" />
                 <span className="text-foreground/90">
                   {company.business_address}
+                </span>
+              </div>
+            ) : null}
+            {company.representative_name ? (
+              <div className="flex items-start gap-2 text-muted-foreground">
+                <UserSquare className="w-4 h-4 mt-0.5" />
+                <span className="text-foreground/90">
+                  {company.representative_name}
+                  {company.representative_title
+                    ? ` · ${company.representative_title}`
+                    : ""}
                 </span>
               </div>
             ) : null}

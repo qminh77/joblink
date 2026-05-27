@@ -76,6 +76,18 @@ export function createCompanyRegisterSchema(t: Translator) {
       .min(2, t("industryRequired"))
       .max(160, t("industryMax")),
     size: z.enum(COMPANY_SIZE_OPTIONS, { message: t("sizeRequired") }),
+    website: z
+      .string()
+      .trim()
+      .max(2048, t("websiteInvalid"))
+      .refine(
+        (value) => value.length === 0 || /^https?:\/\/.+/i.test(value),
+        t("websiteInvalid"),
+      )
+      .optional()
+      .or(z.literal("")),
+    phone: optionalText(20),
+    about: optionalText(2000),
     representativeName: z
       .string()
       .trim()

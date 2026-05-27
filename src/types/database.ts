@@ -428,6 +428,7 @@ export type CompanyProfileRow = {
   logo_url: string | null
   about: string | null
   website: string | null
+  phone: string | null
   province_id: number | null
   district_id: number | null
   industry: string | null

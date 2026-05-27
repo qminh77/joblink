@@ -1,16 +1,18 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Bell, Globe, Shield, User } from "lucide-react"
+import { Bell, Building2, Globe, Shield, User } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { SessionUserSummary } from "@/features/auth/types"
+import { CompanyInfoForm } from "@/features/profile/components/edit/company-info-form"
 import type {
   CompanyProfileDetail,
   MemberProfileDetail,
 } from "@/features/profile/types"
+import type { ProvinceRow } from "@/types/database"
 
 import { AccountInfoCard } from "./account-info-card"
 import { OpenToHireCard } from "./open-to-hire-card"
@@ -40,18 +42,30 @@ const NOTIFICATION_DEFAULTS: Record<(typeof NOTIFICATION_KEYS)[number], boolean>
 export function SettingsTabs({
   user,
   profile,
+  provinces,
   locale,
 }: {
   user: SessionUserSummary
   profile: Profile
+  provinces: ProvinceRow[]
   locale: string
 }) {
   const t = useTranslations("settings")
   const tn = useTranslations("settings.notifications.items")
 
+  const isCompany = profile?.kind === "company"
+
   return (
-    <Tabs defaultValue="account">
+    <Tabs defaultValue={isCompany ? "company" : "account"}>
       <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto">
+        {isCompany ? (
+          <TabsTrigger
+            value="company"
+            className="rounded-lg text-sm px-4 whitespace-nowrap"
+          >
+            <Building2 className="w-4 h-4 mr-1.5" /> {t("tabs.company")}
+          </TabsTrigger>
+        ) : null}
         <TabsTrigger
           value="account"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
@@ -77,6 +91,20 @@ export function SettingsTabs({
           <Globe className="w-4 h-4 mr-1.5" /> {t("tabs.language")}
         </TabsTrigger>
       </TabsList>
+
+      {isCompany && profile?.kind === "company" ? (
+        <TabsContent value="company" className="mt-6">
+          <Card className="rounded-2xl border-border/30 p-6">
+            <h2 className="font-headline font-bold text-base text-foreground mb-1">
+              {t("company.title")}
+            </h2>
+            <p className="text-xs text-muted-foreground mb-5">
+              {t("company.subtitle")}
+            </p>
+            <CompanyInfoForm company={profile.data} provinces={provinces} />
+          </Card>
+        </TabsContent>
+      ) : null}
 
       <TabsContent value="account" className="mt-6">
         <AccountInfoCard user={user} locale={locale} />

@@ -6,8 +6,11 @@ import {
   Briefcase,
   Building2,
   Globe,
+  Mail,
   MapPin,
   Pencil,
+  Phone,
+  UserSquare,
   Users,
 } from "lucide-react"
 
@@ -179,6 +182,63 @@ export async function CompanyPublicPage({ companyUserId }: Props) {
             {t("aboutEmpty")}
           </p>
         )}
+      </Card>
+
+      <Card className="bg-card border-border/30 rounded-xl p-6">
+        <h2 className="text-lg font-bold text-foreground mb-4">
+          {t("contactHeading")}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          {company.businessEmail ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Mail className="w-4 h-4 shrink-0" />
+              <a
+                href={`mailto:${company.businessEmail}`}
+                className="text-foreground hover:text-primary transition-colors break-all"
+              >
+                {company.businessEmail}
+              </a>
+            </div>
+          ) : null}
+          {company.phone ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Phone className="w-4 h-4 shrink-0" />
+              <a
+                href={`tel:${company.phone}`}
+                className="text-foreground hover:text-primary transition-colors"
+              >
+                {company.phone}
+              </a>
+            </div>
+          ) : null}
+          {company.businessAddress ? (
+            <div className="flex items-start gap-2 text-muted-foreground sm:col-span-2">
+              <Building2 className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="text-foreground/90">
+                {company.businessAddress}
+              </span>
+            </div>
+          ) : null}
+          {company.representativeName ? (
+            <div className="flex items-start gap-2 text-muted-foreground sm:col-span-2">
+              <UserSquare className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="text-foreground/90">
+                {t("representativeLabel")}: {company.representativeName}
+                {company.representativeTitle
+                  ? ` · ${company.representativeTitle}`
+                  : ""}
+              </span>
+            </div>
+          ) : null}
+          {!company.businessEmail &&
+          !company.phone &&
+          !company.businessAddress &&
+          !company.representativeName ? (
+            <p className="text-sm text-muted-foreground italic sm:col-span-2">
+              {t("contactEmpty")}
+            </p>
+          ) : null}
+        </div>
       </Card>
 
       <div>

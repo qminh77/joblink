@@ -105,6 +105,9 @@ export async function registerCompanyAction(
       representative_title: emptyToNull(data.representativeTitle),
       business_address: data.businessAddress,
       business_email: data.businessEmail,
+      website: emptyToNull(data.website),
+      phone: emptyToNull(data.phone),
+      about: emptyToNull(data.about),
       verification_status: "pending",
       updated_at: new Date().toISOString(),
     })

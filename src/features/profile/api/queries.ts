@@ -86,7 +86,11 @@ export async function loadProfileById(
   if (!target) return null
 
   if (target.role === "company") {
-    const company = await loadCompanyProfileDetail(supabase, target)
+    const company = await loadCompanyProfileDetail(
+      supabase,
+      target,
+      current.appUser.id,
+    )
     if (!company) return null
     return { kind: "company", data: company }
   }
@@ -111,7 +115,7 @@ export async function loadOwnCompanyProfile(): Promise<CompanyProfileDetail | nu
   const current = await getCurrentUser()
   if (!current || current.appUser.role !== "company") return null
   const supabase = await createClient()
-  return loadCompanyProfileDetail(supabase, current.appUser)
+  return loadCompanyProfileDetail(supabase, current.appUser, current.appUser.id)
 }
 
 async function loadMemberProfileDetail(
@@ -191,6 +195,7 @@ async function loadMemberProfileDetail(
 async function loadCompanyProfileDetail(
   supabase: SupabaseServer,
   target: AppUserRow,
+  viewerUserId: number,
 ): Promise<CompanyProfileDetail | null> {
   const { data } = await supabase
     .from("company_profiles")
@@ -201,6 +206,28 @@ async function loadCompanyProfileDetail(
 
   if (!data) return null
 
+  const isOwner = viewerUserId === target.id
+
+  const followerPromise = supabase
+    .from("follows")
+    .select("id", { count: "exact", head: true })
+    .eq("followable_type", "company")
+    .eq("followable_id", target.id)
+
+  const viewerFollowPromise = isOwner
+    ? null
+    : supabase
+        .from("follows")
+        .select("id", { head: true, count: "exact" })
+        .eq("follower_id", viewerUserId)
+        .eq("followable_type", "company")
+        .eq("followable_id", target.id)
+
+  const [{ count: followerCount }, viewerFollow] = await Promise.all([
+    followerPromise,
+    viewerFollowPromise,
+  ])
+
   const { province, district, ...rest } = data
 
   return {
@@ -210,5 +237,7 @@ async function loadCompanyProfileDetail(
     district,
     profileViewCount: target.profile_view_count,
     connectionCount: target.connection_count,
+    followerCount: followerCount ?? 0,
+    isFollowing: (viewerFollow?.count ?? 0) > 0,
   }
 }

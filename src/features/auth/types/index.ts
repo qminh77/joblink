@@ -9,6 +9,7 @@ export type CurrentUser = {
   profile: {
     displayName: string
     avatarUrl: string | null
+    coverUrl: string | null
     headline: string | null
   }
 }
@@ -21,5 +22,6 @@ export type SessionUserSummary = {
   status: UserStatus
   displayName: string
   avatarUrl: string | null
+  coverUrl: string | null
   headline: string | null
 }

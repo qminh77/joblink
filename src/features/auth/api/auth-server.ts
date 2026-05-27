@@ -49,18 +49,20 @@ type SupabaseServer = Awaited<ReturnType<typeof createClient>>
 async function loadMemberProfile(supabase: SupabaseServer, userId: number) {
   const { data } = await supabase
     .from("member_profiles")
-    .select("full_name, avatar_url, headline")
+    .select("full_name, avatar_url, cover_url, headline")
     .eq("user_id", userId)
     .is("deleted_at", null)
     .maybeSingle<{
       full_name: string
       avatar_url: string | null
+      cover_url: string | null
       headline: string | null
     }>()
 
   return {
     displayName: data?.full_name ?? "Thành viên",
     avatarUrl: data?.avatar_url ?? null,
+    coverUrl: data?.cover_url ?? null,
     headline: data?.headline ?? null,
   }
 }
@@ -80,6 +82,7 @@ async function loadCompanyProfile(supabase: SupabaseServer, userId: number) {
   return {
     displayName: data?.name ?? "Công ty",
     avatarUrl: data?.logo_url ?? null,
+    coverUrl: null,
     headline: data?.industry ?? null,
   }
 }

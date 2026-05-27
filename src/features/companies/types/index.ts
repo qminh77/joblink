@@ -10,6 +10,7 @@ export type CompanyPublicCore = {
   logoUrl: string | null
   about: string | null
   website: string | null
+  phone: string | null
   industry: string | null
   size: string | null
   openToHire: boolean

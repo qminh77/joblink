@@ -27,6 +27,8 @@ export type CompanyProfileDetail = CompanyProfileRow & {
   district: { id: number; name: string } | null
   profileViewCount: number
   connectionCount: number
+  followerCount: number
+  isFollowing: boolean
 }
 
 export type AnyProfileDetail =

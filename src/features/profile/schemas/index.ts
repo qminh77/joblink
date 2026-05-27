@@ -99,6 +99,7 @@ export function createCompanyProfileSchema(t: Translator) {
     about: optionalText(4000),
     logoUrl: optionalUrl(t),
     website: optionalUrl(t),
+    phone: optionalText(20),
     industry: optionalText(160),
     size: optionalText(30),
     provinceId: z.number().int().positive().nullable(),
