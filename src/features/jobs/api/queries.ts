@@ -7,12 +7,14 @@ import type {
   JobPositionRef,
   JobTypeRef,
   JobsListPage,
+  MyApplicationsPage,
   SavedJobsPage,
   WorkModeRef,
 } from "../types"
 
 const EMPTY_JOBS: JobsListPage = { items: [], total: 0 }
 const EMPTY_SAVED: SavedJobsPage = { items: [], total: 0 }
+const EMPTY_APPLICATIONS: MyApplicationsPage = { items: [], total: 0 }
 
 export type JobsListFilters = {
   search?: string | null
@@ -91,6 +93,26 @@ export async function loadMySavedJobs(options?: {
   }
   if (!data) return EMPTY_SAVED
   return data as unknown as SavedJobsPage
+}
+
+export async function loadMyApplications(options?: {
+  limit?: number
+  offset?: number
+}): Promise<MyApplicationsPage> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("get_my_applications", {
+    p_limit: options?.limit ?? 30,
+    p_offset: options?.offset ?? 0,
+  })
+  if (error) {
+    console.error(
+      "[loadMyApplications] RPC error:",
+      JSON.stringify(error, Object.getOwnPropertyNames(error)),
+    )
+    return EMPTY_APPLICATIONS
+  }
+  if (!data) return EMPTY_APPLICATIONS
+  return data as unknown as MyApplicationsPage
 }
 
 // ---------------------------------------------------------------------------

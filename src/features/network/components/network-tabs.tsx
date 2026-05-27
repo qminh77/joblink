@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 import {
   useAcceptConnectionRequest,
@@ -237,7 +238,7 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
   return (
     <Card className="p-4 h-full">
       <div className="flex flex-col items-center text-center gap-1.5 h-full">
-        <Link href={`/profile/${item.userId}`}>
+        <Link href={profileHref(item.userId, item.role)}>
           <Avatar className="size-14 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
             <AvatarFallback className="text-sm">
@@ -246,7 +247,7 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
           </Avatar>
         </Link>
         <Link
-          href={`/profile/${item.userId}`}
+          href={profileHref(item.userId, item.role)}
           className="font-semibold text-sm text-foreground hover:text-primary transition-colors leading-tight line-clamp-1 mt-0.5"
         >
           {item.displayName}
@@ -355,7 +356,7 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
 
   return (
     <div className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
-      <Link href={`/profile/${item.userId}`}>
+      <Link href={profileHref(item.userId, item.role)}>
         <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
           {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
           <AvatarFallback className="text-xs">
@@ -365,7 +366,7 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
       </Link>
       <div className="flex-1 min-w-0">
         <Link
-          href={`/profile/${item.userId}`}
+          href={profileHref(item.userId, item.role)}
           className="font-semibold text-sm text-foreground hover:text-primary transition-colors block truncate"
         >
           {item.displayName}
@@ -445,7 +446,7 @@ function IncomingCard({ item }: { item: InvitationItem }) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3 sm:gap-4">
-        <Link href={`/profile/${item.userId}`}>
+        <Link href={profileHref(item.userId, item.role)}>
           <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
             <AvatarFallback className="text-xs">
@@ -455,7 +456,7 @@ function IncomingCard({ item }: { item: InvitationItem }) {
         </Link>
         <div className="flex-1 min-w-0">
           <Link
-            href={`/profile/${item.userId}`}
+            href={profileHref(item.userId, item.role)}
             className="font-semibold text-sm text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}
@@ -537,7 +538,7 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3 sm:gap-4">
-        <Link href={`/profile/${item.userId}`}>
+        <Link href={profileHref(item.userId, item.role)}>
           <Avatar className="size-10 cursor-pointer hover:opacity-80 transition-opacity">
             {item.avatarUrl ? <AvatarImage src={item.avatarUrl} /> : null}
             <AvatarFallback className="text-xs">
@@ -547,7 +548,7 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
         </Link>
         <div className="flex-1 min-w-0">
           <Link
-            href={`/profile/${item.userId}`}
+            href={profileHref(item.userId, item.role)}
             className="font-semibold text-sm text-foreground truncate hover:text-primary transition-colors block"
           >
             {item.displayName}

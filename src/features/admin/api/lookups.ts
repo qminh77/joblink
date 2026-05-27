@@ -167,7 +167,8 @@ export async function createLookup(
 
   const { error } = await supabase.from(table).insert(payload)
   if (error) {
-    return { ok: false, error: error.message || "update_failed" }
+    console.error("[admin:lookup.create]", error)
+    return { ok: false, error: "update_failed" }
   }
 
   await writeAuditLog({
@@ -200,7 +201,8 @@ export async function updateLookup(
     .update(payload)
     .eq("id", parsed.data.id)
   if (error) {
-    return { ok: false, error: error.message || "update_failed" }
+    console.error("[admin:lookup.update]", error)
+    return { ok: false, error: "update_failed" }
   }
 
   await writeAuditLog({
@@ -231,7 +233,8 @@ export async function deleteLookup(
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", parsed.data.id)
     if (error) {
-      return { ok: false, error: error.message || "update_failed" }
+      console.error("[admin:lookup.delete]", error)
+      return { ok: false, error: "update_failed" }
     }
   } else {
     const { error } = await supabase
@@ -239,7 +242,8 @@ export async function deleteLookup(
       .delete()
       .eq("id", parsed.data.id)
     if (error) {
-      return { ok: false, error: error.message || "update_failed" }
+      console.error("[admin:lookup.delete]", error)
+      return { ok: false, error: "update_failed" }
     }
   }
 

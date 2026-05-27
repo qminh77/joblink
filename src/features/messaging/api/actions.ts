@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
+import { ok, fail, type ActionResult } from "@/lib/action/result"
 
 import {
   createConversationIdSchema,
@@ -28,8 +29,6 @@ import {
   loadMessagingOverview,
   loadUnreadConversationsCount,
 } from "./queries"
-
-type ActionResult = { ok: true } | { ok: false; error: string }
 
 function excerpt(text: string | null, max = 120): string {
   const t = (text ?? "").trim()
@@ -114,10 +113,7 @@ export async function markConversationReadAction(
   const te = await getTranslations("messages.errors")
   const parsed = createConversationIdSchema(te).safeParse(conversationId)
   if (!parsed.success) {
-    return {
-      ok: false,
-      error: parsed.error.issues[0]?.message ?? te("invalidConversation"),
-    }
+    return fail(parsed.error.issues[0]?.message ?? te("invalidConversation"))
   }
 
   const current = await requireCurrentUser()
@@ -128,7 +124,7 @@ export async function markConversationReadAction(
   })
   if (error) {
     console.error("[markConversationReadAction]", error)
-    return { ok: false, error: "unknown" }
+    return fail("unknown")
   }
 
   // Dọn notification new_message chưa đọc của convo này (giảm spam dropdown).
@@ -140,5 +136,5 @@ export async function markConversationReadAction(
   // Badge global ở navbar đọc qua react-query (client invalidate); vẫn revalidate
   // layout phòng SSR-hydrated.
   revalidatePath("/", "layout")
-  return { ok: true }
+  return ok(undefined)
 }

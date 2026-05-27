@@ -7,7 +7,9 @@ import { motion } from "framer-motion"
 import {
   Bookmark,
   Eye,
+  FileText,
   HelpCircle,
+  LayoutDashboard,
   Settings,
   Shield,
   User,
@@ -26,6 +28,7 @@ import {
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { LogoutMenuItem } from "@/features/auth/components/logout-menu-item"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 const itemVariants = {
   hidden: { opacity: 0, x: -8 },
@@ -35,6 +38,7 @@ const itemVariants = {
 export function ProfileDropdown() {
   const router = useRouter()
   const user = useCurrentUser()
+  const selfHref = profileHref(user.id, user.role)
   const initials = getInitials(user.displayName, "JL")
   const tNav = useTranslations("nav")
   const tMenu = useTranslations("profileMenu")
@@ -91,7 +95,7 @@ export function ProfileDropdown() {
           </div>
           <div className="flex items-center gap-4 px-4 pb-3">
             <Link
-              href="/profile/me"
+              href={selfHref}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -118,7 +122,7 @@ export function ProfileDropdown() {
               transition={{ delay: 0.05 }}
             >
               <DropdownMenuItem
-                onClick={() => router.push("/profile/me")}
+                onClick={() => router.push(selfHref)}
                 className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
               >
                 <User className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
@@ -132,30 +136,82 @@ export function ProfileDropdown() {
                 </div>
               </DropdownMenuItem>
             </motion.div>
-            <motion.div
-              variants={itemVariants}
-              initial="hidden"
-              animate="show"
-              transition={{ delay: 0.08 }}
-            >
-              <DropdownMenuItem
-                onClick={() => router.push("/saved-jobs")}
-                className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+            {user.role === "member" ? (
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.08 }}
               >
-                <Bookmark className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-foreground">
-                    {tNav("savedJobs")}
-                  </span>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {tMenu("savedJobsHint")}
-                  </p>
-                </div>
-              </DropdownMenuItem>
-            </motion.div>
+                <DropdownMenuItem
+                  onClick={() => router.push("/saved-jobs")}
+                  className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                >
+                  <Bookmark className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">
+                      {tNav("savedJobs")}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {tMenu("savedJobsHint")}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              </motion.div>
+            ) : null}
+            {user.role === "member" ? (
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.09 }}
+              >
+                <DropdownMenuItem
+                  onClick={() => router.push("/jobs/applications")}
+                  className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                >
+                  <FileText className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">
+                      {tMenu("myApplications")}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {tMenu("myApplicationsHint")}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              </motion.div>
+            ) : null}
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />
+
+          {user.role === "company" ? (
+            <DropdownMenuGroup>
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.1 }}
+              >
+                <DropdownMenuItem
+                  onClick={() => router.push("/company/dashboard")}
+                  className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
+                >
+                  <LayoutDashboard className="w-4.5 h-4.5 text-primary mr-3 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">
+                      {tMenu("companyDashboard")}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {tMenu("companyDashboardHint")}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              </motion.div>
+              <DropdownMenuSeparator className="my-1 bg-border/20" />
+            </DropdownMenuGroup>
+          ) : null}
 
           {user.role === "admin" ? (
             <DropdownMenuGroup>

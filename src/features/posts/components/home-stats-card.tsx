@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { formatCompactNumber, getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 import { useHomeStats, useRealtimeHomeStats } from "../hooks"
 import type { HomeFeedStats } from "../types"
@@ -35,6 +36,7 @@ export function HomeStatsCard({
   useRealtimeHomeStats(user.id)
 
   const stats = data ?? initialStats
+  const selfHref = profileHref(user.id, user.role)
   const initials = getInitials(displayName, "JL")
   const headlineFallback =
     user.role === "company"
@@ -63,7 +65,7 @@ export function HomeStatsCard({
 
         <div className="text-center mt-2 border-b border-border/40 pb-4 px-4">
           <Link
-            href="/profile/me"
+            href={selfHref}
             className="font-headline font-bold text-foreground text-lg hover:text-primary transition-all"
           >
             {displayName}
@@ -77,7 +79,7 @@ export function HomeStatsCard({
           <StatRow
             label={tHome("profileViews")}
             value={stats.profile_view_count}
-            href="/profile/me"
+            href={selfHref}
           />
           <StatRow
             label={tHome("connections")}

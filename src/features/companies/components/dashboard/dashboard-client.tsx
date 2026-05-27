@@ -58,9 +58,8 @@ export function DashboardClient({
     },
     {
       label: t("statViews"),
-      value: "—",
+      value: numberFormatter.format(stats.jobViews),
       icon: Eye,
-      caption: t("statViewsComingSoon"),
     },
     {
       label: t("statHireRate"),
@@ -128,7 +127,7 @@ export function DashboardClient({
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-muted/60 p-1 rounded-xl">
+        <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto max-w-full">
           <TabsTrigger value="overview" className="rounded-lg text-sm px-4">
             {t("tabOverview")}
           </TabsTrigger>

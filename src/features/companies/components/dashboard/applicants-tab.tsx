@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { Loader2, MessageCircle, Search } from "lucide-react"
+import { CalendarClock, FileText, Loader2, Search } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -26,11 +26,20 @@ import {
   useUpdateApplicationStatus,
 } from "../../hooks"
 import type {
+  DashboardApplicantItem,
   DashboardApplicantsPage,
   DashboardAppStatus,
 } from "../../types"
 
+import { ApplicantDetailDialog } from "./applicant-detail-dialog"
+import { InterviewScheduleDialog } from "./interview-schedule-dialog"
 import { APP_STATUS_TONE, APP_STATUS_TRANSITIONS } from "./shared"
+
+const TERMINAL_STATUSES = new Set<DashboardAppStatus>([
+  "hired",
+  "rejected",
+  "withdrawn",
+])
 
 type Props = {
   initialData: DashboardApplicantsPage
@@ -60,6 +69,10 @@ export function ApplicantsTab({ initialData }: Props) {
   })
   const update = useUpdateApplicationStatus()
   const items = data?.items ?? []
+
+  const [detailApp, setDetailApp] = useState<DashboardApplicantItem | null>(null)
+  const [interviewApp, setInterviewApp] =
+    useState<DashboardApplicantItem | null>(null)
 
   return (
     <>
@@ -110,7 +123,7 @@ export function ApplicantsTab({ initialData }: Props) {
               <motion.div
                 key={app.applicationId}
                 variants={slideLeft}
-                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <Avatar className="w-10 h-10 shrink-0">
@@ -142,7 +155,7 @@ export function ApplicantsTab({ initialData }: Props) {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 flex-wrap sm:justify-end sm:shrink-0 pl-12 sm:pl-0">
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${APP_STATUS_TONE[app.status]}`}
                   >
@@ -176,19 +189,39 @@ export function ApplicantsTab({ initialData }: Props) {
                     variant="outline"
                     size="sm"
                     className="h-8 rounded-lg text-xs"
-                    asChild
+                    onClick={() => setDetailApp(app)}
                   >
-                    <Link href={`/profile/${app.applicantId}`}>
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      {t("contact")}
-                    </Link>
+                    <FileText className="w-3 h-3 mr-1" />
+                    {t("viewDetail")}
                   </Button>
+                  {!TERMINAL_STATUSES.has(app.status) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-lg text-xs"
+                      onClick={() => setInterviewApp(app)}
+                    >
+                      <CalendarClock className="w-3 h-3 mr-1" />
+                      {t("scheduleInterview")}
+                    </Button>
+                  ) : null}
                 </div>
               </motion.div>
             ))}
           </motion.div>
         )}
       </Card>
+
+      <ApplicantDetailDialog
+        applicant={detailApp}
+        onClose={() => setDetailApp(null)}
+      />
+      <InterviewScheduleDialog
+        open={interviewApp !== null}
+        applicationId={interviewApp?.applicationId ?? 0}
+        applicantName={interviewApp?.displayName ?? ""}
+        onClose={() => setInterviewApp(null)}
+      />
     </>
   )
 }

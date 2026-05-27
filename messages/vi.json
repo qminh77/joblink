@@ -147,6 +147,10 @@
     "viewProfile": "Xem trang cá nhân",
     "viewProfileHint": "Hồ sơ chuyên nghiệp của bạn",
     "savedJobsHint": "Danh sách việc làm bạn theo dõi",
+    "myApplications": "Đơn ứng tuyển",
+    "myApplicationsHint": "Theo dõi đơn và lịch phỏng vấn",
+    "companyDashboard": "Bảng điều khiển",
+    "companyDashboardHint": "Quản lý tin tuyển dụng và ứng viên",
     "settings": "Cài đặt tài khoản",
     "settingsHint": "Bảo mật, thông báo, quyền riêng tư",
     "help": "Trợ giúp & Hỗ trợ",
@@ -529,6 +533,7 @@
       "openToHire": "Đang tuyển dụng",
       "website": "Website",
       "editProfile": "Chỉnh sửa",
+      "dashboard": "Bảng điều khiển",
       "statJobs": "Việc làm",
       "statFollowers": "Người theo dõi",
       "statEmployees": "Quy mô",
@@ -572,14 +577,17 @@
       "emptyApplicants": "Chưa có ứng viên",
       "searchJobsPlaceholder": "Tìm việc làm...",
       "searchApplicantsPlaceholder": "Tìm theo tên ứng viên hoặc job...",
-      "jobMeta": "{applicants} ứng viên • {time}",
+      "jobMeta": "{applicants} ứng viên • {views} lượt xem • {time}",
       "appliedAt": "Nộp {time}",
       "publish": "Đăng",
       "close": "Đóng tin",
       "changeStatus": "Đổi",
       "contact": "Liên hệ",
+      "viewDetail": "Chi tiết",
+      "scheduleInterview": "Lịch PV",
       "statusUpdated": "Đã cập nhật trạng thái",
       "jobStatusUpdated": "Đã cập nhật trạng thái việc làm",
+      "interviewScheduled": "Đã gửi lịch phỏng vấn cho ứng viên",
       "moveTo": "Chuyển sang {stage}",
       "pipelineEmpty": "Trống",
       "jobsFilter": {
@@ -620,7 +628,57 @@
       "jobNotFound": "Không tìm thấy việc làm",
       "jobRemoved": "Việc làm đã bị xoá",
       "noteTooLong": "Ghi chú quá dài",
+      "invalidScheduleTime": "Thời gian phỏng vấn phải ở tương lai",
+      "invalidDuration": "Thời lượng không hợp lệ",
+      "locationTooLong": "Địa điểm/link quá dài",
+      "cannotSchedule": "Không thể lên lịch cho đơn ở trạng thái này",
+      "interviewNotFound": "Không tìm thấy lịch phỏng vấn",
+      "notResubmittable": "Hồ sơ không ở trạng thái có thể gửi lại",
+      "companyNotFound": "Không tìm thấy công ty",
+      "notCompany": "Tài khoản không phải công ty",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
+    },
+    "interview": {
+      "title": "Lên lịch phỏng vấn",
+      "close": "Đóng",
+      "scheduledAtLabel": "Thời gian",
+      "durationLabel": "Thời lượng",
+      "durationMinutes": "{count} phút",
+      "locationLabel": "Địa điểm / Link",
+      "locationPlaceholder": "Văn phòng hoặc link Google Meet/Zoom...",
+      "noteLabel": "Ghi chú",
+      "notePlaceholder": "Lưu ý cho ứng viên (vòng phỏng vấn, người phỏng vấn...)",
+      "cancel": "Huỷ",
+      "submit": "Gửi lịch"
+    },
+    "applicantDetail": {
+      "title": "Hồ sơ ứng viên",
+      "close": "Đóng",
+      "appliedForLabel": "Ứng tuyển vị trí",
+      "resumeLabel": "CV / Hồ sơ",
+      "openResume": "Mở CV",
+      "noResume": "Ứng viên không đính kèm CV",
+      "coverLetterLabel": "Thư giới thiệu",
+      "noCoverLetter": "Không có thư giới thiệu"
+    },
+    "verification": {
+      "status": {
+        "pending": "Đang chờ xác minh",
+        "pending_update": "Cần bổ sung hồ sơ",
+        "verified": "Đã xác minh",
+        "rejected": "Hồ sơ bị từ chối",
+        "suspended": "Tài khoản bị tạm khoá"
+      },
+      "hint": {
+        "pending": "Hồ sơ của bạn đang chờ quản trị viên duyệt.",
+        "pending_update": "Vui lòng cập nhật thông tin theo yêu cầu rồi gửi lại.",
+        "verified": "Công ty của bạn đã được xác minh.",
+        "rejected": "Bạn có thể chỉnh sửa hồ sơ và gửi lại để được duyệt.",
+        "suspended": "Liên hệ quản trị viên để biết thêm chi tiết."
+      },
+      "reasonLabel": "Lý do",
+      "resubmit": "Gửi lại hồ sơ",
+      "resubmitSuccess": "Đã gửi lại hồ sơ, vui lòng chờ duyệt"
     }
   },
   "jobs": {
@@ -732,7 +790,26 @@
       "requirementsTooLong": "Yêu cầu quá dài",
       "jobTypeRequired": "Vui lòng chọn loại hình",
       "workModeRequired": "Vui lòng chọn hình thức",
+      "interviewNotFound": "Không tìm thấy lịch phỏng vấn",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
+    },
+    "applications": {
+      "heading": "Đơn ứng tuyển của tôi",
+      "subheading": "Theo dõi trạng thái và lịch phỏng vấn",
+      "empty": "Bạn chưa nộp đơn ứng tuyển nào.",
+      "browseJobs": "Tìm việc làm",
+      "appliedOn": "Đã nộp {date}",
+      "interviewHeading": "Lịch phỏng vấn",
+      "durationMinutes": "{count} phút",
+      "confirmInterview": "Xác nhận",
+      "declineInterview": "Từ chối",
+      "interviewConfirmedToast": "Đã xác nhận lịch phỏng vấn",
+      "interviewDeclinedToast": "Đã từ chối lịch phỏng vấn",
+      "interviewStatus": {
+        "confirmed": "Bạn đã xác nhận",
+        "declined": "Bạn đã từ chối"
+      },
+      "withdraw": "Rút đơn"
     }
   },
   "network": {
@@ -903,6 +980,8 @@
       "application_status_changed": "đã cập nhật đơn của bạn tại {jobTitle} thành {status}",
       "application_withdrawn": "đã rút đơn ứng tuyển vào {jobTitle}",
       "poll_vote": "đã bình chọn trong cuộc thăm dò của bạn",
+      "interview_scheduled": "đã gửi lịch phỏng vấn cho vị trí {jobTitle}",
+      "interview_response": "đã phản hồi lịch phỏng vấn cho vị trí {jobTitle}",
       "unknown": "có hoạt động mới"
     },
     "appStatus": {
@@ -938,7 +1017,8 @@
       "reasonMax": "Lý do tối đa 80 ký tự",
       "descriptionMax": "Mô tả tối đa 500 ký tự",
       "invalidData": "Dữ liệu không hợp lệ",
-      "createFailed": "Không thể gửi báo cáo"
+      "createFailed": "Không thể gửi báo cáo",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     }
   },
   "messages": {

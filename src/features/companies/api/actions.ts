@@ -11,11 +11,19 @@ import {
   createApplicationStatusUpdateSchema,
   createCompanyUserIdSchema,
   createJobStatusUpdateSchema,
+  createScheduleInterviewSchema,
+  type ScheduleInterviewInput,
 } from "../schemas"
-import type { ToggleFollowResult, UpdateStatusResult } from "../types"
+import type {
+  ResubmitVerificationResult,
+  ScheduleInterviewResult,
+  ToggleFollowResult,
+  UpdateStatusResult,
+} from "../types"
 import {
   notifyApplicationStatusChanged,
   notifyCompanyFollowed,
+  notifyInterviewScheduled,
 } from "../services/company-notifications"
 
 type StatusPayload = { noop: boolean; status: string; oldStatus?: string }
@@ -110,5 +118,74 @@ export async function updateJobStatusAction(input: {
   )
 
   if (result.ok) revalidatePath("/company/dashboard")
+  return result
+}
+
+type ScheduleInterviewPayload = {
+  interviewId: number
+  applicationId: number
+  applicantId: number
+  jobId: number
+  jobTitle: string
+  scheduledAt: string
+  statusChanged: boolean
+}
+
+/**
+ * Recruiter tạo / dời lịch phỏng vấn. RPC tự check ownership + chuyển đơn sang
+ * 'interview'. Notify ứng viên kèm chi tiết lịch.
+ */
+export async function scheduleInterviewAction(
+  input: ScheduleInterviewInput,
+): Promise<ScheduleInterviewResult> {
+  const te = await getTranslations("companies.dashboardErrors")
+  const parsed = createScheduleInterviewSchema(te).safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+  }
+
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+
+  const result = await rpcResult<ScheduleInterviewPayload>(
+    supabase.rpc("schedule_interview", {
+      p_application_id: parsed.data.applicationId,
+      p_scheduled_at: parsed.data.scheduledAt,
+      p_duration_minutes: parsed.data.durationMinutes,
+      p_location_or_link: parsed.data.locationOrLink ?? null,
+      p_note: parsed.data.note ?? null,
+    }),
+  )
+
+  if (result.ok) {
+    revalidatePath("/company/dashboard")
+    await notifyInterviewScheduled({
+      applicantId: result.applicantId,
+      jobId: result.jobId,
+      jobTitle: result.jobTitle,
+      applicationId: result.applicationId,
+      scheduledAt: result.scheduledAt,
+      current,
+    })
+  }
+  return result
+}
+
+/**
+ * Company gửi lại hồ sơ xác minh khi đang ở 'rejected' / 'pending_update'
+ * (FR-M02-007). RPC tự check role + trạng thái hợp lệ.
+ */
+export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerificationResult> {
+  await requireCurrentUser()
+  const supabase = await createClient()
+
+  const result = await rpcResult<{ status: "pending" }>(
+    supabase.rpc("resubmit_company_verification"),
+  )
+
+  if (result.ok) {
+    revalidatePath("/settings")
+    revalidatePath("/company/dashboard")
+  }
   return result
 }

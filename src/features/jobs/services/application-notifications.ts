@@ -37,6 +37,32 @@ export async function notifyApplicationReceived(opts: {
   })
 }
 
+// Notify nhà tuyển dụng khi ứng viên phản hồi lịch phỏng vấn.
+export async function notifyInterviewResponse(opts: {
+  companyUserId: number
+  jobId: number
+  jobTitle: string
+  applicationId: number
+  accepted: boolean
+  current: CurrentUser
+}): Promise<void> {
+  if (opts.companyUserId === opts.current.appUser.id) return
+  await createNotification({
+    userId: opts.companyUserId,
+    type: "interview_response",
+    payload: {
+      type: "interview_response",
+      userId: opts.current.appUser.id,
+      displayName: opts.current.profile.displayName,
+      avatarUrl: opts.current.profile.avatarUrl,
+      jobId: opts.jobId,
+      jobTitle: opts.jobTitle,
+      applicationId: opts.applicationId,
+      accepted: opts.accepted,
+    },
+  })
+}
+
 export async function notifyApplicationWithdrawn(opts: {
   supabase: Supabase
   applicationId: number

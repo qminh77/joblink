@@ -6,6 +6,7 @@ import { ImageOff } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { readSharedOriginal } from "../lib/media"
 import type { FeedPost } from "../types"
@@ -21,6 +22,7 @@ export function SharedPostQuote({
 }) {
   const t = useTranslations("posts")
   const original = readSharedOriginal(media)
+  const createdRel = useRelativeTime(original?.createdAt ?? null)
   if (!original) return null
 
   if (original.deleted) {
@@ -33,13 +35,12 @@ export function SharedPostQuote({
   }
 
   const initials = getInitials(original.author.displayName, "JL")
-  const createdRel = useRelativeTime(original.createdAt ?? null)
 
   return (
     <div className="mt-3 rounded-2xl border border-border/40 bg-muted/10 overflow-hidden">
       <div className="p-3 sm:p-4">
         <div className="flex items-center gap-3">
-          <Link href={`/profile/${original.authorId}`}>
+          <Link href={profileHref(original.authorId, original.author.role)}>
             <Avatar className="w-9 h-9 border border-border/40 hover:opacity-80 transition-opacity">
               {original.author.avatarUrl ? (
                 <AvatarImage src={original.author.avatarUrl} />
@@ -49,7 +50,7 @@ export function SharedPostQuote({
           </Link>
           <div className="min-w-0">
             <Link
-              href={`/profile/${original.authorId}`}
+              href={profileHref(original.authorId, original.author.role)}
               className="font-headline font-bold text-foreground text-[13px] hover:text-primary transition-colors leading-none block truncate"
             >
               {original.author.displayName}

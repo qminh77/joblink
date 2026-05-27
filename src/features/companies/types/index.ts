@@ -78,6 +78,7 @@ export type DashboardStats = {
   activeJobs: number
   totalApplications: number
   applicationsThisMonth: number
+  jobViews: number
   hireRate: number
 }
 
@@ -88,6 +89,7 @@ export type DashboardRecentJob = {
   createdAt: string
   expiresAt: string | null
   applicantCount: number
+  viewCount: number
 }
 
 export type DashboardRecentApplicant = {
@@ -127,4 +129,21 @@ export type JobStatusFilter = "all" | "active" | "draft" | "closed" | "expired"
 
 export type UpdateStatusResult =
   | { ok: true; noop: boolean; status: string; oldStatus?: string }
+  | { ok: false; error: string }
+
+export type ScheduleInterviewResult =
+  | {
+      ok: true
+      interviewId: number
+      applicationId: number
+      applicantId: number
+      jobId: number
+      jobTitle: string
+      scheduledAt: string
+      statusChanged: boolean
+    }
+  | { ok: false; error: string }
+
+export type ResubmitVerificationResult =
+  | { ok: true; status: "pending" }
   | { ok: false; error: string }

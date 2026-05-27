@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { btnTap, fadeUp } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { ReportDialog } from "@/features/reports/components/report-dialog"
@@ -102,7 +103,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
         <div className="p-4 pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <Link href={`/profile/${post.authorId}`}>
+              <Link href={profileHref(post.authorId, post.author.role)}>
                 <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border border-border/40 hover:opacity-80 transition-opacity">
                   {post.author.avatarUrl ? (
                     <AvatarImage src={post.author.avatarUrl} />
@@ -112,7 +113,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
               </Link>
               <div>
                 <Link
-                  href={`/profile/${post.authorId}`}
+                  href={profileHref(post.authorId, post.author.role)}
                   className="font-headline font-bold text-foreground text-[13px] sm:text-sm hover:text-primary transition-colors leading-none mb-1 block"
                 >
                   {post.author.displayName}

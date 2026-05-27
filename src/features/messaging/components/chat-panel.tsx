@@ -15,6 +15,7 @@ import {
 import { btnTap, fadeUp, staggerSm } from "@/lib/animations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -127,7 +128,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
   }
 
   const otherName = conversation.displayName ?? "—"
-  const profileHref = `/profile/${conversation.otherUserId}`
+  const otherProfileHref = profileHref(conversation.otherUserId, conversation.role)
 
   return (
     <>
@@ -139,7 +140,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <Link href={profileHref}>
+          <Link href={otherProfileHref}>
             <Avatar className="w-9 h-9 cursor-pointer hover:opacity-80">
               {conversation.avatarUrl ? (
                 <AvatarImage
@@ -152,7 +153,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
           </Link>
           <div className="min-w-0">
             <Link
-              href={profileHref}
+              href={otherProfileHref}
               className="font-semibold text-sm hover:text-primary transition-colors truncate block"
             >
               {otherName}

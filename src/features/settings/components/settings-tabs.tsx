@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { SessionUserSummary } from "@/features/auth/types"
+import { CompanyVerificationCard } from "@/features/companies/components/company-verification-card"
 import { CompanyInfoForm } from "@/features/profile/components/edit/company-info-form"
 import type {
   CompanyProfileDetail,
@@ -101,6 +102,10 @@ export function SettingsTabs({
             <p className="text-xs text-muted-foreground mb-5">
               {t("company.subtitle")}
             </p>
+            <CompanyVerificationCard
+              status={profile.data.verification_status}
+              note={profile.data.verification_note}
+            />
             <CompanyInfoForm company={profile.data} provinces={provinces} />
           </Card>
         </TabsContent>

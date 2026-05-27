@@ -64,6 +64,7 @@ export function OverviewTab({ recentJobs, recentApplicants }: Props) {
                     <p className="text-xs text-muted-foreground">
                       {t("jobMeta", {
                         applicants: job.applicantCount,
+                        views: job.viewCount,
                         time: formatRel(job.createdAt),
                       })}
                     </p>

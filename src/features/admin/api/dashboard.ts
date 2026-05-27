@@ -1,8 +1,11 @@
 import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { CompanyVerification } from "@/types/database"
-import type { UserRole, UserStatus } from "@/lib/constants"
+import {
+  COMPANY_VERIFICATION_STATUSES,
+  USER_ROLES,
+  USER_STATUSES,
+} from "@/lib/constants"
 
 import { requireAdmin } from "./admin-guard"
 import type { AdminDashboardData, AdminRecentAction } from "../types"
@@ -54,6 +57,29 @@ async function countOf(
   return res.count ?? 0
 }
 
+// Đếm phân bố bằng các count head:true song song (không tải dữ liệu) thay vì
+// select toàn bộ rows rồi đếm trong JS — bandwidth O(1) theo số nhóm.
+async function distOf<K extends string>(
+  supabase: LooseClient,
+  table: string,
+  column: string,
+  values: readonly K[],
+  base: (q: LooseBuilder) => LooseBuilder,
+): Promise<Partial<Record<K, number>>> {
+  const entries = await Promise.all(
+    values.map(
+      async (v) =>
+        [
+          v,
+          await countOf(supabase, table, (q) => base(q).eq(column, v)),
+        ] as const,
+    ),
+  )
+  const out: Partial<Record<K, number>> = {}
+  for (const [k, n] of entries) if (n > 0) out[k] = n
+  return out
+}
+
 export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   await requireAdmin()
   const supabase = createAdminClient() as unknown as LooseClient
@@ -71,9 +97,9 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
       pendingReports,
       totalPosts,
       totalConnections,
-      roleRows,
-      statusRows,
-      verifRows,
+      roleDist,
+      statusDist,
+      verificationDist,
       auditRows,
     ] = await Promise.all([
       countOf(supabase, "users", (q) => q.is("deleted_at", null)),
@@ -100,12 +126,19 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
         q.is("deleted_at", null).eq("status", "active"),
       ),
       countOf(supabase, "connections", (q) => q.eq("status", "accepted")),
-      supabase.from("users").select("role").is("deleted_at", null),
-      supabase.from("users").select("status").is("deleted_at", null),
-      supabase
-        .from("company_profiles")
-        .select("verification_status")
-        .is("deleted_at", null),
+      distOf(supabase, "users", "role", USER_ROLES, (q) =>
+        q.is("deleted_at", null),
+      ),
+      distOf(supabase, "users", "status", USER_STATUSES, (q) =>
+        q.is("deleted_at", null),
+      ),
+      distOf(
+        supabase,
+        "company_profiles",
+        "verification_status",
+        COMPANY_VERIFICATION_STATUSES,
+        (q) => q.is("deleted_at", null),
+      ),
       supabase
         .from("audit_logs")
         .select(
@@ -114,22 +147,6 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
         .order("created_at", { ascending: false })
         .limit(10),
     ])
-
-    const roleDist: Partial<Record<UserRole, number>> = {}
-    for (const r of (roleRows.data ?? []) as Array<{ role: UserRole }>) {
-      roleDist[r.role] = (roleDist[r.role] ?? 0) + 1
-    }
-    const statusDist: Partial<Record<UserStatus, number>> = {}
-    for (const r of (statusRows.data ?? []) as Array<{ status: UserStatus }>) {
-      statusDist[r.status] = (statusDist[r.status] ?? 0) + 1
-    }
-    const verificationDist: Partial<Record<CompanyVerification, number>> = {}
-    for (const r of (verifRows.data ?? []) as Array<{
-      verification_status: CompanyVerification
-    }>) {
-      verificationDist[r.verification_status] =
-        (verificationDist[r.verification_status] ?? 0) + 1
-    }
 
     const auditList = (auditRows.data ?? []) as Array<{
       id: number

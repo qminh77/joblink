@@ -1,48 +1,22 @@
 "use server"
 
-import { getTranslations } from "next-intl/server"
-
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
+import { action, parse, unwrap } from "@/lib/action/server"
+import type { ActionResult } from "@/lib/action/result"
 
 import { createReportSchema } from "../schemas"
+import {
+  insertReport,
+  loadActiveReportTypes,
+  type ReportTypeOption,
+} from "../data/reports.repo"
 
-type ActionResult<T = void> =
-  | { ok: true; data: T }
-  | { ok: false; error: string }
-
-function ok<T>(data: T): ActionResult<T> {
-  return { ok: true, data }
-}
-
-function fail(error: string): ActionResult<never> {
-  return { ok: false, error }
-}
-
-export type ReportTypeOption = {
-  id: number
-  code: string
-  name: string
-}
+export type { ReportTypeOption } from "../data/reports.repo"
 
 export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
-  try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from("report_types")
-      .select("id, code, name")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-
-    if (error) {
-      console.error("[getReportTypesAction]", error)
-      return []
-    }
-    return data ?? []
-  } catch (e) {
-    console.error("[getReportTypesAction]", e)
-    return []
-  }
+  const supabase = await createClient()
+  return loadActiveReportTypes(supabase)
 }
 
 export async function createReportAction(input: {
@@ -51,27 +25,21 @@ export async function createReportAction(input: {
   reason: string
   description?: string | null
 }): Promise<ActionResult<{ reportId: number }>> {
-  const te = await getTranslations("reports.errors")
-  const parsed = createReportSchema(te).safeParse(input)
-  if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? te("invalidData"))
-  }
+  return action("reports.errors", async (t) => {
+    const data = parse(createReportSchema(t), input)
+    const current = await requireCurrentUser()
+    const supabase = await createClient()
 
-  const current = await requireCurrentUser()
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from("reports")
-    .insert({
-      reporter_id: current.appUser.id,
-      target_type: parsed.data.targetType,
-      target_id: parsed.data.targetId,
-      reason: parsed.data.reason,
-      description: parsed.data.description ?? null,
-    })
-    .select("id")
-    .single()
-
-  if (error || !data) return fail(error?.message ?? te("createFailed"))
-  return ok({ reportId: data.id })
+    const row = unwrap(
+      await insertReport(supabase, {
+        reporterId: current.appUser.id,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        reason: data.reason,
+        description: data.description ?? null,
+      }),
+      "createFailed",
+    )
+    return { reportId: row.id }
+  })
 }

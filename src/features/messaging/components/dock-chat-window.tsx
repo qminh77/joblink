@@ -8,6 +8,7 @@ import { Check, CheckCheck, ChevronDown, Send, X } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 import {
@@ -122,7 +123,7 @@ export function DockChatWindow({
   }
 
   const otherName = conversation.displayName ?? "—"
-  const profileHref = `/profile/${conversation.otherUserId}`
+  const otherProfileHref = profileHref(conversation.otherUserId, conversation.role)
   const hasUnread = !minimized ? false : conversation.unreadCount > 0
 
   return (
@@ -202,7 +203,7 @@ export function DockChatWindow({
             ) : messages.length === 0 ? (
               <div className="text-center py-8 text-[11px] text-muted-foreground">
                 <Link
-                  href={profileHref}
+                  href={otherProfileHref}
                   className="font-semibold text-foreground hover:text-primary block mb-1"
                 >
                   {otherName}

@@ -17,12 +17,14 @@ import type {
   ApplyResult,
   CreateJobInput,
   CreateJobResult,
+  RespondInterviewResult,
   ToggleSavedResult,
   WithdrawResult,
 } from "../types"
 import {
   notifyApplicationReceived,
   notifyApplicationWithdrawn,
+  notifyInterviewResponse,
 } from "../services/application-notifications"
 
 export async function createJobAction(
@@ -141,4 +143,54 @@ export async function toggleSavedJobAction(
 
   if (result.ok) revalidatePath("/saved-jobs")
   return result
+}
+
+/**
+ * Ứng viên xác nhận / từ chối lịch phỏng vấn. RPC tự check chủ đơn. Notify
+ * recruiter kèm kết quả.
+ */
+export async function respondInterviewAction(input: {
+  interviewId: number
+  accept: boolean
+}): Promise<RespondInterviewResult> {
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+
+  const result = await rpcResult<{
+    status: "confirmed" | "declined"
+    companyUserId: number
+    jobId: number
+    jobTitle: string
+    applicationId: number
+  }>(
+    supabase.rpc("respond_interview", {
+      p_interview_id: input.interviewId,
+      p_accept: input.accept,
+    }),
+  )
+
+  if (result.ok) {
+    revalidatePath("/jobs/applications")
+    await notifyInterviewResponse({
+      companyUserId: result.companyUserId,
+      jobId: result.jobId,
+      jobTitle: result.jobTitle,
+      applicationId: result.applicationId,
+      accepted: input.accept,
+      current,
+    })
+  }
+  return result.ok
+    ? { ok: true, status: result.status }
+    : { ok: false, error: result.error }
+}
+
+/**
+ * Ghi nhận lượt xem job (FR-M07-004). Best-effort — bỏ qua lỗi/dedupe trong RPC.
+ * Không throw để không ảnh hưởng render trang job.
+ */
+export async function logJobViewAction(jobId: number): Promise<void> {
+  if (!Number.isInteger(jobId) || jobId <= 0) return
+  const supabase = await createClient()
+  await supabase.rpc("log_job_view", { p_job_id: jobId })
 }

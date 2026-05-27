@@ -9,6 +9,7 @@ import { MessageSquare, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { fadeUp, staggerSm } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
@@ -227,7 +228,7 @@ function CommentRow({
   return (
     <div className={`flex gap-2 group ${pendingDelete ? "opacity-50" : ""}`}>
       <Link
-        href={`/profile/${comment.userId}`}
+        href={profileHref(comment.userId, comment.author.role)}
         className="shrink-0"
         aria-label={comment.author.displayName}
       >
@@ -241,7 +242,7 @@ function CommentRow({
       <div className="flex-1 min-w-0">
         <div className="inline-block max-w-full bg-muted/70 rounded-2xl px-3 py-1.5">
           <Link
-            href={`/profile/${comment.userId}`}
+            href={profileHref(comment.userId, comment.author.role)}
             className="font-semibold text-[12px] text-foreground hover:text-primary transition-colors leading-tight"
           >
             {comment.author.displayName}

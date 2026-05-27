@@ -121,6 +121,55 @@ export type WithdrawResult =
   | { ok: true; status: string }
   | { ok: false; error: string }
 
+export type ApplicationStatusValue =
+  | "applied"
+  | "reviewed"
+  | "interview"
+  | "offered"
+  | "hired"
+  | "rejected"
+  | "withdrawn"
+
+export type ApplicationInterview = {
+  id: number
+  scheduledAt: string
+  durationMinutes: number
+  locationOrLink: string | null
+  note: string | null
+  status: "scheduled" | "confirmed" | "declined"
+}
+
+export type ApplicationHistoryEntry = {
+  oldStatus: string | null
+  newStatus: string
+  changedAt: string
+  note: string | null
+}
+
+export type MyApplicationItem = {
+  applicationId: number
+  status: ApplicationStatusValue
+  appliedAt: string
+  updatedAt: string
+  jobId: number
+  jobTitle: string
+  jobStatus: string
+  companyUserId: number
+  companyName: string
+  companyLogoUrl: string | null
+  interview: ApplicationInterview | null
+  history: ApplicationHistoryEntry[]
+}
+
+export type MyApplicationsPage = {
+  items: MyApplicationItem[]
+  total: number
+}
+
+export type RespondInterviewResult =
+  | { ok: true; status: "confirmed" | "declined" }
+  | { ok: false; error: string }
+
 // Reference data tables (loaded for filters/form)
 export type JobTypeRef = { id: number; code: string; name: string }
 export type WorkModeRef = { id: number; code: string; name: string }

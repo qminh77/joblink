@@ -34,6 +34,7 @@ import { applyUserAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
 import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 const STATUS_STYLE: Record<string, string> = {
   pending_verification:
@@ -219,7 +220,7 @@ export function UsersPanel({
                   <tr key={user.id} className="hover:bg-muted/20">
                     <td className="px-4 py-3">
                       <Link
-                        href={`/profile/${user.id}`}
+                        href={profileHref(user.id, user.role)}
                         className="flex items-center gap-3 group"
                       >
                         <Avatar className="w-8 h-8">

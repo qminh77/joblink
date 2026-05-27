@@ -3,6 +3,8 @@ import {
   BarChart2,
   Bell,
   Briefcase,
+  CalendarCheck,
+  CalendarClock,
   MessageCircle,
   MessageSquare,
   Send,
@@ -39,6 +41,8 @@ export function getNotificationLabelParams(
   switch (item.type) {
     case "job_application_received":
     case "application_withdrawn":
+    case "interview_scheduled":
+    case "interview_response":
       return payload.type === item.type ? { jobTitle: payload.jobTitle } : {}
     case "application_status_changed":
       if (payload.type !== item.type) return {}
@@ -102,6 +106,14 @@ const VISUALS: Record<
   poll_vote: {
     icon: BarChart2,
     iconClassName: "text-orange-500 bg-orange-500/10",
+  },
+  interview_scheduled: {
+    icon: CalendarClock,
+    iconClassName: "text-purple-500 bg-purple-500/10",
+  },
+  interview_response: {
+    icon: CalendarCheck,
+    iconClassName: "text-emerald-500 bg-emerald-500/10",
   },
 }
 
@@ -187,6 +199,24 @@ export function getNotificationVisual(
         ...base,
         href:
           payload?.type === item.type ? `/jobs/${payload.jobId}` : "/jobs",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "interview_scheduled":
+      // Ứng viên → trang đơn ứng tuyển để xem/ xác nhận lịch.
+      return {
+        ...base,
+        href: "/jobs/applications",
+        actorName: payload?.type === item.type ? payload.displayName : null,
+        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
+        actorUserId: payload?.type === item.type ? payload.userId : null,
+      }
+    case "interview_response":
+      // Recruiter → dashboard để xem phản hồi lịch của ứng viên.
+      return {
+        ...base,
+        href: "/company/dashboard",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

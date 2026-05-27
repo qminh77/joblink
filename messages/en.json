@@ -147,6 +147,10 @@
     "viewProfile": "View profile",
     "viewProfileHint": "Your professional profile",
     "savedJobsHint": "Jobs you've bookmarked",
+    "myApplications": "My applications",
+    "myApplicationsHint": "Track applications and interviews",
+    "companyDashboard": "Dashboard",
+    "companyDashboardHint": "Manage job posts and applicants",
     "settings": "Account settings",
     "settingsHint": "Security, notifications, privacy",
     "help": "Help & Support",
@@ -529,6 +533,7 @@
       "openToHire": "Open to hire",
       "website": "Website",
       "editProfile": "Edit",
+      "dashboard": "Dashboard",
       "statJobs": "Jobs",
       "statFollowers": "Followers",
       "statEmployees": "Size",
@@ -572,14 +577,17 @@
       "emptyApplicants": "No applicants yet",
       "searchJobsPlaceholder": "Search jobs...",
       "searchApplicantsPlaceholder": "Search by name or job title...",
-      "jobMeta": "{applicants} applicants • {time}",
+      "jobMeta": "{applicants} applicants • {views} views • {time}",
       "appliedAt": "Applied {time}",
       "publish": "Publish",
       "close": "Close",
       "changeStatus": "Change",
       "contact": "Contact",
+      "viewDetail": "Details",
+      "scheduleInterview": "Interview",
       "statusUpdated": "Status updated",
       "jobStatusUpdated": "Job status updated",
+      "interviewScheduled": "Interview invite sent to the applicant",
       "moveTo": "Move to {stage}",
       "pipelineEmpty": "Empty",
       "jobsFilter": {
@@ -620,7 +628,57 @@
       "jobNotFound": "Job not found",
       "jobRemoved": "Job has been removed",
       "noteTooLong": "Note is too long",
+      "invalidScheduleTime": "Interview time must be in the future",
+      "invalidDuration": "Invalid duration",
+      "locationTooLong": "Location/link is too long",
+      "cannotSchedule": "Cannot schedule for an application in this status",
+      "interviewNotFound": "Interview not found",
+      "notResubmittable": "Profile is not in a resubmittable state",
+      "companyNotFound": "Company not found",
+      "notCompany": "Account is not a company",
       "unknown": "Something went wrong, please try again"
+    },
+    "interview": {
+      "title": "Schedule interview",
+      "close": "Close",
+      "scheduledAtLabel": "Date & time",
+      "durationLabel": "Duration",
+      "durationMinutes": "{count} min",
+      "locationLabel": "Location / Link",
+      "locationPlaceholder": "Office address or Google Meet/Zoom link...",
+      "noteLabel": "Note",
+      "notePlaceholder": "Notes for the candidate (round, interviewer...)",
+      "cancel": "Cancel",
+      "submit": "Send invite"
+    },
+    "applicantDetail": {
+      "title": "Applicant profile",
+      "close": "Close",
+      "appliedForLabel": "Applied for",
+      "resumeLabel": "CV / Resume",
+      "openResume": "Open CV",
+      "noResume": "No CV attached",
+      "coverLetterLabel": "Cover letter",
+      "noCoverLetter": "No cover letter"
+    },
+    "verification": {
+      "status": {
+        "pending": "Pending verification",
+        "pending_update": "Update required",
+        "verified": "Verified",
+        "rejected": "Profile rejected",
+        "suspended": "Account suspended"
+      },
+      "hint": {
+        "pending": "Your profile is awaiting admin review.",
+        "pending_update": "Please update the requested information and resubmit.",
+        "verified": "Your company has been verified.",
+        "rejected": "You can edit your profile and resubmit for review.",
+        "suspended": "Contact an administrator for more details."
+      },
+      "reasonLabel": "Reason",
+      "resubmit": "Resubmit profile",
+      "resubmitSuccess": "Profile resubmitted, awaiting review"
     }
   },
   "jobs": {
@@ -732,7 +790,26 @@
       "requirementsTooLong": "Requirements is too long",
       "jobTypeRequired": "Please select a job type",
       "workModeRequired": "Please select a work mode",
+      "interviewNotFound": "Interview not found",
       "unknown": "Something went wrong, please try again"
+    },
+    "applications": {
+      "heading": "My applications",
+      "subheading": "Track status and interview schedules",
+      "empty": "You haven't applied to any jobs yet.",
+      "browseJobs": "Browse jobs",
+      "appliedOn": "Applied on {date}",
+      "interviewHeading": "Interview schedule",
+      "durationMinutes": "{count} min",
+      "confirmInterview": "Confirm",
+      "declineInterview": "Decline",
+      "interviewConfirmedToast": "Interview confirmed",
+      "interviewDeclinedToast": "Interview declined",
+      "interviewStatus": {
+        "confirmed": "You confirmed",
+        "declined": "You declined"
+      },
+      "withdraw": "Withdraw"
     }
   },
   "network": {
@@ -903,6 +980,8 @@
       "application_status_changed": "updated your application for {jobTitle} to {status}",
       "application_withdrawn": "withdrew their application for {jobTitle}",
       "poll_vote": "voted on your poll",
+      "interview_scheduled": "sent you an interview invite for {jobTitle}",
+      "interview_response": "responded to the interview invite for {jobTitle}",
       "unknown": "has new activity"
     },
     "appStatus": {
@@ -938,7 +1017,8 @@
       "reasonMax": "Reason up to 80 characters",
       "descriptionMax": "Description up to 500 characters",
       "invalidData": "Invalid data",
-      "createFailed": "Could not submit report"
+      "createFailed": "Could not submit report",
+      "unexpected": "Something went wrong, please try again"
     }
   },
   "messages": {

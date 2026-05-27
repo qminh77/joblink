@@ -9,13 +9,18 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
+  resubmitCompanyVerificationAction,
+  scheduleInterviewAction,
   toggleFollowCompanyAction,
   updateApplicationStatusAction,
   updateJobStatusAction,
 } from "../api/actions"
+import type { ScheduleInterviewInput } from "../schemas"
 import type {
   DashboardApplicantsPage,
   DashboardJobsPage,
+  ResubmitVerificationResult,
+  ScheduleInterviewResult,
   ToggleFollowResult,
   UpdateStatusResult,
 } from "../types"
@@ -180,6 +185,14 @@ function translateDashboardError(t: (k: string) => string, raw: string) {
     "jobNotFound",
     "jobRemoved",
     "noteTooLong",
+    "invalidScheduleTime",
+    "invalidDuration",
+    "locationTooLong",
+    "cannotSchedule",
+    "interviewNotFound",
+    "notResubmittable",
+    "companyNotFound",
+    "notCompany",
     "unknown",
   ])
   if (!raw) return t("unknown")
@@ -206,6 +219,46 @@ export function useUpdateApplicationStatus() {
       if (!result.ok || result.noop) return
       toast.success(ts("statusUpdated"))
       qc.invalidateQueries({ queryKey: ["companies", "dashboard"] })
+    },
+    onError: (error) => {
+      toast.error(translateDashboardError(te, error.message))
+    },
+  })
+}
+
+export function useScheduleInterview() {
+  const qc = useQueryClient()
+  const te = useTranslations("companies.dashboardErrors")
+  const ts = useTranslations("companies.dashboard")
+
+  return useMutation<ScheduleInterviewResult, Error, ScheduleInterviewInput>({
+    mutationFn: async (input) => {
+      const r = await scheduleInterviewAction(input)
+      if (!r.ok) throw new Error(r.error)
+      return r
+    },
+    onSuccess: () => {
+      toast.success(ts("interviewScheduled"))
+      qc.invalidateQueries({ queryKey: ["companies", "dashboard"] })
+    },
+    onError: (error) => {
+      toast.error(translateDashboardError(te, error.message))
+    },
+  })
+}
+
+export function useResubmitVerification() {
+  const te = useTranslations("companies.dashboardErrors")
+  const ts = useTranslations("companies.verification")
+
+  return useMutation<ResubmitVerificationResult, Error, void>({
+    mutationFn: async () => {
+      const r = await resubmitCompanyVerificationAction()
+      if (!r.ok) throw new Error(r.error)
+      return r
+    },
+    onSuccess: () => {
+      toast.success(ts("resubmitSuccess"))
     },
     onError: (error) => {
       toast.error(translateDashboardError(te, error.message))

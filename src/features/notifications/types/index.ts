@@ -79,6 +79,20 @@ export type PollVotePayload = ActorRef & {
   optionText: string
 }
 
+export type InterviewScheduledPayload = ActorRef & {
+  jobId: number
+  jobTitle: string
+  applicationId: number
+  scheduledAt: string
+}
+
+export type InterviewResponsePayload = ActorRef & {
+  jobId: number
+  jobTitle: string
+  applicationId: number
+  accepted: boolean
+}
+
 export type NotificationPayload =
   | ({ type: "connection_request" } & ConnectionRequestPayload)
   | ({ type: "connection_accepted" } & ConnectionAcceptedPayload)
@@ -92,6 +106,8 @@ export type NotificationPayload =
   | ({ type: "application_status_changed" } & ApplicationStatusChangedPayload)
   | ({ type: "application_withdrawn" } & ApplicationWithdrawnPayload)
   | ({ type: "poll_vote" } & PollVotePayload)
+  | ({ type: "interview_scheduled" } & InterviewScheduledPayload)
+  | ({ type: "interview_response" } & InterviewResponsePayload)
 
 export type NotificationItem = {
   id: number

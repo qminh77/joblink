@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   Globe,
+  LayoutDashboard,
   Mail,
   MapPin,
   Pencil,
@@ -128,12 +129,20 @@ export async function CompanyPublicPage({ companyUserId }: Props) {
             </div>
             <div className="flex items-center gap-2 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
               {isOwner ? (
-                <Button variant="outline" className="rounded-lg" asChild>
-                  <Link href="/profile/edit">
-                    <Pencil className="w-4 h-4 mr-1.5" />
-                    {t("editProfile")}
-                  </Link>
-                </Button>
+                <>
+                  <Button className="rounded-lg" asChild>
+                    <Link href="/company/dashboard">
+                      <LayoutDashboard className="w-4 h-4 mr-1.5" />
+                      {t("dashboard")}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="rounded-lg" asChild>
+                    <Link href="/settings">
+                      <Pencil className="w-4 h-4 mr-1.5" />
+                      {t("editProfile")}
+                    </Link>
+                  </Button>
+                </>
               ) : (
                 <CompanyFollowButton
                   companyUserId={company.userId}

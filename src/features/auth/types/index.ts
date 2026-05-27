@@ -1,10 +1,7 @@
-import type { User } from "@supabase/supabase-js"
-
 import type { UserRole, UserStatus } from "@/lib/constants"
 import type { AppUserRow } from "@/types/database"
 
 export type CurrentUser = {
-  authUser: User
   appUser: AppUserRow
   profile: {
     displayName: string

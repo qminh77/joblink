@@ -1,9 +1,8 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { loadUserPosts } from "@/features/posts/api/queries"
 import { loadProfileById } from "@/features/profile/api/queries"
-import { CompanyProfileView } from "@/features/profile/components/company-profile-view"
 import { MemberProfileView } from "@/features/profile/components/member-profile-view"
 
 type ProfilePageProps = {
@@ -25,18 +24,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (!result) notFound()
 
-  const { detail, relation, isOwner } = result
-
-  if (detail.kind === "company") {
-    return (
-      <CompanyProfileView
-        company={detail.data}
-        isOwner={isOwner}
-        relation={relation}
-        postsPage={postsPage}
-      />
-    )
+  // Company dùng trang public riêng /company/[id]; /profile/[id] chỉ phục vụ member.
+  if (result.detail.kind === "company") {
+    redirect(`/company/${targetId}`)
   }
+
+  const { detail, relation } = result
 
   return (
     <MemberProfileView

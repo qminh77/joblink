@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { COMPANY_VERIFICATION_STATUSES } from "@/lib/constants"
 import type { CompanyVerification } from "@/types/database"
 
 import { requireAdmin } from "./admin-guard"
@@ -95,10 +96,19 @@ export async function listAdminCompanies(
     submittedAt: r.created_at,
   }))
 
-  const { data: countRows } = await supabase
-    .from("company_profiles")
-    .select("verification_status")
-    .is("deleted_at", null)
+  // Đếm bằng count head:true song song (không tải dữ liệu) thay vì select toàn bảng.
+  const countCol = (status?: CompanyVerification) => {
+    let q = supabase
+      .from("company_profiles")
+      .select("user_id", { count: "exact", head: true })
+      .is("deleted_at", null)
+    if (status) q = q.eq("verification_status", status)
+    return q
+  }
+  const [allRes, ...statusRes] = await Promise.all([
+    countCol(),
+    ...COMPANY_VERIFICATION_STATUSES.map((s) => countCol(s)),
+  ])
 
   const counts: Record<string, number> = {
     pending: 0,
@@ -106,14 +116,11 @@ export async function listAdminCompanies(
     verified: 0,
     rejected: 0,
     suspended: 0,
-    all: 0,
+    all: allRes.count ?? 0,
   }
-  for (const row of (countRows ?? []) as Array<{
-    verification_status: CompanyVerification
-  }>) {
-    counts.all += 1
-    counts[row.verification_status] = (counts[row.verification_status] ?? 0) + 1
-  }
+  COMPANY_VERIFICATION_STATUSES.forEach((s, i) => {
+    counts[s] = statusRes[i].count ?? 0
+  })
 
   return {
     items,

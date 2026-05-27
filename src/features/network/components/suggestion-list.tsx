@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 import { useSendConnectionRequest, useSentConnectionIds } from "../hooks"
 import type { NetworkUserCard } from "../types"
@@ -51,7 +52,7 @@ function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
 
   return (
     <li className="flex items-center gap-2.5">
-      <Link href={`/profile/${connection.userId}`} className="shrink-0">
+      <Link href={profileHref(connection.userId, connection.role)} className="shrink-0">
         <Avatar className="size-9 hover:opacity-80 transition-opacity">
           {connection.avatarUrl ? (
             <AvatarImage src={connection.avatarUrl} />
@@ -63,7 +64,7 @@ function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
       </Link>
       <div className="flex-1 min-w-0">
         <Link
-          href={`/profile/${connection.userId}`}
+          href={profileHref(connection.userId, connection.role)}
           className="text-[13px] font-semibold text-foreground truncate hover:text-primary transition-colors block leading-tight"
           title={connection.displayName}
         >

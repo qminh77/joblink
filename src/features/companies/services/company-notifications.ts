@@ -34,6 +34,32 @@ export async function notifyCompanyFollowed(opts: {
   })
 }
 
+// Notify ứng viên khi recruiter gửi/dời lịch phỏng vấn.
+export async function notifyInterviewScheduled(opts: {
+  applicantId: number
+  jobId: number
+  jobTitle: string
+  applicationId: number
+  scheduledAt: string
+  current: CurrentUser
+}): Promise<void> {
+  if (opts.applicantId === opts.current.appUser.id) return
+  await createNotification({
+    userId: opts.applicantId,
+    type: "interview_scheduled",
+    payload: {
+      type: "interview_scheduled",
+      userId: opts.current.appUser.id,
+      displayName: opts.current.profile.displayName,
+      avatarUrl: opts.current.profile.avatarUrl,
+      jobId: opts.jobId,
+      jobTitle: opts.jobTitle,
+      applicationId: opts.applicationId,
+      scheduledAt: opts.scheduledAt,
+    },
+  })
+}
+
 // Notify ứng viên khi recruiter đổi trạng thái đơn (caller đã loại trường noop).
 export async function notifyApplicationStatusChanged(opts: {
   supabase: Supabase
