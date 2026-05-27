@@ -2628,6 +2628,197 @@ CREATE POLICY messages_update_read
 
 
 -- #############################################################################
+-- 16c-bis. POSTS VISIBILITY RLS (migration 20260529_023)
+-- #############################################################################
+-- Enforce visibility (public / connections / private) ở tầng database thay vì
+-- chỉ dựa vào các RPC ở tầng ứng dụng. Không có khối này, client cầm anon key
+-- có thể gọi thẳng PostgREST để đọc bài 'private' của người khác hoặc sửa/xoá
+-- bài người khác. Các RPC SECURITY INVOKER vốn đã lọc đúng tập visible nên kết
+-- quả không đổi; admin dùng service-role bypass RLS.
+
+-- DROP trước khi tạo: nếu DB đã có hàm cùng tên với tên tham số khác,
+-- CREATE OR REPLACE sẽ báo "cannot change name of input parameter". CASCADE để
+-- re-run được — mọi thứ phụ thuộc 2 hàm này chỉ là các RLS policy bên dưới,
+-- bị drop kèm rồi được tạo lại ngay. DROP can_view_post trước (tham chiếu are_connected).
+DROP FUNCTION IF EXISTS public.can_view_post(BIGINT) CASCADE;
+DROP FUNCTION IF EXISTS public.are_connected(BIGINT, BIGINT) CASCADE;
+
+CREATE OR REPLACE FUNCTION public.are_connected(p_a BIGINT, p_b BIGINT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.connections c
+     WHERE c.status = 'accepted'
+       AND ((c.requester_id = p_a AND c.receiver_id = p_b)
+         OR (c.requester_id = p_b AND c.receiver_id = p_a))
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.are_connected(BIGINT, BIGINT) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.can_view_post(post_id BIGINT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.posts p
+     WHERE p.id = can_view_post.post_id
+       AND p.deleted_at IS NULL
+       AND (
+            p.visibility = 'public'
+         OR p.author_id = public.auth_user_id()
+         OR (p.visibility = 'connections'
+             AND public.are_connected(public.auth_user_id(), p.author_id))
+         OR public.is_admin()
+       )
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.can_view_post(BIGINT) TO anon, authenticated;
+
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS posts_admin_all      ON public.posts;
+DROP POLICY IF EXISTS posts_select_visible ON public.posts;
+DROP POLICY IF EXISTS posts_insert_own     ON public.posts;
+DROP POLICY IF EXISTS posts_update_own     ON public.posts;
+DROP POLICY IF EXISTS posts_delete_own     ON public.posts;
+
+CREATE POLICY posts_admin_all
+  ON public.posts
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY posts_select_visible
+  ON public.posts
+  FOR SELECT
+  USING (
+    deleted_at IS NULL
+    AND (
+         visibility = 'public'
+      OR author_id = public.auth_user_id()
+      OR (visibility = 'connections'
+          AND public.are_connected(public.auth_user_id(), author_id))
+    )
+  );
+
+CREATE POLICY posts_insert_own
+  ON public.posts
+  FOR INSERT
+  WITH CHECK (author_id = public.auth_user_id());
+
+CREATE POLICY posts_update_own
+  ON public.posts
+  FOR UPDATE
+  USING (author_id = public.auth_user_id())
+  WITH CHECK (author_id = public.auth_user_id());
+
+CREATE POLICY posts_delete_own
+  ON public.posts
+  FOR DELETE
+  USING (author_id = public.auth_user_id());
+
+ALTER TABLE public.post_reactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS post_reactions_admin_all      ON public.post_reactions;
+DROP POLICY IF EXISTS post_reactions_select_visible ON public.post_reactions;
+DROP POLICY IF EXISTS post_reactions_insert_own     ON public.post_reactions;
+DROP POLICY IF EXISTS post_reactions_delete_own     ON public.post_reactions;
+
+CREATE POLICY post_reactions_admin_all
+  ON public.post_reactions
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY post_reactions_select_visible
+  ON public.post_reactions
+  FOR SELECT
+  USING (public.can_view_post(post_id));
+
+CREATE POLICY post_reactions_insert_own
+  ON public.post_reactions
+  FOR INSERT
+  WITH CHECK (user_id = public.auth_user_id() AND public.can_view_post(post_id));
+
+CREATE POLICY post_reactions_delete_own
+  ON public.post_reactions
+  FOR DELETE
+  USING (user_id = public.auth_user_id());
+
+ALTER TABLE public.post_comments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS post_comments_admin_all      ON public.post_comments;
+DROP POLICY IF EXISTS post_comments_select_visible ON public.post_comments;
+DROP POLICY IF EXISTS post_comments_insert_own     ON public.post_comments;
+DROP POLICY IF EXISTS post_comments_update_own     ON public.post_comments;
+
+CREATE POLICY post_comments_admin_all
+  ON public.post_comments
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY post_comments_select_visible
+  ON public.post_comments
+  FOR SELECT
+  USING (public.can_view_post(post_id));
+
+CREATE POLICY post_comments_insert_own
+  ON public.post_comments
+  FOR INSERT
+  WITH CHECK (user_id = public.auth_user_id() AND public.can_view_post(post_id));
+
+CREATE POLICY post_comments_update_own
+  ON public.post_comments
+  FOR UPDATE
+  USING (user_id = public.auth_user_id())
+  WITH CHECK (user_id = public.auth_user_id());
+
+ALTER TABLE public.post_shares ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS post_shares_admin_all      ON public.post_shares;
+DROP POLICY IF EXISTS post_shares_select_visible ON public.post_shares;
+DROP POLICY IF EXISTS post_shares_insert_own     ON public.post_shares;
+DROP POLICY IF EXISTS post_shares_delete_own     ON public.post_shares;
+
+CREATE POLICY post_shares_admin_all
+  ON public.post_shares
+  FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY post_shares_select_visible
+  ON public.post_shares
+  FOR SELECT
+  USING (public.can_view_post(post_id));
+
+CREATE POLICY post_shares_insert_own
+  ON public.post_shares
+  FOR INSERT
+  WITH CHECK (user_id = public.auth_user_id());
+
+CREATE POLICY post_shares_delete_own
+  ON public.post_shares
+  FOR DELETE
+  USING (user_id = public.auth_user_id());
+
+-- =============================================================================
+-- END MIGRATION 20260529_023
+-- =============================================================================
+
+
+-- #############################################################################
 -- 16d. MESSAGING REALTIME — messages / conversations / participants
 -- #############################################################################
 -- -----------------------------------------------------------------------------

@@ -63,4 +63,11 @@ export type FeedComment = {
   author: FeedAuthor
 }
 
+export type MentionableUser = {
+  userId: number
+  displayName: string
+  avatarUrl: string | null
+  headline: string | null
+}
+
 export type { PostReactionType }

@@ -115,7 +115,8 @@
       "shareFailed": "Could not share post",
       "commentFailed": "Could not post comment",
       "loadCommentsFailed": "Could not load comments",
-      "deleteCommentFailed": "Could not delete comment"
+      "deleteCommentFailed": "Could not delete comment",
+      "unexpected": "Something went wrong, please try again"
     }
   },
   "languageSwitcher": {
@@ -382,7 +383,8 @@
       "memberOnly": "Only members can perform this action",
       "companyOnly": "Only company accounts can perform this action",
       "invalidData": "Invalid data",
-      "missingId": "Missing ID to update"
+      "missingId": "Missing ID to update",
+      "unexpected": "Something went wrong, please try again"
     },
     "company": {
       "name": "Company name",
@@ -801,7 +803,8 @@
       "noRespondPermission": "You don't have permission to respond to this invitation",
       "connectionNotFound": "Connection not found",
       "noRemovePermission": "You don't have permission to remove this connection",
-      "notAccepted": "This connection is not established"
+      "notAccepted": "This connection is not established",
+      "unexpected": "Something went wrong, please try again"
     },
     "validation": {
       "keywordMax": "Keyword up to 100 characters"

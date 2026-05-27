@@ -115,7 +115,8 @@
       "shareFailed": "Không thể chia sẻ bài viết",
       "commentFailed": "Không thể đăng bình luận",
       "loadCommentsFailed": "Không thể tải bình luận",
-      "deleteCommentFailed": "Không thể xoá bình luận"
+      "deleteCommentFailed": "Không thể xoá bình luận",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     }
   },
   "languageSwitcher": {
@@ -382,7 +383,8 @@
       "memberOnly": "Chỉ thành viên mới có thể thực hiện thao tác này",
       "companyOnly": "Chỉ tài khoản công ty mới có thể thực hiện thao tác này",
       "invalidData": "Dữ liệu không hợp lệ",
-      "missingId": "Thiếu ID cần cập nhật"
+      "missingId": "Thiếu ID cần cập nhật",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
     "company": {
       "name": "Tên công ty",
@@ -801,7 +803,8 @@
       "noRespondPermission": "Bạn không có quyền phản hồi lời mời này",
       "connectionNotFound": "Kết nối không tồn tại",
       "noRemovePermission": "Bạn không có quyền hủy kết nối này",
-      "notAccepted": "Kết nối này chưa được thiết lập"
+      "notAccepted": "Kết nối này chưa được thiết lập",
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
     "validation": {
       "keywordMax": "Từ khóa tối đa 100 ký tự"

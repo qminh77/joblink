@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
+import { rpcResult } from "@/lib/action/rpc"
 
 import {
   createConversationIdSchema,
@@ -22,7 +23,6 @@ import {
   clearNewMessageNotifications,
   notifyNewMessage,
 } from "../lib/new-message-notification"
-
 import {
   loadConversationMessages,
   loadMessagingOverview,
@@ -31,14 +31,12 @@ import {
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
-function fail(error: string): ActionResult {
-  return { ok: false, error }
-}
-
 function excerpt(text: string | null, max = 120): string {
   const t = (text ?? "").trim()
   return t.length > max ? `${t.slice(0, max - 1)}…` : t
 }
+
+// ── Reads (RLS lo lọc participant) ───────────────────────────────────────────
 
 export async function getMessagingOverviewAction(): Promise<MessagingOverview> {
   return loadMessagingOverview()
@@ -55,6 +53,8 @@ export async function getConversationMessagesAction(
   return loadConversationMessages(conversationId, cursor)
 }
 
+// ── Writes (qua RPC SECURITY DEFINER; error code do client whitelist-translate) ─
+
 export async function ensureConversationWithAction(
   targetUserId: number,
 ): Promise<EnsureConversationResult> {
@@ -67,25 +67,11 @@ export async function ensureConversationWithAction(
   await requireCurrentUser()
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc(
-    "find_or_create_direct_conversation",
-    { p_other_user_id: parsed.data },
+  return rpcResult<{ conversationId: number }>(
+    supabase.rpc("find_or_create_direct_conversation", {
+      p_other_user_id: parsed.data,
+    }),
   )
-
-  if (error) return { ok: false, error: error.message }
-
-  const payload = data as unknown as
-    | { ok: true; conversationId: number }
-    | { ok: false; error: string }
-    | null
-
-  if (!payload) return { ok: false, error: "unknown" }
-  if (!payload.ok) {
-    // Trả nguyên code (vd "notConnected") — client translate qua whitelist
-    // ở translateMessagingError. Tránh gọi te() ở server với key động.
-    return { ok: false, error: payload.error }
-  }
-  return { ok: true, conversationId: payload.conversationId }
 }
 
 export async function sendMessageAction(
@@ -93,10 +79,7 @@ export async function sendMessageAction(
   content: string,
 ): Promise<SendMessageResult> {
   const te = await getTranslations("messages.errors")
-  const parsed = createSendMessageSchema(te).safeParse({
-    conversationId,
-    content,
-  })
+  const parsed = createSendMessageSchema(te).safeParse({ conversationId, content })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
@@ -104,45 +87,25 @@ export async function sendMessageAction(
   const current = await requireCurrentUser()
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc("send_message", {
-    p_conversation_id: parsed.data.conversationId,
-    p_content: parsed.data.content,
-  })
+  const result = await rpcResult<{ message: MessageItem; recipientId: number }>(
+    supabase.rpc("send_message", {
+      p_conversation_id: parsed.data.conversationId,
+      p_content: parsed.data.content,
+    }),
+  )
 
-  if (error) return { ok: false, error: error.message }
-
-  const payload = data as unknown as
-    | {
-        ok: true
-        message: MessageItem
-        recipientId: number
-      }
-    | { ok: false; error: string }
-    | null
-
-  if (!payload) return { ok: false, error: "unknown" }
-  if (!payload.ok) {
-    // Trả nguyên code (vd "notConnected") — client translate qua whitelist
-    // ở translateMessagingError. Tránh gọi te() ở server với key động.
-    return { ok: false, error: payload.error }
+  if (result.ok) {
+    // Notify new_message (gộp nếu đã có row chưa đọc cho cùng convo).
+    await notifyNewMessage({
+      recipientId: result.recipientId,
+      senderId: current.appUser.id,
+      conversationId: parsed.data.conversationId,
+      senderName: current.profile.displayName,
+      senderAvatarUrl: current.profile.avatarUrl,
+      excerpt: excerpt(result.message.content),
+    })
   }
-
-  // Tạo notification new_message (gộp nếu đã có row chưa đọc cho cùng convo).
-  await notifyNewMessage({
-    recipientId: payload.recipientId,
-    senderId: current.appUser.id,
-    conversationId: parsed.data.conversationId,
-    senderName: current.profile.displayName,
-    senderAvatarUrl: current.profile.avatarUrl,
-    excerpt: excerpt(payload.message.content),
-  })
-
-  // Không revalidate /messages: client dùng React Query + realtime để cập nhật.
-  return {
-    ok: true,
-    message: payload.message,
-    recipientId: payload.recipientId,
-  }
+  return result
 }
 
 export async function markConversationReadAction(
@@ -151,7 +114,10 @@ export async function markConversationReadAction(
   const te = await getTranslations("messages.errors")
   const parsed = createConversationIdSchema(te).safeParse(conversationId)
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? te("invalidConversation"))
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? te("invalidConversation"),
+    }
   }
 
   const current = await requireCurrentUser()
@@ -160,17 +126,19 @@ export async function markConversationReadAction(
   const { error } = await supabase.rpc("mark_conversation_read", {
     p_conversation_id: parsed.data,
   })
-  if (error) return fail(error.message)
+  if (error) {
+    console.error("[markConversationReadAction]", error)
+    return { ok: false, error: "unknown" }
+  }
 
-  // Dọn notification new_message chưa đọc của convo này (giảm spam ở dropdown
-  // notifications khi user đã mở chat).
+  // Dọn notification new_message chưa đọc của convo này (giảm spam dropdown).
   await clearNewMessageNotifications({
     recipientId: current.appUser.id,
     conversationId: parsed.data,
   })
 
-  // Badge global ở navbar đọc qua react-query — invalidate qua client.
-  // Nhưng vẫn revalidate notifications layout phòng SSR-hydrated.
+  // Badge global ở navbar đọc qua react-query (client invalidate); vẫn revalidate
+  // layout phòng SSR-hydrated.
   revalidatePath("/", "layout")
   return { ok: true }
 }
