@@ -800,6 +800,40 @@ export type Database = {
         Args: { p_option_id: number }
         Returns: undefined
       }
+      update_poll_media: {
+        Args: { p_post_id: number }
+        Returns: undefined
+      }
+      log_job_view: {
+        Args: { p_job_id: number }
+        Returns: Json
+      }
+      expire_due_jobs: {
+        Args: Record<string, never>
+        Returns: number
+      }
+      schedule_interview: {
+        Args: {
+          p_application_id: number
+          p_scheduled_at: string
+          p_duration_minutes: number
+          p_location_or_link: string | null
+          p_note: string | null
+        }
+        Returns: Json
+      }
+      respond_interview: {
+        Args: { p_interview_id: number; p_accept: boolean }
+        Returns: Json
+      }
+      get_my_applications: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      resubmit_company_verification: {
+        Args: Record<string, never>
+        Returns: Json
+      }
     }
 
     Enums: Record<string, never>

@@ -44,7 +44,19 @@ export function mergePollData(
     return { options: pollOptions, totalVotes }
   }
 
-  return fromMedia
+  // Fallback: use option text from media but hide vote counts.
+  // The RPC always supplies pollOptions for poll posts; this path
+  // is only reached in edge cases (network error, stale cache) and
+  // must not leak vote counts to non-voters.
+  return {
+    options: fromMedia.options.map((o) => ({
+      id: o.id,
+      optionText: o.optionText,
+      voteCount: 0,
+      viewerVoted: false,
+    })),
+    totalVotes: 0,
+  }
 }
 
 export function buildPollMedia(

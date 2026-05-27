@@ -32,7 +32,6 @@ import {
   findPollOptionById,
   findReaction,
   findViewerPollVotes,
-  incrementOptionVoteCount,
   insertComment,
   insertPollOptions,
   insertPollVote,
@@ -274,11 +273,9 @@ export async function voteAction(
       await insertPollVote(supabase, data.postId, data.optionId, me),
       "voteFailed",
     )
-
-    assertOk(
-      await incrementOptionVoteCount(supabase, data.optionId),
-      "voteFailed",
-    )
+    // Trigger trg_poll_vote_after_insert tự động:
+    //   • increment poll_options.vote_count
+    //   • rebuild posts.media qua update_poll_media()
 
     const option = await findPollOptionById(supabase, data.optionId)
     if (option) {

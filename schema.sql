@@ -1349,7 +1349,15 @@ BEGIN
                     jsonb_build_object(
                       'id', po.id,
                       'optionText', po.option_text,
-                      'voteCount', po.vote_count,
+                      'voteCount', CASE
+                        WHEN v_me IS NULL THEN 0
+                        WHEN f.author_id = v_me THEN po.vote_count
+                        WHEN EXISTS (
+                          SELECT 1 FROM public.poll_votes pv3
+                           WHERE pv3.post_id = f.id AND pv3.user_id = v_me
+                        ) THEN po.vote_count
+                        ELSE 0
+                      END,
                       'viewerVoted', CASE
                         WHEN v_me IS NULL THEN FALSE
                         ELSE EXISTS (
@@ -1515,7 +1523,15 @@ BEGIN
                     jsonb_build_object(
                       'id', po.id,
                       'optionText', po.option_text,
-                      'voteCount', po.vote_count,
+                      'voteCount', CASE
+                        WHEN v_me IS NULL THEN 0
+                        WHEN f.author_id = v_me THEN po.vote_count
+                        WHEN EXISTS (
+                          SELECT 1 FROM public.poll_votes pv3
+                           WHERE pv3.post_id = f.id AND pv3.user_id = v_me
+                        ) THEN po.vote_count
+                        ELSE 0
+                      END,
                       'viewerVoted', CASE
                         WHEN v_me IS NULL THEN FALSE
                         ELSE EXISTS (
@@ -1570,6 +1586,78 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.increment_poll_vote_count(BIGINT)
     TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- RPC: update_poll_media — rebuild posts.media from poll_options after vote
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_poll_media(p_post_id BIGINT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_options JSONB;
+    v_total_votes INT;
+    v_media JSONB;
+BEGIN
+    SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+            'id', po.id,
+            'optionText', po.option_text,
+            'voteCount', po.vote_count
+        ) ORDER BY po.id
+    ), '[]'::jsonb)
+    INTO v_options
+    FROM public.poll_options po
+    WHERE po.post_id = p_post_id;
+
+    SELECT COALESCE(SUM(po.vote_count), 0)
+    INTO v_total_votes
+    FROM public.poll_options po
+    WHERE po.post_id = p_post_id;
+
+    v_media := jsonb_build_object(
+        'type', 'poll',
+        'options', v_options,
+        'totalVotes', v_total_votes
+    );
+
+    UPDATE public.posts
+    SET media = v_media
+    WHERE id = p_post_id
+      AND deleted_at IS NULL;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_poll_media(BIGINT) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- Trigger: auto-update poll_options.vote_count + posts.media on poll_votes INSERT
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.trigger_after_poll_vote()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    UPDATE public.poll_options
+       SET vote_count = vote_count + 1
+     WHERE id = NEW.option_id;
+
+    PERFORM public.update_poll_media(NEW.post_id);
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_poll_vote_after_insert ON public.poll_votes;
+
+CREATE TRIGGER trg_poll_vote_after_insert
+    AFTER INSERT ON public.poll_votes
+    FOR EACH ROW
+    EXECUTE FUNCTION public.trigger_after_poll_vote();
 
 
 -- #############################################################################

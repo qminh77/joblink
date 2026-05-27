@@ -391,10 +391,6 @@ export function useVote() {
     onSuccess: () => {
       toast.success(t("voteSuccess"))
     },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
-      qc.invalidateQueries({ queryKey: ["user-posts"] })
-    },
   })
 }
 
@@ -562,7 +558,7 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
 
     const supabase = createBrowserClient()
     const channel = supabase.channel(`home-feed-engagement-${filterKey.length}`)
-    for (const table of ["post_reactions", "post_comments", "post_shares", "poll_votes"]) {
+    for (const table of ["post_reactions", "post_comments", "post_shares"]) {
       channel.on(
         "postgres_changes",
         {

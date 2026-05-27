@@ -307,6 +307,13 @@ export function incrementOptionVoteCount(
   })
 }
 
+export function updatePollMedia(
+  supabase: Supabase,
+  postId: number,
+) {
+  return supabase.rpc("update_poll_media", { p_post_id: postId })
+}
+
 export async function findPollOptionById(
   supabase: Supabase,
   optionId: number,
