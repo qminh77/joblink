@@ -369,7 +369,22 @@
       "companyDefault": "Company",
       "viewCount": "{count} profile views",
       "private": "This profile is private",
-      "notFound": "Profile not found"
+      "notFound": "Profile not found",
+      "privateTitle": "Private profile",
+      "privateDescription": "This member has chosen to hide their profile from others.",
+      "openToWork": "Open to work",
+      "editProfile": "Edit profile",
+      "editProfileSubtitle": "Manage personal info, experiences, educations, and skills",
+      "about": "About",
+      "experiences": "Experience",
+      "experiencesEmpty": "No experience added yet.",
+      "educations": "Education",
+      "educationsEmpty": "No education added yet.",
+      "skillsTitle": "Skills",
+      "skillsEmpty": "No skills added yet.",
+      "contactPrivate": "Contact info (private)",
+      "website": "Website",
+      "currentPosition": "Present"
     },
     "stats": {
       "connections": "{count} connections"

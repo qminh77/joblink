@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl"
 import { Briefcase, Loader2, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { btnTap, fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
+import { fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
 import { createJobAction } from "../api/actions"
@@ -123,11 +122,11 @@ export function PostJobForm({
       animate="show"
       className="max-w-4xl mx-auto space-y-6"
     >
-      <div>
-        <h1 className="font-headline font-bold text-2xl text-foreground">
+      <div className="pb-2 border-b border-border/40">
+        <h1 className="font-headline font-bold text-xl text-foreground">
           {t("heading")}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("subheading")}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t("subheading")}</p>
       </div>
 
       <motion.form
@@ -138,7 +137,7 @@ export function PostJobForm({
         className="space-y-6"
       >
         <motion.div variants={fadeUp}>
-          <Card className="bg-card border-border/30 rounded-xl p-6">
+          <Card className="bg-card border-border/40 rounded-2xl p-6">
             <h2 className="font-headline font-bold text-lg text-foreground mb-6">
               {t("basicInfo")}
             </h2>
@@ -258,7 +257,7 @@ export function PostJobForm({
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Card className="bg-card border-border/30 rounded-xl p-6">
+          <Card className="bg-card border-border/40 rounded-2xl p-6">
             <h2 className="font-headline font-bold text-lg text-foreground mb-6">
               {t("contentSection")}
             </h2>
@@ -297,7 +296,7 @@ export function PostJobForm({
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Card className="bg-card border-border/30 rounded-xl p-6">
+          <Card className="bg-card border-border/40 rounded-2xl p-6">
             <h2 className="font-headline font-bold text-lg text-foreground mb-4">
               {t("skillsSection")}
             </h2>
@@ -311,7 +310,7 @@ export function PostJobForm({
                 <motion.span
                   key={s}
                   variants={fadeUp}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                  className="inline-flex items-center gap-1.5 px-3 h-7 bg-muted text-muted-foreground rounded-full text-xs font-medium"
                 >
                   {s}
                   <button
@@ -339,17 +338,15 @@ export function PostJobForm({
                 maxLength={100}
                 disabled={skills.length >= 20}
               />
-              <motion.span {...btnTap}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-xl h-10"
-                  onClick={addSkill}
-                  disabled={!skillInput.trim() || skills.length >= 20}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </motion.span>
+              <button
+                type="button"
+                onClick={addSkill}
+                disabled={!skillInput.trim() || skills.length >= 20}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-primary hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+                aria-label={t("skillsPlaceholder")}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
             <p className="text-[11px] text-muted-foreground mt-2">
               {t("skillsHint", { count: skills.length, max: 20 })}
@@ -359,17 +356,16 @@ export function PostJobForm({
 
         <motion.div
           variants={fadeUp}
-          className="flex items-center justify-end gap-3"
+          className="flex items-center justify-end gap-1 pt-2"
         >
-          <Link href="/company/dashboard">
-            <Button type="button" variant="outline" className="rounded-xl">
-              {t("cancel")}
-            </Button>
+          <Link
+            href="/company/dashboard"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors inline-flex items-center"
+          >
+            {t("cancel")}
           </Link>
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="rounded-xl"
             disabled={submitting}
             onClick={(e) =>
               handleSubmit(
@@ -377,24 +373,25 @@ export function PostJobForm({
                 "draft",
               )
             }
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
           >
             {submitting ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : null}
             {t("saveDraft")}
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
-            className="rounded-xl px-6"
             disabled={submitting}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
           >
             {submitting ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Briefcase className="w-4 h-4 mr-1.5" />
+              <Briefcase className="w-4 h-4" />
             )}
             {t("publish")}
-          </Button>
+          </button>
         </motion.div>
       </motion.form>
     </motion.div>

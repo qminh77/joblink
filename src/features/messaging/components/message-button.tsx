@@ -25,7 +25,7 @@ type Props = {
 export function MessageButton({
   targetUserId,
   size = "default",
-  variant = "secondary",
+  variant = "ghost",
   fullWidth = false,
   disabled = false,
 }: Props) {

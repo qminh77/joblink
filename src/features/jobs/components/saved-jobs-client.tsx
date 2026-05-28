@@ -12,7 +12,6 @@ import {
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { fadeUp, pageEntrance, staggerSm } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
@@ -48,24 +47,27 @@ export function SavedJobsClient({ initialData }: Props) {
       animate="show"
       className="max-w-3xl mx-auto space-y-4"
     >
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
+      <div className="pb-2 border-b border-border/40">
+        <h1 className="font-headline font-bold text-xl text-foreground">
           {t("savedHeading")}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {t("savedSubheading", { count: data.total })}
         </p>
       </div>
 
       {data.items.length === 0 ? (
-        <Card className="bg-card border-border/30 rounded-xl p-12 text-center">
+        <Card className="bg-card border-border/40 rounded-2xl p-12 text-center">
           <Bookmark className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground mb-3">
             {t("savedEmpty")}
           </p>
-          <Button asChild>
-            <Link href="/jobs">{t("browseJobs")}</Link>
-          </Button>
+          <Link
+            href="/jobs"
+            className="inline-flex items-center text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+          >
+            {t("browseJobs")}
+          </Link>
         </Card>
       ) : (
         <motion.div
@@ -86,26 +88,26 @@ export function SavedJobsClient({ initialData }: Props) {
       )}
 
       {totalPages > 1 ? (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
+        <div className="flex items-center justify-center gap-1 pt-2">
+          <button
+            type="button"
             disabled={page === 0 || query.isFetching}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
           >
             {t("prevPage")}
-          </Button>
-          <span className="text-sm text-muted-foreground px-2">
+          </button>
+          <span className="text-xs text-muted-foreground px-2">
             {t("pagination", { current: page + 1, total: totalPages })}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             disabled={page >= totalPages - 1 || query.isFetching}
             onClick={() => setPage((p) => p + 1)}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
           >
             {t("nextPage")}
-          </Button>
+          </button>
         </div>
       ) : null}
       {query.isFetching ? (
@@ -134,13 +136,13 @@ function SavedJobRow({
   const location = formatLocation(job)
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-4">
+    <Card className="bg-card border-border/40 rounded-2xl p-4 hover:bg-muted/30 transition-colors">
       <div className="flex items-start gap-3">
-        <Avatar className="w-12 h-12 rounded-lg shrink-0">
+        <Avatar className="w-11 h-11 rounded-lg shrink-0">
           {job.companyLogoUrl ? (
             <AvatarImage src={job.companyLogoUrl} alt={job.companyName} />
           ) : null}
-          <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
+          <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
             <Briefcase className="w-5 h-5" />
           </AvatarFallback>
         </Avatar>
@@ -171,7 +173,7 @@ function SavedJobRow({
                   },
                 })
               }}
-              className={`p-1.5 rounded-full hover:bg-muted transition-colors ${
+              className={`p-1.5 rounded-full hover:bg-muted/60 transition-colors ${
                 saved ? "text-primary" : "text-muted-foreground"
               }`}
               disabled={toggle.isPending}

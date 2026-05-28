@@ -18,7 +18,6 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
 import { MessageButton } from "@/features/messaging/components/message-button"
@@ -58,13 +57,13 @@ export function MemberProfileView({
         initial="hidden"
         animate="show"
       >
-        <Card className="max-w-2xl mx-auto p-10 text-center rounded-2xl border-border/40">
+        <Card className="max-w-2xl mx-auto p-10 text-center rounded-2xl bg-card border-border/40">
           <Lock className="w-10 h-10 text-muted-foreground/60 mx-auto mb-4" />
           <h2 className="font-headline font-bold text-lg text-foreground">
-            Hồ sơ riêng tư
+            {tProfile("view.privateTitle")}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Thành viên này đã chọn ẩn hồ sơ với người dùng khác.
+            {tProfile("view.privateDescription")}
           </p>
         </Card>
       </motion.div>
@@ -83,7 +82,7 @@ export function MemberProfileView({
       ) : null}
 
       <motion.div variants={fadeUp}>
-        <Card className="overflow-hidden rounded-2xl border-border/40 p-0 gap-0">
+        <Card className="overflow-hidden rounded-2xl bg-card border-border/40 p-0 gap-0">
           {profile.cover_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -97,7 +96,7 @@ export function MemberProfileView({
           <div className="px-6 pb-6">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div className="flex items-end gap-4">
-                <Avatar className="w-24 h-24 border-4 border-card shadow-sm -mt-12">
+                <Avatar className="w-24 h-24 border-4 border-card -mt-12">
                   {profile.avatar_url ? (
                     <AvatarImage src={profile.avatar_url} />
                   ) : null}
@@ -111,8 +110,11 @@ export function MemberProfileView({
                       {profile.full_name}
                     </h1>
                     {profile.open_to_work ? (
-                      <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
-                        <BadgeCheck className="w-3 h-3 mr-1" /> Đang tìm việc
+                      <Badge
+                        variant="outline"
+                        className="border-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10"
+                      >
+                        <BadgeCheck className="w-3 h-3 mr-1" /> {tProfile("view.openToWork")}
                       </Badge>
                     ) : null}
                   </div>
@@ -131,11 +133,12 @@ export function MemberProfileView({
 
               <div className="flex gap-2">
                 {profile.isOwner ? (
-                  <Button asChild className="rounded-lg" size="sm">
-                    <Link href="/profile/edit">
-                      <Pencil className="w-3.5 h-3.5 mr-1" /> Chỉnh sửa hồ sơ
-                    </Link>
-                  </Button>
+                  <Link
+                    href="/profile/edit"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> {tProfile("view.editProfile")}
+                  </Link>
                 ) : (
                   <>
                     <ConnectButton
@@ -195,7 +198,7 @@ export function MemberProfileView({
         <div className="lg:col-span-2 space-y-5">
           {profile.about ? (
             <motion.div variants={fadeUp}>
-              <SectionCard title="Giới thiệu">
+              <SectionCard title={tProfile("view.about")}>
                 <p className="text-sm text-foreground/90 whitespace-pre-line">
                   {profile.about}
                 </p>
@@ -205,16 +208,16 @@ export function MemberProfileView({
 
           <motion.div variants={fadeUp}>
             <SectionCard
-              title="Kinh nghiệm"
-              icon={<Briefcase className="w-4 h-4 text-primary" />}
-              emptyMessage="Chưa có kinh nghiệm được thêm."
+              title={tProfile("view.experiences")}
+              icon={<Briefcase className="w-4 h-4 text-muted-foreground" />}
+              emptyMessage={tProfile("view.experiencesEmpty")}
               empty={profile.experiences.length === 0}
             >
               <ul className="space-y-5">
                 {profile.experiences.map((exp) => (
                   <li key={exp.id} className="flex gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Briefcase className="w-4 h-4 text-primary" />
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                      <Briefcase className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm text-foreground">
@@ -226,7 +229,7 @@ export function MemberProfileView({
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatDate(exp.start_date)} —{" "}
                         {exp.is_current
-                          ? "Hiện tại"
+                          ? tProfile("view.currentPosition")
                           : exp.end_date
                             ? formatDate(exp.end_date)
                             : "—"}
@@ -245,16 +248,16 @@ export function MemberProfileView({
 
           <motion.div variants={fadeUp}>
             <SectionCard
-              title="Học vấn"
-              icon={<GraduationCap className="w-4 h-4 text-primary" />}
-              emptyMessage="Chưa có thông tin học vấn."
+              title={tProfile("view.educations")}
+              icon={<GraduationCap className="w-4 h-4 text-muted-foreground" />}
+              emptyMessage={tProfile("view.educationsEmpty")}
               empty={profile.educations.length === 0}
             >
               <ul className="space-y-5">
                 {profile.educations.map((edu) => (
                   <li key={edu.id} className="flex gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <GraduationCap className="w-4 h-4 text-primary" />
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm text-foreground">
@@ -295,16 +298,16 @@ export function MemberProfileView({
         <div className="space-y-5">
           <motion.div variants={fadeUp}>
             <SectionCard
-              title="Kỹ năng"
-              icon={<Wrench className="w-4 h-4 text-primary" />}
+              title={tProfile("view.skillsTitle")}
+              icon={<Wrench className="w-4 h-4 text-muted-foreground" />}
               empty={profile.skills.length === 0}
-              emptyMessage="Chưa có kỹ năng nào."
+              emptyMessage={tProfile("view.skillsEmpty")}
             >
               <div className="flex flex-wrap gap-2">
                 {profile.skills.map((skill) => (
                   <span
                     key={skill.id}
-                    className="px-3 py-1 bg-muted border border-border/40 rounded-full text-xs font-medium text-foreground"
+                    className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground"
                   >
                     {skill.name}
                   </span>
@@ -315,7 +318,7 @@ export function MemberProfileView({
 
           {profile.isOwner ? (
             <motion.div variants={fadeUp}>
-              <SectionCard title="Thông tin liên hệ (riêng tư)">
+              <SectionCard title={tProfile("view.contactPrivate")}>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="w-4 h-4" />
@@ -339,7 +342,7 @@ export function MemberProfileView({
             </motion.div>
           ) : profile.website ? (
             <motion.div variants={fadeUp}>
-              <SectionCard title="Website">
+              <SectionCard title={tProfile("view.website")}>
                 <a
                   href={profile.website}
                   target="_blank"

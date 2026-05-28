@@ -7,9 +7,9 @@ import { useTranslations } from "next-intl"
 import { Briefcase, Loader2, Search } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import { slideLeft, staggerSm } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
@@ -62,16 +62,19 @@ export function JobsTab({ initialData }: Props) {
         </div>
         <div className="flex items-center gap-1 flex-wrap">
           {STATUS_OPTIONS.map((s) => (
-            <Button
+            <button
               key={s}
               type="button"
-              variant={status === s ? "default" : "outline"}
-              size="sm"
-              className="rounded-full text-xs"
               onClick={() => setStatus(s)}
+              className={cn(
+                "px-3 h-7 rounded-full text-xs font-medium transition-colors",
+                status === s
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              )}
             >
               {t(`jobsFilter.${s}`)}
-            </Button>
+            </button>
           ))}
         </div>
         {isFetching ? (
@@ -95,11 +98,11 @@ export function JobsTab({ initialData }: Props) {
               <motion.div
                 key={job.id}
                 variants={slideLeft}
-                className="flex items-center justify-between px-4 py-3 gap-3"
+                className="flex items-center justify-between px-4 py-3 gap-3 hover:bg-muted/30 transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-4.5 h-4.5 text-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Briefcase className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
@@ -125,9 +128,8 @@ export function JobsTab({ initialData }: Props) {
                     {t(`jobStatus.${job.status}`)}
                   </Badge>
                   {job.status === "draft" || job.status === "closed" ? (
-                    <Button
-                      size="xs"
-                      variant="outline"
+                    <button
+                      type="button"
                       disabled={updateStatus.isPending}
                       onClick={() =>
                         updateStatus.mutate({
@@ -135,13 +137,13 @@ export function JobsTab({ initialData }: Props) {
                           newStatus: "active",
                         })
                       }
+                      className="text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 h-7 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {t("publish")}
-                    </Button>
+                    </button>
                   ) : job.status === "active" ? (
-                    <Button
-                      size="xs"
-                      variant="outline"
+                    <button
+                      type="button"
                       disabled={updateStatus.isPending}
                       onClick={() =>
                         updateStatus.mutate({
@@ -149,9 +151,10 @@ export function JobsTab({ initialData }: Props) {
                           newStatus: "closed",
                         })
                       }
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 px-2.5 h-7 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {t("close")}
-                    </Button>
+                    </button>
                   ) : null}
                 </div>
               </motion.div>

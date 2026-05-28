@@ -6,10 +6,9 @@ import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Briefcase, Eye, Plus, TrendingUp, Users } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { btnTap, fadeUp, pageEntrance, staggerSm } from "@/lib/animations"
+import { fadeUp, pageEntrance, staggerSm } from "@/lib/animations"
 
 import type {
   DashboardApplicantsPage,
@@ -84,13 +83,12 @@ export function DashboardClient({
             {companyName} &bull; {t("subheading")}
           </p>
         </div>
-        <Link href="/company/post-job">
-          <motion.span {...btnTap}>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1.5" />
-              {t("postJob")}
-            </Button>
-          </motion.span>
+        <Link
+          href="/company/post-job"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          {t("postJob")}
         </Link>
       </div>
 
@@ -102,10 +100,10 @@ export function DashboardClient({
       >
         {statCards.map((s) => (
           <motion.div key={s.label} variants={fadeUp}>
-            <Card className="bg-card border-border/40 rounded-2xl p-4 hover:bg-muted/30 transition-colors">
-              <div className="flex items-start justify-between">
+            <Card className="bg-card border-border/40 rounded-2xl p-4 transition-colors">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[11px] text-muted-foreground font-medium">
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
                     {s.label}
                   </p>
                   <h3 className="font-headline font-bold text-xl text-foreground mt-1 tabular-nums">
@@ -117,9 +115,7 @@ export function DashboardClient({
                     </span>
                   ) : null}
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <s.icon className="w-4 h-4 text-primary" />
-                </div>
+                <s.icon className="w-4 h-4 text-muted-foreground shrink-0" />
               </div>
             </Card>
           </motion.div>

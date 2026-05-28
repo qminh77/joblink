@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import {
   BadgeCheck,
@@ -14,7 +13,6 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
-import { btnTap } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 import { useToggleSavedJob } from "../hooks"
@@ -51,13 +49,13 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
   }
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-4 hover:border-primary/40 hover:shadow-md transition-all group">
+    <Card className="bg-card border-border/40 rounded-2xl p-4 hover:bg-muted/30 transition-colors group">
       <div className="flex items-start gap-3">
-        <Avatar className="w-12 h-12 rounded-lg shrink-0">
+        <Avatar className="w-11 h-11 rounded-lg shrink-0">
           {job.companyLogoUrl ? (
             <AvatarImage src={job.companyLogoUrl} alt={job.companyName} />
           ) : null}
-          <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
+          <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
             <Briefcase className="w-5 h-5" />
           </AvatarFallback>
         </Avatar>
@@ -87,12 +85,11 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
                 </span>
               )}
             </div>
-            <motion.button
+            <button
               type="button"
-              {...btnTap}
               onClick={handleToggleSave}
               disabled={toggle.isPending}
-              className={`p-1.5 rounded-full hover:bg-muted transition-colors ${
+              className={`p-1.5 rounded-full hover:bg-muted/60 transition-colors ${
                 saved ? "text-primary" : "text-muted-foreground"
               }`}
               aria-label={saved ? t("unsave") : t("save")}
@@ -100,7 +97,7 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
               <Bookmark
                 className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
               />
-            </motion.button>
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">

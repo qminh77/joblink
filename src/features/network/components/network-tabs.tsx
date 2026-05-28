@@ -97,17 +97,17 @@ export function NetworkTabs({
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 pb-6">
-      <div>
-        <h1 className="font-headline font-bold text-xl sm:text-2xl text-foreground">
+      <div className="pb-2 border-b border-border/40">
+        <h1 className="font-headline font-bold text-xl text-foreground">
           {t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{t("subtitle")}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
         <Input
-          className="pl-10 h-10 rounded-xl"
+          className="pl-10 h-10 rounded-full bg-muted border-none text-sm"
           placeholder={t("searchPlaceholder")}
           value={suggestionQuery}
           onChange={(event) => setSuggestionQuery(event.target.value)}
@@ -115,7 +115,7 @@ export function NetworkTabs({
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto">
+        <TabsList className="bg-muted/60 p-1 rounded-2xl overflow-x-auto">
           <TabsTrigger
             value="suggestions"
             className="rounded-lg text-xs sm:text-sm px-3 sm:px-4 whitespace-nowrap"
@@ -327,7 +327,7 @@ function ConnectionsTab({
         <div className="relative w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <Input
-            className="pl-8 h-8 rounded-lg text-xs"
+            className="pl-8 h-8 rounded-full bg-muted border-none text-xs"
             placeholder={tNetwork("searchConnectionsPlaceholder")}
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
@@ -472,7 +472,7 @@ function IncomingCard({ item }: { item: InvitationItem }) {
             </p>
           ) : null}
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-1 shrink-0">
           <Button
             size="sm"
             variant="ghost"
@@ -484,6 +484,8 @@ function IncomingCard({ item }: { item: InvitationItem }) {
           </Button>
           <Button
             size="sm"
+            variant="ghost"
+            className="text-primary hover:bg-primary/10 hover:text-primary"
             disabled={isBusy}
             onClick={() => accept.mutate(item.connectionId)}
           >

@@ -14,7 +14,7 @@ export function SectionCard({
   emptyMessage?: string
 }) {
   return (
-    <Card className="rounded-2xl border-border/40 p-5">
+    <Card className="rounded-2xl bg-card border-border/40 p-5">
       <div className="flex items-center gap-2 mb-4">
         {icon}
         <h2 className="font-headline font-bold text-base text-foreground">

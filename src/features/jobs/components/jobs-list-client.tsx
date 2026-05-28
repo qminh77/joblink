@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Loader2, Search, SlidersHorizontal } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -81,19 +80,23 @@ export function JobsListClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("heading")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subheading")}</p>
+          <h1 className="font-headline font-bold text-xl text-foreground">
+            {t("heading")}
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t("subheading")}
+          </p>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-lg lg:hidden"
+        <button
+          type="button"
           onClick={() => setShowFiltersMobile((v) => !v)}
+          className="lg:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          aria-label={t("filters")}
         >
           <SlidersHorizontal className="w-4 h-4" />
-        </Button>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -102,15 +105,15 @@ export function JobsListClient({
             showFiltersMobile ? "block" : "hidden lg:block"
           }`}
         >
-          <Card className="bg-card border-border/30 rounded-xl p-5 sticky top-24">
+          <Card className="bg-card border-border/40 rounded-2xl p-5 sticky top-24">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground text-sm">
+              <h2 className="font-headline font-bold text-foreground text-sm">
                 {t("filters")}
               </h2>
               {hasFilters ? (
                 <button
                   onClick={clearAll}
-                  className="text-xs text-primary hover:opacity-80"
+                  className="text-xs font-semibold text-primary hover:bg-primary/10 px-2 h-7 rounded-lg transition-colors"
                 >
                   {t("clearFilters")}
                 </button>
@@ -127,7 +130,7 @@ export function JobsListClient({
                   setProvinceId(e.target.value ? Number(e.target.value) : null)
                   setPage(0)
                 }}
-                className="w-full h-10 px-3 bg-muted/40 border border-border/30 rounded-lg text-sm focus:outline-none focus:border-primary text-foreground"
+                className="w-full h-9 px-3 bg-muted border-0 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
               >
                 <option value="">{t("allLocations")}</option>
                 {provinces.map((p) => (
@@ -192,7 +195,7 @@ export function JobsListClient({
 
         <section className="lg:col-span-9 space-y-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => {
@@ -200,12 +203,12 @@ export function JobsListClient({
                 setPage(0)
               }}
               placeholder={t("searchPlaceholder")}
-              className="pl-12 h-12 rounded-xl bg-card border-border/30 text-sm"
+              className="pl-11 h-10 rounded-full bg-muted border-none text-sm"
             />
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("resultCount", { count: data.total })}
             </p>
             {query.isFetching ? (
@@ -214,7 +217,7 @@ export function JobsListClient({
           </div>
 
           {data.items.length === 0 ? (
-            <Card className="bg-card border-border/30 rounded-xl p-12 text-center">
+            <Card className="bg-card border-border/40 rounded-2xl p-12 text-center">
               <p className="text-sm text-muted-foreground">{t("empty")}</p>
             </Card>
           ) : (
@@ -233,26 +236,26 @@ export function JobsListClient({
           )}
 
           {totalPages > 1 ? (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex items-center justify-center gap-1 pt-2">
+              <button
+                type="button"
                 disabled={page === 0 || query.isFetching}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 {t("prevPage")}
-              </Button>
-              <span className="text-sm text-muted-foreground px-2">
+              </button>
+              <span className="text-xs text-muted-foreground px-2">
                 {t("pagination", { current: page + 1, total: totalPages })}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 disabled={page >= totalPages - 1 || query.isFetching}
                 onClick={() => setPage((p) => p + 1)}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 {t("nextPage")}
-              </Button>
+              </button>
             </div>
           ) : null}
         </section>

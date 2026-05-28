@@ -369,7 +369,22 @@
       "companyDefault": "Công ty",
       "viewCount": "{count} lượt xem hồ sơ",
       "private": "Hồ sơ này đang ở chế độ riêng tư",
-      "notFound": "Không tìm thấy hồ sơ"
+      "notFound": "Không tìm thấy hồ sơ",
+      "privateTitle": "Hồ sơ riêng tư",
+      "privateDescription": "Thành viên này đã chọn ẩn hồ sơ với người dùng khác.",
+      "openToWork": "Đang tìm việc",
+      "editProfile": "Chỉnh sửa hồ sơ",
+      "editProfileSubtitle": "Quản lý thông tin cá nhân, kinh nghiệm, học vấn và kỹ năng",
+      "about": "Giới thiệu",
+      "experiences": "Kinh nghiệm",
+      "experiencesEmpty": "Chưa có kinh nghiệm được thêm.",
+      "educations": "Học vấn",
+      "educationsEmpty": "Chưa có thông tin học vấn.",
+      "skillsTitle": "Kỹ năng",
+      "skillsEmpty": "Chưa có kỹ năng nào.",
+      "contactPrivate": "Thông tin liên hệ (riêng tư)",
+      "website": "Website",
+      "currentPosition": "Hiện tại"
     },
     "stats": {
       "connections": "{count} kết nối"

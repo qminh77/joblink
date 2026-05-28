@@ -58,7 +58,7 @@ export function SettingsTabs({
 
   return (
     <Tabs defaultValue={isCompany ? "company" : "account"}>
-      <TabsList className="bg-muted/60 p-1 rounded-xl overflow-x-auto">
+      <TabsList className="bg-muted/60 p-1 rounded-2xl overflow-x-auto">
         {isCompany ? (
           <TabsTrigger
             value="company"
@@ -95,7 +95,7 @@ export function SettingsTabs({
 
       {isCompany && profile?.kind === "company" ? (
         <TabsContent value="company" className="mt-6">
-          <Card className="rounded-2xl border-border/30 p-6">
+          <Card className="rounded-2xl bg-card border-border/40 p-6">
             <h2 className="font-headline font-bold text-base text-foreground mb-1">
               {t("company.title")}
             </h2>
@@ -128,7 +128,7 @@ export function SettingsTabs({
       </TabsContent>
 
       <TabsContent value="notifications" className="mt-6">
-        <Card className="rounded-2xl border-border/30 p-6 space-y-1">
+        <Card className="rounded-2xl bg-card border-border/40 p-6 space-y-1">
           <h2 className="font-headline font-bold text-base text-foreground mb-1">
             {t("notifications.title")}
           </h2>

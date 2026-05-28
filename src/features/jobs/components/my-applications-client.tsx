@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { fadeUp, pageEntrance, staggerSm } from "@/lib/animations"
 import { profileHref } from "@/lib/utils/profile-url"
@@ -54,12 +53,15 @@ export function MyApplicationsClient({
 
   if (items.length === 0) {
     return (
-      <Card className="rounded-2xl border-border/30 p-10 text-center">
+      <Card className="rounded-2xl bg-card border-border/40 p-10 text-center">
         <Clock className="w-8 h-8 text-muted-foreground/60 mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
-        <Button asChild variant="outline" className="rounded-lg mt-4">
-          <Link href="/jobs">{t("browseJobs")}</Link>
-        </Button>
+        <Link
+          href="/jobs"
+          className="inline-flex items-center text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors mt-4"
+        >
+          {t("browseJobs")}
+        </Link>
       </Card>
     )
   }
@@ -75,15 +77,15 @@ export function MyApplicationsClient({
         const interview = app.interview
         return (
           <motion.div key={app.applicationId} variants={fadeUp}>
-            <Card className="rounded-2xl border-border/30 p-5 space-y-4">
+            <Card className="rounded-2xl bg-card border-border/40 p-5 space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0">
-                  <Avatar className="w-11 h-11 rounded-xl shrink-0">
+                  <Avatar className="w-11 h-11 rounded-lg shrink-0">
                     {app.companyLogoUrl ? (
                       <AvatarImage src={app.companyLogoUrl} alt={app.companyName} />
                     ) : null}
-                    <AvatarFallback className="rounded-xl">
-                      <Building2 className="w-5 h-5 text-muted-foreground" />
+                    <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
+                      <Building2 className="w-5 h-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
@@ -116,9 +118,9 @@ export function MyApplicationsClient({
               </div>
 
               {interview ? (
-                <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3.5 space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
-                    <CalendarClock className="w-4 h-4" />
+                <div className="rounded-xl border border-border/40 bg-muted/30 p-3.5 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <CalendarClock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     {t("interviewHeading")}
                   </div>
                   <p className="text-sm text-foreground">
@@ -153,10 +155,9 @@ export function MyApplicationsClient({
                   ) : null}
 
                   {interview.status === "scheduled" ? (
-                    <div className="flex items-center gap-2 pt-1">
-                      <Button
-                        size="sm"
-                        className="rounded-lg h-8"
+                    <div className="flex items-center gap-1 pt-1">
+                      <button
+                        type="button"
                         disabled={respond.isPending}
                         onClick={() =>
                           respond.mutate(
@@ -164,14 +165,13 @@ export function MyApplicationsClient({
                             { onSuccess: () => router.refresh() },
                           )
                         }
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         {t("confirmInterview")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-lg h-8"
+                      </button>
+                      <button
+                        type="button"
                         disabled={respond.isPending}
                         onClick={() =>
                           respond.mutate(
@@ -179,10 +179,11 @@ export function MyApplicationsClient({
                             { onSuccess: () => router.refresh() },
                           )
                         }
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                       >
-                        <XCircle className="w-3.5 h-3.5 mr-1" />
+                        <XCircle className="w-3.5 h-3.5" />
                         {t("declineInterview")}
-                      </Button>
+                      </button>
                     </div>
                   ) : (
                     <span
@@ -205,19 +206,18 @@ export function MyApplicationsClient({
 
               {WITHDRAWABLE.has(app.status) ? (
                 <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-lg h-8 text-xs text-muted-foreground hover:text-destructive"
+                  <button
+                    type="button"
                     disabled={withdraw.isPending}
                     onClick={() =>
                       withdraw.mutate(app.applicationId, {
                         onSuccess: () => router.refresh(),
                       })
                     }
+                    className="text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {t("withdraw")}
-                  </Button>
+                  </button>
                 </div>
               ) : null}
             </Card>
@@ -235,11 +235,16 @@ function isUrl(value: string): boolean {
 export function MyApplicationsHeader() {
   const t = useTranslations("jobs.applications")
   return (
-    <motion.div variants={pageEntrance} initial="hidden" animate="show">
-      <h1 className="font-headline font-bold text-2xl text-foreground">
+    <motion.div
+      variants={pageEntrance}
+      initial="hidden"
+      animate="show"
+      className="pb-2 border-b border-border/40"
+    >
+      <h1 className="font-headline font-bold text-xl text-foreground">
         {t("heading")}
       </h1>
-      <p className="text-sm text-muted-foreground mt-0.5">{t("subheading")}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{t("subheading")}</p>
     </motion.div>
   )
 }

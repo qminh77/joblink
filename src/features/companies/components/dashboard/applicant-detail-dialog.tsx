@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ExternalLink, FileText, UserSquare, X } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { getInitials } from "@/lib/utils/format"
 import { modalContent, modalOverlay } from "@/lib/animations"
 
@@ -36,7 +35,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
             initial="hidden"
             animate="show"
             exit="exit"
-            className="w-full max-w-lg bg-card border border-border/40 rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-lg bg-card border border-border/40 rounded-2xl max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40 sticky top-0 bg-card">
@@ -74,7 +73,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border/40 p-3 bg-muted/30 text-sm">
+              <div className="rounded-xl border border-border/40 p-3 text-sm">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("appliedForLabel")}
                 </p>
@@ -91,20 +90,15 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   <FileText className="w-3.5 h-3.5" /> {t("resumeLabel")}
                 </p>
                 {applicant.resumeUrl ? (
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
+                  <a
+                    href={applicant.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 h-7 rounded-lg transition-colors"
                   >
-                    <a
-                      href={applicant.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                      {t("openResume")}
-                    </a>
-                  </Button>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {t("openResume")}
+                  </a>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
                     {t("noResume")}
@@ -117,7 +111,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   <UserSquare className="w-3.5 h-3.5" /> {t("coverLetterLabel")}
                 </p>
                 {applicant.coverLetter ? (
-                  <p className="text-sm text-foreground/90 whitespace-pre-line rounded-lg bg-muted/40 p-3">
+                  <p className="text-sm text-foreground/90 whitespace-pre-line rounded-xl border border-border/40 p-3">
                     {applicant.coverLetter}
                   </p>
                 ) : (

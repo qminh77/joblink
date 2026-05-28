@@ -11,7 +11,7 @@ export function OpenToHireCard({ initialValue }: { initialValue: boolean }) {
   const t = useTranslations("settings.openToHire")
 
   return (
-    <Card className="rounded-2xl border-border/30 p-6">
+    <Card className="rounded-2xl bg-card border-border/40 p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="font-headline font-bold text-base text-foreground">

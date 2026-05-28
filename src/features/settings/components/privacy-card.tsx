@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
   Select,
@@ -43,7 +42,7 @@ export function PrivacyCard({
   }
 
   return (
-    <Card className="rounded-2xl border-border/30 p-6 space-y-5">
+    <Card className="rounded-2xl bg-card border-border/40 p-6 space-y-5">
       <div>
         <h2 className="font-headline font-bold text-base text-foreground">
           {t("title")}
@@ -82,13 +81,14 @@ export function PrivacyCard({
       </div>
 
       <div className="flex justify-end">
-        <Button
+        <button
+          type="button"
           onClick={save}
           disabled={!dirty || updatePrivacy.isPending}
-          className="rounded-lg"
+          className="inline-flex items-center text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
         >
           {updatePrivacy.isPending ? tCommon("saving") : tCommon("saveChanges")}
-        </Button>
+        </button>
       </div>
     </Card>
   )

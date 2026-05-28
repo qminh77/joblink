@@ -20,9 +20,8 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { btnTap, fadeUp, pageEntrance } from "@/lib/animations"
+import { fadeUp, pageEntrance } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 import {
@@ -80,23 +79,23 @@ export function JobDetailClient({ detail }: Props) {
     >
       <div className="lg:col-span-2 space-y-6">
         <motion.div variants={fadeUp}>
-          <Card className="bg-card rounded-2xl p-6 border border-border/30">
+          <Card className="bg-card rounded-2xl p-6 border border-border/40">
             <div className="flex items-start gap-4">
-              <Avatar className="w-14 h-14 rounded-2xl">
+              <Avatar className="w-14 h-14 rounded-xl">
                 {job.companyLogoUrl ? (
                   <AvatarImage
                     src={job.companyLogoUrl}
                     alt={job.companyName}
                   />
                 ) : null}
-                <AvatarFallback className="rounded-2xl bg-primary/10">
-                  <Briefcase className="w-7 h-7 text-primary" />
+                <AvatarFallback className="rounded-xl bg-muted text-muted-foreground">
+                  <Briefcase className="w-6 h-6" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-foreground">
+                    <h1 className="font-headline font-bold text-2xl text-foreground">
                       {job.title}
                     </h1>
                     <Link
@@ -129,19 +128,20 @@ export function JobDetailClient({ detail }: Props) {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 shrink-0">
+                  <div className="flex flex-col gap-2 shrink-0 items-end">
                     {viewer.isOwner ? (
-                      <Button asChild variant="outline" className="rounded-lg">
-                        <Link href="/company/dashboard">
-                          <Pencil className="w-4 h-4 mr-1.5" />
-                          {t("manageOnDashboard")}
-                        </Link>
-                      </Button>
+                      <Link
+                        href="/company/dashboard"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        {t("manageOnDashboard")}
+                      </Link>
                     ) : viewer.viewerApplied ? (
                       <div className="flex flex-col gap-1 items-end">
                         <Badge
-                          variant="secondary"
-                          className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1"
+                          variant="outline"
+                          className="border-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 gap-1"
                         >
                           <CheckCircle2 className="w-3 h-3" />
                           {viewer.applicationStatus
@@ -167,35 +167,35 @@ export function JobDetailClient({ detail }: Props) {
                         ) : null}
                       </div>
                     ) : canApply ? (
-                      <motion.span {...btnTap}>
-                        <Button
-                          onClick={() => setShowApply(true)}
-                          className="rounded-lg"
-                        >
-                          {t("apply")}
-                        </Button>
-                      </motion.span>
+                      <button
+                        type="button"
+                        onClick={() => setShowApply(true)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+                      >
+                        {t("apply")}
+                      </button>
                     ) : (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="outline" className="border-0 bg-muted text-muted-foreground gap-1">
                         <XCircle className="w-3 h-3" />
                         {t("notAcceptingApplications")}
                       </Badge>
                     )}
                     {!viewer.isOwner ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={handleToggleSave}
                         disabled={toggle.isPending}
-                        className="rounded-lg"
+                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 h-8 rounded-lg transition-colors ${
+                          saved
+                            ? "text-primary hover:bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        }`}
                       >
                         <Bookmark
-                          className={`w-4 h-4 mr-1.5 ${
-                            saved ? "fill-current" : ""
-                          }`}
+                          className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
                         />
                         {saved ? t("saved") : t("save")}
-                      </Button>
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -204,27 +204,27 @@ export function JobDetailClient({ detail }: Props) {
 
             <div className="flex flex-wrap gap-2 mt-4">
               {job.jobTypeName ? (
-                <Badge variant="outline" className="rounded-full text-xs">
+                <span className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                   {job.jobTypeName}
-                </Badge>
+                </span>
               ) : null}
               {job.workModeName ? (
-                <Badge variant="outline" className="rounded-full text-xs">
+                <span className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                   {job.workModeName}
-                </Badge>
+                </span>
               ) : null}
               {job.jobPositionName ? (
-                <Badge variant="outline" className="rounded-full text-xs">
+                <span className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                   {job.jobPositionName}
-                </Badge>
+                </span>
               ) : null}
             </div>
           </Card>
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Card className="bg-card rounded-2xl p-6 border border-border/30">
-            <h2 className="text-lg font-bold text-foreground mb-3">
+          <Card className="bg-card rounded-2xl p-6 border border-border/40">
+            <h2 className="font-headline text-lg font-bold text-foreground mb-3">
               {t("description")}
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
@@ -235,8 +235,8 @@ export function JobDetailClient({ detail }: Props) {
 
         {job.requirements ? (
           <motion.div variants={fadeUp}>
-            <Card className="bg-card rounded-2xl p-6 border border-border/30">
-              <h2 className="text-lg font-bold text-foreground mb-3">
+            <Card className="bg-card rounded-2xl p-6 border border-border/40">
+              <h2 className="font-headline text-lg font-bold text-foreground mb-3">
                 {t("requirements")}
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
@@ -248,19 +248,18 @@ export function JobDetailClient({ detail }: Props) {
 
         {skills.length > 0 ? (
           <motion.div variants={fadeUp}>
-            <Card className="bg-card rounded-2xl p-6 border border-border/30">
-              <h2 className="text-lg font-bold text-foreground mb-3">
+            <Card className="bg-card rounded-2xl p-6 border border-border/40">
+              <h2 className="font-headline text-lg font-bold text-foreground mb-3">
                 {t("requiredSkills")}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {skills.map((s) => (
-                  <Badge
+                  <span
                     key={s}
-                    variant="secondary"
-                    className="rounded-full px-3 py-1 text-xs"
+                    className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground"
                   >
                     {s}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             </Card>
@@ -269,25 +268,25 @@ export function JobDetailClient({ detail }: Props) {
       </div>
 
       <motion.div variants={fadeUp} className="lg:col-span-1">
-        <Card className="bg-card rounded-2xl p-6 border border-border/30 text-center sticky top-24">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3 overflow-hidden">
+        <Card className="bg-card rounded-2xl p-6 border border-border/40 text-center sticky top-24">
+          <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3 overflow-hidden">
             {job.companyLogoUrl ? (
-              <Avatar className="w-16 h-16 rounded-2xl">
+              <Avatar className="w-16 h-16 rounded-xl">
                 <AvatarImage
                   src={job.companyLogoUrl}
                   alt={job.companyName}
                 />
-                <AvatarFallback className="rounded-2xl bg-primary/10">
-                  <Building2 className="w-8 h-8 text-primary" />
+                <AvatarFallback className="rounded-xl bg-muted text-muted-foreground">
+                  <Building2 className="w-7 h-7" />
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <Building2 className="w-8 h-8 text-primary" />
+              <Building2 className="w-7 h-7 text-muted-foreground" />
             )}
           </div>
           <Link
             href={`/company/${job.companyUserId}`}
-            className="text-lg font-bold text-foreground hover:text-primary transition-colors"
+            className="font-headline text-lg font-bold text-foreground hover:text-primary transition-colors"
           >
             {job.companyName}
           </Link>
@@ -306,11 +305,12 @@ export function JobDetailClient({ detail }: Props) {
               {job.companyAbout}
             </p>
           ) : null}
-          <Button asChild variant="outline" className="w-full mt-4 rounded-xl">
-            <Link href={`/company/${job.companyUserId}`}>
-              {t("viewCompanyPage")}
-            </Link>
-          </Button>
+          <Link
+            href={`/company/${job.companyUserId}`}
+            className="inline-flex items-center justify-center w-full mt-4 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+          >
+            {t("viewCompanyPage")}
+          </Link>
         </Card>
       </motion.div>
 

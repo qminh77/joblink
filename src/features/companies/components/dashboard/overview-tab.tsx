@@ -30,7 +30,7 @@ export function OverviewTab({ recentJobs, recentApplicants }: Props) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card className="border-border/40 rounded-2xl">
+      <Card className="bg-card border-border/40 rounded-2xl">
         <CardHeader>
           <CardTitle className="font-headline font-bold text-sm">
             {t("overviewJobsHeading")}
@@ -55,8 +55,8 @@ export function OverviewTab({ recentJobs, recentApplicants }: Props) {
                   className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Briefcase className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Briefcase className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0">
                       <Link
@@ -87,7 +87,7 @@ export function OverviewTab({ recentJobs, recentApplicants }: Props) {
         </CardContent>
       </Card>
 
-      <Card className="border-border/40 rounded-2xl">
+      <Card className="bg-card border-border/40 rounded-2xl">
         <CardHeader>
           <CardTitle className="font-headline font-bold text-sm">
             {t("overviewApplicantsHeading")}

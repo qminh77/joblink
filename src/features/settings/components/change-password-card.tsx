@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
 
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
   Form,
@@ -42,7 +41,7 @@ export function ChangePasswordCard() {
   }
 
   return (
-    <Card className="rounded-2xl border-border/30 p-6">
+    <Card className="rounded-2xl bg-card border-border/40 p-6">
       <h2 className="font-headline font-bold text-base text-foreground mb-1">
         {t("title")}
       </h2>
@@ -105,13 +104,13 @@ export function ChangePasswordCard() {
           />
 
           <div className="md:col-span-3 flex justify-end">
-            <Button
+            <button
               type="submit"
               disabled={changePassword.isPending}
-              className="rounded-lg"
+              className="inline-flex items-center text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
             >
               {changePassword.isPending ? t("submitting") : t("submit")}
-            </Button>
+            </button>
           </div>
         </form>
       </Form>

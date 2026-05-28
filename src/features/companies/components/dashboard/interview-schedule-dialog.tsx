@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl"
 import { AnimatePresence, motion } from "framer-motion"
 import { CalendarClock, Loader2, X } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -84,7 +83,7 @@ export function InterviewScheduleDialog({
             initial="hidden"
             animate="show"
             exit="exit"
-            className="w-full max-w-md bg-card border border-border/40 rounded-2xl shadow-xl"
+            className="w-full max-w-md bg-card border border-border/40 rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40">
@@ -172,28 +171,27 @@ export function InterviewScheduleDialog({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
-                <Button
+              <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/40">
+                <button
                   type="button"
-                  variant="outline"
                   onClick={onClose}
                   disabled={schedule.isPending}
-                  className="rounded-lg"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {t("cancel")}
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
                   disabled={schedule.isPending || !scheduledAt}
-                  className="rounded-lg"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {schedule.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <CalendarClock className="w-4 h-4 mr-1.5" />
+                    <CalendarClock className="w-4 h-4" />
                   )}
                   {t("submit")}
-                </Button>
+                </button>
               </div>
             </form>
           </motion.div>

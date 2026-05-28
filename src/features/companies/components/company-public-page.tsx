@@ -19,7 +19,6 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { SectionCard } from "@/features/profile/components/section-card"
 import { fadeUp, pageEntrance, staggerMd } from "@/lib/animations"
@@ -84,7 +83,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
       className="max-w-5xl mx-auto space-y-5"
     >
       <motion.div variants={fadeUp}>
-        <Card className="overflow-hidden rounded-2xl border-border/40 p-0 gap-0">
+        <Card className="overflow-hidden rounded-2xl bg-card border-border/40 p-0 gap-0">
           <div className="h-36 md:h-48 bg-gradient-to-r from-primary/20 via-primary/5 to-purple-500/20" />
           <div className="px-6 pb-4">
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
@@ -93,8 +92,8 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                   {company.logoUrl ? (
                     <AvatarImage src={company.logoUrl} alt={company.name} />
                   ) : null}
-                  <AvatarFallback className="rounded-2xl bg-primary/20 text-2xl font-bold">
-                    <Building2 className="w-10 h-10 text-primary" />
+                  <AvatarFallback className="rounded-2xl bg-muted text-muted-foreground">
+                    <Building2 className="w-10 h-10" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1 min-w-0 pb-1">
@@ -104,8 +103,8 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                     </h1>
                     {verificationLabel ? (
                       <Badge
-                        variant="secondary"
-                        className={`text-xs gap-1 ${
+                        variant="outline"
+                        className={`text-xs gap-1 border-0 ${
                           VERIFICATION_TONE[company.verificationStatus] ?? ""
                         }`}
                       >
@@ -115,8 +114,8 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                     ) : null}
                     {company.openToHire ? (
                       <Badge
-                        variant="secondary"
-                        className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-xs"
+                        variant="outline"
+                        className="border-0 bg-blue-50 text-blue-600 dark:bg-blue-500/10 text-xs"
                       >
                         {t("openToHire")}
                       </Badge>
@@ -147,21 +146,23 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+              <div className="flex items-center gap-1 w-full md:w-auto justify-end">
                 {isOwner ? (
                   <>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href="/company/dashboard">
-                        <LayoutDashboard className="w-4 h-4 mr-1.5" />
-                        {t("dashboard")}
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href="/settings">
-                        <Pencil className="w-4 h-4 mr-1.5" />
-                        {t("editProfile")}
-                      </Link>
-                    </Button>
+                    <Link
+                      href="/company/dashboard"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      {t("dashboard")}
+                    </Link>
+                    <Link
+                      href="/settings"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      {t("editProfile")}
+                    </Link>
                   </>
                 ) : (
                   <CompanyFollowButton
@@ -226,7 +227,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
 
           <motion.div variants={fadeUp}>
             {jobs.length === 0 ? (
-              <Card className="rounded-2xl border-border/40 p-8 text-center">
+              <Card className="rounded-2xl bg-card border-border/40 p-8 text-center">
                 <Briefcase className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">
                   {t("noActiveJobs")}
@@ -242,7 +243,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                   return (
                     <Card
                       key={job.id}
-                      className="rounded-2xl border-border/40 p-5 flex flex-col justify-between h-full group"
+                      className="rounded-2xl bg-card border-border/40 p-5 flex flex-col justify-between h-full group hover:bg-muted/30 transition-colors"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -283,16 +284,12 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                         <span className="text-xs text-muted-foreground">
                           {formatRelativeTime(job.createdAt)}
                         </span>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-primary font-semibold h-auto p-0"
-                          asChild
+                        <Link
+                          href={`/jobs/${job.id}`}
+                          className="text-xs font-semibold text-primary hover:underline"
                         >
-                          <Link href={`/jobs/${job.id}`}>
-                            {t("jobDetails")}
-                          </Link>
-                        </Button>
+                          {t("jobDetails")}
+                        </Link>
                       </div>
                     </Card>
                   )
@@ -307,7 +304,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
             <motion.div variants={fadeUp}>
               <SectionCard
                 title={t("about")}
-                icon={<Info className="w-4 h-4 text-primary" />}
+                icon={<Info className="w-4 h-4 text-muted-foreground" />}
               >
                 <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
                   {company.about}
@@ -320,7 +317,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
             <motion.div variants={fadeUp}>
               <SectionCard
                 title={t("contactHeading")}
-                icon={<Mail className="w-4 h-4 text-primary" />}
+                icon={<Mail className="w-4 h-4 text-muted-foreground" />}
               >
                 <div className="space-y-3 text-sm">
                   {company.businessEmail ? (

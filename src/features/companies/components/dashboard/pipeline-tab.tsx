@@ -67,7 +67,7 @@ export function PipelineTab({ initialData }: Props) {
         return (
           <Card
             key={stage}
-            className="border-border/40 rounded-2xl"
+            className="bg-card border-border/40 rounded-2xl"
           >
             <CardHeader className="pb-0">
               <button
@@ -80,7 +80,10 @@ export function PipelineTab({ initialData }: Props) {
                 <CardTitle className="font-headline font-semibold text-sm">
                   {t(`appStatus.${stage}`)}
                 </CardTitle>
-                <Badge variant="secondary" className="rounded-full text-[10px] min-w-5 h-5 justify-center">
+                <Badge
+                  variant="secondary"
+                  className="rounded-full text-[10px] min-w-5 h-5 justify-center bg-muted text-muted-foreground border-0"
+                >
                   {list.length}
                 </Badge>
               </button>
@@ -105,7 +108,7 @@ export function PipelineTab({ initialData }: Props) {
                         <motion.div
                           key={app.applicationId}
                           variants={fadeUp}
-                          className="p-2.5 rounded-lg bg-muted/40 border border-border/40 text-xs"
+                          className="p-2.5 rounded-xl border border-border/40 bg-card hover:bg-muted/30 transition-colors text-xs"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <Avatar className="w-6 h-6 shrink-0">

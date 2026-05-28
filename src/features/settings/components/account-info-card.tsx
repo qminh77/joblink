@@ -31,7 +31,7 @@ export function AccountInfoCard({
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-2xl border-border/30 p-6 space-y-4">
+      <Card className="rounded-2xl bg-card border-border/40 p-6 space-y-4">
         <h2 className="font-headline font-bold text-base text-foreground">
           {t("title")}
         </h2>
@@ -48,7 +48,7 @@ export function AccountInfoCard({
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">{t("status")}</p>
-            <Badge className={STATUS_TONES[user.status]}>
+            <Badge variant="outline" className={`border-0 ${STATUS_TONES[user.status]}`}>
               <ShieldCheck className="w-3 h-3 mr-1" /> {tStatus(user.status)}
             </Badge>
           </div>

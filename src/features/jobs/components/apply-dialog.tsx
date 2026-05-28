@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl"
 import { Loader2, Send, X } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -60,12 +59,12 @@ export function ApplyDialog({ jobId, jobTitle, companyName, open, onClose }: Pro
             initial="hidden"
             animate="show"
             exit="exit"
-            className="w-full max-w-lg bg-card border border-border/40 rounded-2xl shadow-xl"
+            className="w-full max-w-lg bg-card border border-border/40 rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-border/40">
               <div className="min-w-0">
-                <h2 className="font-headline font-bold text-lg truncate">
+                <h2 className="font-headline font-bold text-base truncate">
                   {t("applyDialogTitle")}
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
@@ -75,10 +74,10 @@ export function ApplyDialog({ jobId, jobTitle, companyName, open, onClose }: Pro
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground"
                 aria-label={t("close")}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -120,23 +119,27 @@ export function ApplyDialog({ jobId, jobTitle, companyName, open, onClose }: Pro
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
-                <Button
+              <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/40">
+                <button
                   type="button"
-                  variant="outline"
                   onClick={onClose}
                   disabled={apply.isPending}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {t("cancel")}
-                </Button>
-                <Button type="submit" disabled={apply.isPending}>
+                </button>
+                <button
+                  type="submit"
+                  disabled={apply.isPending}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
+                >
                   {apply.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4 mr-1.5" />
+                    <Send className="w-4 h-4" />
                   )}
                   {t("submitApplication")}
-                </Button>
+                </button>
               </div>
             </form>
           </motion.div>

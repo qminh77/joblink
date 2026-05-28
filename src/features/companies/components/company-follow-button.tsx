@@ -4,8 +4,6 @@ import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { Bell, Plus } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-
 import { useToggleFollowCompany } from "../hooks"
 
 type Props = {
@@ -60,19 +58,23 @@ export function CompanyFollowButton({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button
+      <button
         type="button"
-        variant="ghost"
         onClick={handleClick}
         disabled={disabled || toggle.isPending}
+        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg transition-colors disabled:opacity-50 ${
+          isFollowing
+            ? "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            : "text-primary hover:bg-primary/10"
+        }`}
       >
         {isFollowing ? (
-          <Bell className="w-4 h-4 mr-1.5" />
+          <Bell className="w-4 h-4" />
         ) : (
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="w-4 h-4" />
         )}
         {isFollowing ? t("following") : t("follow")}
-      </Button>
+      </button>
       <span className="text-[11px] text-muted-foreground">
         {t("followerCount", { count: followerCount })}
       </span>

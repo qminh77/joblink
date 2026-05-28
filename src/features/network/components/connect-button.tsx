@@ -86,7 +86,8 @@ export function ConnectButton({
     return (
       <Button
         size={size}
-        className={widthClass}
+        variant="ghost"
+        className={`text-primary hover:bg-primary/10 hover:text-primary ${widthClass}`}
         disabled={send.isPending}
         onClick={() => send.mutate(targetUserId)}
       >
@@ -98,10 +99,11 @@ export function ConnectButton({
 
   if (relation.kind === "pending_incoming") {
     return (
-      <div className={`flex gap-2 ${widthClass}`}>
+      <div className={`flex gap-1 ${widthClass}`}>
         <Button
           size={size}
-          className="flex-1"
+          variant="ghost"
+          className="flex-1 text-primary hover:bg-primary/10 hover:text-primary"
           disabled={accept.isPending}
           onClick={() => accept.mutate(relation.connectionId)}
         >

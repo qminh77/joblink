@@ -8,7 +8,6 @@ import { CalendarClock, FileText, Loader2, Search } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { slideLeft, staggerSm } from "@/lib/animations"
+import { cn } from "@/lib/utils"
 import { getInitials } from "@/lib/utils/format"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
@@ -90,18 +90,21 @@ export function ApplicantsTab({ initialData }: Props) {
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_OPTIONS.map((s) => (
-              <Button
+              <button
                 key={s}
                 type="button"
-                variant={status === s ? "default" : "outline"}
-                size="sm"
-                className="rounded-full text-xs"
                 onClick={() => setStatus(s)}
+                className={cn(
+                  "px-3 h-7 rounded-full text-xs font-medium transition-colors",
+                  status === s
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                )}
               >
                 {s === "all"
                   ? t("appsFilter.all")
                   : t(`appStatus.${s}`)}
-              </Button>
+              </button>
             ))}
           </div>
           {isFetching ? (
@@ -125,7 +128,7 @@ export function ApplicantsTab({ initialData }: Props) {
                 <motion.div
                   key={app.applicationId}
                   variants={slideLeft}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 gap-3"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 gap-3 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Avatar className="w-9 h-9 shrink-0">
@@ -177,7 +180,10 @@ export function ApplicantsTab({ initialData }: Props) {
                         update.isPending || app.status === "withdrawn"
                       }
                     >
-                      <SelectTrigger className="h-7 w-28 text-xs rounded-lg">
+                      <SelectTrigger
+                        size="sm"
+                        className="h-7 w-28 text-xs rounded-full border-0 bg-muted/60 hover:bg-muted shadow-none"
+                      >
                         <SelectValue placeholder={t("changeStatus")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -188,23 +194,23 @@ export function ApplicantsTab({ initialData }: Props) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button
-                      variant="outline"
-                      size="xs"
+                    <button
+                      type="button"
                       onClick={() => setDetailApp(app)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-2.5 h-7 rounded-lg transition-colors"
                     >
-                      <FileText className="w-3 h-3 mr-1" />
+                      <FileText className="w-3 h-3" />
                       {t("viewDetail")}
-                    </Button>
+                    </button>
                     {!TERMINAL_STATUSES.has(app.status) ? (
-                      <Button
-                        variant="outline"
-                        size="xs"
+                      <button
+                        type="button"
                         onClick={() => setInterviewApp(app)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:bg-primary/10 px-2.5 h-7 rounded-lg transition-colors"
                       >
-                        <CalendarClock className="w-3 h-3 mr-1" />
+                        <CalendarClock className="w-3 h-3" />
                         {t("scheduleInterview")}
-                      </Button>
+                      </button>
                     ) : null}
                   </div>
                 </motion.div>
