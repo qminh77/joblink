@@ -27,28 +27,23 @@ export type ReportTypeOption = {
 }
 
 export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
-  try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from("report_types")
-      .select("id, code, name, name_en")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("report_types")
+    .select("id, code, name, name_en")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
 
-    if (error) {
-      console.error("[getReportTypesAction]", error)
-      return []
-    }
-    return (data ?? []).map((r) => ({
-      id: r.id,
-      code: r.code,
-      name: r.name,
-      nameEn: r.name_en ?? null,
-    }))
-  } catch (e) {
-    console.error("[getReportTypesAction]", e)
+  if (error) {
+    console.error("[getReportTypesAction]", error)
     return []
   }
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    code: r.code,
+    name: r.name,
+    nameEn: r.name_en ?? null,
+  }))
 }
 
 export async function createReportAction(input: {

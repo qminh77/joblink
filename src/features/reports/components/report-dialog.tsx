@@ -58,7 +58,12 @@ type Props = {
 export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
   const t = useTranslations("reports")
   const locale = useLocale()
-  const { data: reportTypes = [], isLoading } = useReportTypes()
+  const {
+    data: reportTypes = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useReportTypes()
   const createReport = useCreateReport()
 
   const [reason, setReason] = useState("")
@@ -117,9 +122,23 @@ export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
             <div className="py-6 text-center text-sm text-muted-foreground">
               {t("loadingTypes")}
             </div>
+          ) : isError ? (
+            <div className="py-6 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                {t("loadError")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+              >
+                {t("retry")}
+              </Button>
+            </div>
           ) : grouped.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              {t("loadingTypes")}
+              {t("emptyTypes")}
             </div>
           ) : (
             grouped.map((group) => (

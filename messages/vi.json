@@ -928,6 +928,9 @@
   "reports": {
     "reportTitle": "Báo cáo {type}",
     "loadingTypes": "Đang tải...",
+    "emptyTypes": "Không có loại báo cáo nào",
+    "loadError": "Không thể tải loại báo cáo",
+    "retry": "Thử lại",
     "descriptionPlaceholder": "Mô tả thêm (không bắt buộc)...",
     "cancel": "Huỷ",
     "submitReport": "Gửi báo cáo",

@@ -928,6 +928,9 @@
   "reports": {
     "reportTitle": "Report {type}",
     "loadingTypes": "Loading...",
+    "emptyTypes": "No report types available",
+    "loadError": "Failed to load report types",
+    "retry": "Retry",
     "descriptionPlaceholder": "Additional details (optional)...",
     "cancel": "Cancel",
     "submitReport": "Submit report",
