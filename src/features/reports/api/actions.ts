@@ -23,6 +23,7 @@ export type ReportTypeOption = {
   id: number
   code: string
   name: string
+  nameEn: string | null
 }
 
 export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
@@ -30,7 +31,7 @@ export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from("report_types")
-      .select("id, code, name")
+      .select("id, code, name, name_en")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
 
@@ -38,7 +39,12 @@ export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
       console.error("[getReportTypesAction]", error)
       return []
     }
-    return data ?? []
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      nameEn: r.name_en ?? null,
+    }))
   } catch (e) {
     console.error("[getReportTypesAction]", e)
     return []

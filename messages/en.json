@@ -104,8 +104,6 @@
     "addOption": "Add option",
     "removeOption": "Remove option",
     "pollOption": "Option {n}",
-    "minOptions": "At least 2 options required",
-    "maxOptions": "Maximum 10 options allowed",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentOrMediaRequired": "Please enter content or attach an image",
@@ -122,6 +120,8 @@
       "invalidOption": "Invalid option",
       "optionRequired": "Option text is required",
       "optionMax": "Option is too long (max 255)",
+      "minOptions": "At least 2 options required",
+      "maxOptions": "Maximum 10 options allowed",
       "createFailed": "Could not create post",
       "updateFailed": "Could not update post",
       "shareFailed": "Could not share post",
@@ -926,12 +926,19 @@
     }
   },
   "reports": {
-    "reportTitle": "Report post",
+    "reportTitle": "Report {type}",
     "loadingTypes": "Loading...",
     "descriptionPlaceholder": "Additional details (optional)...",
     "cancel": "Cancel",
     "submitReport": "Submit report",
     "submitting": "Submitting...",
+    "targetTypes": {
+      "user": "user",
+      "post": "post",
+      "comment": "comment",
+      "job": "job",
+      "company": "company"
+    },
     "errors": {
       "invalidTarget": "Invalid target",
       "reasonRequired": "Please select a reason",

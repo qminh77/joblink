@@ -104,8 +104,6 @@
     "addOption": "Thêm lựa chọn",
     "removeOption": "Xoá lựa chọn",
     "pollOption": "Lựa chọn {n}",
-    "minOptions": "Cần ít nhất 2 lựa chọn",
-    "maxOptions": "Tối đa 10 lựa chọn",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
@@ -122,6 +120,8 @@
       "invalidOption": "Lựa chọn không hợp lệ",
       "optionRequired": "Vui lòng nhập nội dung lựa chọn",
       "optionMax": "Lựa chọn quá dài (tối đa 255 ký tự)",
+      "minOptions": "Cần ít nhất 2 lựa chọn",
+      "maxOptions": "Tối đa 10 lựa chọn",
       "createFailed": "Không thể tạo bài viết",
       "updateFailed": "Không thể cập nhật bài viết",
       "shareFailed": "Không thể chia sẻ bài viết",
@@ -926,12 +926,19 @@
     }
   },
   "reports": {
-    "reportTitle": "Báo cáo bài viết",
+    "reportTitle": "Báo cáo {type}",
     "loadingTypes": "Đang tải...",
     "descriptionPlaceholder": "Mô tả thêm (không bắt buộc)...",
     "cancel": "Huỷ",
     "submitReport": "Gửi báo cáo",
     "submitting": "Đang gửi...",
+    "targetTypes": {
+      "user": "người dùng",
+      "post": "bài viết",
+      "comment": "bình luận",
+      "job": "tin tuyển dụng",
+      "company": "công ty"
+    },
     "errors": {
       "invalidTarget": "Nội dung không hợp lệ",
       "reasonRequired": "Vui lòng chọn lý do báo cáo",
