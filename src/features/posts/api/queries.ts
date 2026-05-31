@@ -18,7 +18,7 @@ const EMPTY_STATS: HomeFeedStats = {
 }
 
 const DEFAULT_POSTS_LIMIT = 20
-const DEFAULT_SUGGESTION_LIMIT = 12
+const DEFAULT_SUGGESTION_LIMIT = 4
 
 type RpcResponse = HomeFeedPayload | null
 

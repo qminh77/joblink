@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import {
-  loadOwnMemberProfile,
-  loadProvinces,
-} from "@/features/profile/api/queries"
+import { loadProfileEditOverview } from "@/features/profile/api/queries"
 import { EditProfileTabs } from "@/features/profile/components/edit/edit-profile-tabs"
 
 export default async function EditProfilePage() {
@@ -13,26 +11,28 @@ export default async function EditProfilePage() {
     redirect("/settings")
   }
 
-  const [profile, provinces] = await Promise.all([
-    loadOwnMemberProfile(),
-    loadProvinces(),
-  ])
-
-  if (!profile) {
+  const overview = await loadProfileEditOverview()
+  if (!overview) {
     redirect("/login")
   }
+
+  const t = await getTranslations("profile.edit")
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <div>
         <h1 className="font-headline font-bold text-xl sm:text-2xl text-foreground">
-          Chỉnh sửa hồ sơ
+          {t("pageTitle")}
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Quản lý thông tin cá nhân, kinh nghiệm, học vấn và kỹ năng
+          {t("pageSubtitle")}
         </p>
       </div>
-      <EditProfileTabs profile={profile} provinces={provinces} />
+      <EditProfileTabs
+        profile={overview.profile}
+        provinces={overview.provinces}
+        cvs={overview.cvs}
+      />
     </div>
   )
 }

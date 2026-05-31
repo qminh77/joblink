@@ -133,7 +133,7 @@ BEGIN
            AND u.role <> 'admin'
            AND u.id <> v_me
            AND NOT (u.id = ANY(v_excluded_ids))
-         ORDER BY u.created_at DESC
+         ORDER BY RANDOM()
          LIMIT p_suggestion_limit
     )
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)

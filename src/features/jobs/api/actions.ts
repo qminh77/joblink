@@ -68,7 +68,7 @@ export async function createJobAction(
 export async function applyToJobAction(input: {
   jobId: number
   coverLetter?: string | null
-  resumeUrl?: string | null
+  resumeCvId: number
 }): Promise<ApplyResult> {
   const te = await getTranslations("jobs.errors")
   const parsed = createApplySchema(te).safeParse(input)
@@ -79,11 +79,22 @@ export async function applyToJobAction(input: {
   const current = await requireCurrentUser()
   const supabase = await createClient()
 
+  // Verify CV thuộc về applicant + chưa bị xoá → lưu storage_path vào resume_url.
+  // Đây là cơ chế "lưu path private" mà company-side dùng signed URL khi xem.
+  const { data: cv, error: cvErr } = await supabase
+    .from("member_cvs")
+    .select("storage_path, user_id, deleted_at")
+    .eq("id", parsed.data.resumeCvId)
+    .maybeSingle<{ storage_path: string; user_id: number; deleted_at: string | null }>()
+  if (cvErr || !cv || cv.user_id !== current.appUser.id || cv.deleted_at) {
+    return { ok: false, error: te("resumeRequired") }
+  }
+
   const result = await rpcResult<{ applicationId: number; status: string }>(
     supabase.rpc("apply_to_job", {
       p_job_id: parsed.data.jobId,
       p_cover_letter: parsed.data.coverLetter ?? null,
-      p_resume_url: parsed.data.resumeUrl ?? null,
+      p_resume_url: cv.storage_path,
     }),
   )
 

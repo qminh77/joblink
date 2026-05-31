@@ -149,7 +149,7 @@ export function useApplyToJob() {
   return useMutation<
     ApplyResult,
     Error,
-    { jobId: number; coverLetter?: string | null; resumeUrl?: string | null }
+    { jobId: number; coverLetter?: string | null; resumeCvId: number }
   >({
     mutationFn: async (input) => {
       const r = await applyToJobAction(input)

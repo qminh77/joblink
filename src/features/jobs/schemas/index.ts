@@ -65,12 +65,12 @@ export function createApplySchema(t: Translator) {
       .max(MAX_COVER_LETTER, t("coverLetterTooLong"))
       .optional()
       .nullable(),
-    resumeUrl: z
-      .string()
-      .trim()
-      .url(t("invalidResumeUrl"))
-      .optional()
-      .nullable(),
+    // CV chọn từ danh sách member_cvs. Server lookup storage_path từ id rồi
+    // pass vào RPC apply_to_job như p_resume_url (giữ shape RPC cũ).
+    resumeCvId: z
+      .number({ error: t("resumeRequired") })
+      .int()
+      .positive(t("resumeRequired")),
   })
 }
 

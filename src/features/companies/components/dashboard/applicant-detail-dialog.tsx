@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { AnimatePresence, motion } from "framer-motion"
-import { ExternalLink, FileText, UserSquare, X } from "lucide-react"
+import { ExternalLink, FileText, Loader2, UserSquare, X } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getApplicantResumeUrlAction } from "@/features/cvs/api/actions"
 import { getInitials } from "@/lib/utils/format"
 import { modalContent, modalOverlay } from "@/lib/animations"
 
@@ -18,6 +21,24 @@ type Props = {
 
 export function ApplicantDetailDialog({ applicant, onClose }: Props) {
   const t = useTranslations("companies.applicantDetail")
+  const [fetchingResume, setFetchingResume] = useState(false)
+
+  async function openResume() {
+    if (!applicant) return
+    setFetchingResume(true)
+    try {
+      const res = await getApplicantResumeUrlAction({
+        applicationId: applicant.applicationId,
+      })
+      if (res.ok) {
+        window.open(res.data.url, "_blank", "noopener,noreferrer")
+      } else {
+        toast.error(res.error)
+      }
+    } finally {
+      setFetchingResume(false)
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -90,15 +111,19 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   <FileText className="w-3.5 h-3.5" /> {t("resumeLabel")}
                 </p>
                 {applicant.resumeUrl ? (
-                  <a
-                    href={applicant.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 h-7 rounded-lg transition-colors"
+                  <button
+                    type="button"
+                    onClick={openResume}
+                    disabled={fetchingResume}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 h-7 rounded-lg transition-colors disabled:opacity-60"
                   >
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    {fetchingResume ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    )}
                     {t("openResume")}
-                  </a>
+                  </button>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
                     {t("noResume")}

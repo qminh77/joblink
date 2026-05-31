@@ -57,27 +57,23 @@ export function CompanyFollowButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled || toggle.isPending}
-        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg transition-colors disabled:opacity-50 ${
-          isFollowing
-            ? "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-            : "text-primary hover:bg-primary/10"
-        }`}
-      >
-        {isFollowing ? (
-          <Bell className="w-4 h-4" />
-        ) : (
-          <Plus className="w-4 h-4" />
-        )}
-        {isFollowing ? t("following") : t("follow")}
-      </button>
-      <span className="text-[11px] text-muted-foreground">
-        {t("followerCount", { count: followerCount })}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled || toggle.isPending}
+      aria-label={t("followerCount", { count: followerCount })}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg transition-colors disabled:opacity-50 ${
+        isFollowing
+          ? "bg-muted text-foreground hover:bg-muted/80"
+          : "bg-primary text-primary-foreground hover:bg-primary/90"
+      }`}
+    >
+      {isFollowing ? (
+        <Bell className="w-3.5 h-3.5" />
+      ) : (
+        <Plus className="w-3.5 h-3.5" />
+      )}
+      {isFollowing ? t("following") : t("follow")}
+    </button>
   )
 }

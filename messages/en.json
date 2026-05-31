@@ -288,11 +288,19 @@
     "edit": {
       "title": "Edit profile",
       "subtitle": "Update your personal info, experience and skills",
+      "pageTitle": "Edit profile",
+      "pageSubtitle": "Manage your personal info, experience, education, skills and CVs",
       "tabs": {
         "basic": "Basic info",
         "experiences": "Experience",
         "educations": "Education",
-        "skills": "Skills"
+        "skills": "Skills",
+        "cvs": "CVs"
+      },
+      "completeness": {
+        "title": "Profile completeness",
+        "hint": "Add more details to stand out to recruiters.",
+        "done": "Your profile is complete — ready for any opportunity."
       }
     },
     "basic": {
@@ -798,6 +806,7 @@
       "invalidWorkMode": "Invalid work mode",
       "invalidProvince": "Invalid location",
       "invalidResumeUrl": "Invalid resume URL",
+      "resumeRequired": "Please select a CV to apply",
       "tooManySkills": "At most 20 skills",
       "titleRequired": "Please enter a title",
       "descriptionRequired": "Please enter a description",
@@ -1419,6 +1428,79 @@
         "code_required": "Code is required",
         "province_required": "Please select a province"
       }
+    }
+  },
+  "cvs": {
+    "default": "Default",
+    "view": "View CV",
+    "rename": "Rename",
+    "delete": "Delete CV",
+    "setDefault": "Set as default",
+    "section": {
+      "title": "My CVs",
+      "description": "Upload and manage multiple PDF CVs (max 5 MB). One CV is marked default for quick apply.",
+      "empty": "You haven't uploaded any CV yet.",
+      "uploadButton": "Upload CV"
+    },
+    "uploadDialog": {
+      "title": "Upload a CV",
+      "description": "PDF only, up to {max} MB.",
+      "choosePdf": "Choose a PDF file",
+      "changeFile": "Change file",
+      "hint": "Drag & drop or click — PDF only, up to {max} MB.",
+      "nameLabel": "Display name",
+      "namePlaceholder": "e.g. CV Frontend 2026",
+      "makeDefault": "Set as default CV",
+      "upload": "Upload",
+      "cancel": "Cancel"
+    },
+    "renameDialog": {
+      "title": "Rename CV",
+      "description": "This name is only visible to you in your CV list.",
+      "save": "Save"
+    },
+    "deleteDialog": {
+      "title": "Delete CV",
+      "description": "Delete the CV \"{name}\"? Existing applications keep their original link."
+    },
+    "picker": {
+      "label": "Choose a CV to apply",
+      "uploadNew": "Upload new",
+      "uploadFirst": "Upload your first CV",
+      "empty": "You have no CV yet — upload one before applying."
+    },
+    "upload": {
+      "tooLarge": "File exceeds 5 MB",
+      "invalidType": "PDF files only",
+      "uploadFailed": "Upload failed, please try again",
+      "unauthorized": "Your session expired, please log in again"
+    },
+    "validation": {
+      "fileNameRequired": "Please name this CV",
+      "fileNameMax": "CV name is limited to {max} characters",
+      "invalidStoragePath": "Invalid storage path",
+      "fileTooLarge": "File exceeds 5 MB",
+      "invalidMime": "PDF files only"
+    },
+    "errors": {
+      "unexpected": "Something went wrong, please try again",
+      "memberOnly": "Only members can perform this action",
+      "companyOnly": "Only company accounts can perform this action",
+      "invalidId": "Invalid parameter",
+      "invalidStoragePath": "Invalid storage path",
+      "notFound": "CV not found",
+      "forbidden": "You don't have access to this CV",
+      "fileNameRequired": "Please name this CV",
+      "fileNameMax": "CV name is limited to {max} characters",
+      "fileTooLarge": "File exceeds 5 MB",
+      "invalidMime": "PDF files only"
+    },
+    "messages": {
+      "uploadSuccess": "CV uploaded",
+      "renameSuccess": "CV renamed",
+      "deleteSuccess": "CV deleted",
+      "setDefaultSuccess": "Default CV updated",
+      "unknownError": "Something went wrong"
     }
   }
 }

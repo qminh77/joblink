@@ -288,11 +288,19 @@
     "edit": {
       "title": "Chỉnh sửa hồ sơ",
       "subtitle": "Cập nhật thông tin cá nhân, kinh nghiệm và kỹ năng của bạn",
+      "pageTitle": "Chỉnh sửa hồ sơ",
+      "pageSubtitle": "Quản lý thông tin cá nhân, kinh nghiệm, học vấn, kỹ năng và CV",
       "tabs": {
         "basic": "Thông tin chung",
         "experiences": "Kinh nghiệm",
         "educations": "Học vấn",
-        "skills": "Kỹ năng"
+        "skills": "Kỹ năng",
+        "cvs": "CV"
+      },
+      "completeness": {
+        "title": "Mức độ hoàn thiện hồ sơ",
+        "hint": "Bổ sung thêm thông tin để hồ sơ nổi bật hơn với nhà tuyển dụng.",
+        "done": "Hồ sơ đã đầy đủ — sẵn sàng cho mọi cơ hội."
       }
     },
     "basic": {
@@ -798,6 +806,7 @@
       "invalidWorkMode": "Hình thức làm việc không hợp lệ",
       "invalidProvince": "Địa điểm không hợp lệ",
       "invalidResumeUrl": "Đường dẫn CV không hợp lệ",
+      "resumeRequired": "Vui lòng chọn một CV để ứng tuyển",
       "tooManySkills": "Tối đa 20 kỹ năng",
       "titleRequired": "Vui lòng nhập tiêu đề",
       "descriptionRequired": "Vui lòng nhập mô tả",
@@ -1419,6 +1428,79 @@
         "code_required": "Trường mã không được để trống",
         "province_required": "Vui lòng chọn tỉnh/thành"
       }
+    }
+  },
+  "cvs": {
+    "default": "Mặc định",
+    "view": "Xem CV",
+    "rename": "Đổi tên",
+    "delete": "Xoá CV",
+    "setDefault": "Đặt làm mặc định",
+    "section": {
+      "title": "CV của tôi",
+      "description": "Tải lên và quản lý nhiều CV PDF (tối đa 5 MB). Một CV được đặt làm mặc định để dùng nhanh khi ứng tuyển.",
+      "empty": "Bạn chưa tải lên CV nào.",
+      "uploadButton": "Tải CV mới"
+    },
+    "uploadDialog": {
+      "title": "Tải CV lên",
+      "description": "Chỉ chấp nhận file PDF, tối đa {max} MB.",
+      "choosePdf": "Chọn file PDF từ máy",
+      "changeFile": "Đổi file khác",
+      "hint": "Kéo thả hoặc click — chỉ PDF, tối đa {max} MB.",
+      "nameLabel": "Tên hiển thị",
+      "namePlaceholder": "VD: CV Frontend 2026",
+      "makeDefault": "Đặt làm CV mặc định",
+      "upload": "Tải lên",
+      "cancel": "Huỷ"
+    },
+    "renameDialog": {
+      "title": "Đổi tên CV",
+      "description": "Tên này chỉ bạn nhìn thấy trong danh sách CV.",
+      "save": "Lưu"
+    },
+    "deleteDialog": {
+      "title": "Xoá CV",
+      "description": "Bạn có chắc muốn xoá CV \"{name}\"? Các đơn ứng tuyển đã gửi vẫn giữ link cũ."
+    },
+    "picker": {
+      "label": "Chọn CV để ứng tuyển",
+      "uploadNew": "Tải CV mới",
+      "uploadFirst": "Tải CV đầu tiên",
+      "empty": "Bạn chưa có CV — hãy tải lên trước khi ứng tuyển."
+    },
+    "upload": {
+      "tooLarge": "File vượt quá 5 MB",
+      "invalidType": "Chỉ chấp nhận file PDF",
+      "uploadFailed": "Tải lên thất bại, vui lòng thử lại",
+      "unauthorized": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"
+    },
+    "validation": {
+      "fileNameRequired": "Vui lòng đặt tên cho CV",
+      "fileNameMax": "Tên CV tối đa {max} ký tự",
+      "invalidStoragePath": "Đường dẫn lưu trữ không hợp lệ",
+      "fileTooLarge": "File vượt quá 5 MB",
+      "invalidMime": "Chỉ chấp nhận file PDF"
+    },
+    "errors": {
+      "unexpected": "Đã xảy ra lỗi, vui lòng thử lại",
+      "memberOnly": "Chỉ thành viên cá nhân mới thực hiện được thao tác này",
+      "companyOnly": "Chỉ tài khoản công ty mới thực hiện được thao tác này",
+      "invalidId": "Tham số không hợp lệ",
+      "invalidStoragePath": "Đường dẫn lưu trữ không hợp lệ",
+      "notFound": "Không tìm thấy CV",
+      "forbidden": "Bạn không có quyền truy cập CV này",
+      "fileNameRequired": "Vui lòng đặt tên cho CV",
+      "fileNameMax": "Tên CV tối đa {max} ký tự",
+      "fileTooLarge": "File vượt quá 5 MB",
+      "invalidMime": "Chỉ chấp nhận file PDF"
+    },
+    "messages": {
+      "uploadSuccess": "Đã tải CV lên",
+      "renameSuccess": "Đã đổi tên CV",
+      "deleteSuccess": "Đã xoá CV",
+      "setDefaultSuccess": "Đã đặt CV làm mặc định",
+      "unknownError": "Đã xảy ra lỗi"
     }
   }
 }

@@ -327,6 +327,23 @@ CREATE TABLE IF NOT EXISTS profile_view_logs (
     CONSTRAINT fk_pvl_viewer FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS member_cvs (
+    id           BIGSERIAL PRIMARY KEY,
+    user_id      BIGINT NOT NULL,
+    file_name    VARCHAR(160) NOT NULL,
+    storage_path TEXT NOT NULL,
+    file_size    INT NOT NULL,
+    mime_type    VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
+    is_default   BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at   TIMESTAMPTZ NULL,
+    CONSTRAINT fk_member_cv_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT chk_member_cv_size CHECK (file_size > 0 AND file_size <= 5 * 1024 * 1024),
+    CONSTRAINT chk_member_cv_mime CHECK (mime_type = 'application/pdf'),
+    CONSTRAINT uk_member_cv_path UNIQUE (storage_path)
+);
+
 CREATE INDEX IF NOT EXISTS idx_member_profiles_user     ON member_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_member_profiles_otw      ON member_profiles(open_to_work) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_member_profiles_visibility ON member_profiles(profile_visibility) WHERE deleted_at IS NULL;
@@ -337,6 +354,9 @@ CREATE INDEX IF NOT EXISTS idx_member_educations_user   ON member_educations(use
 CREATE INDEX IF NOT EXISTS idx_member_skills_user       ON member_skills(user_id);
 CREATE INDEX IF NOT EXISTS idx_member_skills_skill      ON member_skills(skill_id);
 CREATE INDEX IF NOT EXISTS idx_profile_view_target      ON profile_view_logs(target_user_id, viewed_at);
+CREATE INDEX IF NOT EXISTS idx_member_cvs_user          ON member_cvs(user_id, created_at DESC) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_member_cvs_default_per_user
+    ON member_cvs(user_id) WHERE is_default = TRUE AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_profile_view_viewer      ON profile_view_logs(viewer_user_id, viewed_at);
 
 -- =============================================================================

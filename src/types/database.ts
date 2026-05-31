@@ -186,6 +186,19 @@ export type ProfileViewLogRow = {
   viewed_at: string
 }
 
+export type MemberCvRow = {
+  id: number
+  user_id: number
+  file_name: string
+  storage_path: string
+  file_size: number
+  mime_type: string
+  is_default: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
 export type ConnectionRow = {
   id: number
   requester_id: number
@@ -496,6 +509,12 @@ export type Database = {
       >
       skills: TableDef<SkillRow, { name: string }>
       member_skills: TableDef<MemberSkillRow, MemberSkillRow>
+      member_cvs: TableDef<
+        MemberCvRow,
+        Omit<MemberCvRow, "id" | "created_at" | "updated_at" | "deleted_at"> & {
+          is_default?: boolean
+        }
+      >
       profile_view_logs: TableDef<
         ProfileViewLogRow,
         Omit<ProfileViewLogRow, "id" | "viewed_at">
@@ -664,6 +683,14 @@ export type Database = {
         Args: {
           p_target_user_id: number
         }
+        Returns: Json
+      }
+      get_profile_edit_overview: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      set_default_member_cv: {
+        Args: { p_cv_id: number }
         Returns: Json
       }
       get_messaging_overview: {

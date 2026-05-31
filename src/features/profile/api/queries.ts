@@ -2,6 +2,7 @@ import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import type { ConnectionRelation } from "@/features/network/types"
+import { mapMemberCv, type MemberCv, type MemberCvRow } from "@/features/cvs/types"
 import { createClient } from "@/lib/supabase/server"
 import type {
   AppUserRow,
@@ -18,6 +19,12 @@ import type {
   MemberProfileDetail,
   ProfilePageData,
 } from "../types"
+
+export type ProfileEditOverview = {
+  profile: MemberProfileDetail
+  provinces: ProvinceRow[]
+  cvs: MemberCv[]
+}
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>
 
@@ -153,6 +160,54 @@ export async function loadOwnMemberProfile(): Promise<MemberProfileDetail | null
   if (!current || current.appUser.role !== "member") return null
   const supabase = await createClient()
   return loadMemberProfileDetail(supabase, current.appUser, current.appUser.id)
+}
+
+type ProfileEditOverviewRpc = {
+  userId: number
+  email: string
+  profile: MemberProfileRow
+  province: { id: number; name: string } | null
+  district: { id: number; name: string } | null
+  experiences: MemberExperienceRow[]
+  educations: MemberEducationRow[]
+  skills: SkillRow[]
+  cvs: MemberCvRow[]
+  provinces: ProvinceRow[]
+}
+
+// Gộp toàn bộ dữ liệu trang /profile/edit về 1 round-trip qua RPC
+// `get_profile_edit_overview`. Trang dùng hàm này thay cho
+// Promise.all([loadOwnMemberProfile, loadProvinces, loadOwnCvs]).
+export async function loadProfileEditOverview(): Promise<ProfileEditOverview | null> {
+  const current = await getCurrentUser()
+  if (!current || current.appUser.role !== "member") return null
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("get_profile_edit_overview")
+  if (error) {
+    console.error("[loadProfileEditOverview] rpc", error)
+    return null
+  }
+  if (!data) return null
+  const r = data as unknown as ProfileEditOverviewRpc
+
+  const detail: MemberProfileDetail = {
+    ...(r.profile as MemberProfileRow),
+    email: r.email,
+    province: r.province,
+    district: r.district,
+    experiences: r.experiences ?? [],
+    educations: r.educations ?? [],
+    skills: r.skills ?? [],
+    profileViewCount: current.appUser.profile_view_count,
+    connectionCount: current.appUser.connection_count,
+    isOwner: true,
+    isVisible: true,
+  }
+  return {
+    profile: detail,
+    provinces: r.provinces ?? [],
+    cvs: (r.cvs ?? []).map(mapMemberCv),
+  }
 }
 
 export async function loadOwnCompanyProfile(): Promise<CompanyProfileDetail | null> {
