@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { FileText, Plus, Star } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
 import { CvUploadDialog } from "./cv-upload-dialog"
@@ -58,21 +57,19 @@ export function CvPicker({ cvs, value, onChange, refreshOnUpload }: Props) {
       />
 
       {cvs.length === 0 ? (
-        <div className="border border-dashed border-border/50 rounded-xl py-6 text-center">
+        <div className="bg-muted/40 rounded-xl py-6 text-center">
           <FileText className="w-7 h-7 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">{t("picker.empty")}</p>
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="outline"
-            className="rounded-lg mt-3"
             onClick={() => setUploadOpen(true)}
+            className="h-8 px-3 mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
           >
-            <Plus className="w-3.5 h-3.5 mr-1" /> {t("picker.uploadFirst")}
-          </Button>
+            <Plus className="w-3.5 h-3.5" /> {t("picker.uploadFirst")}
+          </button>
         </div>
       ) : (
-        <div className="grid gap-2">
+        <div className="grid gap-1">
           {cvs.map((cv) => {
             const selected = cv.id === value
             return (
@@ -81,10 +78,8 @@ export function CvPicker({ cvs, value, onChange, refreshOnUpload }: Props) {
                 type="button"
                 onClick={() => onChange(cv.id)}
                 className={
-                  "flex items-center gap-3 text-left rounded-xl border p-3 transition " +
-                  (selected
-                    ? "border-primary bg-primary/5"
-                    : "border-border/40 hover:border-primary/40 hover:bg-muted/40")
+                  "flex items-center gap-3 text-left rounded-xl px-3 py-2.5 transition-colors " +
+                  (selected ? "bg-primary/5" : "hover:bg-muted/60")
                 }
               >
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -105,8 +100,10 @@ export function CvPicker({ cvs, value, onChange, refreshOnUpload }: Props) {
                 </div>
                 <div
                   className={
-                    "w-4 h-4 rounded-full border-2 shrink-0 " +
-                    (selected ? "border-primary bg-primary" : "border-border")
+                    "w-4 h-4 rounded-full shrink-0 transition-colors " +
+                    (selected
+                      ? "bg-primary ring-4 ring-primary/20"
+                      : "bg-muted")
                   }
                 />
               </button>

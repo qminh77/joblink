@@ -1,5 +1,11 @@
 {
   "common": {
+    "monthPicker": {
+      "placeholder": "Pick month/year",
+      "prevYear": "Previous year",
+      "nextYear": "Next year",
+      "clear": "Clear"
+    },
     "appName": "JobLink",
     "save": "Save",
     "saveChanges": "Save changes",
@@ -747,7 +753,8 @@
       "savedSubheading": "{count} jobs in your list",
       "savedEmpty": "You haven't saved any jobs yet.",
       "browseJobs": "Browse jobs",
-      "savedAt": "Saved {time}"
+      "savedAt": "Saved {time}",
+      "deadlineLabel": "Apply by {date}"
     },
     "post": {
       "heading": "Post a job",
@@ -761,8 +768,10 @@
       "jobTypePlaceholder": "Select type",
       "workModeLabel": "Work mode",
       "workModePlaceholder": "Select mode",
-      "jobPositionLabel": "Position",
-      "jobPositionPlaceholder": "Select position",
+      "positionTitleLabel": "Position",
+      "positionTitlePlaceholder": "e.g. Senior Frontend Developer",
+      "expiresAtLabel": "Application deadline",
+      "expiresAtHint": "Leave empty if open-ended",
       "salaryMinLabel": "Min salary (VND)",
       "salaryMaxLabel": "Max salary (VND)",
       "contentSection": "Job description",
@@ -799,6 +808,7 @@
       "cannotWithdrawNow": "Cannot withdraw at this stage",
       "invalidTitle": "Invalid title",
       "titleTooLong": "Title is too long",
+      "positionTitleTooLong": "Position is too long (max 255 chars)",
       "invalidDescription": "Invalid description",
       "invalidSalaryRange": "Max salary must be greater than min salary",
       "invalidStatus": "Invalid status",
@@ -1498,9 +1508,17 @@
     "messages": {
       "uploadSuccess": "CV uploaded",
       "renameSuccess": "CV renamed",
-      "deleteSuccess": "CV deleted",
+      "deleteSuccess": "Default CV updated",
       "setDefaultSuccess": "Default CV updated",
       "unknownError": "Something went wrong"
+    },
+    "viewer": {
+      "description": "View PDF CV inside the app",
+      "loadError": "Failed to load CV, please try again",
+      "download": "Download",
+      "close": "Close",
+      "openInTab": "Open in new tab",
+      "mobileHint": "Mobile browsers can't display PDFs here. Tap below to open it in a new tab."
     }
   }
 }

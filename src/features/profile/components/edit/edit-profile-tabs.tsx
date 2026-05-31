@@ -12,7 +12,6 @@ import {
   Wrench,
 } from "lucide-react"
 
-import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CvsSection } from "@/features/cvs/components/cvs-section"
 import type { MemberCv } from "@/features/cvs/types"
@@ -75,7 +74,7 @@ export function EditProfileTabs({
       </motion.div>
 
       <motion.div variants={fadeUp} initial="hidden" animate="show">
-        <Card className="bg-card border-border/30 rounded-2xl p-4 sm:p-5">
+        <div className="rounded-2xl bg-muted/40 p-4 sm:p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -87,7 +86,7 @@ export function EditProfileTabs({
                 </h2>
                 <span className="text-sm font-bold text-primary">{percent}%</span>
               </div>
-              <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+              <div className="mt-2 h-1.5 rounded-full bg-background/70 overflow-hidden">
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-500"
                   style={{ width: `${percent}%` }}
@@ -100,7 +99,7 @@ export function EditProfileTabs({
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       </motion.div>
 
       <Tabs defaultValue={TAB_VALUE.info}>
@@ -143,12 +142,12 @@ export function EditProfileTabs({
           className="mt-5 focus-visible:outline-none"
         >
           <motion.div key="info" variants={fadeUp} initial="hidden" animate="show">
-            <Card className="bg-card border-border/30 rounded-2xl p-5 sm:p-6">
+            <div className="rounded-2xl bg-muted/30 p-5 sm:p-6">
               <h2 className="font-headline font-bold text-base text-foreground mb-5">
                 {t("basic.title")}
               </h2>
               <BasicInfoForm profile={profile} provinces={provinces} />
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
@@ -162,9 +161,9 @@ export function EditProfileTabs({
             initial="hidden"
             animate="show"
           >
-            <Card className="bg-card border-border/30 rounded-2xl p-5 sm:p-6">
+            <div className="rounded-2xl bg-muted/30 p-5 sm:p-6">
               <ExperiencesSection experiences={profile.experiences} />
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
@@ -178,9 +177,9 @@ export function EditProfileTabs({
             initial="hidden"
             animate="show"
           >
-            <Card className="bg-card border-border/30 rounded-2xl p-5 sm:p-6">
+            <div className="rounded-2xl bg-muted/30 p-5 sm:p-6">
               <EducationsSection educations={profile.educations} />
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
@@ -194,9 +193,9 @@ export function EditProfileTabs({
             initial="hidden"
             animate="show"
           >
-            <Card className="bg-card border-border/30 rounded-2xl p-5 sm:p-6">
+            <div className="rounded-2xl bg-muted/30 p-5 sm:p-6">
               <SkillsSection skills={profile.skills} />
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
@@ -205,9 +204,9 @@ export function EditProfileTabs({
           className="mt-5 focus-visible:outline-none"
         >
           <motion.div key="cv" variants={fadeUp} initial="hidden" animate="show">
-            <Card className="bg-card border-border/30 rounded-2xl p-5 sm:p-6">
+            <div className="rounded-2xl bg-muted/30 p-5 sm:p-6">
               <CvsSection cvs={cvs} />
-            </Card>
+            </div>
           </motion.div>
         </TabsContent>
       </Tabs>

@@ -1,5 +1,11 @@
 {
   "common": {
+    "monthPicker": {
+      "placeholder": "Chọn tháng/năm",
+      "prevYear": "Năm trước",
+      "nextYear": "Năm sau",
+      "clear": "Xóa"
+    },
     "appName": "JobLink",
     "save": "Lưu",
     "saveChanges": "Lưu thay đổi",
@@ -747,7 +753,8 @@
       "savedSubheading": "{count} việc làm trong danh sách",
       "savedEmpty": "Bạn chưa lưu việc làm nào.",
       "browseJobs": "Tìm việc làm",
-      "savedAt": "Đã lưu {time}"
+      "savedAt": "Đã lưu {time}",
+      "deadlineLabel": "Hạn nộp {date}"
     },
     "post": {
       "heading": "Đăng tin tuyển dụng",
@@ -761,8 +768,10 @@
       "jobTypePlaceholder": "Chọn loại hình",
       "workModeLabel": "Hình thức làm việc",
       "workModePlaceholder": "Chọn hình thức",
-      "jobPositionLabel": "Vị trí",
-      "jobPositionPlaceholder": "Chọn vị trí",
+      "positionTitleLabel": "Vị trí",
+      "positionTitlePlaceholder": "VD: Senior Frontend Developer",
+      "expiresAtLabel": "Hạn nộp đơn",
+      "expiresAtHint": "Để trống nếu không giới hạn",
       "salaryMinLabel": "Lương tối thiểu (VND)",
       "salaryMaxLabel": "Lương tối đa (VND)",
       "contentSection": "Mô tả công việc",
@@ -799,6 +808,7 @@
       "cannotWithdrawNow": "Không thể rút đơn ở trạng thái này",
       "invalidTitle": "Tiêu đề không hợp lệ",
       "titleTooLong": "Tiêu đề quá dài",
+      "positionTitleTooLong": "Vị trí quá dài (tối đa 255 ký tự)",
       "invalidDescription": "Mô tả không hợp lệ",
       "invalidSalaryRange": "Lương tối đa phải lớn hơn lương tối thiểu",
       "invalidStatus": "Trạng thái không hợp lệ",
@@ -1501,6 +1511,14 @@
       "deleteSuccess": "Đã xoá CV",
       "setDefaultSuccess": "Đã đặt CV làm mặc định",
       "unknownError": "Đã xảy ra lỗi"
+    },
+    "viewer": {
+      "description": "Xem CV PDF trực tiếp trong ứng dụng",
+      "loadError": "Không tải được CV, vui lòng thử lại",
+      "download": "Tải về",
+      "close": "Đóng",
+      "openInTab": "Mở tab mới",
+      "mobileHint": "Trình duyệt di động không xem được PDF tại đây. Nhấn nút bên dưới để mở trong tab mới."
     }
   }
 }

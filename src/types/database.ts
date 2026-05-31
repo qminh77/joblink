@@ -356,6 +356,7 @@ export type JobRow = {
   job_type_id: number
   work_mode_id: number
   job_position_id: number | null
+  position_title: string | null
   status: "draft" | "active" | "closed" | "expired" | "removed"
   expires_at: string | null
   created_at: string
@@ -778,6 +779,7 @@ export type Database = {
           p_job_type_id: number
           p_work_mode_id: number
           p_job_position_id: number | null
+          p_position_title: string | null
           p_status: string
           p_expires_at: string | null
           p_skills: string[] | null

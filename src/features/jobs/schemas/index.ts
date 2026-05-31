@@ -39,7 +39,12 @@ export function createJobSchema(t: Translator) {
         .number({ error: t("workModeRequired") })
         .int()
         .positive(t("workModeRequired")),
-      jobPositionId: z.number().int().positive().optional().nullable(),
+      positionTitle: z
+        .string()
+        .trim()
+        .max(MAX_TITLE, t("positionTitleTooLong"))
+        .optional()
+        .nullable(),
       status: z.enum(["draft", "active"]),
       expiresAt: z.string().datetime().optional().nullable(),
       skills: z

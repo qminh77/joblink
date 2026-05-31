@@ -23,25 +23,15 @@ import { fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
 import { createJobAction } from "../api/actions"
-import type {
-  JobPositionRef,
-  JobTypeRef,
-  WorkModeRef,
-} from "../types"
+import type { JobTypeRef, WorkModeRef } from "../types"
 
 type Props = {
   provinces: ProvinceRow[]
   jobTypes: JobTypeRef[]
   workModes: WorkModeRef[]
-  jobPositions: JobPositionRef[]
 }
 
-export function PostJobForm({
-  provinces,
-  jobTypes,
-  workModes,
-  jobPositions,
-}: Props) {
+export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
   const t = useTranslations("jobs.post")
   const router = useRouter()
 
@@ -51,7 +41,8 @@ export function PostJobForm({
   const [provinceId, setProvinceId] = useState<string>("")
   const [jobTypeId, setJobTypeId] = useState<string>("")
   const [workModeId, setWorkModeId] = useState<string>("")
-  const [jobPositionId, setJobPositionId] = useState<string>("")
+  const [positionTitle, setPositionTitle] = useState("")
+  const [expiresAt, setExpiresAt] = useState("")
   const [salaryMin, setSalaryMin] = useState("")
   const [salaryMax, setSalaryMax] = useState("")
   const [skills, setSkills] = useState<string[]>([])
@@ -84,6 +75,12 @@ export function PostJobForm({
       return
     }
 
+    // Hạn nộp đơn dạng YYYY-MM-DD từ <input type="date"> → ISO cuối ngày
+    // (23:59 local) để cùng ngày người dùng vẫn ứng tuyển được.
+    const expiresAtIso = expiresAt
+      ? new Date(`${expiresAt}T23:59:59`).toISOString()
+      : null
+
     setSubmitting(true)
     const result = await createJobAction({
       title,
@@ -92,11 +89,12 @@ export function PostJobForm({
       provinceId: provinceId ? Number(provinceId) : null,
       jobTypeId: Number(jobTypeId),
       workModeId: Number(workModeId),
-      jobPositionId: jobPositionId ? Number(jobPositionId) : null,
+      positionTitle: positionTitle.trim() || null,
       salaryMin: salaryMin ? Number(salaryMin) : null,
       salaryMax: salaryMax ? Number(salaryMax) : null,
       salaryVisible: true,
       status,
+      expiresAt: expiresAtIso,
       skills: skills.length > 0 ? skills : undefined,
     })
     setSubmitting(false)
@@ -202,27 +200,39 @@ export function PostJobForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="font-medium">
-                  {t("jobPositionLabel")}{" "}
+                <Label htmlFor="position-title" className="font-medium">
+                  {t("positionTitleLabel")}{" "}
                   <span className="text-muted-foreground text-xs">
                     ({t("optional")})
                   </span>
                 </Label>
-                <Select
-                  value={jobPositionId}
-                  onValueChange={setJobPositionId}
-                >
-                  <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue placeholder={t("jobPositionPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobPositions.map((jp) => (
-                      <SelectItem key={jp.id} value={String(jp.id)}>
-                        {jp.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="position-title"
+                  placeholder={t("positionTitlePlaceholder")}
+                  value={positionTitle}
+                  onChange={(e) => setPositionTitle(e.target.value)}
+                  maxLength={255}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expires-at" className="font-medium">
+                  {t("expiresAtLabel")}{" "}
+                  <span className="text-muted-foreground text-xs">
+                    ({t("optional")})
+                  </span>
+                </Label>
+                <Input
+                  id="expires-at"
+                  type="date"
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  className="h-11 rounded-xl"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {t("expiresAtHint")}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="salary-min" className="font-medium">

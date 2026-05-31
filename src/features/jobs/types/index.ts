@@ -48,6 +48,7 @@ export type JobDetailCore = {
   jobTypeName: string | null
   workModeName: string | null
   jobPositionName: string | null
+  positionTitle: string | null
 }
 
 export type JobDetailViewer = {
@@ -99,7 +100,7 @@ export type CreateJobInput = {
   salaryVisible?: boolean
   jobTypeId: number
   workModeId: number
-  jobPositionId?: number | null
+  positionTitle?: string | null
   status: "draft" | "active"
   expiresAt?: string | null
   skills?: string[]
@@ -173,4 +174,3 @@ export type RespondInterviewResult =
 // Reference data tables (loaded for filters/form)
 export type JobTypeRef = { id: number; code: string; name: string }
 export type WorkModeRef = { id: number; code: string; name: string }
-export type JobPositionRef = { id: number; code: string; name: string }

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { MonthYearPicker } from "./month-year-picker"
 import {
   useAddExperience,
   useUpdateExperience,
@@ -138,7 +139,7 @@ export function ExperienceDialog({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="startDate"
@@ -146,10 +147,9 @@ export function ExperienceDialog({
                   <FormItem>
                     <FormLabel>{td("startDate")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="month"
-                        className="h-10 rounded-xl"
+                      <MonthYearPicker
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -163,12 +163,10 @@ export function ExperienceDialog({
                   <FormItem>
                     <FormLabel>{td("endDate")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
+                      <MonthYearPicker
                         value={field.value ?? ""}
-                        type="month"
+                        onChange={field.onChange}
                         disabled={isCurrent}
-                        className="h-10 rounded-xl"
                       />
                     </FormControl>
                     <FormMessage />

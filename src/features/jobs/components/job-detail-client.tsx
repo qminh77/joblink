@@ -9,6 +9,7 @@ import {
   Bookmark,
   Briefcase,
   Building2,
+  CalendarClock,
   CheckCircle2,
   Clock,
   DollarSign,
@@ -125,6 +126,23 @@ export function JobDetailClient({ detail }: Props) {
                       <span className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4" /> {formatRel(job.createdAt)}
                       </span>
+                      {job.expiresAt ? (
+                        <>
+                          <span className="w-1 h-1 rounded-full bg-border" />
+                          <span
+                            className={`flex items-center gap-1.5 ${
+                              new Date(job.expiresAt) < new Date()
+                                ? "text-destructive"
+                                : ""
+                            }`}
+                          >
+                            <CalendarClock className="w-4 h-4" />
+                            {t("deadlineLabel", {
+                              date: new Date(job.expiresAt).toLocaleDateString(),
+                            })}
+                          </span>
+                        </>
+                      ) : null}
                     </div>
                   </div>
 
@@ -213,9 +231,9 @@ export function JobDetailClient({ detail }: Props) {
                   {job.workModeName}
                 </span>
               ) : null}
-              {job.jobPositionName ? (
+              {job.positionTitle ?? job.jobPositionName ? (
                 <span className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                  {job.jobPositionName}
+                  {job.positionTitle ?? job.jobPositionName}
                 </span>
               ) : null}
             </div>

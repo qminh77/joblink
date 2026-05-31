@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server"
 
 import type {
   JobDetail,
-  JobPositionRef,
   JobTypeRef,
   JobsListPage,
   MyApplicationsPage,
@@ -140,13 +139,3 @@ export async function loadWorkModes(): Promise<WorkModeRef[]> {
   return (data ?? []) as WorkModeRef[]
 }
 
-export async function loadJobPositions(): Promise<JobPositionRef[]> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("job_positions")
-    .select("id, code, name")
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: true })
-  return (data ?? []) as JobPositionRef[]
-}

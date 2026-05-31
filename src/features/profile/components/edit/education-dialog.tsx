@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { MonthYearPicker } from "./month-year-picker"
 import { Textarea } from "@/components/ui/textarea"
 import {
   useAddEducation,
@@ -159,7 +160,7 @@ export function EducationDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="startDate"
@@ -167,11 +168,9 @@ export function EducationDialog({
                   <FormItem>
                     <FormLabel>{td("startDate")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
+                      <MonthYearPicker
                         value={field.value ?? ""}
-                        type="month"
-                        className="h-10 rounded-xl"
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -185,11 +184,9 @@ export function EducationDialog({
                   <FormItem>
                     <FormLabel>{td("endDate")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
+                      <MonthYearPicker
                         value={field.value ?? ""}
-                        type="month"
-                        className="h-10 rounded-xl"
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />

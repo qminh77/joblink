@@ -4,13 +4,11 @@
 -- Mục tiêu:
 --   • SRS FR-M02-001 + UC-11 Easy Apply: Member upload PDF, đặt tên, set default,
 --     chọn 1 CV khi apply job (thay vì paste URL ngoài như flow cũ).
---   • Bảng `member_cvs` lưu metadata; file binary lưu ở Storage bucket `cv`
---     PRIVATE, truy cập qua signed URL có hạn (SRS yêu cầu Company chỉ xem CV
---     khi ứng viên đã apply — kiểm soát bằng RPC get_company_applicants +
---     signed URL hết hạn).
---   • CV vẫn không có RLS ở bảng — app enforce ownership ở action/repo (đồng
---     bộ với member_profiles/exp/edu). Bucket có RLS để chặn truy cập file
---     trực tiếp từ client.
+--   • SRS Bảo mật: CV chứa PII — Company CHỈ được xem CV khi ứng viên đã apply.
+--     Bucket `uploads` (post-media/avatar/cover) là PUBLIC → KHÔNG dùng được
+--     cho CV vì bucket public override RLS, ai có URL cũng đọc được. Vì vậy
+--     tách BUCKET PRIVATE riêng `cvs`, truy cập qua signed URL ttl ngắn.
+--   • Bảng `member_cvs` lưu metadata; binary nằm ở `cvs/<userId>/<uuid>.pdf`.
 -- =============================================================================
 
 -- 1. Bảng member_cvs ----------------------------------------------------------
@@ -18,7 +16,7 @@ CREATE TABLE IF NOT EXISTS member_cvs (
     id           BIGSERIAL PRIMARY KEY,
     user_id      BIGINT NOT NULL,
     file_name    VARCHAR(160) NOT NULL,            -- tên hiển thị do member đặt
-    storage_path TEXT NOT NULL,                    -- path trong bucket `cv`
+    storage_path TEXT NOT NULL,                    -- path trong bucket `cvs`
     file_size    INT NOT NULL,                     -- byte
     mime_type    VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
     is_default   BOOLEAN NOT NULL DEFAULT FALSE,   -- 1 default per user
@@ -31,30 +29,30 @@ CREATE TABLE IF NOT EXISTS member_cvs (
     CONSTRAINT uk_member_cv_path UNIQUE (storage_path)
 );
 
+ALTER TABLE member_cvs DISABLE ROW LEVEL SECURITY;
+
 CREATE INDEX IF NOT EXISTS idx_member_cvs_user
     ON member_cvs(user_id, created_at DESC)
     WHERE deleted_at IS NULL;
 
--- Đảm bảo: mỗi user chỉ có TỐI ĐA 1 CV default (chưa xóa).
 CREATE UNIQUE INDEX IF NOT EXISTS uk_member_cvs_default_per_user
     ON member_cvs(user_id)
     WHERE is_default = TRUE AND deleted_at IS NULL;
 
--- Trigger set updated_at -------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_member_cvs_set_updated_at ON member_cvs;
 CREATE TRIGGER trg_member_cvs_set_updated_at
 BEFORE UPDATE ON member_cvs
 FOR EACH ROW
-EXECUTE FUNCTION public.set_updated_at();
+EXECUTE FUNCTION joblink_set_updated_at();
 
--- 2. Bucket `cv` PRIVATE -------------------------------------------------------
--- Private vì CV chứa thông tin cá nhân — chỉ chủ + company nhận application
--- mới xem được (thông qua signed URL được sinh từ server, hết hạn).
+-- 2. Bucket `cvs` PRIVATE (TÁCH KHỎI `uploads` để bảo mật) --------------------
+-- `uploads` public → KHÔNG dùng cho CV. Bucket `cvs` private + signed URL.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
-    'cv',
-    'cv',
-    FALSE,
-    5242880,                          -- 5MB
+    'cvs',
+    'cvs',
+    FALSE,                          -- PRIVATE
+    5242880,                        -- 5MB
     ARRAY['application/pdf']
 )
 ON CONFLICT (id) DO UPDATE
@@ -63,46 +61,50 @@ ON CONFLICT (id) DO UPDATE
        allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- 3. RLS bucket ----------------------------------------------------------------
--- Path: cv/<userId>/<uuid>.pdf
---   path_tokens[1] = '<userId>' (chỉ ghép owner — đơn giản, không cần prefix
---   member-cv vì bucket riêng).
--- Server action chạy bằng service_role => bypass RLS. Các policy này là lớp
--- phòng thủ cho trường hợp client gọi storage trực tiếp.
+-- Path: cvs/<userId>/<uuid>.pdf  (path_tokens[1] = userId)
+-- KHÔNG có policy SELECT public — chỉ owner select. Member preview: client JWT
+-- pass RLS (là owner). Company xem CV ứng viên: server action verify quyền
+-- (jobs!inner ownership), rồi dùng `createAdminClient()` (service_role) để
+-- sinh signed URL — service_role bypass RLS.
 
-DROP POLICY IF EXISTS "cv: authenticated insert own folder" ON storage.objects;
-DROP POLICY IF EXISTS "cv: owner select" ON storage.objects;
-DROP POLICY IF EXISTS "cv: owner delete" ON storage.objects;
+DROP POLICY IF EXISTS "cvs: authenticated insert own folder" ON storage.objects;
+DROP POLICY IF EXISTS "cvs: owner select" ON storage.objects;
+DROP POLICY IF EXISTS "cvs: owner delete" ON storage.objects;
 
-CREATE POLICY "cv: authenticated insert own folder"
+CREATE POLICY "cvs: authenticated insert own folder"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
-    bucket_id = 'cv'
+    bucket_id = 'cvs'
     AND path_tokens[1] = (
       SELECT id::text FROM public.users WHERE auth_id = auth.uid()
     )
   );
 
-CREATE POLICY "cv: owner select"
+CREATE POLICY "cvs: owner select"
   ON storage.objects FOR SELECT TO authenticated
   USING (
-    bucket_id = 'cv'
+    bucket_id = 'cvs'
     AND path_tokens[1] = (
       SELECT id::text FROM public.users WHERE auth_id = auth.uid()
     )
   );
 
-CREATE POLICY "cv: owner delete"
+CREATE POLICY "cvs: owner delete"
   ON storage.objects FOR DELETE TO authenticated
   USING (
-    bucket_id = 'cv'
+    bucket_id = 'cvs'
     AND path_tokens[1] = (
       SELECT id::text FROM public.users WHERE auth_id = auth.uid()
     )
   );
 
+-- Lưu ý: nếu trước đó migration phiên bản cũ đã tạo bucket `cv` (2 ký tự),
+-- KHÔNG thể DELETE bằng SQL — Supabase block `DELETE FROM storage.*` qua
+-- trigger `storage.protect_delete`. Phải xóa qua Dashboard (Storage → Delete
+-- bucket) hoặc Storage API. Bucket trùng tên cũ không ảnh hưởng chức năng:
+-- code mới dùng bucket `cvs` (3 ký tự).
+
 -- 4. RPC set default CV (atomic) -----------------------------------------------
--- Đặt 1 CV làm default: clear cờ default ở các CV khác của user trước, rồi set
--- target. Gom 1 transaction để tránh vi phạm unique index ở giữa.
 CREATE OR REPLACE FUNCTION public.set_default_member_cv(p_cv_id BIGINT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -150,6 +152,3 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.set_default_member_cv(BIGINT) TO authenticated;
-
--- 5. Đồng bộ schema.sql --------------------------------------------------------
--- Lưu ý: cập nhật `schema.sql` tay trong commit này để khớp đầy đủ.

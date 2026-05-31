@@ -17,6 +17,7 @@ export function createRegisterCvSchema(t: Translator) {
       .trim()
       .min(1, t("fileNameRequired"))
       .max(CV_FILE_NAME_MAX, t("fileNameMax", { max: CV_FILE_NAME_MAX })),
+    // Path: <userId>/<uuid>.pdf  trong bucket private `cvs`.
     storagePath: z
       .string()
       .min(1)

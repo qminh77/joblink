@@ -4,7 +4,6 @@ import { useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 import { FileUp, Loader2, UploadCloud } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -132,7 +131,7 @@ function UploadForm({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full border-2 border-dashed border-border/60 rounded-2xl p-6 flex flex-col items-center gap-2 hover:border-primary/60 hover:bg-muted/40 transition"
+          className="w-full bg-muted/40 hover:bg-muted/70 rounded-2xl p-6 flex flex-col items-center gap-2 transition-colors"
         >
           {file ? (
             <>
@@ -189,23 +188,24 @@ function UploadForm({
         ) : null}
       </div>
 
-      <DialogFooter>
-        <Button
-          variant="outline"
+      <DialogFooter className="gap-1">
+        <button
+          type="button"
           onClick={onClose}
           disabled={busy}
-          className="rounded-xl"
+          className="h-9 px-3 inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-lg transition-colors disabled:opacity-60"
         >
           {t("uploadDialog.cancel")}
-        </Button>
-        <Button
+        </button>
+        <button
+          type="button"
           onClick={submit}
           disabled={!file || busy}
-          className="rounded-xl"
+          className="h-9 px-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-60"
         >
-          {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
           {t("uploadDialog.upload")}
-        </Button>
+        </button>
       </DialogFooter>
     </>
   )

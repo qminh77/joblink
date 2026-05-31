@@ -15,10 +15,7 @@ import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import {
-  CV_BUCKET,
-  CV_SIGNED_URL_TTL_SECONDS,
-} from "../lib/constants"
+import { CV_BUCKET, CV_SIGNED_URL_TTL_SECONDS } from "../lib/constants"
 import {
   countActiveCvs,
   findMemberCv,
@@ -51,6 +48,8 @@ export async function registerCvAction(
     const current = await requireRole("member")
     const data = parse(createRegisterCvSchema(await validation()), input)
 
+    // Path layout: <userId>/<uuid>.pdf — segment[0] phải khớp current user
+    // (chống user trick đăng ký path của người khác).
     const pathOwner = data.storagePath.split("/")[0]
     if (pathOwner !== String(current.appUser.id)) {
       throw ActionError.key("invalidStoragePath")
@@ -165,7 +164,8 @@ export async function setDefaultCvAction(cvId: number): Promise<ActionResult> {
   })
 }
 
-// Lấy signed URL để member tự xem CV của mình (preview).
+// Sinh signed URL ngắn hạn cho member tự xem CV của mình. Bucket `cvs` PRIVATE
+// → KHÔNG có URL công khai; mọi lượt xem đều qua URL ký hết hạn 5 phút.
 export async function getCvViewUrlAction(input: {
   cvId?: number
   storagePath?: string
@@ -260,12 +260,25 @@ export async function getApplicantResumeUrlAction(input: {
       return { url: raw, kind: "external" as const }
     }
 
+    // raw là storage_path (vd: <userId>/<uuid>.pdf) trong bucket private `cvs`.
+    // Server (user JWT) gọi createSignedUrl — RLS policy "cvs: owner select"
+    // chỉ cho owner; ở đây caller là company → cần dùng admin client để
+    // bypass RLS (đã verify quyền nghiệp vụ ở trên qua jobs!inner).
     const { data: signed, error: signErr } = await supabase.storage
       .from(CV_BUCKET)
       .createSignedUrl(raw, CV_SIGNED_URL_TTL_SECONDS)
     if (signErr || !signed) {
-      console.error("[getApplicantResumeUrl] sign", signErr)
-      throw ActionError.key("unexpected")
+      // Fallback: thử admin client (service_role) — kéo dài tương thích nếu
+      // RLS policy thay đổi sau này. Hợp lệ vì ta đã verify company quyền.
+      const admin = createAdminClient()
+      const { data: aSigned, error: aErr } = await admin.storage
+        .from(CV_BUCKET)
+        .createSignedUrl(raw, CV_SIGNED_URL_TTL_SECONDS)
+      if (aErr || !aSigned) {
+        console.error("[getApplicantResumeUrl] sign", signErr, aErr)
+        throw ActionError.key("unexpected")
+      }
+      return { url: aSigned.signedUrl, kind: "signed" as const }
     }
     return { url: signed.signedUrl, kind: "signed" as const }
   })

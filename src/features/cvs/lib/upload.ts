@@ -48,8 +48,8 @@ export type CvUploadResult = {
   fileSize: number
 }
 
-// Upload file PDF lên bucket `cv` với path `<userId>/<uuid>.pdf`. Trả storagePath
-// để caller submit kèm metadata qua registerCvAction.
+// Upload file PDF lên bucket PRIVATE `cvs` với path `<userId>/<uuid>.pdf`.
+// RLS chỉ owner ghi vào folder của chính mình → path_tokens[1] = userId.
 export async function uploadCvFile(args: {
   file: File
   userId: number

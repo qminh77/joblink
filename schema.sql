@@ -543,6 +543,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     job_type_id      BIGINT NOT NULL,
     work_mode_id     BIGINT NOT NULL,
     job_position_id  BIGINT NULL,
+    position_title   VARCHAR(255) NULL,
     status           VARCHAR(20) NOT NULL DEFAULT 'draft',
     expires_at       TIMESTAMPTZ NULL,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -3866,6 +3867,7 @@ CREATE OR REPLACE FUNCTION public.create_job(
     p_job_type_id BIGINT,
     p_work_mode_id BIGINT,
     p_job_position_id BIGINT,
+    p_position_title TEXT,
     p_status TEXT,
     p_expires_at TIMESTAMPTZ,
     p_skills TEXT[]
@@ -3882,6 +3884,7 @@ DECLARE
     v_job_id BIGINT;
     v_skill_name TEXT;
     v_skill_id BIGINT;
+    v_position_title TEXT;
 BEGIN
     SELECT u.id, u.role, u.status INTO v_me, v_role, v_status
       FROM public.users u
@@ -3928,10 +3931,16 @@ BEGIN
         RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidProvince');
     END IF;
 
+    v_position_title := NULLIF(btrim(COALESCE(p_position_title, '')), '');
+    IF v_position_title IS NOT NULL AND char_length(v_position_title) > 255 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'positionTitleTooLong');
+    END IF;
+
     INSERT INTO public.jobs(
         company_user_id, title, description, requirements,
         province_id, district_id, salary_min, salary_max, salary_visible,
-        job_type_id, work_mode_id, job_position_id, status, expires_at
+        job_type_id, work_mode_id, job_position_id, position_title,
+        status, expires_at
     ) VALUES (
         v_me,
         btrim(p_title),
@@ -3939,7 +3948,8 @@ BEGIN
         NULLIF(btrim(COALESCE(p_requirements, '')), ''),
         p_province_id, p_district_id, p_salary_min, p_salary_max,
         COALESCE(p_salary_visible, TRUE),
-        p_job_type_id, p_work_mode_id, p_job_position_id, p_status, p_expires_at
+        p_job_type_id, p_work_mode_id, p_job_position_id, v_position_title,
+        p_status, p_expires_at
     )
     RETURNING id INTO v_job_id;
 
@@ -3970,7 +3980,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.create_job(
     TEXT, TEXT, TEXT, BIGINT, BIGINT, BIGINT, BIGINT, BOOLEAN,
-    BIGINT, BIGINT, BIGINT, TEXT, TIMESTAMPTZ, TEXT[]
+    BIGINT, BIGINT, BIGINT, TEXT, TEXT, TIMESTAMPTZ, TEXT[]
 ) TO authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -4127,7 +4137,8 @@ BEGIN
         'districtName', dt.name,
         'jobTypeName', jt.name,
         'workModeName', wm.name,
-        'jobPositionName', jp.name
+        'jobPositionName', jp.name,
+        'positionTitle', j.position_title
     ), j.company_user_id
     INTO v_job, v_company_user_id
     FROM public.jobs j
