@@ -174,8 +174,9 @@ export type SkillRow = {
 }
 
 export type MemberSkillRow = {
+  id: number
   user_id: number
-  skill_id: number
+  name: string
   endorsement_count: number
 }
 
@@ -509,7 +510,10 @@ export type Database = {
         >
       >
       skills: TableDef<SkillRow, { name: string }>
-      member_skills: TableDef<MemberSkillRow, MemberSkillRow>
+      member_skills: TableDef<
+        MemberSkillRow,
+        { user_id: number; name: string; endorsement_count?: number }
+      >
       member_cvs: TableDef<
         MemberCvRow,
         Omit<MemberCvRow, "id" | "created_at" | "updated_at" | "deleted_at"> & {

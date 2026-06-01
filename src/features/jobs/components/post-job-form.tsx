@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { LocationSelect } from "@/components/common/location-select"
 import { fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
@@ -49,9 +50,10 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
   const [title, setTitle] = useState(init?.title ?? "")
   const [description, setDescription] = useState(init?.description ?? "")
   const [requirements, setRequirements] = useState(init?.requirements ?? "")
-  const [provinceId, setProvinceId] = useState<string>(
-    init?.provinceId != null ? String(init.provinceId) : "",
+  const [provinceId, setProvinceId] = useState<number | null>(
+    init?.provinceId ?? null,
   )
+  const [wardId, setWardId] = useState<number | null>(init?.wardId ?? null)
   const [jobTypeId, setJobTypeId] = useState<string>(
     init?.jobTypeId != null ? String(init.jobTypeId) : "",
   )
@@ -107,7 +109,8 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
       title,
       description,
       requirements: requirements || null,
-      provinceId: provinceId ? Number(provinceId) : null,
+      provinceId,
+      wardId,
       jobTypeId: Number(jobTypeId),
       workModeId: Number(workModeId),
       positionTitle: positionTitle.trim() || null,
@@ -187,20 +190,15 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
                   className="h-11 rounded-xl"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="font-medium">{t("provinceLabel")}</Label>
-                <Select value={provinceId} onValueChange={setProvinceId}>
-                  <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue placeholder={t("provincePlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {provinces.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="md:col-span-2">
+                <LocationSelect
+                  provinces={provinces}
+                  value={{ provinceId, wardId }}
+                  onChange={(next) => {
+                    setProvinceId(next.provinceId)
+                    setWardId(next.wardId)
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label className="font-medium">{t("jobTypeLabel")}</Label>

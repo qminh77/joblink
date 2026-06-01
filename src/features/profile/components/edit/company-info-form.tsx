@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { LocationSelect } from "@/components/common/location-select"
 import { COMPANY_SIZE_OPTIONS } from "@/features/auth/schemas"
 import {
   createCompanyProfileSchema,
@@ -69,6 +70,8 @@ export function CompanyInfoForm({
   })
 
   const updateProfile = useUpdateCompanyProfile()
+  const provinceId = useWatch({ control: form.control, name: "provinceId" })
+  const wardId = useWatch({ control: form.control, name: "wardId" })
 
   function onSubmit(values: CompanyProfileInput) {
     updateProfile.mutate(values)
@@ -216,36 +219,17 @@ export function CompanyInfoForm({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="provinceId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("province")}</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : "none"}
-                  onValueChange={(value) =>
-                    field.onChange(value === "none" ? null : Number(value))
-                  }
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-10 rounded-xl w-full">
-                      <SelectValue placeholder={t("selectProvince")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">— —</SelectItem>
-                    {provinces.map((province) => (
-                      <SelectItem key={province.id} value={String(province.id)}>
-                        {province.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="md:col-span-2">
+            <LocationSelect
+              provinces={provinces}
+              value={{ provinceId: provinceId ?? null, wardId: wardId ?? null }}
+              initialWardName={company.ward?.name}
+              onChange={({ provinceId, wardId }) => {
+                form.setValue("provinceId", provinceId, { shouldDirty: true })
+                form.setValue("wardId", wardId, { shouldDirty: true })
+              }}
+            />
+          </div>
 
           <FormField
             control={form.control}

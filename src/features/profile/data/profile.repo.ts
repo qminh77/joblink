@@ -160,31 +160,20 @@ export function softDeleteEducation(
     .eq("user_id", userId)
 }
 
-export function findSkillByName(supabase: Supabase, name: string) {
-  return supabase
-    .from("skills")
-    .select("id")
-    .ilike("name", name)
-    .maybeSingle<{ id: number }>()
-}
-
-export function insertSkill(supabase: Supabase, name: string) {
-  return supabase
-    .from("skills")
-    .insert({ name })
-    .select("id")
-    .single<{ id: number }>()
-}
-
-export function upsertMemberSkill(
+// Kỹ năng giờ là free-text riêng từng user: lưu thẳng name trên member_skills,
+// không còn catalog dùng chung. Trùng (user_id, name) thì bỏ qua nhờ
+// uk_member_skill_user_name + ignoreDuplicates.
+export function insertMemberSkill(
   supabase: Supabase,
   userId: number,
-  skillId: number,
+  name: string,
 ) {
-  return supabase.from("member_skills").upsert(
-    { user_id: userId, skill_id: skillId, endorsement_count: 0 },
-    { onConflict: "user_id,skill_id" },
-  )
+  return supabase
+    .from("member_skills")
+    .upsert(
+      { user_id: userId, name, endorsement_count: 0 },
+      { onConflict: "user_id,name", ignoreDuplicates: true },
+    )
 }
 
 export function deleteMemberSkill(
@@ -196,7 +185,7 @@ export function deleteMemberSkill(
     .from("member_skills")
     .delete()
     .eq("user_id", userId)
-    .eq("skill_id", skillId)
+    .eq("id", skillId)
 }
 
 export function insertProfileViewLog(

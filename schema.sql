@@ -1617,7 +1617,8 @@ CREATE OR REPLACE FUNCTION public.increment_poll_vote_count(
 )
 RETURNS VOID
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
     UPDATE public.poll_options

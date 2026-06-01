@@ -248,8 +248,9 @@ async function loadMemberProfileDetail(
 
   const skillsPromise = supabase
     .from("member_skills")
-    .select("skill_id, skills(id, name)")
+    .select("id, name")
     .eq("user_id", target.id)
+    .order("name", { ascending: true })
 
   const [
     { data: profileRow },
@@ -270,11 +271,7 @@ async function loadMemberProfileDetail(
 
   const experiences = isVisible ? ((expData ?? []) as MemberExperienceRow[]) : []
   const educations = isVisible ? ((eduData ?? []) as MemberEducationRow[]) : []
-  const skills = isVisible
-    ? ((skillData ?? []) as unknown as Array<{ skills: SkillRow | null }>)
-        .map((row) => row.skills)
-        .filter((row): row is SkillRow => row != null)
-    : []
+  const skills = isVisible ? ((skillData ?? []) as SkillRow[]) : []
 
   return {
     ...profile,

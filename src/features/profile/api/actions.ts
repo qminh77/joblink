@@ -11,7 +11,6 @@ import {
   assertOk,
   parse,
   requireRole,
-  unwrap,
 } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 
@@ -29,11 +28,10 @@ import {
 import { normalizeDate } from "../lib/normalize"
 import {
   deleteMemberSkill,
-  findSkillByName,
   insertEducation,
   insertExperience,
+  insertMemberSkill,
   insertProfileViewLog,
-  insertSkill,
   loadProfileStats,
   softDeleteEducation,
   softDeleteExperience,
@@ -42,7 +40,6 @@ import {
   updateExperience,
   updateMemberMedia,
   updateMemberProfile,
-  upsertMemberSkill,
 } from "../data/profile.repo"
 
 const validation = () => getTranslations("profile.validation")
@@ -210,12 +207,8 @@ export async function addSkillAction(skillName: string): Promise<ActionResult> {
     const name = parse(createSkillNameSchema(await validation()), skillName)
     const supabase = await createClient()
 
-    const { data: existing } = await findSkillByName(supabase, name)
-    const skillId =
-      existing?.id ?? unwrap(await insertSkill(supabase, name), "unexpected").id
-
     assertOk(
-      await upsertMemberSkill(supabase, current.appUser.id, skillId),
+      await insertMemberSkill(supabase, current.appUser.id, name),
       "unexpected",
     )
     revalidateProfile(current.appUser.id)

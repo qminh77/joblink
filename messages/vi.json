@@ -6,6 +6,14 @@
       "nextYear": "Năm sau",
       "clear": "Xóa"
     },
+    "location": {
+      "province": "Tỉnh/Thành phố",
+      "ward": "Xã/Phường",
+      "selectProvince": "Chọn Tỉnh/Thành phố",
+      "selectWard": "Chọn Xã/Phường",
+      "none": "— —",
+      "loading": "Đang tải..."
+    },
     "appName": "JobLink",
     "save": "Lưu",
     "saveChanges": "Lưu thay đổi",

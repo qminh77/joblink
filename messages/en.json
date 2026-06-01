@@ -6,6 +6,14 @@
       "nextYear": "Next year",
       "clear": "Clear"
     },
+    "location": {
+      "province": "Province/City",
+      "ward": "Ward",
+      "selectProvince": "Select province/city",
+      "selectWard": "Select ward",
+      "none": "— —",
+      "loading": "Loading..."
+    },
     "appName": "JobLink",
     "save": "Save",
     "saveChanges": "Save changes",
