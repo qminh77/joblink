@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { Briefcase, Loader2, Search } from "lucide-react"
+import { Briefcase, Loader2, Pencil, Search } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -127,6 +127,15 @@ export function JobsTab({ initialData }: Props) {
                   >
                     {t(`jobStatus.${job.status}`)}
                   </Badge>
+                  {job.status !== "removed" ? (
+                    <Link
+                      href={`/company/post-job/${job.id}`}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-2.5 h-7 rounded-lg transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      {t("edit")}
+                    </Link>
+                  ) : null}
                   {job.status === "draft" || job.status === "closed" ? (
                     <button
                       type="button"

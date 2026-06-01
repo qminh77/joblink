@@ -114,9 +114,9 @@ BEGIN
             LEFT JOIN public.member_profiles  mp ON mp.user_id = c.id AND mp.deleted_at IS NULL
             LEFT JOIN public.company_profiles cp ON cp.user_id = c.id AND cp.deleted_at IS NULL
             LEFT JOIN public.provinces mpr ON mpr.id = mp.province_id
-            LEFT JOIN public.districts md  ON md.id  = mp.district_id
+            LEFT JOIN public.wards md  ON md.id  = mp.ward_id
             LEFT JOIN public.provinces cpr ON cpr.id = cp.province_id
-            LEFT JOIN public.districts cd  ON cd.id  = cp.district_id
+            LEFT JOIN public.wards cd  ON cd.id  = cp.ward_id
       ) s;
 
     -- ---------------------------------------------------------------------

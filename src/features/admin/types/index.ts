@@ -102,7 +102,7 @@ export type AdminAuditLogEntry = {
 
 export type AdminLookupKind =
   | "provinces"
-  | "districts"
+  | "wards"
   | "job_types"
   | "work_modes"
   | "job_positions"

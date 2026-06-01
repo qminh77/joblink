@@ -62,7 +62,7 @@ BEGIN
         'openToHire', cp.open_to_hire,
         'verificationStatus', cp.verification_status,
         'provinceName', pv.name,
-        'districtName', dt.name,
+        'wardName', dt.name,
         'businessAddress', cp.business_address,
         'businessEmail', cp.business_email,
         'representativeName', cp.representative_name,
@@ -74,7 +74,7 @@ BEGIN
     JOIN public.company_profiles cp
       ON cp.user_id = u.id AND cp.deleted_at IS NULL
     LEFT JOIN public.provinces pv ON pv.id = cp.province_id
-    LEFT JOIN public.districts dt ON dt.id = cp.district_id
+    LEFT JOIN public.wards dt ON dt.id = cp.ward_id
     WHERE u.id = p_company_user_id
       AND u.deleted_at IS NULL
       AND u.role = 'company'
@@ -103,7 +103,7 @@ BEGIN
             'salaryMax', x.salary_max,
             'salaryVisible', x.salary_visible,
             'provinceName', x.province_name,
-            'districtName', x.district_name,
+            'wardName', x.ward_name,
             'jobTypeName', x.job_type_name,
             'workModeName', x.work_mode_name,
             'createdAt', x.created_at
@@ -113,13 +113,13 @@ BEGIN
     FROM (
         SELECT j.id, j.title, j.salary_min, j.salary_max, j.salary_visible,
                pv.name AS province_name,
-               dt.name AS district_name,
+               dt.name AS ward_name,
                jt.name AS job_type_name,
                wm.name AS work_mode_name,
                j.created_at
           FROM public.jobs j
           LEFT JOIN public.provinces pv ON pv.id = j.province_id
-          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.wards dt ON dt.id = j.ward_id
           LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
           LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
          WHERE j.company_user_id = p_company_user_id

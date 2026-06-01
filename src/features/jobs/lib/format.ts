@@ -15,9 +15,9 @@ export function formatSalary(input: {
 }
 
 export function formatLocation(parts: {
-  districtName: string | null
+  wardName: string | null
   provinceName: string | null
 }): string | null {
-  const out = [parts.districtName, parts.provinceName].filter(Boolean).join(", ")
+  const out = [parts.wardName, parts.provinceName].filter(Boolean).join(", ")
   return out || null
 }

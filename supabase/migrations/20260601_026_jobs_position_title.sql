@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION public.create_job(
     p_description TEXT,
     p_requirements TEXT,
     p_province_id BIGINT,
-    p_district_id BIGINT,
+    p_ward_id BIGINT,
     p_salary_min BIGINT,
     p_salary_max BIGINT,
     p_salary_visible BOOLEAN,
@@ -97,7 +97,7 @@ BEGIN
 
     INSERT INTO public.jobs(
         company_user_id, title, description, requirements,
-        province_id, district_id, salary_min, salary_max, salary_visible,
+        province_id, ward_id, salary_min, salary_max, salary_visible,
         job_type_id, work_mode_id, job_position_id, position_title,
         status, expires_at
     ) VALUES (
@@ -105,7 +105,7 @@ BEGIN
         btrim(p_title),
         btrim(p_description),
         NULLIF(btrim(COALESCE(p_requirements, '')), ''),
-        p_province_id, p_district_id, p_salary_min, p_salary_max,
+        p_province_id, p_ward_id, p_salary_min, p_salary_max,
         COALESCE(p_salary_visible, TRUE),
         p_job_type_id, p_work_mode_id, p_job_position_id, v_position_title,
         p_status, p_expires_at
@@ -177,7 +177,7 @@ BEGIN
         'companySize', cp.size,
         'companyVerified', cp.verification_status = 'verified',
         'provinceName', pv.name,
-        'districtName', dt.name,
+        'wardName', dt.name,
         'jobTypeName', jt.name,
         'workModeName', wm.name,
         'jobPositionName', jp.name,
@@ -188,7 +188,7 @@ BEGIN
     JOIN public.users u ON u.id = j.company_user_id
     LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
     LEFT JOIN public.provinces pv ON pv.id = j.province_id
-    LEFT JOIN public.districts dt ON dt.id = j.district_id
+    LEFT JOIN public.wards dt ON dt.id = j.ward_id
     LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
     LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
     LEFT JOIN public.job_positions jp ON jp.id = j.job_position_id

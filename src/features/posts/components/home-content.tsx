@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { formatSalary } from "@/features/jobs/lib/format"
 import { SuggestionList } from "@/features/network/components/suggestion-list"
 
 import { loadHomeFeed } from "../api/queries"
@@ -56,7 +57,11 @@ export async function HomeContent() {
         </div>
 
         <PostsFeed
-          initialPage={{ posts: feed.posts, nextCursor: feed.next_cursor }}
+          initialPage={{
+            posts: feed.posts,
+            jobs: feed.jobs,
+            nextCursor: feed.next_cursor,
+          }}
           realtimeAuthorIds={realtimeAuthorIds}
         />
       </div>
@@ -74,26 +79,52 @@ export async function HomeContent() {
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/jobs/1"
-              className="border border-border/40 rounded-xl p-3 hover:border-primary/40 hover:bg-muted/20 transition-all cursor-pointer group bg-card block"
-            >
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center border border-border/40 overflow-hidden group-hover:bg-primary/5 transition-colors">
-                  <Building2 className="text-primary w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-headline font-bold text-foreground text-[13px] truncate group-hover:text-primary transition-colors">
-                    Senior Frontend
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    Global Tech Solutions
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
+          {feed.suggested_jobs.length === 0 ? (
+            <p className="text-[12px] text-muted-foreground py-2">
+              {tHome("jobSuggestionsEmpty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {feed.suggested_jobs.map((job) => {
+                const salary = formatSalary(job)
+                return (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="border border-border/40 rounded-xl p-3 hover:border-primary/40 hover:bg-muted/20 transition-all cursor-pointer group bg-card block"
+                  >
+                    <div className="flex gap-3 items-center">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center border border-border/40 overflow-hidden group-hover:bg-primary/5 transition-colors">
+                        {job.companyLogoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={job.companyLogoUrl}
+                            alt={job.companyName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Building2 className="text-primary w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-headline font-bold text-foreground text-[13px] truncate group-hover:text-primary transition-colors">
+                          {job.title}
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {job.companyName}
+                        </p>
+                        {salary ? (
+                          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 truncate">
+                            {salary}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
           <Link href="/jobs" className="flex">
             <Button
               variant="ghost"

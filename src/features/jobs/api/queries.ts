@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 
 import type {
   JobDetail,
+  JobEditData,
   JobTypeRef,
   JobsListPage,
   MyApplicationsPage,
@@ -72,6 +73,26 @@ export async function loadJobDetail(jobId: number): Promise<JobDetail | null> {
   }
   if (!data) return null
   return data as unknown as JobDetail
+}
+
+// Owner-only: RPC trả NULL nếu không phải chủ tin → route tự notFound.
+export async function loadJobForEdit(
+  jobId: number,
+): Promise<JobEditData | null> {
+  if (!Number.isInteger(jobId) || jobId <= 0) return null
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("get_job_for_edit", {
+    p_job_id: jobId,
+  })
+  if (error) {
+    console.error(
+      "[loadJobForEdit] RPC error:",
+      JSON.stringify(error, Object.getOwnPropertyNames(error)),
+    )
+    return null
+  }
+  if (!data) return null
+  return data as unknown as JobEditData
 }
 
 export async function loadMySavedJobs(options?: {

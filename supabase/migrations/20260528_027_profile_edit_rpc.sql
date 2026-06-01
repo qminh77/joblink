@@ -22,7 +22,7 @@ DECLARE
     v_role          TEXT;
     v_profile       JSONB;
     v_province      JSONB;
-    v_district      JSONB;
+    v_ward      JSONB;
     v_experiences   JSONB;
     v_educations    JSONB;
     v_skills        JSONB;
@@ -53,9 +53,9 @@ BEGIN
      WHERE p.id = (v_profile->>'province_id')::BIGINT
      LIMIT 1;
 
-    SELECT jsonb_build_object('id', d.id, 'name', d.name) INTO v_district
-      FROM public.districts d
-     WHERE d.id = (v_profile->>'district_id')::BIGINT
+    SELECT jsonb_build_object('id', d.id, 'name', d.name) INTO v_ward
+      FROM public.wards d
+     WHERE d.id = (v_profile->>'ward_id')::BIGINT
      LIMIT 1;
 
     SELECT COALESCE(jsonb_agg(to_jsonb(e) ORDER BY e.is_current DESC, e.start_date DESC), '[]'::jsonb)
@@ -103,7 +103,7 @@ BEGIN
         'email', v_email,
         'profile', v_profile,
         'province', v_province,
-        'district', v_district,
+        'ward', v_ward,
         'experiences', v_experiences,
         'educations', v_educations,
         'skills', v_skills,

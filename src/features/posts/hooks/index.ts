@@ -139,7 +139,7 @@ export function usePrependPost() {
     qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) => {
       if (!cache) {
         return {
-          pages: [{ posts: [post], nextCursor: null }],
+          pages: [{ posts: [post], jobs: [], nextCursor: null }],
           pageParams: [null],
         }
       }
@@ -148,6 +148,7 @@ export function usePrependPost() {
       if (exists) return cache
       const updatedFirst: FeedPage = {
         posts: [post, ...(first?.posts ?? [])],
+        jobs: first?.jobs ?? [],
         nextCursor: first?.nextCursor ?? null,
       }
       return { ...cache, pages: [updatedFirst, ...rest] }

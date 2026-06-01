@@ -42,7 +42,7 @@ export function createMemberProfileSchema(t: Translator) {
     about: optionalText(4000),
     website: optionalUrl(t),
     provinceId: z.number().int().positive().nullable(),
-    districtId: z.number().int().positive().nullable(),
+    wardId: z.number().int().positive().nullable(),
     profileVisibility: z.enum(PROFILE_VISIBILITIES),
     openToWork: z.boolean(),
   })
@@ -103,7 +103,7 @@ export function createCompanyProfileSchema(t: Translator) {
     industry: optionalText(160),
     size: optionalText(30),
     provinceId: z.number().int().positive().nullable(),
-    districtId: z.number().int().positive().nullable(),
+    wardId: z.number().int().positive().nullable(),
     openToHire: z.boolean(),
     businessAddress: optionalText(500),
     businessEmail: optionalText(255),

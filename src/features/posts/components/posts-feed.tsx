@@ -7,11 +7,18 @@ import { useTranslations } from "next-intl"
 import { staggerSm } from "@/lib/animations"
 
 import { useHomeFeed, useRealtimeEngagement, useRealtimeFeed } from "../hooks"
-import type { FeedPage, FeedPost } from "../types"
+import type { FeedJob, FeedPage, FeedPost } from "../types"
 
+import { JobFeedCard } from "./job-feed-card"
 import { PostCard } from "./post-card"
 import { SendModal } from "./send-modal"
 import { ShareModal } from "./share-modal"
+
+// Item hiển thị trong feed: post (mạng xã hội) hoặc job (tin tuyển dụng công ty),
+// trộn theo created_at giảm dần.
+type FeedRenderItem =
+  | { kind: "post"; createdAt: string; post: FeedPost }
+  | { kind: "job"; createdAt: string; job: FeedJob }
 
 type Props = {
   initialPage: FeedPage
@@ -58,6 +65,22 @@ export function PostsFeed({ initialPage, realtimeAuthorIds }: Props) {
   const visiblePostIds = useMemo(() => posts.map((p) => p.id), [posts])
   useRealtimeEngagement(visiblePostIds)
 
+  // Trộn posts + jobs từ mọi trang, sort theo created_at giảm dần. Cursor phía
+  // server đã thống nhất nên thứ tự không lệch ở ranh giới trang.
+  const items = useMemo<FeedRenderItem[]>(() => {
+    const merged: FeedRenderItem[] = []
+    for (const page of data?.pages ?? []) {
+      for (const post of page.posts) {
+        merged.push({ kind: "post", createdAt: post.createdAt, post })
+      }
+      for (const job of page.jobs ?? []) {
+        merged.push({ kind: "job", createdAt: job.createdAt, job })
+      }
+    }
+    merged.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    return merged
+  }, [data])
+
   return (
     <>
       <motion.div
@@ -66,27 +89,31 @@ export function PostsFeed({ initialPage, realtimeAuthorIds }: Props) {
         animate="show"
         className="space-y-4"
       >
-        {posts.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-10">
             {tFeed("emptyFeed")}
           </div>
         ) : null}
 
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onShare={setShareTarget}
-            onSend={setSendTarget}
-          />
-        ))}
+        {items.map((item) =>
+          item.kind === "post" ? (
+            <PostCard
+              key={`post-${item.post.id}`}
+              post={item.post}
+              onShare={setShareTarget}
+              onSend={setSendTarget}
+            />
+          ) : (
+            <JobFeedCard key={`job-${item.job.id}`} job={item.job} />
+          ),
+        )}
 
         <div ref={sentinelRef} className="h-10 flex items-center justify-center">
           {isFetchingNextPage ? (
             <span className="text-xs text-muted-foreground">
               {tFeed("loadingMore")}
             </span>
-          ) : !hasNextPage && posts.length > 0 ? (
+          ) : !hasNextPage && items.length > 0 ? (
             <span className="text-xs text-muted-foreground">
               {tFeed("endOfFeed")}
             </span>

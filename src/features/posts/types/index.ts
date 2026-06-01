@@ -43,10 +43,36 @@ export type HomeFeedStats = {
   profile_view_count: number
 }
 
+/**
+ * Tin tuyển dụng hiển thị trong feed / sidebar gợi ý. Shape khớp jsonb camelCase
+ * do RPC get_home_feed trả về (xem migration 20260601_029). Không có
+ * reaction/comment — render bằng JobFeedCard, đọc-then-điều-hướng tới /jobs/[id].
+ */
+export type FeedJob = {
+  id: number
+  title: string
+  companyUserId: number
+  companyName: string
+  companyLogoUrl: string | null
+  companyVerified: boolean
+  provinceName: string | null
+  wardName: string | null
+  jobTypeName: string | null
+  workModeName: string | null
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryVisible: boolean
+  createdAt: string
+  viewerSaved: boolean
+  viewerApplied: boolean
+}
+
 export type HomeFeedPayload = {
   stats: HomeFeedStats
   suggestions: NetworkUserCard[]
+  suggested_jobs: FeedJob[]
   posts: FeedPost[]
+  jobs: FeedJob[]
   connection_ids: number[]
   me: number | null
   next_cursor: string | null
@@ -54,10 +80,15 @@ export type HomeFeedPayload = {
 
 export type FeedPage = {
   posts: FeedPost[]
+  jobs: FeedJob[]
   nextCursor: string | null
 }
 
-export type UserPostsPage = FeedPage & {
+// Profile posts: không trộn job (chỉ feed home mới interleave), nên không kế
+// thừa `jobs` từ FeedPage.
+export type UserPostsPage = {
+  posts: FeedPost[]
+  nextCursor: string | null
   canView: boolean
 }
 

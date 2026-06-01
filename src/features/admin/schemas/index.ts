@@ -62,7 +62,7 @@ export type SettingsUpdateInput = z.infer<typeof settingsUpdateSchema>
 
 export const LOOKUP_KINDS = [
   "provinces",
-  "districts",
+  "wards",
   "job_types",
   "work_modes",
   "job_positions",
@@ -94,7 +94,7 @@ export const lookupCreateSchema = z
         })
       }
     }
-    if (val.kind === "districts" && !val.provinceId) {
+    if (val.kind === "wards" && !val.provinceId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["provinceId"],
@@ -125,7 +125,7 @@ export const lookupUpdateSchema = z
         })
       }
     }
-    if (val.kind === "districts" && !val.provinceId) {
+    if (val.kind === "wards" && !val.provinceId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["provinceId"],

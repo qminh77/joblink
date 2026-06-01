@@ -21,7 +21,7 @@ export type CompanyPublicCore = {
     | "rejected"
     | "suspended"
   provinceName: string | null
-  districtName: string | null
+  wardName: string | null
   businessAddress: string | null
   businessEmail: string | null
   representativeName: string | null
@@ -36,7 +36,7 @@ export type CompanyActiveJobPreview = {
   salaryMax: number | null
   salaryVisible: boolean
   provinceName: string | null
-  districtName: string | null
+  wardName: string | null
   jobTypeName: string | null
   workModeName: string | null
   createdAt: string

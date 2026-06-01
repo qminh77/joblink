@@ -55,7 +55,7 @@ export function BasicInfoForm({
       about: profile.about ?? "",
       website: profile.website ?? "",
       provinceId: profile.province?.id ?? null,
-      districtId: profile.district?.id ?? null,
+      wardId: profile.ward?.id ?? null,
       profileVisibility: profile.profile_visibility,
       openToWork: profile.open_to_work,
     },

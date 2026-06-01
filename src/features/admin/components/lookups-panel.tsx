@@ -43,7 +43,7 @@ import type {
 
 const TAB_ORDER: AdminLookupKind[] = [
   "provinces",
-  "districts",
+  "wards",
   "job_types",
   "work_modes",
   "job_positions",
@@ -210,7 +210,7 @@ export function LookupsPanel({
                         {t("nameEn")}
                       </th>
                     ) : null}
-                    {kind === "districts" ? (
+                    {kind === "wards" ? (
                       <th className="text-left px-4 py-3 font-semibold">
                         {t("province")}
                       </th>
@@ -259,7 +259,7 @@ export function LookupsPanel({
                             {row.nameEn ?? "—"}
                           </td>
                         ) : null}
-                        {kind === "districts" ? (
+                        {kind === "wards" ? (
                           <td className="px-4 py-3 text-muted-foreground">
                             {provinces.find((p) => p.id === row.provinceId)
                               ?.name ?? "—"}
@@ -378,7 +378,7 @@ export function LookupsPanel({
                   />
                 </Labeled>
               ) : null}
-              {kind === "districts" ? (
+              {kind === "wards" ? (
                 <Labeled label={t("province")}>
                   <Select
                     value={

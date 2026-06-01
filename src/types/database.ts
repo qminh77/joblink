@@ -112,7 +112,7 @@ export type ProvinceRow = {
   is_active: boolean
 }
 
-export type DistrictRow = {
+export type WardRow = {
   id: number
   province_id: number
   code: string
@@ -131,7 +131,7 @@ export type MemberProfileRow = {
   headline: string | null
   about: string | null
   province_id: number | null
-  district_id: number | null
+  ward_id: number | null
   website: string | null
   open_to_work: boolean
   profile_visibility: ProfileVisibility
@@ -349,7 +349,7 @@ export type JobRow = {
   description: string
   requirements: string | null
   province_id: number | null
-  district_id: number | null
+  ward_id: number | null
   salary_min: number | null
   salary_max: number | null
   salary_visible: boolean
@@ -462,7 +462,7 @@ export type CompanyProfileRow = {
   website: string | null
   phone: string | null
   province_id: number | null
-  district_id: number | null
+  ward_id: number | null
   industry: string | null
   size: string | null
   open_to_hire: boolean
@@ -492,7 +492,7 @@ export type Database = {
     Tables: {
       users: TableDef<AppUserRow>
       provinces: TableDef<ProvinceRow>
-      districts: TableDef<DistrictRow>
+      wards: TableDef<WardRow>
       member_profiles: TableDef<MemberProfileRow>
       member_experiences: TableDef<
         MemberExperienceRow,
@@ -772,7 +772,7 @@ export type Database = {
           p_description: string
           p_requirements: string | null
           p_province_id: number | null
-          p_district_id: number | null
+          p_ward_id: number | null
           p_salary_min: number | null
           p_salary_max: number | null
           p_salary_visible: boolean
@@ -784,6 +784,29 @@ export type Database = {
           p_expires_at: string | null
           p_skills: string[] | null
         }
+        Returns: Json
+      }
+      update_job: {
+        Args: {
+          p_job_id: number
+          p_title: string
+          p_description: string
+          p_requirements: string | null
+          p_province_id: number | null
+          p_ward_id: number | null
+          p_salary_min: number | null
+          p_salary_max: number | null
+          p_salary_visible: boolean
+          p_job_type_id: number
+          p_work_mode_id: number
+          p_position_title: string | null
+          p_expires_at: string | null
+          p_skills: string[] | null
+        }
+        Returns: Json
+      }
+      get_job_for_edit: {
+        Args: { p_job_id: number }
         Returns: Json
       }
       get_jobs_list: {

@@ -46,7 +46,7 @@ export function MemberProfileView({
   const tProfile = useTranslations("profile")
   const initials = getInitials(profile.full_name, "JL")
   const visibilityLabel = PROFILE_VISIBILITY_LABELS[profile.profile_visibility]
-  const locationText = [profile.district?.name, profile.province?.name]
+  const locationText = [profile.ward?.name, profile.province?.name]
     .filter(Boolean)
     .join(", ")
 

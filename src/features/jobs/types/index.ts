@@ -13,7 +13,7 @@ export type JobListItem = {
   companyLogoUrl: string | null
   companyVerified: boolean
   provinceName: string | null
-  districtName: string | null
+  wardName: string | null
   jobTypeName: string | null
   workModeName: string | null
   viewerSaved: boolean
@@ -44,7 +44,7 @@ export type JobDetailCore = {
   companySize: string | null
   companyVerified: boolean
   provinceName: string | null
-  districtName: string | null
+  wardName: string | null
   jobTypeName: string | null
   workModeName: string | null
   jobPositionName: string | null
@@ -79,7 +79,7 @@ export type SavedJobItem = {
   companyName: string
   companyLogoUrl: string | null
   provinceName: string | null
-  districtName: string | null
+  wardName: string | null
   jobTypeName: string | null
   workModeName: string | null
 }
@@ -94,7 +94,7 @@ export type CreateJobInput = {
   description: string
   requirements?: string | null
   provinceId?: number | null
-  districtId?: number | null
+  wardId?: number | null
   salaryMin?: number | null
   salaryMax?: number | null
   salaryVisible?: boolean
@@ -109,6 +109,34 @@ export type CreateJobInput = {
 export type CreateJobResult =
   | { ok: true; jobId: number }
   | { ok: false; error: string }
+
+// Sửa tin không đổi trạng thái → bỏ `status` (do update_job_status quản lý).
+export type UpdateJobInput = Omit<CreateJobInput, "status"> & { jobId: number }
+
+export type UpdateJobResult = CreateJobResult
+
+// Field dạng ID để prefill form sửa (RPC get_job_for_edit, owner-only).
+export type JobEditCore = {
+  id: number
+  title: string
+  description: string
+  requirements: string | null
+  provinceId: number | null
+  wardId: number | null
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryVisible: boolean
+  jobTypeId: number
+  workModeId: number
+  positionTitle: string | null
+  status: "draft" | "active" | "closed" | "expired" | "removed"
+  expiresAt: string | null
+}
+
+export type JobEditData = {
+  job: JobEditCore
+  skills: string[]
+}
 
 export type ApplyResult =
   | { ok: true; applicationId: number; status: string }

@@ -12,6 +12,7 @@ import {
   createApplySchema,
   createJobIdSchema,
   createJobSchema,
+  updateJobSchema,
 } from "../schemas"
 import type {
   ApplyResult,
@@ -19,6 +20,8 @@ import type {
   CreateJobResult,
   RespondInterviewResult,
   ToggleSavedResult,
+  UpdateJobInput,
+  UpdateJobResult,
   WithdrawResult,
 } from "../types"
 import {
@@ -45,7 +48,7 @@ export async function createJobAction(
       p_description: parsed.data.description,
       p_requirements: parsed.data.requirements ?? null,
       p_province_id: parsed.data.provinceId ?? null,
-      p_district_id: parsed.data.districtId ?? null,
+      p_ward_id: parsed.data.wardId ?? null,
       p_salary_min: parsed.data.salaryMin ?? null,
       p_salary_max: parsed.data.salaryMax ?? null,
       p_salary_visible: parsed.data.salaryVisible,
@@ -61,6 +64,45 @@ export async function createJobAction(
 
   if (result.ok) {
     revalidatePath("/jobs")
+    revalidatePath("/company/dashboard")
+  }
+  return result
+}
+
+export async function updateJobAction(
+  input: UpdateJobInput,
+): Promise<UpdateJobResult> {
+  const te = await getTranslations("jobs.errors")
+  const parsed = updateJobSchema(te).safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+  }
+
+  await requireCurrentUser()
+  const supabase = await createClient()
+
+  const result = await rpcResult<{ jobId: number }>(
+    supabase.rpc("update_job", {
+      p_job_id: parsed.data.jobId,
+      p_title: parsed.data.title,
+      p_description: parsed.data.description,
+      p_requirements: parsed.data.requirements ?? null,
+      p_province_id: parsed.data.provinceId ?? null,
+      p_ward_id: parsed.data.wardId ?? null,
+      p_salary_min: parsed.data.salaryMin ?? null,
+      p_salary_max: parsed.data.salaryMax ?? null,
+      p_salary_visible: parsed.data.salaryVisible,
+      p_job_type_id: parsed.data.jobTypeId,
+      p_work_mode_id: parsed.data.workModeId,
+      p_position_title: parsed.data.positionTitle ?? null,
+      p_expires_at: parsed.data.expiresAt ?? null,
+      p_skills: parsed.data.skills ?? null,
+    }),
+  )
+
+  if (result.ok) {
+    revalidatePath("/jobs")
+    revalidatePath(`/jobs/${parsed.data.jobId}`)
     revalidatePath("/company/dashboard")
   }
   return result

@@ -27,7 +27,9 @@ function normalize(payload: RpcResponse): HomeFeedPayload {
     return {
       stats: { connection_count: 0, profile_view_count: 0 },
       suggestions: [],
+      suggested_jobs: [],
       posts: [],
+      jobs: [],
       connection_ids: [],
       me: null,
       next_cursor: null,
@@ -36,7 +38,9 @@ function normalize(payload: RpcResponse): HomeFeedPayload {
   return {
     stats: payload.stats ?? { connection_count: 0, profile_view_count: 0 },
     suggestions: payload.suggestions ?? [],
+    suggested_jobs: payload.suggested_jobs ?? [],
     posts: payload.posts ?? [],
+    jobs: payload.jobs ?? [],
     connection_ids: payload.connection_ids ?? [],
     me: payload.me ?? null,
     next_cursor: payload.next_cursor ?? null,
@@ -68,7 +72,11 @@ export async function loadFeedPage(
   limit = DEFAULT_POSTS_LIMIT,
 ): Promise<FeedPage> {
   const payload = await loadHomeFeed({ cursor, postsLimit: limit })
-  return { posts: payload.posts, nextCursor: payload.next_cursor }
+  return {
+    posts: payload.posts,
+    jobs: payload.jobs,
+    nextCursor: payload.next_cursor,
+  }
 }
 
 const DEFAULT_USER_POSTS_LIMIT = 10

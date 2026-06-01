@@ -56,7 +56,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
 
   const isVerified = company.verificationStatus === "verified"
 
-  const location = [company.districtName, company.provinceName]
+  const location = [company.wardName, company.provinceName]
     .filter(Boolean)
     .join(", ")
 
@@ -216,7 +216,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {jobs.map((job) => {
-                  const jobLocation = [job.districtName, job.provinceName]
+                  const jobLocation = [job.wardName, job.provinceName]
                     .filter(Boolean)
                     .join(", ")
                   const salary = formatSalary(job)

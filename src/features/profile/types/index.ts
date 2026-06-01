@@ -12,7 +12,7 @@ import type {
 export type MemberProfileDetail = MemberProfileRow & {
   email: string
   province: Pick<ProvinceRow, "id" | "name"> | null
-  district: { id: number; name: string } | null
+  ward: { id: number; name: string } | null
   experiences: MemberExperienceRow[]
   educations: MemberEducationRow[]
   skills: SkillRow[]
@@ -25,7 +25,7 @@ export type MemberProfileDetail = MemberProfileRow & {
 export type CompanyProfileDetail = CompanyProfileRow & {
   email: string
   province: Pick<ProvinceRow, "id" | "name"> | null
-  district: { id: number; name: string } | null
+  ward: { id: number; name: string } | null
   profileViewCount: number
   connectionCount: number
   followerCount: number

@@ -15,7 +15,7 @@ import type { AdminLookupKind, AdminLookupRow } from "../types"
 
 const KIND_TABLE: Record<AdminLookupKind, string> = {
   provinces: "provinces",
-  districts: "districts",
+  wards: "wards",
   job_types: "job_types",
   work_modes: "work_modes",
   job_positions: "job_positions",
@@ -25,7 +25,7 @@ const KIND_TABLE: Record<AdminLookupKind, string> = {
 
 const SOFT_DELETE_KINDS = new Set<AdminLookupKind>([
   "provinces",
-  "districts",
+  "wards",
   "job_types",
   "work_modes",
   "job_positions",
@@ -85,7 +85,7 @@ export async function listLookups(
   if (kind === "job_types" || kind === "work_modes") {
     select += ", is_system"
   }
-  if (kind === "districts") {
+  if (kind === "wards") {
     select += ", province_id"
   }
   if (kind === "job_positions") {
@@ -138,7 +138,7 @@ function buildPayload(
     sort_order: input.sortOrder ?? 0,
     is_active: input.isActive ?? true,
   }
-  if (kind === "districts") payload.province_id = input.provinceId ?? null
+  if (kind === "wards") payload.province_id = input.provinceId ?? null
   if (kind === "job_positions") payload.parent_id = input.parentId ?? null
   return payload
 }

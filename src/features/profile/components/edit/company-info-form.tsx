@@ -58,7 +58,7 @@ export function CompanyInfoForm({
       industry: company.industry ?? "",
       size: company.size ?? "",
       provinceId: company.province?.id ?? null,
-      districtId: company.district?.id ?? null,
+      wardId: company.ward?.id ?? null,
       openToHire: company.open_to_hire,
       businessAddress: company.business_address ?? "",
       businessEmail: company.business_email ?? "",

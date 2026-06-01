@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION public.create_job(
     p_description TEXT,
     p_requirements TEXT,
     p_province_id BIGINT,
-    p_district_id BIGINT,
+    p_ward_id BIGINT,
     p_salary_min BIGINT,
     p_salary_max BIGINT,
     p_salary_visible BOOLEAN,
@@ -108,14 +108,14 @@ BEGIN
 
     INSERT INTO public.jobs(
         company_user_id, title, description, requirements,
-        province_id, district_id, salary_min, salary_max, salary_visible,
+        province_id, ward_id, salary_min, salary_max, salary_visible,
         job_type_id, work_mode_id, job_position_id, status, expires_at
     ) VALUES (
         v_me,
         btrim(p_title),
         btrim(p_description),
         NULLIF(btrim(COALESCE(p_requirements, '')), ''),
-        p_province_id, p_district_id, p_salary_min, p_salary_max,
+        p_province_id, p_ward_id, p_salary_min, p_salary_max,
         COALESCE(p_salary_visible, TRUE),
         p_job_type_id, p_work_mode_id, p_job_position_id, p_status, p_expires_at
     )
@@ -191,10 +191,10 @@ BEGIN
         SELECT j.id, j.title, j.salary_min, j.salary_max, j.salary_visible,
                j.created_at, j.expires_at,
                j.company_user_id,
-               j.province_id, j.district_id,
+               j.province_id, j.ward_id,
                j.job_type_id, j.work_mode_id,
                pv.name AS province_name,
-               dt.name AS district_name,
+               dt.name AS ward_name,
                jt.name AS job_type_name,
                wm.name AS work_mode_name,
                COALESCE(cp.name, u.email) AS company_name,
@@ -205,7 +205,7 @@ BEGIN
           LEFT JOIN public.company_profiles cp
             ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
           LEFT JOIN public.provinces pv ON pv.id = j.province_id
-          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.wards dt ON dt.id = j.ward_id
           LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
           LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
          WHERE j.status = 'active'
@@ -238,7 +238,7 @@ BEGIN
             'companyLogoUrl', p.company_logo_url,
             'companyVerified', p.company_verification_status = 'verified',
             'provinceName', p.province_name,
-            'districtName', p.district_name,
+            'wardName', p.ward_name,
             'jobTypeName', p.job_type_name,
             'workModeName', p.work_mode_name,
             'viewerSaved', v_me IS NOT NULL AND EXISTS(
@@ -302,7 +302,7 @@ BEGIN
         'companySize', cp.size,
         'companyVerified', cp.verification_status = 'verified',
         'provinceName', pv.name,
-        'districtName', dt.name,
+        'wardName', dt.name,
         'jobTypeName', jt.name,
         'workModeName', wm.name,
         'jobPositionName', jp.name
@@ -312,7 +312,7 @@ BEGIN
     JOIN public.users u ON u.id = j.company_user_id
     LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
     LEFT JOIN public.provinces pv ON pv.id = j.province_id
-    LEFT JOIN public.districts dt ON dt.id = j.district_id
+    LEFT JOIN public.wards dt ON dt.id = j.ward_id
     LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
     LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
     LEFT JOIN public.job_positions jp ON jp.id = j.job_position_id
@@ -587,7 +587,7 @@ BEGIN
                COALESCE(cp.name, u.email) AS company_name,
                cp.logo_url AS company_logo_url,
                pv.name AS province_name,
-               dt.name AS district_name,
+               dt.name AS ward_name,
                jt.name AS job_type_name,
                wm.name AS work_mode_name
           FROM public.saved_jobs s
@@ -596,7 +596,7 @@ BEGIN
           LEFT JOIN public.company_profiles cp
             ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
           LEFT JOIN public.provinces pv ON pv.id = j.province_id
-          LEFT JOIN public.districts dt ON dt.id = j.district_id
+          LEFT JOIN public.wards dt ON dt.id = j.ward_id
           LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
           LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
          WHERE s.user_id = v_me
@@ -620,7 +620,7 @@ BEGIN
             'companyName', p.company_name,
             'companyLogoUrl', p.company_logo_url,
             'provinceName', p.province_name,
-            'districtName', p.district_name,
+            'wardName', p.ward_name,
             'jobTypeName', p.job_type_name,
             'workModeName', p.work_mode_name
         ) ORDER BY p.saved_at DESC), '[]'::jsonb),

@@ -197,7 +197,7 @@
       "representativeTitle": "Chức vụ (tuỳ chọn)",
       "representativeTitlePlaceholder": "CEO, Trưởng phòng nhân sự, ...",
       "businessAddress": "Địa chỉ doanh nghiệp",
-      "businessAddressPlaceholder": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành",
+      "businessAddressPlaceholder": "Số nhà, đường, phường/xã, tỉnh/thành",
       "businessEmail": "Email doanh nghiệp",
       "businessEmailPlaceholder": "contact@company.com",
       "companyAccountSection": "Tài khoản đăng nhập",
@@ -319,9 +319,9 @@
       "avatarUrl": "Ảnh đại diện (URL)",
       "website": "Website",
       "province": "Tỉnh/Thành",
-      "district": "Quận/Huyện",
+      "ward": "Phường/Xã",
       "selectProvince": "Chọn tỉnh/thành",
-      "selectDistrict": "Chọn quận/huyện",
+      "selectWard": "Chọn phường/xã",
       "visibility": "Hiển thị hồ sơ",
       "openToWork": "Đang tìm việc",
       "saveSuccess": "Đã cập nhật hồ sơ"
@@ -449,7 +449,7 @@
       "selectProvince": "Chọn tỉnh/thành",
       "taxId": "Mã số thuế",
       "businessAddress": "Địa chỉ doanh nghiệp",
-      "businessAddressPlaceholder": "Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành",
+      "businessAddressPlaceholder": "Số nhà, đường, phường/xã, tỉnh/thành",
       "representativeName": "Họ tên người đại diện",
       "representativeTitle": "Chức vụ người đại diện",
       "representativeTitlePlaceholder": "CEO, Trưởng phòng nhân sự, ...",
@@ -608,6 +608,7 @@
       "searchApplicantsPlaceholder": "Tìm theo tên ứng viên hoặc job...",
       "jobMeta": "{applicants} ứng viên • {views} lượt xem • {time}",
       "appliedAt": "Nộp {time}",
+      "edit": "Sửa",
       "publish": "Đăng",
       "close": "Đóng tin",
       "changeStatus": "Đổi",
@@ -784,9 +785,13 @@
       "skillsHint": "{count}/{max} kỹ năng",
       "saveDraft": "Lưu nháp",
       "publish": "Đăng tin",
+      "saveChanges": "Lưu thay đổi",
       "cancel": "Huỷ",
       "publishSuccess": "Đã đăng tin tuyển dụng",
       "draftSuccess": "Đã lưu bản nháp",
+      "updateSuccess": "Đã cập nhật tin tuyển dụng",
+      "editHeading": "Chỉnh sửa tin tuyển dụng",
+      "editSubheading": "Cập nhật nội dung tin tuyển dụng của bạn",
       "optional": "tuỳ chọn",
       "jobTypeRequired": "Vui lòng chọn loại hình",
       "workModeRequired": "Vui lòng chọn hình thức làm việc"
@@ -955,7 +960,8 @@
     "jobSuggestionsViewAll": "Xem tất cả",
     "pendingInvitations": "Lời mời đang chờ xác nhận",
     "wantsToConnect": "Muốn kết nối với bạn",
-    "viewAllCount": "Xem tất cả ({count})"
+    "viewAllCount": "Xem tất cả ({count})",
+    "jobSuggestionsEmpty": "Chưa có việc làm gợi ý."
   },
   "feed": {
     "like": "Thích",
@@ -978,7 +984,9 @@
     "writeReplyTo": "Trả lời {name}…",
     "mentionSearching": "Đang tìm…",
     "mentionNoResults": "Không tìm thấy người dùng",
-    "viewMoreComments": "Xem thêm {count} bình luận"
+    "viewMoreComments": "Xem thêm {count} bình luận",
+    "jobRecruiting": "đang tuyển dụng",
+    "viewJobDetail": "Xem chi tiết"
   },
   "notifications": {
     "title": "Thông báo",
@@ -1405,7 +1413,7 @@
       "subtitle": "Quản lý dữ liệu dùng chung",
       "tabs": {
         "provinces": "Tỉnh/Thành",
-        "districts": "Quận/Huyện",
+        "wards": "Phường/Xã/Đặc khu",
         "job_types": "Loại công việc",
         "work_modes": "Hình thức",
         "job_positions": "Vị trí",

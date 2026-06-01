@@ -197,7 +197,7 @@
       "representativeTitle": "Job title (optional)",
       "representativeTitlePlaceholder": "CEO, HR Manager, ...",
       "businessAddress": "Business address",
-      "businessAddressPlaceholder": "Street, ward, district, city",
+      "businessAddressPlaceholder": "Street, ward, province/city",
       "businessEmail": "Business email",
       "businessEmailPlaceholder": "contact@company.com",
       "companyAccountSection": "Login account",
@@ -319,9 +319,9 @@
       "avatarUrl": "Avatar URL",
       "website": "Website",
       "province": "Province/City",
-      "district": "District",
+      "ward": "Ward",
       "selectProvince": "Select province",
-      "selectDistrict": "Select district",
+      "selectWard": "Select ward",
       "visibility": "Profile visibility",
       "openToWork": "Open to work",
       "saveSuccess": "Profile updated"
@@ -449,7 +449,7 @@
       "selectProvince": "Select province/city",
       "taxId": "Tax ID",
       "businessAddress": "Business address",
-      "businessAddressPlaceholder": "Street, ward, district, province/city",
+      "businessAddressPlaceholder": "Street, ward, province/city",
       "representativeName": "Representative name",
       "representativeTitle": "Representative title",
       "representativeTitlePlaceholder": "CEO, HR Manager, ...",
@@ -608,6 +608,7 @@
       "searchApplicantsPlaceholder": "Search by name or job title...",
       "jobMeta": "{applicants} applicants • {views} views • {time}",
       "appliedAt": "Applied {time}",
+      "edit": "Edit",
       "publish": "Publish",
       "close": "Close",
       "changeStatus": "Change",
@@ -784,9 +785,13 @@
       "skillsHint": "{count}/{max} skills",
       "saveDraft": "Save draft",
       "publish": "Publish",
+      "saveChanges": "Save changes",
       "cancel": "Cancel",
       "publishSuccess": "Job posted",
       "draftSuccess": "Draft saved",
+      "updateSuccess": "Job updated",
+      "editHeading": "Edit job posting",
+      "editSubheading": "Update your job posting details",
       "optional": "optional",
       "jobTypeRequired": "Please select a type",
       "workModeRequired": "Please select a work mode"
@@ -955,7 +960,8 @@
     "jobSuggestionsViewAll": "View all",
     "pendingInvitations": "Pending invitations",
     "wantsToConnect": "Wants to connect with you",
-    "viewAllCount": "View all ({count})"
+    "viewAllCount": "View all ({count})",
+    "jobSuggestionsEmpty": "No job suggestions yet."
   },
   "feed": {
     "like": "Like",
@@ -978,7 +984,9 @@
     "writeReplyTo": "Reply to {name}…",
     "mentionSearching": "Searching…",
     "mentionNoResults": "No users found",
-    "viewMoreComments": "View {count} more comments"
+    "viewMoreComments": "View {count} more comments",
+    "jobRecruiting": "is hiring",
+    "viewJobDetail": "View details"
   },
   "notifications": {
     "title": "Notifications",
@@ -1405,7 +1413,7 @@
       "subtitle": "Manage shared dropdown data",
       "tabs": {
         "provinces": "Provinces",
-        "districts": "Districts",
+        "wards": "Wards/Communes",
         "job_types": "Job types",
         "work_modes": "Work modes",
         "job_positions": "Job positions",

@@ -32,24 +32,24 @@ type LocationRef = { id: number; name: string } | null
 
 type MemberProfileWithLocation = MemberProfileRow & {
   province: LocationRef
-  district: LocationRef
+  ward: LocationRef
 }
 
 type CompanyProfileWithLocation = CompanyProfileRow & {
   province: LocationRef
-  district: LocationRef
+  ward: LocationRef
 }
 
 const MEMBER_PROFILE_SELECT = `
   *,
   province:provinces(id, name),
-  district:districts(id, name)
+  ward:wards(id, name)
 `
 
 const COMPANY_PROFILE_SELECT = `
   *,
   province:provinces(id, name),
-  district:districts(id, name)
+  ward:wards(id, name)
 `
 
 export async function loadProvinces(): Promise<ProvinceRow[]> {
@@ -64,10 +64,10 @@ export async function loadProvinces(): Promise<ProvinceRow[]> {
   return (data ?? []) as ProvinceRow[]
 }
 
-export async function loadDistrictsByProvince(provinceId: number) {
+export async function loadWardsByProvince(provinceId: number) {
   const supabase = await createClient()
   const { data } = await supabase
-    .from("districts")
+    .from("wards")
     .select("id, province_id, code, name, name_en, sort_order, is_active")
     .eq("province_id", provinceId)
     .eq("is_active", true)
@@ -84,7 +84,7 @@ type ProfileDetailRpc = {
   profile: Record<string, unknown>
   email: string
   province: { id: number; name: string } | null
-  district: { id: number; name: string } | null
+  ward: { id: number; name: string } | null
   profileViewCount: number
   connectionCount: number
   isVisible?: boolean
@@ -122,7 +122,7 @@ export async function loadProfileById(
       ...(r.profile as unknown as CompanyProfileRow),
       email: r.email,
       province: r.province,
-      district: r.district,
+      ward: r.ward,
       profileViewCount: r.profileViewCount,
       connectionCount: r.connectionCount,
       followerCount: r.followerCount ?? 0,
@@ -139,7 +139,7 @@ export async function loadProfileById(
     ...(r.profile as unknown as MemberProfileRow),
     email: r.email,
     province: r.province,
-    district: r.district,
+    ward: r.ward,
     experiences: r.experiences ?? [],
     educations: r.educations ?? [],
     skills: r.skills ?? [],
@@ -167,7 +167,7 @@ type ProfileEditOverviewRpc = {
   email: string
   profile: MemberProfileRow
   province: { id: number; name: string } | null
-  district: { id: number; name: string } | null
+  ward: { id: number; name: string } | null
   experiences: MemberExperienceRow[]
   educations: MemberEducationRow[]
   skills: SkillRow[]
@@ -194,7 +194,7 @@ export async function loadProfileEditOverview(): Promise<ProfileEditOverview | n
     ...(r.profile as MemberProfileRow),
     email: r.email,
     province: r.province,
-    district: r.district,
+    ward: r.ward,
     experiences: r.experiences ?? [],
     educations: r.educations ?? [],
     skills: r.skills ?? [],
@@ -265,7 +265,7 @@ async function loadMemberProfileDetail(
 
   if (!profileRow) return null
 
-  const { province, district, ...profile } = profileRow
+  const { province, ward, ...profile } = profileRow
   const isVisible = profile.profile_visibility !== "private" || isOwner
 
   const experiences = isVisible ? ((expData ?? []) as MemberExperienceRow[]) : []
@@ -280,7 +280,7 @@ async function loadMemberProfileDetail(
     ...profile,
     email: target.email,
     province,
-    district,
+    ward,
     experiences,
     educations,
     skills,
@@ -327,13 +327,13 @@ async function loadCompanyProfileDetail(
     viewerFollowPromise,
   ])
 
-  const { province, district, ...rest } = data
+  const { province, ward, ...rest } = data
 
   return {
     ...rest,
     email: target.email,
     province,
-    district,
+    ward,
     profileViewCount: target.profile_view_count,
     connectionCount: target.connection_count,
     followerCount: followerCount ?? 0,

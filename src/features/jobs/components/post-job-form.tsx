@@ -22,30 +22,51 @@ import { Textarea } from "@/components/ui/textarea"
 import { fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
-import { createJobAction } from "../api/actions"
-import type { JobTypeRef, WorkModeRef } from "../types"
+import { createJobAction, updateJobAction } from "../api/actions"
+import type { JobEditData, JobTypeRef, WorkModeRef } from "../types"
 
 type Props = {
   provinces: ProvinceRow[]
   jobTypes: JobTypeRef[]
   workModes: WorkModeRef[]
+  // Khi có editJob → form ở chế độ sửa: prefill + gọi updateJobAction.
+  editJob?: JobEditData
 }
 
-export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
+// ISO (vd 2026-06-01T23:59:59Z) → YYYY-MM-DD cho <input type="date">.
+function isoToDateInput(iso: string | null | undefined): string {
+  if (!iso) return ""
+  return iso.slice(0, 10)
+}
+
+export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) {
   const t = useTranslations("jobs.post")
   const router = useRouter()
 
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [requirements, setRequirements] = useState("")
-  const [provinceId, setProvinceId] = useState<string>("")
-  const [jobTypeId, setJobTypeId] = useState<string>("")
-  const [workModeId, setWorkModeId] = useState<string>("")
-  const [positionTitle, setPositionTitle] = useState("")
-  const [expiresAt, setExpiresAt] = useState("")
-  const [salaryMin, setSalaryMin] = useState("")
-  const [salaryMax, setSalaryMax] = useState("")
-  const [skills, setSkills] = useState<string[]>([])
+  const isEdit = Boolean(editJob)
+  const init = editJob?.job
+
+  const [title, setTitle] = useState(init?.title ?? "")
+  const [description, setDescription] = useState(init?.description ?? "")
+  const [requirements, setRequirements] = useState(init?.requirements ?? "")
+  const [provinceId, setProvinceId] = useState<string>(
+    init?.provinceId != null ? String(init.provinceId) : "",
+  )
+  const [jobTypeId, setJobTypeId] = useState<string>(
+    init?.jobTypeId != null ? String(init.jobTypeId) : "",
+  )
+  const [workModeId, setWorkModeId] = useState<string>(
+    init?.workModeId != null ? String(init.workModeId) : "",
+  )
+  const [positionTitle, setPositionTitle] = useState(init?.positionTitle ?? "")
+  const [expiresAt, setExpiresAt] = useState(isoToDateInput(init?.expiresAt))
+  const [salaryMin, setSalaryMin] = useState(
+    init?.salaryMin != null ? String(init.salaryMin) : "",
+  )
+  const [salaryMax, setSalaryMax] = useState(
+    init?.salaryMax != null ? String(init.salaryMax) : "",
+  )
+  const [skills, setSkills] = useState<string[]>(editJob?.skills ?? [])
   const [skillInput, setSkillInput] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -81,8 +102,8 @@ export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
       ? new Date(`${expiresAt}T23:59:59`).toISOString()
       : null
 
-    setSubmitting(true)
-    const result = await createJobAction({
+    // Nội dung chung cho cả tạo & sửa (sửa không gửi `status`).
+    const content = {
       title,
       description,
       requirements: requirements || null,
@@ -93,23 +114,33 @@ export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
       salaryMin: salaryMin ? Number(salaryMin) : null,
       salaryMax: salaryMax ? Number(salaryMax) : null,
       salaryVisible: true,
-      status,
       expiresAt: expiresAtIso,
       skills: skills.length > 0 ? skills : undefined,
-    })
+    }
+
+    setSubmitting(true)
+    const result =
+      isEdit && editJob
+        ? await updateJobAction({ ...content, jobId: editJob.job.id })
+        : await createJobAction({ ...content, status })
     setSubmitting(false)
 
     if (!result.ok) {
       toast.error(result.error)
       return
     }
+
+    if (isEdit && editJob) {
+      toast.success(t("updateSuccess"))
+      router.push(`/jobs/${editJob.job.id}`)
+      return
+    }
+
     toast.success(
       status === "active" ? t("publishSuccess") : t("draftSuccess"),
     )
     router.push(
-      status === "active"
-        ? `/jobs/${result.jobId}`
-        : "/company/dashboard",
+      status === "active" ? `/jobs/${result.jobId}` : "/company/dashboard",
     )
   }
 
@@ -122,9 +153,11 @@ export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
     >
       <div className="pb-2 border-b border-border/40">
         <h1 className="font-headline font-bold text-xl text-foreground">
-          {t("heading")}
+          {isEdit ? t("editHeading") : t("heading")}
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">{t("subheading")}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {isEdit ? t("editSubheading") : t("subheading")}
+        </p>
       </div>
 
       <motion.form
@@ -369,27 +402,30 @@ export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
           className="flex items-center justify-end gap-1 pt-2"
         >
           <Link
-            href="/company/dashboard"
+            href={isEdit && editJob ? `/jobs/${editJob.job.id}` : "/company/dashboard"}
             className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors inline-flex items-center"
           >
             {t("cancel")}
           </Link>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={(e) =>
-              handleSubmit(
-                e as unknown as React.FormEvent<HTMLFormElement>,
-                "draft",
-              )
-            }
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {submitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : null}
-            {t("saveDraft")}
-          </button>
+          {/* Sửa tin không đổi trạng thái → ẩn "Lưu nháp" (chỉ ở chế độ tạo). */}
+          {!isEdit ? (
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={(e) =>
+                handleSubmit(
+                  e as unknown as React.FormEvent<HTMLFormElement>,
+                  "draft",
+                )
+              }
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {submitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : null}
+              {t("saveDraft")}
+            </button>
+          ) : null}
           <button
             type="submit"
             disabled={submitting}
@@ -400,7 +436,7 @@ export function PostJobForm({ provinces, jobTypes, workModes }: Props) {
             ) : (
               <Briefcase className="w-4 h-4" />
             )}
-            {t("publish")}
+            {isEdit ? t("saveChanges") : t("publish")}
           </button>
         </motion.div>
       </motion.form>

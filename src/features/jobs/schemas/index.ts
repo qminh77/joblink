@@ -27,7 +27,7 @@ export function createJobSchema(t: Translator) {
         .optional()
         .nullable(),
       provinceId: z.number().int().positive().optional().nullable(),
-      districtId: z.number().int().positive().optional().nullable(),
+      wardId: z.number().int().positive().optional().nullable(),
       salaryMin: z.number().int().nonnegative().optional().nullable(),
       salaryMax: z.number().int().nonnegative().optional().nullable(),
       salaryVisible: z.boolean().default(true),
@@ -46,6 +46,65 @@ export function createJobSchema(t: Translator) {
         .optional()
         .nullable(),
       status: z.enum(["draft", "active"]),
+      expiresAt: z.string().datetime().optional().nullable(),
+      skills: z
+        .array(z.string().trim().min(1).max(100))
+        .max(20, t("tooManySkills"))
+        .optional(),
+    })
+    .refine(
+      (v) =>
+        v.salaryMin == null ||
+        v.salaryMax == null ||
+        v.salaryMin <= v.salaryMax,
+      { message: t("invalidSalaryRange"), path: ["salaryMax"] },
+    )
+}
+
+export function updateJobSchema(t: Translator) {
+  // Sửa tin = nội dung của createJobSchema (BỎ `status`) + jobId. Đổi trạng
+  // thái do update_job_status quản lý riêng nên form sửa không gửi status.
+  return z
+    .object({
+      jobId: z
+        .number({ error: t("invalidJob") })
+        .int()
+        .positive(t("invalidJob")),
+      title: z
+        .string()
+        .trim()
+        .min(3, t("titleRequired"))
+        .max(MAX_TITLE, t("titleTooLong")),
+      description: z
+        .string()
+        .trim()
+        .min(10, t("descriptionRequired"))
+        .max(MAX_DESCRIPTION, t("descriptionTooLong")),
+      requirements: z
+        .string()
+        .trim()
+        .max(MAX_REQUIREMENTS, t("requirementsTooLong"))
+        .optional()
+        .nullable(),
+      provinceId: z.number().int().positive().optional().nullable(),
+      wardId: z.number().int().positive().optional().nullable(),
+      salaryMin: z.number().int().nonnegative().optional().nullable(),
+      salaryMax: z.number().int().nonnegative().optional().nullable(),
+      salaryVisible: z.boolean().default(true),
+      jobTypeId: z
+        .number({ error: t("jobTypeRequired") })
+        .int()
+        .positive(t("jobTypeRequired")),
+      workModeId: z
+        .number({ error: t("workModeRequired") })
+        .int()
+        .positive(t("workModeRequired")),
+      positionTitle: z
+        .string()
+        .trim()
+        .max(MAX_TITLE, t("positionTitleTooLong"))
+        .optional()
+        .nullable(),
       expiresAt: z.string().datetime().optional().nullable(),
       skills: z
         .array(z.string().trim().min(1).max(100))

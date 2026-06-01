@@ -33,7 +33,7 @@ DECLARE
     v_conn          RECORD;
     v_profile       JSONB;
     v_province      JSONB;
-    v_district      JSONB;
+    v_ward      JSONB;
     v_is_visible    BOOLEAN;
     v_experiences   JSONB;
     v_educations    JSONB;
@@ -104,9 +104,9 @@ BEGIN
           JOIN public.provinces pv ON pv.id = cp.province_id
          WHERE cp.user_id = v_target.id AND cp.deleted_at IS NULL;
 
-        SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_district
+        SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_ward
           FROM public.company_profiles cp
-          JOIN public.districts dt ON dt.id = cp.district_id
+          JOIN public.wards dt ON dt.id = cp.ward_id
          WHERE cp.user_id = v_target.id AND cp.deleted_at IS NULL;
 
         SELECT COUNT(*)::INT INTO v_follower_cnt
@@ -132,7 +132,7 @@ BEGIN
             'profile', v_profile,
             'email', v_target.email,
             'province', v_province,
-            'district', v_district,
+            'ward', v_ward,
             'profileViewCount', v_target.profile_view_count,
             'connectionCount', v_target.connection_count,
             'followerCount', COALESCE(v_follower_cnt, 0),
@@ -155,9 +155,9 @@ BEGIN
       JOIN public.provinces pv ON pv.id = mp.province_id
      WHERE mp.user_id = v_target.id AND mp.deleted_at IS NULL;
 
-    SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_district
+    SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_ward
       FROM public.member_profiles mp
-      JOIN public.districts dt ON dt.id = mp.district_id
+      JOIN public.wards dt ON dt.id = mp.ward_id
      WHERE mp.user_id = v_target.id AND mp.deleted_at IS NULL;
 
     v_visibility := v_profile ->> 'profile_visibility';
@@ -192,7 +192,7 @@ BEGIN
         'profile', v_profile,
         'email', v_target.email,
         'province', v_province,
-        'district', v_district,
+        'ward', v_ward,
         'profileViewCount', v_target.profile_view_count,
         'connectionCount', v_target.connection_count,
         'isVisible', v_is_visible,
