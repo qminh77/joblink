@@ -1378,6 +1378,7 @@
         "dismissed": "Dismissed"
       },
       "reportedBy": "Reported by",
+      "targetAuthor": "Posted by",
       "reason": "Reason",
       "viewTarget": "View target",
       "actionTake": "Take action",

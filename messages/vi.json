@@ -1378,6 +1378,7 @@
         "dismissed": "Bỏ qua"
       },
       "reportedBy": "Báo cáo bởi",
+      "targetAuthor": "Người đăng",
       "reason": "Lý do",
       "viewTarget": "Xem đối tượng",
       "actionTake": "Xử lý",

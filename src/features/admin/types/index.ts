@@ -85,6 +85,8 @@ export type AdminReportRow = {
   description: string | null
   status: ReportStatus
   createdAt: string
+  targetAuthorName: string | null
+  targetAuthorAvatar: string | null
   targetPreview: {
     label: string
     snippet: string | null

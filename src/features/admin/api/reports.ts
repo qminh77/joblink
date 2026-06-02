@@ -112,6 +112,10 @@ export async function listAdminReports(
 
   const fetchTasks: PromiseLike<void>[] = []
 
+  let postRows: Array<{ id: number; content: string | null; author_id: number }> = []
+  let commentRows: Array<{ id: number; content: string | null; user_id: number }> = []
+  let jobRows: Array<{ id: number; title: string | null; company_user_id: number }> = []
+
   if (targetIdsByType.has("post")) {
     const ids = targetIdsByType.get("post")!
     fetchTasks.push(
@@ -119,16 +123,7 @@ export async function listAdminReports(
         .from("posts")
         .select("id, content, author_id")
         .in("id", ids)
-        .then(({ data: posts }) => {
-          for (const p of posts ?? []) {
-            const snippet = (p.content ?? "").slice(0, 200)
-            previewMap.set(`post-${p.id}`, {
-              label: "Bài viết",
-              snippet: snippet || "(nội dung trống)",
-              url: null,
-            })
-          }
-        }),
+        .then(({ data }) => { postRows = (data ?? []) as typeof postRows }),
     )
   }
 
@@ -137,18 +132,9 @@ export async function listAdminReports(
     fetchTasks.push(
       supabase
         .from("post_comments")
-        .select("id, content")
+        .select("id, content, user_id")
         .in("id", ids)
-        .then(({ data: comments }) => {
-          for (const c of comments ?? []) {
-            const snippet = (c.content ?? "").slice(0, 150)
-            previewMap.set(`comment-${c.id}`, {
-              label: "Bình luận",
-              snippet: snippet || "(nội dung trống)",
-              url: null,
-            })
-          }
-        }),
+        .then(({ data }) => { commentRows = (data ?? []) as typeof commentRows }),
     )
   }
 
@@ -159,15 +145,7 @@ export async function listAdminReports(
         .from("jobs")
         .select("id, title, company_user_id")
         .in("id", ids)
-        .then(({ data: jobs }) => {
-          for (const j of jobs ?? []) {
-            previewMap.set(`job-${j.id}`, {
-              label: j.title,
-              snippet: null,
-              url: `/jobs/${j.id}`,
-            })
-          }
-        }),
+        .then(({ data }) => { jobRows = (data ?? []) as typeof jobRows }),
     )
   }
 
@@ -176,7 +154,7 @@ export async function listAdminReports(
     fetchTasks.push(
       supabase
         .from("member_profiles")
-        .select("user_id, full_name, headline")
+        .select("user_id, full_name, headline, avatar_url")
         .in("user_id", ids)
         .is("deleted_at", null)
         .then(({ data: profiles }) => {
@@ -196,7 +174,7 @@ export async function listAdminReports(
     fetchTasks.push(
       supabase
         .from("company_profiles")
-        .select("user_id, name")
+        .select("user_id, name, logo_url")
         .in("user_id", ids)
         .is("deleted_at", null)
         .then(({ data: companies }) => {
@@ -213,10 +191,97 @@ export async function listAdminReports(
 
   await Promise.all(fetchTasks)
 
+  // Build target preview snippets
+  for (const p of postRows) {
+    const snippet = (p.content ?? "").slice(0, 200)
+    previewMap.set(`post-${p.id}`, {
+      label: "Bài viết",
+      snippet: snippet || "(nội dung trống)",
+      url: null,
+    })
+  }
+  for (const c of commentRows) {
+    const snippet = (c.content ?? "").slice(0, 150)
+    previewMap.set(`comment-${c.id}`, {
+      label: "Bình luận",
+      snippet: snippet || "(nội dung trống)",
+      url: null,
+    })
+  }
+  for (const j of jobRows) {
+    previewMap.set(`job-${j.id}`, {
+      label: j.title ?? "(không có tiêu đề)",
+      snippet: null,
+      url: `/jobs/${j.id}`,
+    })
+  }
+
+  // Collect all author user IDs
+  const authorUserIds = new Set<number>()
+  for (const p of postRows) authorUserIds.add(p.author_id)
+  for (const c of commentRows) authorUserIds.add(c.user_id)
+  for (const j of jobRows) authorUserIds.add(j.company_user_id)
+  // For user/company targets, the target itself is the author
+  for (const r of rows) {
+    if (r.target_type === "user" || r.target_type === "company") {
+      authorUserIds.add(r.target_id)
+    }
+  }
+
+  // Fetch author display names and avatars
+  const authorData = new Map<number, { name: string; avatar: string | null }>()
+  const userIds = [...authorUserIds]
+  if (userIds.length > 0) {
+    const [{ data: members }, { data: companies }] = await Promise.all([
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds)
+        .is("deleted_at", null),
+      supabase
+        .from("company_profiles")
+        .select("user_id, name, logo_url")
+        .in("user_id", userIds)
+        .is("deleted_at", null),
+    ])
+    for (const m of members ?? []) {
+      authorData.set(m.user_id, { name: m.full_name, avatar: m.avatar_url })
+    }
+    for (const c of companies ?? []) {
+      if (!authorData.has(c.user_id)) {
+        authorData.set(c.user_id, { name: c.name, avatar: c.logo_url })
+      }
+    }
+  }
+
+  function getAuthorId(targetType: ReportTargetType, targetId: number): number | null {
+    if (targetType === "post") {
+      const p = postRows.find(x => x.id === targetId)
+      return p?.author_id ?? null
+    }
+    if (targetType === "comment") {
+      const c = commentRows.find(x => x.id === targetId)
+      return c?.user_id ?? null
+    }
+    if (targetType === "job") {
+      const j = jobRows.find(x => x.id === targetId)
+      return j?.company_user_id ?? null
+    }
+    // user / company: the target is the author
+    return targetId
+  }
+
+  function getAuthorInfo(targetType: ReportTargetType, targetId: number): { name: string; avatar: string | null } | null {
+    const aid = getAuthorId(targetType, targetId)
+    if (aid == null) return null
+    return authorData.get(aid) ?? null
+  }
+
   return rows.map((r) => {
     const rd = reporterData[r.reporter_id] ?? { name: `user#${r.reporter_id}`, avatar: null }
     const key = `${r.target_type}-${r.target_id}`
     const preview = previewMap.get(key) ?? { label: `#${r.target_id}`, snippet: null, url: null }
+    const author = getAuthorInfo(r.target_type, r.target_id)
     return {
       id: r.id,
       reporterId: r.reporter_id,
@@ -229,6 +294,8 @@ export async function listAdminReports(
       description: r.description,
       status: r.status,
       createdAt: r.created_at,
+      targetAuthorName: author?.name ?? null,
+      targetAuthorAvatar: author?.avatar ?? null,
       targetPreview: preview,
     }
   })

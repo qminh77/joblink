@@ -279,6 +279,17 @@ export function ReportsPanel({
                           <span className="text-muted-foreground/60">
                             #{r.targetId}
                           </span>
+                          {r.targetAuthorName ? (
+                            <>
+                              <span className="text-muted-foreground/40">•</span>
+                              <span className="text-muted-foreground">
+                                {t("targetAuthor")}:{" "}
+                              </span>
+                              <span className="font-medium text-foreground">
+                                {r.targetAuthorName}
+                              </span>
+                            </>
+                          ) : null}
                           {r.targetPreview.url ? (
                             <a
                               href={r.targetPreview.url}
