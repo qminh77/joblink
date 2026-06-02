@@ -221,7 +221,7 @@ export function Navbar() {
                   onClick={() => setIsCreatePostOpen(true)}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
                 >
-                  <ImageIcon className="w-4.5 h-4.5 text-blue-500 mr-3 shrink-0" />
+                  <ImageIcon className="w-4 h-4 text-blue-500 mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
                       {tPost("createPost")}
@@ -236,7 +236,7 @@ export function Navbar() {
                     onClick={() => router.push("/company/post-job")}
                     className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
                   >
-                    <Briefcase className="w-4.5 h-4.5 text-emerald-500 mr-3 shrink-0" />
+                    <Briefcase className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-foreground">
                         {tPost("createJob")}

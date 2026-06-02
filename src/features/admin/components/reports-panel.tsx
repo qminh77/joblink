@@ -194,7 +194,7 @@ export function ReportsPanel({
                         {tTypes(r.targetType)}
                       </Badge>
                       <span className="text-sm text-foreground font-medium">
-                        {r.reason}
+                        {r.reasonName}
                       </span>
                       <Badge
                         variant="outline"

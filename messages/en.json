@@ -406,7 +406,8 @@
       "skillsEmpty": "No skills added yet.",
       "contactPrivate": "Contact info (private)",
       "website": "Website",
-      "currentPosition": "Present"
+      "currentPosition": "Present",
+      "reportUser": "Report user"
     },
     "stats": {
       "connections": "{count} connections"
@@ -582,7 +583,8 @@
       "jobDetails": "View details",
       "contactHeading": "Contact information",
       "contactEmpty": "This company hasn't added contact information yet.",
-      "representativeLabel": "Representative"
+      "representativeLabel": "Representative",
+      "report": "Report company"
     },
     "errors": {
       "invalidCompany": "Invalid company",
@@ -763,7 +765,8 @@
       "savedEmpty": "You haven't saved any jobs yet.",
       "browseJobs": "Browse jobs",
       "savedAt": "Saved {time}",
-      "deadlineLabel": "Apply by {date}"
+      "deadlineLabel": "Apply by {date}",
+      "report": "Report job"
     },
     "post": {
       "heading": "Post a job",
@@ -994,7 +997,8 @@
     "mentionNoResults": "No users found",
     "viewMoreComments": "View {count} more comments",
     "jobRecruiting": "is hiring",
-    "viewJobDetail": "View details"
+    "viewJobDetail": "View details",
+    "reportComment": "Report comment"
   },
   "notifications": {
     "title": "Notifications",
@@ -1057,6 +1061,7 @@
   "reports": {
     "reportTitle": "Report post",
     "loadingTypes": "Loading...",
+    "emptyTypes": "No report types available",
     "descriptionPlaceholder": "Additional details (optional)...",
     "cancel": "Cancel",
     "submitReport": "Submit report",
@@ -1124,10 +1129,12 @@
       "users": "Users",
       "companies": "Companies",
       "jobs": "Jobs",
+      "posts": "Posts",
       "reports": "Reports",
       "appeals": "Appeals",
       "auditLog": "Audit log",
       "settings": "Settings",
+      "reportTypes": "Report types",
       "lookups": "Lookups"
     },
     "jobs": {
@@ -1158,6 +1165,52 @@
       "success": {
         "removed": "Job removed",
         "restored": "Job restored"
+      }
+    },
+    "posts": {
+      "title": "Post management",
+      "subtitle": "View & moderate all posts across the platform",
+      "searchPlaceholder": "Search by content...",
+      "filterType": "Type",
+      "allTypes": "All types",
+      "allStatuses": "All statuses",
+      "types": {
+        "text": "Text",
+        "image": "Image",
+        "video": "Video",
+        "article": "Article",
+        "poll": "Poll"
+      },
+      "author": "Author",
+      "createdAt": "Created",
+      "filterStatus": "Status",
+      "reactions": "Reactions",
+      "comments": "Comments",
+      "visibility": "Visibility",
+      "visibilityLabel": {
+        "public": "Public",
+        "connections": "Connections",
+        "private": "Private"
+      },
+      "hide": "Hide",
+      "restore": "Restore",
+      "delete": "Delete",
+      "confirmTitle": "Confirm action",
+      "reason": "Reason (audited)",
+      "submit": "Confirm",
+      "submitting": "Processing...",
+      "open": "Open",
+      "empty": "No posts found",
+      "total": "{count} posts",
+      "success": {
+        "hidden": "Post hidden",
+        "restored": "Post restored",
+        "deleted": "Post deleted"
+      },
+      "statuses": {
+        "active": "Active",
+        "hidden": "Hidden",
+        "deleted": "Deleted"
       }
     },
     "appeals": {
@@ -1365,6 +1418,30 @@
       "searchPlaceholder": "Search by action, entity...",
       "empty": "No log entries yet",
       "total": "{count} entries"
+    },
+    "reportTypes": {
+      "title": "Report types",
+      "subtitle": "Manage report categories used across the platform",
+      "code": "Code",
+      "name": "Name",
+      "nameEn": "Name (EN)",
+      "sortOrder": "Order",
+      "isActive": "Active",
+      "isSystem": "System",
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "confirmDelete": "Delete this report type?",
+      "cannotDeleteSystem": "System report types cannot be deleted",
+      "empty": "No report types yet",
+      "success": {
+        "created": "Report type created",
+        "updated": "Report type updated",
+        "deleted": "Report type deleted"
+      }
     },
     "settings": {
       "title": "System settings",

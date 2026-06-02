@@ -9,6 +9,7 @@ export type ReportTypeOption = {
   id: number
   code: string
   name: string
+  nameEn: string | null
 }
 
 export async function loadActiveReportTypes(
@@ -16,7 +17,7 @@ export async function loadActiveReportTypes(
 ): Promise<ReportTypeOption[]> {
   const { data, error } = await supabase
     .from("report_types")
-    .select("id, code, name")
+    .select("id, code, name, name_en")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
 
@@ -24,7 +25,12 @@ export async function loadActiveReportTypes(
     console.error("[loadActiveReportTypes]", error)
     return []
   }
-  return data ?? []
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as number,
+    code: r.code as string,
+    name: r.name as string,
+    nameEn: (r.name_en as string | null) ?? null,
+  }))
 }
 
 export function insertReport(

@@ -76,7 +76,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                 >
                   <Icon
                     className={cn(
-                      "w-4.5 h-4.5 mr-3 shrink-0",
+                      "w-4 h-4 mr-3 shrink-0",
                       isActive ? "text-primary" : "text-muted-foreground",
                     )}
                   />

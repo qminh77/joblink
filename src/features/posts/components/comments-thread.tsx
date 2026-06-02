@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { MessageSquare, Trash2 } from "lucide-react"
+import { Flag, MessageSquare, Trash2 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { fadeUp, staggerSm } from "@/lib/animations"
@@ -12,6 +12,7 @@ import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import type { FeedComment } from "../types"
 import { useCreateComment, useDeleteComment, usePostComments } from "../hooks"
@@ -87,42 +88,59 @@ export function CommentsThread({
 
   const tree = useMemo(() => buildTree(comments ?? []), [comments])
 
+  const [reportCommentId, setReportCommentId] = useState<number | null>(null)
+
   if (!enabled) return null
 
+  let content: React.ReactNode
+
   if (isLoading) {
-    return (
+    content = (
       <div className="space-y-2 pt-1">
         <CommentSkeleton />
         <CommentSkeleton />
       </div>
     )
-  }
-
-  if (tree.length === 0) {
-    return (
+  } else if (tree.length === 0) {
+    content = (
       <div className="flex flex-col items-center gap-1.5 py-4 text-center text-muted-foreground">
         <MessageSquare className="w-4 h-4 opacity-60" />
         <p className="text-[11px]">{tFeed("noComments")}</p>
       </div>
     )
+  } else {
+    content = (
+      <motion.ul
+        variants={staggerSm}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-2 pt-1"
+      >
+        {tree.map((node) => (
+          <CommentBranch
+            key={node.id}
+            node={node}
+            postId={postId}
+            currentUserId={user.id}
+            onReport={setReportCommentId}
+          />
+        ))}
+      </motion.ul>
+    )
   }
 
   return (
-    <motion.ul
-      variants={staggerSm}
-      initial="hidden"
-      animate="show"
-      className="flex flex-col gap-2 pt-1"
-    >
-      {tree.map((node) => (
-        <CommentBranch
-          key={node.id}
-          node={node}
-          postId={postId}
-          currentUserId={user.id}
+    <>
+      {content}
+      {reportCommentId != null ? (
+        <ReportDialog
+          open
+          onClose={() => setReportCommentId(null)}
+          targetType="comment"
+          targetId={reportCommentId}
         />
-      ))}
-    </motion.ul>
+      ) : null}
+    </>
   )
 }
 
@@ -130,10 +148,12 @@ function CommentBranch({
   node,
   postId,
   currentUserId,
+  onReport,
 }: {
   node: CommentNode
   postId: number
   currentUserId: number
+  onReport: (id: number) => void
 }) {
   const [replying, setReplying] = useState(false)
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
@@ -160,6 +180,7 @@ function CommentBranch({
         comment={node}
         currentUserId={currentUserId}
         onReply={() => openReply(node)}
+        onReport={() => onReport(node.id)}
       />
 
       {node.replies.length > 0 ? (
@@ -177,6 +198,7 @@ function CommentBranch({
                   comment={r}
                   currentUserId={currentUserId}
                   onReply={() => openReply(r)}
+                  onReport={() => onReport(r.id)}
                   compact
                 />
               </li>
@@ -209,11 +231,13 @@ function CommentRow({
   comment,
   currentUserId,
   onReply,
+  onReport,
   compact = false,
 }: {
   comment: FeedComment
   currentUserId: number
   onReply: () => void
+  onReport: () => void
   compact?: boolean
 }) {
   const tFeed = useTranslations("feed")
@@ -257,6 +281,13 @@ function CommentRow({
             className="font-medium hover:text-primary transition-colors"
           >
             {tFeed("reply")}
+          </button>
+          <button
+            type="button"
+            onClick={onReport}
+            className="font-medium hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+          >
+            {tFeed("reportComment")}
           </button>
           {isOwn ? (
             <button

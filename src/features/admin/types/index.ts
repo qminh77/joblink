@@ -80,6 +80,7 @@ export type AdminReportRow = {
   targetType: ReportTargetType
   targetId: number
   reason: string
+  reasonName: string
   description: string | null
   status: ReportStatus
   createdAt: string

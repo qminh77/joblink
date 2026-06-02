@@ -81,6 +81,18 @@ export async function listAdminReports(
     }
   }
 
+  const reasonCodes = [...new Set(rows.map((r) => r.reason))]
+  const reasonNameMap: Record<string, string> = {}
+  if (reasonCodes.length > 0) {
+    const { data: reportTypes } = await supabase
+      .from("report_types")
+      .select("code, name")
+      .in("code", reasonCodes)
+    for (const rt of (reportTypes ?? []) as Array<{ code: string; name: string }>) {
+      reasonNameMap[rt.code] = rt.name
+    }
+  }
+
   return rows.map((r) => ({
     id: r.id,
     reporterId: r.reporter_id,
@@ -88,6 +100,7 @@ export async function listAdminReports(
     targetType: r.target_type,
     targetId: r.target_id,
     reason: r.reason,
+    reasonName: reasonNameMap[r.reason] ?? r.reason,
     description: r.description,
     status: r.status,
     createdAt: r.created_at,

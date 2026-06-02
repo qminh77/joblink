@@ -797,6 +797,15 @@ INSERT INTO report_types (code, name, name_en, sort_order) VALUES
     ('other',            'Khác',                          'Other',                            10)
 ON CONFLICT (code) DO NOTHING;
 
+-- RLS: cho phép mọi authenticated user SELECT report_types (lookup table)
+ALTER TABLE public.report_types ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS report_types_select_authenticated ON public.report_types;
+CREATE POLICY report_types_select_authenticated
+  ON public.report_types
+  FOR SELECT
+  USING (true);
+
 CREATE TABLE IF NOT EXISTS reports (
     id          BIGSERIAL PRIMARY KEY,
     reporter_id BIGINT NOT NULL,

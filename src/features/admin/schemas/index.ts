@@ -138,3 +138,11 @@ export const lookupDeleteSchema = z.object({
   kind: lookupKindEnum,
   id: z.coerce.number().int().positive(),
 })
+
+export const postActionSchema = z.object({
+  postId: z.coerce.number().int().positive(),
+  action: z.enum(["hide", "restore", "delete"]),
+  reason: z.string().trim().min(1).max(500),
+})
+
+export type PostActionInput = z.infer<typeof postActionSchema>

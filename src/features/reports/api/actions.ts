@@ -8,16 +8,10 @@ import type { ActionResult } from "@/lib/action/result"
 import { createReportSchema } from "../schemas"
 import {
   insertReport,
-  loadActiveReportTypes,
   type ReportTypeOption,
 } from "../data/reports.repo"
 
 export type { ReportTypeOption } from "../data/reports.repo"
-
-export async function getReportTypesAction(): Promise<ReportTypeOption[]> {
-  const supabase = await createClient()
-  return loadActiveReportTypes(supabase)
-}
 
 export async function createReportAction(input: {
   targetType: string
