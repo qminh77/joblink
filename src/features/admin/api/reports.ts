@@ -58,26 +58,34 @@ export async function listAdminReports(
   }>
 
   const reporterIds = [...new Set(rows.map((r) => r.reporter_id))]
-  const names: Record<number, string> = {}
+  const reporterData: Record<number, { name: string; avatar: string | null }> = {}
   if (reporterIds.length > 0) {
     const [{ data: members }, { data: companies }, { data: users }] =
       await Promise.all([
         supabase
           .from("member_profiles")
-          .select("user_id, full_name")
+          .select("user_id, full_name, avatar_url")
           .in("user_id", reporterIds)
           .is("deleted_at", null),
         supabase
           .from("company_profiles")
-          .select("user_id, name")
+          .select("user_id, name, logo_url")
           .in("user_id", reporterIds)
           .is("deleted_at", null),
         supabase.from("users").select("id, email").in("id", reporterIds),
       ])
-    for (const m of members ?? []) names[m.user_id] = m.full_name
-    for (const c of companies ?? []) names[c.user_id] = c.name
+    for (const m of members ?? []) {
+      reporterData[m.user_id] = { name: m.full_name, avatar: m.avatar_url }
+    }
+    for (const c of companies ?? []) {
+      if (!reporterData[c.user_id]) {
+        reporterData[c.user_id] = { name: c.name, avatar: c.logo_url }
+      }
+    }
     for (const u of users ?? []) {
-      if (!names[u.id]) names[u.id] = u.email
+      if (!reporterData[u.id]) {
+        reporterData[u.id] = { name: u.email, avatar: null }
+      }
     }
   }
 
@@ -93,18 +101,137 @@ export async function listAdminReports(
     }
   }
 
-  return rows.map((r) => ({
-    id: r.id,
-    reporterId: r.reporter_id,
-    reporterName: names[r.reporter_id] ?? `user#${r.reporter_id}`,
-    targetType: r.target_type,
-    targetId: r.target_id,
-    reason: r.reason,
-    reasonName: reasonNameMap[r.reason] ?? r.reason,
-    description: r.description,
-    status: r.status,
-    createdAt: r.created_at,
-  }))
+  const targetIdsByType = new Map<ReportTargetType, number[]>()
+  for (const r of rows) {
+    const arr = targetIdsByType.get(r.target_type) ?? []
+    arr.push(r.target_id)
+    targetIdsByType.set(r.target_type, arr)
+  }
+
+  const previewMap = new Map<string, { label: string; snippet: string | null; url: string | null }>()
+
+  const fetchTasks: PromiseLike<void>[] = []
+
+  if (targetIdsByType.has("post")) {
+    const ids = targetIdsByType.get("post")!
+    fetchTasks.push(
+      supabase
+        .from("posts")
+        .select("id, content, author_id")
+        .in("id", ids)
+        .then(({ data: posts }) => {
+          for (const p of posts ?? []) {
+            const snippet = (p.content ?? "").slice(0, 200)
+            previewMap.set(`post-${p.id}`, {
+              label: "Bài viết",
+              snippet: snippet || "(nội dung trống)",
+              url: null,
+            })
+          }
+        }),
+    )
+  }
+
+  if (targetIdsByType.has("comment")) {
+    const ids = targetIdsByType.get("comment")!
+    fetchTasks.push(
+      supabase
+        .from("post_comments")
+        .select("id, content")
+        .in("id", ids)
+        .then(({ data: comments }) => {
+          for (const c of comments ?? []) {
+            const snippet = (c.content ?? "").slice(0, 150)
+            previewMap.set(`comment-${c.id}`, {
+              label: "Bình luận",
+              snippet: snippet || "(nội dung trống)",
+              url: null,
+            })
+          }
+        }),
+    )
+  }
+
+  if (targetIdsByType.has("job")) {
+    const ids = targetIdsByType.get("job")!
+    fetchTasks.push(
+      supabase
+        .from("jobs")
+        .select("id, title, company_user_id")
+        .in("id", ids)
+        .then(({ data: jobs }) => {
+          for (const j of jobs ?? []) {
+            previewMap.set(`job-${j.id}`, {
+              label: j.title,
+              snippet: null,
+              url: `/jobs/${j.id}`,
+            })
+          }
+        }),
+    )
+  }
+
+  if (targetIdsByType.has("user")) {
+    const ids = targetIdsByType.get("user")!
+    fetchTasks.push(
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name, headline")
+        .in("user_id", ids)
+        .is("deleted_at", null)
+        .then(({ data: profiles }) => {
+          for (const p of profiles ?? []) {
+            previewMap.set(`user-${p.user_id}`, {
+              label: p.full_name,
+              snippet: p.headline,
+              url: `/profile/${p.user_id}`,
+            })
+          }
+        }),
+    )
+  }
+
+  if (targetIdsByType.has("company")) {
+    const ids = targetIdsByType.get("company")!
+    fetchTasks.push(
+      supabase
+        .from("company_profiles")
+        .select("user_id, name")
+        .in("user_id", ids)
+        .is("deleted_at", null)
+        .then(({ data: companies }) => {
+          for (const c of companies ?? []) {
+            previewMap.set(`company-${c.user_id}`, {
+              label: c.name,
+              snippet: null,
+              url: `/company/${c.user_id}`,
+            })
+          }
+        }),
+    )
+  }
+
+  await Promise.all(fetchTasks)
+
+  return rows.map((r) => {
+    const rd = reporterData[r.reporter_id] ?? { name: `user#${r.reporter_id}`, avatar: null }
+    const key = `${r.target_type}-${r.target_id}`
+    const preview = previewMap.get(key) ?? { label: `#${r.target_id}`, snippet: null, url: null }
+    return {
+      id: r.id,
+      reporterId: r.reporter_id,
+      reporterName: rd.name,
+      reporterAvatar: rd.avatar,
+      targetType: r.target_type,
+      targetId: r.target_id,
+      reason: r.reason,
+      reasonName: reasonNameMap[r.reason] ?? r.reason,
+      description: r.description,
+      status: r.status,
+      createdAt: r.created_at,
+      targetPreview: preview,
+    }
+  })
 }
 
 export async function setReportStatus(

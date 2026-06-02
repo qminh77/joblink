@@ -77,6 +77,7 @@ export type AdminReportRow = {
   id: number
   reporterId: number
   reporterName: string
+  reporterAvatar: string | null
   targetType: ReportTargetType
   targetId: number
   reason: string
@@ -84,6 +85,11 @@ export type AdminReportRow = {
   description: string | null
   status: ReportStatus
   createdAt: string
+  targetPreview: {
+    label: string
+    snippet: string | null
+    url: string | null
+  }
 }
 
 export type AdminAuditLogEntry = {
