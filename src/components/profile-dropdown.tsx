@@ -125,7 +125,7 @@ export function ProfileDropdown() {
                 onClick={() => router.push(selfHref)}
                 className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
               >
-                <User className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                <User className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
                     {tMenu("viewProfile")}
@@ -147,7 +147,7 @@ export function ProfileDropdown() {
                   onClick={() => router.push("/saved-jobs")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
-                  <Bookmark className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                  <Bookmark className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
                       {tNav("savedJobs")}
@@ -170,7 +170,7 @@ export function ProfileDropdown() {
                   onClick={() => router.push("/jobs/applications")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
-                  <FileText className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                  <FileText className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
                       {tMenu("myApplications")}
@@ -198,7 +198,7 @@ export function ProfileDropdown() {
                   onClick={() => router.push("/company/dashboard")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
-                  <LayoutDashboard className="w-4.5 h-4.5 text-primary mr-3 shrink-0" />
+                  <LayoutDashboard className="w-4 h-4 text-primary mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
                       {tMenu("companyDashboard")}
@@ -225,7 +225,7 @@ export function ProfileDropdown() {
                   onClick={() => router.push("/admin/dashboard")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
-                  <Shield className="w-4.5 h-4.5 text-primary mr-3 shrink-0" />
+                  <Shield className="w-4 h-4 text-primary mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
                       {tNav("admin")}
@@ -248,7 +248,7 @@ export function ProfileDropdown() {
                 onClick={() => router.push("/settings")}
                 className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
               >
-                <Settings className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                <Settings className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
                     {tMenu("settings")}
@@ -266,7 +266,7 @@ export function ProfileDropdown() {
               transition={{ delay: 0.14 }}
             >
               <DropdownMenuItem className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted">
-                <HelpCircle className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                <HelpCircle className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">
                     {tMenu("help")}

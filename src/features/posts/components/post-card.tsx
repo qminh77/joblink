@@ -158,7 +158,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
                       }}
                       className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                     >
-                      <Pencil className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                      <Pencil className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-foreground">
                           {tPosts("editPost")}
@@ -185,7 +185,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
                       disabled={deletePost.isPending}
                       className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                     >
-                      <Trash2 className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                      <Trash2 className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-foreground">
                           {tPosts("deletePost")}
@@ -207,10 +207,13 @@ export function PostCard({ post, onShare, onSend }: Props) {
                   transition={{ delay: 0.08 }}
                 >
                   <DropdownMenuItem
-                    onClick={() => setShowReport(true)}
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      setShowReport(true)
+                    }}
                     className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                   >
-                    <Flag className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+                    <Flag className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-foreground">
                         {tPosts("reportPost")}

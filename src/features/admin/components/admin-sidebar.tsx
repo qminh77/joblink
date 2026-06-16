@@ -7,11 +7,13 @@ import {
   Briefcase,
   Building2,
   Database,
+  FileText,
   Flag,
   Gavel,
   LayoutDashboard,
   ScrollText,
   Settings,
+  Tags,
   Users,
 } from "lucide-react"
 
@@ -22,6 +24,8 @@ const ITEMS = [
   { key: "users", href: "/admin/users", icon: Users },
   { key: "companies", href: "/admin/companies", icon: Building2 },
   { key: "jobs", href: "/admin/jobs", icon: Briefcase },
+  { key: "posts", href: "/admin/posts", icon: FileText },
+  { key: "reportTypes", href: "/admin/report-types", icon: Tags },
   { key: "reports", href: "/admin/reports", icon: Flag },
   { key: "appeals", href: "/admin/appeals", icon: Gavel },
   { key: "auditLog", href: "/admin/audit-log", icon: ScrollText },

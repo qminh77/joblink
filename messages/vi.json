@@ -406,7 +406,8 @@
       "skillsEmpty": "Chưa có kỹ năng nào.",
       "contactPrivate": "Thông tin liên hệ (riêng tư)",
       "website": "Website",
-      "currentPosition": "Hiện tại"
+      "currentPosition": "Hiện tại",
+      "reportUser": "Báo cáo người dùng"
     },
     "stats": {
       "connections": "{count} kết nối"
@@ -582,7 +583,8 @@
       "jobDetails": "Xem chi tiết",
       "contactHeading": "Thông tin liên hệ",
       "contactEmpty": "Công ty chưa cập nhật thông tin liên hệ.",
-      "representativeLabel": "Người đại diện"
+      "representativeLabel": "Người đại diện",
+      "report": "Báo cáo công ty"
     },
     "errors": {
       "invalidCompany": "Công ty không hợp lệ",
@@ -763,7 +765,8 @@
       "savedEmpty": "Bạn chưa lưu việc làm nào.",
       "browseJobs": "Tìm việc làm",
       "savedAt": "Đã lưu {time}",
-      "deadlineLabel": "Hạn nộp {date}"
+      "deadlineLabel": "Hạn nộp {date}",
+      "report": "Báo cáo tin tuyển dụng"
     },
     "post": {
       "heading": "Đăng tin tuyển dụng",
@@ -994,7 +997,8 @@
     "mentionNoResults": "Không tìm thấy người dùng",
     "viewMoreComments": "Xem thêm {count} bình luận",
     "jobRecruiting": "đang tuyển dụng",
-    "viewJobDetail": "Xem chi tiết"
+    "viewJobDetail": "Xem chi tiết",
+    "reportComment": "Báo cáo bình luận"
   },
   "notifications": {
     "title": "Thông báo",
@@ -1057,6 +1061,7 @@
   "reports": {
     "reportTitle": "Báo cáo bài viết",
     "loadingTypes": "Đang tải...",
+    "emptyTypes": "Không có loại báo cáo",
     "descriptionPlaceholder": "Mô tả thêm (không bắt buộc)...",
     "cancel": "Huỷ",
     "submitReport": "Gửi báo cáo",
@@ -1124,10 +1129,12 @@
       "users": "Người dùng",
       "companies": "Doanh nghiệp",
       "jobs": "Tin tuyển dụng",
+      "posts": "Bài viết",
       "reports": "Báo cáo",
       "appeals": "Khiếu nại",
       "auditLog": "Nhật ký",
       "settings": "Cài đặt",
+      "reportTypes": "Loại báo cáo",
       "lookups": "Danh mục"
     },
     "jobs": {
@@ -1158,6 +1165,52 @@
       "success": {
         "removed": "Đã gỡ tin",
         "restored": "Đã khôi phục tin"
+      }
+    },
+    "posts": {
+      "title": "Quản lý bài viết",
+      "subtitle": "Xem & xử lý tất cả bài viết trên hệ thống",
+      "searchPlaceholder": "Tìm theo nội dung...",
+      "filterType": "Loại",
+      "allTypes": "Tất cả loại",
+      "allStatuses": "Tất cả trạng thái",
+      "types": {
+        "text": "Văn bản",
+        "image": "Hình ảnh",
+        "video": "Video",
+        "article": "Bài viết",
+        "poll": "Bình chọn"
+      },
+      "author": "Tác giả",
+      "createdAt": "Tạo lúc",
+      "filterStatus": "Trạng thái",
+      "reactions": "Cảm xúc",
+      "comments": "Bình luận",
+      "visibility": "Hiển thị",
+      "visibilityLabel": {
+        "public": "Công khai",
+        "connections": "Kết nối",
+        "private": "Riêng tư"
+      },
+      "hide": "Ẩn",
+      "restore": "Khôi phục",
+      "delete": "Xoá",
+      "confirmTitle": "Xác nhận thao tác",
+      "reason": "Lý do (ghi vào audit log)",
+      "submit": "Xác nhận",
+      "submitting": "Đang xử lý...",
+      "open": "Mở",
+      "empty": "Không có bài viết nào",
+      "total": "{count} bài viết",
+      "success": {
+        "hidden": "Đã ẩn bài viết",
+        "restored": "Đã khôi phục bài viết",
+        "deleted": "Đã xoá bài viết"
+      },
+      "statuses": {
+        "active": "Hoạt động",
+        "hidden": "Đã ẩn",
+        "deleted": "Đã xoá"
       }
     },
     "appeals": {
@@ -1325,6 +1378,7 @@
         "dismissed": "Bỏ qua"
       },
       "reportedBy": "Báo cáo bởi",
+      "targetAuthor": "Người đăng",
       "reason": "Lý do",
       "viewTarget": "Xem đối tượng",
       "actionTake": "Xử lý",
@@ -1365,6 +1419,30 @@
       "searchPlaceholder": "Tìm theo hành động, đối tượng...",
       "empty": "Chưa có nhật ký nào",
       "total": "{count} bản ghi"
+    },
+    "reportTypes": {
+      "title": "Loại báo cáo",
+      "subtitle": "Quản lý các danh mục báo cáo trên hệ thống",
+      "code": "Mã",
+      "name": "Tên",
+      "nameEn": "Tên (EN)",
+      "sortOrder": "Thứ tự",
+      "isActive": "Hoạt động",
+      "isSystem": "Hệ thống",
+      "add": "Thêm mới",
+      "edit": "Chỉnh sửa",
+      "delete": "Xoá",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "cancel": "Huỷ",
+      "confirmDelete": "Bạn có chắc muốn xoá loại báo cáo này?",
+      "cannotDeleteSystem": "Không thể xoá loại báo cáo hệ thống",
+      "empty": "Chưa có loại báo cáo nào",
+      "success": {
+        "created": "Đã tạo loại báo cáo",
+        "updated": "Đã cập nhật loại báo cáo",
+        "deleted": "Đã xoá loại báo cáo"
+      }
     },
     "settings": {
       "title": "Cài đặt hệ thống",

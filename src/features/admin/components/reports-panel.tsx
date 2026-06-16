@@ -3,9 +3,15 @@
 import { useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
-import { Flag } from "lucide-react"
+import {
+  ExternalLink,
+  Flag,
+  MessageSquare,
+  User,
+} from "lucide-react"
 import { toast } from "sonner"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -36,6 +42,7 @@ import {
   type ReportStatus,
   type ReportTargetType,
 } from "@/lib/constants"
+import { getInitials } from "@/lib/utils/format"
 import type { ModerationActionType } from "@/types/database"
 
 const STATUS_STYLE: Record<ReportStatus, string> = {
@@ -45,12 +52,12 @@ const STATUS_STYLE: Record<ReportStatus, string> = {
   dismissed: "bg-muted text-muted-foreground border-border/30",
 }
 
-const TARGET_HREF: Record<ReportTargetType, (id: number) => string | null> = {
-  user: (id) => `/profile/${id}`,
-  post: () => null,
-  comment: () => null,
-  job: (id) => `/jobs/${id}`,
-  company: () => null,
+const TARGET_ICON: Record<ReportTargetType, typeof Flag> = {
+  user: User,
+  post: Flag,
+  comment: MessageSquare,
+  job: Flag,
+  company: Flag,
 }
 
 const ACTION_TYPES: ModerationActionType[] = [
@@ -180,92 +187,136 @@ export function ReportsPanel({
           </Card>
         ) : (
           items.map((r) => {
-            const targetHrefFn = TARGET_HREF[r.targetType]
-            const targetHref = targetHrefFn ? targetHrefFn(r.targetId) : null
+            const Icon = TARGET_ICON[r.targetType]
             return (
               <Card
                 key={r.id}
-                className="bg-card border-border/30 rounded-xl p-5"
+                className="bg-card border-border/30 rounded-xl overflow-hidden"
               >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {tTypes(r.targetType)}
-                      </Badge>
-                      <span className="text-sm text-foreground font-medium">
-                        {r.reason}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${STATUS_STYLE[r.status]}`}
-                      >
-                        {tStatuses(r.status)}
-                      </Badge>
-                      {targetHref ? (
-                        <a
-                          href={targetHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {t("viewTarget")} #{r.targetId}
-                        </a>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          #{r.targetId}
-                        </span>
-                      )}
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="w-9 h-9 shrink-0 mt-0.5 border border-border/30">
+                      {r.reporterAvatar ? (
+                        <AvatarImage src={r.reporterAvatar} />
+                      ) : null}
+                      <AvatarFallback className="text-[11px]">
+                        {getInitials(r.reporterName, "?")}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Icon className="w-3 h-3" />
+                              {tTypes(r.targetType)}
+                            </Badge>
+                            <span className="text-sm font-medium text-foreground">
+                              {r.reasonName}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${STATUS_STYLE[r.status]}`}
+                            >
+                              {tStatuses(r.status)}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {t("reportedBy")}{" "}
+                            <span className="font-medium text-foreground">
+                              {r.reporterName}
+                            </span>
+                            {" • "}
+                            {format.dateTime(new Date(r.createdAt), {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {r.status === "pending" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={pending}
+                              onClick={() => quickStatus(r, "in_review")}
+                            >
+                              {t("actionMarkReview")}
+                            </Button>
+                          )}
+                          {r.status !== "dismissed" && r.status !== "resolved" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={pending}
+                              onClick={() => quickStatus(r, "dismissed")}
+                            >
+                              {t("actionDismiss")}
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            disabled={pending}
+                            onClick={() => {
+                              setOpenTarget(r)
+                              setActionType("hide")
+                              setReason("")
+                            }}
+                          >
+                            {t("actionTake")}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-muted/50 border border-border/20 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="font-medium text-foreground">
+                            {r.targetPreview.label}
+                          </span>
+                          <span className="text-muted-foreground/60">
+                            #{r.targetId}
+                          </span>
+                          {r.targetAuthorName ? (
+                            <>
+                              <span className="text-muted-foreground/40">•</span>
+                              <span className="text-muted-foreground">
+                                {t("targetAuthor")}:{" "}
+                              </span>
+                              <span className="font-medium text-foreground">
+                                {r.targetAuthorName}
+                              </span>
+                            </>
+                          ) : null}
+                          {r.targetPreview.url ? (
+                            <a
+                              href={r.targetPreview.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-0.5 text-primary hover:underline ml-auto"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : null}
+                        </div>
+                        {r.targetPreview.snippet ? (
+                          <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+                            {r.targetPreview.snippet}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      {r.description ? (
+                        <div className="flex items-start gap-2 text-sm">
+                          <MessageSquare className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                          <p className="text-foreground/70 whitespace-pre-line leading-relaxed line-clamp-3">
+                            &ldquo;{r.description}&rdquo;
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                    {r.description ? (
-                      <p className="text-sm text-foreground mt-1.5 whitespace-pre-line">
-                        {r.description}
-                      </p>
-                    ) : null}
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {t("reportedBy")}{" "}
-                      <span className="font-medium text-foreground">
-                        {r.reporterName}
-                      </span>
-                      {" • "}
-                      {format.dateTime(new Date(r.createdAt), {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    {r.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={pending}
-                        onClick={() => quickStatus(r, "in_review")}
-                      >
-                        {t("actionMarkReview")}
-                      </Button>
-                    )}
-                    {r.status !== "dismissed" && r.status !== "resolved" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={pending}
-                        onClick={() => quickStatus(r, "dismissed")}
-                      >
-                        {t("actionDismiss")}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      disabled={pending}
-                      onClick={() => {
-                        setOpenTarget(r)
-                        setActionType("hide")
-                        setReason("")
-                      }}
-                    >
-                      {t("actionTake")}
-                    </Button>
                   </div>
                 </div>
               </Card>
@@ -288,10 +339,15 @@ export function ReportsPanel({
             <DialogTitle>{t("modActionTitle")}</DialogTitle>
             <DialogDescription>
               {openTarget
-                ? `${tTypes(openTarget.targetType)} #${openTarget.targetId}`
+                ? `${tTypes(openTarget.targetType)} #${openTarget.targetId} — ${openTarget.reasonName}`
                 : ""}
             </DialogDescription>
           </DialogHeader>
+          {openTarget?.description ? (
+            <Card className="bg-muted/30 border-border/20 rounded-lg p-3 text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
+              &ldquo;{openTarget.description}&rdquo;
+            </Card>
+          ) : null}
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium block mb-1">

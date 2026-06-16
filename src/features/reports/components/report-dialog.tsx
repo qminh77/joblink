@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +24,8 @@ type Props = {
 
 export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
   const t = useTranslations("reports")
-  const { data: reportTypes = [], isLoading } = useReportTypes()
+  const locale = useLocale()
+  const { data: reportTypes = [], isLoading, isError } = useReportTypes()
   const createReport = useCreateReport()
 
   const [reason, setReason] = useState("")
@@ -55,9 +56,13 @@ export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
             <div className="py-6 text-center text-sm text-muted-foreground">
               {t("loadingTypes")}
             </div>
+          ) : isError ? (
+            <div className="py-6 text-center text-sm text-destructive">
+              {t("errors.unexpected")}
+            </div>
           ) : reportTypes.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              Không có loại báo cáo
+              {t("emptyTypes")}
             </div>
           ) : (
             reportTypes.map((rt) => {
@@ -74,7 +79,7 @@ export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >
-                  {rt.name}
+                  {locale === "en" && rt.nameEn ? rt.nameEn : rt.name}
                 </button>
               )
             })

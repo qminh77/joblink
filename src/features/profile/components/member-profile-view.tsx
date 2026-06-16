@@ -2,9 +2,11 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useState } from "react"
 import {
   BadgeCheck,
   Briefcase,
+  Flag,
   GraduationCap,
   Eye,
   Globe,
@@ -21,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
 import { MessageButton } from "@/features/messaging/components/message-button"
+import { ReportDialog } from "@/features/reports/components/report-dialog"
 import type { ConnectionRelation } from "@/features/network/types"
 import type { UserPostsPage } from "@/features/posts/types"
 import { PROFILE_VISIBILITY_LABELS } from "@/features/profile/lib/constants"
@@ -44,6 +47,7 @@ export function MemberProfileView({
   postsPage: UserPostsPage
 }) {
   const tProfile = useTranslations("profile")
+  const [showReport, setShowReport] = useState(false)
   const initials = getInitials(profile.full_name, "JL")
   const visibilityLabel = PROFILE_VISIBILITY_LABELS[profile.profile_visibility]
   const locationText = [profile.ward?.name, profile.province?.name]
@@ -152,6 +156,14 @@ export function MemberProfileView({
                         size="sm"
                       />
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setShowReport(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive px-3 h-8 rounded-lg transition-colors"
+                      title={tProfile("view.reportUser")}
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                    </button>
                   </>
                 )}
               </div>
@@ -356,6 +368,13 @@ export function MemberProfileView({
           ) : null}
         </div>
       </motion.div>
+
+      <ReportDialog
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        targetType="user"
+        targetId={profile.user_id}
+      />
     </motion.div>
   )
 }

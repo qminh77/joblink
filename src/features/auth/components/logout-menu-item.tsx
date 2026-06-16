@@ -21,7 +21,7 @@ export function LogoutMenuItem() {
       }}
       className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted text-foreground"
     >
-      <LogOut className="w-4.5 h-4.5 text-muted-foreground mr-3 shrink-0" />
+      <LogOut className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
       <div className="flex-1 min-w-0">
         <span className="text-sm font-medium">
           {logout.isPending ? tCommon("submitting") : t("menu")}

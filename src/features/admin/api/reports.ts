@@ -58,40 +58,247 @@ export async function listAdminReports(
   }>
 
   const reporterIds = [...new Set(rows.map((r) => r.reporter_id))]
-  const names: Record<number, string> = {}
+  const reporterData: Record<number, { name: string; avatar: string | null }> = {}
   if (reporterIds.length > 0) {
     const [{ data: members }, { data: companies }, { data: users }] =
       await Promise.all([
         supabase
           .from("member_profiles")
-          .select("user_id, full_name")
+          .select("user_id, full_name, avatar_url")
           .in("user_id", reporterIds)
           .is("deleted_at", null),
         supabase
           .from("company_profiles")
-          .select("user_id, name")
+          .select("user_id, name, logo_url")
           .in("user_id", reporterIds)
           .is("deleted_at", null),
         supabase.from("users").select("id, email").in("id", reporterIds),
       ])
-    for (const m of members ?? []) names[m.user_id] = m.full_name
-    for (const c of companies ?? []) names[c.user_id] = c.name
+    for (const m of members ?? []) {
+      reporterData[m.user_id] = { name: m.full_name, avatar: m.avatar_url }
+    }
+    for (const c of companies ?? []) {
+      if (!reporterData[c.user_id]) {
+        reporterData[c.user_id] = { name: c.name, avatar: c.logo_url }
+      }
+    }
     for (const u of users ?? []) {
-      if (!names[u.id]) names[u.id] = u.email
+      if (!reporterData[u.id]) {
+        reporterData[u.id] = { name: u.email, avatar: null }
+      }
     }
   }
 
-  return rows.map((r) => ({
-    id: r.id,
-    reporterId: r.reporter_id,
-    reporterName: names[r.reporter_id] ?? `user#${r.reporter_id}`,
-    targetType: r.target_type,
-    targetId: r.target_id,
-    reason: r.reason,
-    description: r.description,
-    status: r.status,
-    createdAt: r.created_at,
-  }))
+  const reasonCodes = [...new Set(rows.map((r) => r.reason))]
+  const reasonNameMap: Record<string, string> = {}
+  if (reasonCodes.length > 0) {
+    const { data: reportTypes } = await supabase
+      .from("report_types")
+      .select("code, name")
+      .in("code", reasonCodes)
+    for (const rt of (reportTypes ?? []) as Array<{ code: string; name: string }>) {
+      reasonNameMap[rt.code] = rt.name
+    }
+  }
+
+  const targetIdsByType = new Map<ReportTargetType, number[]>()
+  for (const r of rows) {
+    const arr = targetIdsByType.get(r.target_type) ?? []
+    arr.push(r.target_id)
+    targetIdsByType.set(r.target_type, arr)
+  }
+
+  const previewMap = new Map<string, { label: string; snippet: string | null; url: string | null }>()
+
+  const fetchTasks: PromiseLike<void>[] = []
+
+  let postRows: Array<{ id: number; content: string | null; author_id: number }> = []
+  let commentRows: Array<{ id: number; content: string | null; user_id: number }> = []
+  let jobRows: Array<{ id: number; title: string | null; company_user_id: number }> = []
+
+  if (targetIdsByType.has("post")) {
+    const ids = targetIdsByType.get("post")!
+    fetchTasks.push(
+      supabase
+        .from("posts")
+        .select("id, content, author_id")
+        .in("id", ids)
+        .then(({ data }) => { postRows = (data ?? []) as typeof postRows }),
+    )
+  }
+
+  if (targetIdsByType.has("comment")) {
+    const ids = targetIdsByType.get("comment")!
+    fetchTasks.push(
+      supabase
+        .from("post_comments")
+        .select("id, content, user_id")
+        .in("id", ids)
+        .then(({ data }) => { commentRows = (data ?? []) as typeof commentRows }),
+    )
+  }
+
+  if (targetIdsByType.has("job")) {
+    const ids = targetIdsByType.get("job")!
+    fetchTasks.push(
+      supabase
+        .from("jobs")
+        .select("id, title, company_user_id")
+        .in("id", ids)
+        .then(({ data }) => { jobRows = (data ?? []) as typeof jobRows }),
+    )
+  }
+
+  if (targetIdsByType.has("user")) {
+    const ids = targetIdsByType.get("user")!
+    fetchTasks.push(
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name, headline, avatar_url")
+        .in("user_id", ids)
+        .is("deleted_at", null)
+        .then(({ data: profiles }) => {
+          for (const p of profiles ?? []) {
+            previewMap.set(`user-${p.user_id}`, {
+              label: p.full_name,
+              snippet: p.headline,
+              url: `/profile/${p.user_id}`,
+            })
+          }
+        }),
+    )
+  }
+
+  if (targetIdsByType.has("company")) {
+    const ids = targetIdsByType.get("company")!
+    fetchTasks.push(
+      supabase
+        .from("company_profiles")
+        .select("user_id, name, logo_url")
+        .in("user_id", ids)
+        .is("deleted_at", null)
+        .then(({ data: companies }) => {
+          for (const c of companies ?? []) {
+            previewMap.set(`company-${c.user_id}`, {
+              label: c.name,
+              snippet: null,
+              url: `/company/${c.user_id}`,
+            })
+          }
+        }),
+    )
+  }
+
+  await Promise.all(fetchTasks)
+
+  // Build target preview snippets
+  for (const p of postRows) {
+    const snippet = (p.content ?? "").slice(0, 200)
+    previewMap.set(`post-${p.id}`, {
+      label: "Bài viết",
+      snippet: snippet || "(nội dung trống)",
+      url: null,
+    })
+  }
+  for (const c of commentRows) {
+    const snippet = (c.content ?? "").slice(0, 150)
+    previewMap.set(`comment-${c.id}`, {
+      label: "Bình luận",
+      snippet: snippet || "(nội dung trống)",
+      url: null,
+    })
+  }
+  for (const j of jobRows) {
+    previewMap.set(`job-${j.id}`, {
+      label: j.title ?? "(không có tiêu đề)",
+      snippet: null,
+      url: `/jobs/${j.id}`,
+    })
+  }
+
+  // Collect all author user IDs
+  const authorUserIds = new Set<number>()
+  for (const p of postRows) authorUserIds.add(p.author_id)
+  for (const c of commentRows) authorUserIds.add(c.user_id)
+  for (const j of jobRows) authorUserIds.add(j.company_user_id)
+  // For user/company targets, the target itself is the author
+  for (const r of rows) {
+    if (r.target_type === "user" || r.target_type === "company") {
+      authorUserIds.add(r.target_id)
+    }
+  }
+
+  // Fetch author display names and avatars
+  const authorData = new Map<number, { name: string; avatar: string | null }>()
+  const userIds = [...authorUserIds]
+  if (userIds.length > 0) {
+    const [{ data: members }, { data: companies }] = await Promise.all([
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds)
+        .is("deleted_at", null),
+      supabase
+        .from("company_profiles")
+        .select("user_id, name, logo_url")
+        .in("user_id", userIds)
+        .is("deleted_at", null),
+    ])
+    for (const m of members ?? []) {
+      authorData.set(m.user_id, { name: m.full_name, avatar: m.avatar_url })
+    }
+    for (const c of companies ?? []) {
+      if (!authorData.has(c.user_id)) {
+        authorData.set(c.user_id, { name: c.name, avatar: c.logo_url })
+      }
+    }
+  }
+
+  function getAuthorId(targetType: ReportTargetType, targetId: number): number | null {
+    if (targetType === "post") {
+      const p = postRows.find(x => x.id === targetId)
+      return p?.author_id ?? null
+    }
+    if (targetType === "comment") {
+      const c = commentRows.find(x => x.id === targetId)
+      return c?.user_id ?? null
+    }
+    if (targetType === "job") {
+      const j = jobRows.find(x => x.id === targetId)
+      return j?.company_user_id ?? null
+    }
+    // user / company: the target is the author
+    return targetId
+  }
+
+  function getAuthorInfo(targetType: ReportTargetType, targetId: number): { name: string; avatar: string | null } | null {
+    const aid = getAuthorId(targetType, targetId)
+    if (aid == null) return null
+    return authorData.get(aid) ?? null
+  }
+
+  return rows.map((r) => {
+    const rd = reporterData[r.reporter_id] ?? { name: `user#${r.reporter_id}`, avatar: null }
+    const key = `${r.target_type}-${r.target_id}`
+    const preview = previewMap.get(key) ?? { label: `#${r.target_id}`, snippet: null, url: null }
+    const author = getAuthorInfo(r.target_type, r.target_id)
+    return {
+      id: r.id,
+      reporterId: r.reporter_id,
+      reporterName: rd.name,
+      reporterAvatar: rd.avatar,
+      targetType: r.target_type,
+      targetId: r.target_id,
+      reason: r.reason,
+      reasonName: reasonNameMap[r.reason] ?? r.reason,
+      description: r.description,
+      status: r.status,
+      createdAt: r.created_at,
+      targetAuthorName: author?.name ?? null,
+      targetAuthorAvatar: author?.avatar ?? null,
+      targetPreview: preview,
+    }
+  })
 }
 
 export async function setReportStatus(

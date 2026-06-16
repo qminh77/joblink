@@ -82,7 +82,7 @@ export async function listLookups(
   if (kind !== "skills") {
     select += ", code, name_en, sort_order, is_active"
   }
-  if (kind === "job_types" || kind === "work_modes") {
+  if (kind === "job_types" || kind === "work_modes" || kind === "report_types") {
     select += ", is_system"
   }
   if (kind === "wards") {

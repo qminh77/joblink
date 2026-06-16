@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useState } from "react"
 import {
   BadgeCheck,
   Briefcase,
   Building2,
+  Flag,
   Globe,
   Info,
   LayoutDashboard,
@@ -26,6 +28,8 @@ import { formatRelativeTime } from "@/lib/utils/format"
 import { useTranslations } from "next-intl"
 
 import type { CompanyPublicOverview, CompanyActiveJobPreview } from "../types"
+
+import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import { CompanyFollowButton } from "./company-follow-button"
 import { ProfilePostsSection } from "@/features/profile/components/profile-posts-section"
@@ -51,6 +55,7 @@ function formatSalary(job: CompanyActiveJobPreview): string | null {
 
 export function CompanyPublicPage({ overview, postsPage }: Props) {
   const t = useTranslations("companies.public")
+  const [showReport, setShowReport] = useState(false)
   const { company, jobsCount, followerCount, isFollowing, isOwner, jobs } =
     overview
 
@@ -158,11 +163,22 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                     </Link>
                   </>
                 ) : (
-                  <CompanyFollowButton
-                    companyUserId={company.userId}
-                    initialIsFollowing={isFollowing}
-                    initialFollowerCount={followerCount}
-                  />
+                  <>
+                    <CompanyFollowButton
+                      companyUserId={company.userId}
+                      initialIsFollowing={isFollowing}
+                      initialFollowerCount={followerCount}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowReport(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive px-3 h-8 rounded-lg transition-colors"
+                      title={t("report")}
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{t("report")}</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -336,6 +352,13 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
           ) : null}
         </div>
       </motion.div>
+
+      <ReportDialog
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        targetType="company"
+        targetId={company.userId}
+      />
     </motion.div>
   )
 }

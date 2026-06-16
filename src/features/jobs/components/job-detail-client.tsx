@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   DollarSign,
+  Flag,
   MapPin,
   Pencil,
   Users,
@@ -32,6 +33,8 @@ import {
 import { formatLocation, formatSalary } from "../lib/format"
 import type { JobDetail } from "../types"
 
+import { ReportDialog } from "@/features/reports/components/report-dialog"
+
 import { ApplyDialog } from "./apply-dialog"
 
 type Props = {
@@ -45,6 +48,7 @@ export function JobDetailClient({ detail }: Props) {
 
   const [saved, setSaved] = useState(detail.viewer.viewerSaved)
   const [showApply, setShowApply] = useState(false)
+  const [showReport, setShowReport] = useState(false)
 
   const toggle = useToggleSavedJob({
     onRollback: () => setSaved((v) => !v),
@@ -199,21 +203,32 @@ export function JobDetailClient({ detail }: Props) {
                       </Badge>
                     )}
                     {!viewer.isOwner ? (
-                      <button
-                        type="button"
-                        onClick={handleToggleSave}
-                        disabled={toggle.isPending}
-                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 h-8 rounded-lg transition-colors ${
-                          saved
-                            ? "text-primary hover:bg-primary/10"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                        }`}
-                      >
-                        <Bookmark
-                          className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
-                        />
-                        {saved ? t("saved") : t("save")}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleToggleSave}
+                          disabled={toggle.isPending}
+                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 h-8 rounded-lg transition-colors ${
+                            saved
+                              ? "text-primary hover:bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          }`}
+                        >
+                          <Bookmark
+                            className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
+                          />
+                          {saved ? t("saved") : t("save")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowReport(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive px-3 h-8 rounded-lg transition-colors"
+                          title={t("report")}
+                        >
+                          <Flag className="w-4 h-4" />
+                          <span className="hidden sm:inline">{t("report")}</span>
+                        </button>
+                      </>
                     ) : null}
                   </div>
                 </div>
@@ -338,6 +353,13 @@ export function JobDetailClient({ detail }: Props) {
         companyName={job.companyName}
         open={showApply}
         onClose={() => setShowApply(false)}
+      />
+
+      <ReportDialog
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        targetType="job"
+        targetId={job.id}
       />
     </motion.div>
   )
