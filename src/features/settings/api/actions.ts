@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { sendEmailChangeVerification } from "@/features/auth/api/auth-mailer"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
@@ -151,11 +152,20 @@ export async function updateAccountAction(
 
     const newEmail = data.email.trim().toLowerCase()
     if (newEmail !== current.appUser.email.toLowerCase()) {
-      const { error } = await supabase.auth.updateUser({ email: newEmail })
-      if (error) {
-        console.error("[updateAccountAction:email]", error)
+      // Gửi link xác nhận tới email MỚI qua SMTP của Admin (không dùng
+      // supabase.auth.updateUser tự gửi). public.users.email đồng bộ qua
+      // trigger 037 sau khi người dùng xác nhận.
+      const { cookies } = await import("next/headers")
+      const cookieStore = await cookies()
+      const localeCookie = cookieStore.get("NEXT_LOCALE")?.value
+      const sent = await sendEmailChangeVerification(
+        current.appUser.email,
+        newEmail,
+        localeCookie === "en" ? "en" : "vi",
+      )
+      if (!sent.ok) {
         throw ActionError.key(
-          error.code === "email_exists" ? "emailInUse" : "emailUpdateFailed",
+          sent.code === "email_exists" ? "emailInUse" : "emailUpdateFailed",
         )
       }
       emailChangeRequested = true

@@ -172,3 +172,67 @@ export async function createUserAndSendVerification(input: {
   if (!res.ok) console.error("[auth-mailer] sendMail verify", res.error)
   return { ok: true, authId: data.user.id }
 }
+
+function emailChangeStrings(
+  site: string,
+  locale: AuthMailLocale,
+): RecoveryStrings {
+  if (locale === "en") {
+    return {
+      subject: `Confirm your new ${site} email`,
+      heading: "Confirm your new email",
+      intro: `A request was made to change the email on your ${site} account to this address. Click below to confirm the change.`,
+      button: "Confirm new email",
+      hint: "If you didn't request this, you can ignore this email and your address stays unchanged.",
+    }
+  }
+  return {
+    subject: `Xác nhận email mới cho ${site}`,
+    heading: "Xác nhận email mới",
+    intro: `Có yêu cầu đổi email tài khoản ${site} sang địa chỉ này. Nhấn nút bên dưới để xác nhận thay đổi.`,
+    button: "Xác nhận email mới",
+    hint: "Nếu bạn không yêu cầu, hãy bỏ qua email này và địa chỉ sẽ giữ nguyên.",
+  }
+}
+
+// Đổi email (UC-66): tạo link xác nhận gửi tới email MỚI qua SMTP (không dùng
+// updateUser của Supabase). public.users.email đồng bộ bởi trigger 037 sau khi
+// người dùng xác nhận. (Giả định "Secure email change" của Supabase tắt — chỉ
+// cần xác nhận một phía email mới.)
+export async function sendEmailChangeVerification(
+  currentEmail: string,
+  newEmail: string,
+  locale: AuthMailLocale = "vi",
+): Promise<{ ok: true } | { ok: false; code: string }> {
+  const admin = createAdminClient()
+  const redirectTo = `${siteUrl()}/auth/callback?next=/settings`
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "email_change_new",
+    email: currentEmail,
+    newEmail,
+    options: { redirectTo },
+  })
+  const link = data?.properties?.action_link
+  if (error || !link) {
+    if (error) console.error("[auth-mailer] generateLink email_change", error.message)
+    return { ok: false, code: error?.code || "email_change_failed" }
+  }
+
+  const site = await siteName()
+  const s = emailChangeStrings(site, locale)
+  const { html, text } = renderEmail({
+    site,
+    heading: s.heading,
+    intro: s.intro,
+    buttonLabel: s.button,
+    link,
+    hint: s.hint,
+  })
+  const res = await sendMail({ to: newEmail, subject: s.subject, html, text })
+  if (!res.ok) {
+    console.error("[auth-mailer] sendMail email_change", res.error)
+    return { ok: false, code: "send_failed" }
+  }
+  return { ok: true }
+}
