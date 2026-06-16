@@ -21,7 +21,12 @@ export const SETTING_GROUPS: Record<string, string[]> = {
     "smtp_from_name",
   ],
   recaptcha: ["recaptcha_enabled", "recaptcha_site_key", "recaptcha_secret"],
-  security: ["login_rate_limit", "upload_max_mb", "require_2fa_admin"],
+  security: [
+    "login_rate_limit",
+    "upload_max_mb",
+    "require_2fa_admin",
+    "google_auth_enabled",
+  ],
   contact: [
     "contact_address",
     "contact_email",

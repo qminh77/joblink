@@ -59,6 +59,7 @@ const BOOLEAN_KEYS = new Set([
   "recaptcha_enabled",
   "require_2fa_admin",
   "maintenance_mode",
+  "google_auth_enabled",
 ])
 const NUMBER_KEYS = new Set([
   "smtp_port",

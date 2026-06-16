@@ -5,6 +5,8 @@ import { getTranslations } from "next-intl/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 
+import { sendPasswordResetEmail } from "./auth-mailer"
+
 import {
   COMPANY_SIZE_OPTIONS,
   createCompanyRegisterSchema,
@@ -127,5 +129,18 @@ export async function registerCompanyAction(
 
   await supabase.auth.signOut()
 
+  return { ok: true }
+}
+
+// Quên mật khẩu: gửi email đặt lại qua SMTP của Admin (không dùng email Supabase).
+// LUÔN trả { ok: true } dù email tồn tại hay không để tránh dò email (enumeration).
+export async function requestPasswordResetAction(input: {
+  email: string
+  locale?: string
+}): Promise<{ ok: true }> {
+  const email = (input.email ?? "").trim().toLowerCase()
+  if (email && /.+@.+\..+/.test(email)) {
+    await sendPasswordResetEmail(email, input.locale === "en" ? "en" : "vi")
+  }
   return { ok: true }
 }

@@ -29,7 +29,10 @@ export default async function LoginPage() {
         </p>
       }
     >
-      <LoginForm recaptcha={settings.recaptcha} />
+      <LoginForm
+        recaptcha={settings.recaptcha}
+        googleEnabled={settings.googleAuthEnabled}
+      />
     </AuthLayout>
   )
 }

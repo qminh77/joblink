@@ -2,11 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client"
 
-import type {
-  ForgotPasswordInput,
-  LoginInput,
-  MemberRegisterInput,
-} from "../schemas"
+import type { LoginInput, MemberRegisterInput } from "../schemas"
 
 export async function signInWithPasswordClient(input: LoginInput) {
   const supabase = createClient()
@@ -38,23 +34,6 @@ export async function signUpMemberClient(input: MemberRegisterInput) {
 
   if (error) throw error
   return data
-}
-
-export async function sendPasswordResetEmailClient(
-  input: ForgotPasswordInput,
-) {
-  const supabase = createClient()
-
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/auth/callback?next=/settings`
-      : undefined
-
-  const { error } = await supabase.auth.resetPasswordForEmail(input.email, {
-    redirectTo,
-  })
-
-  if (error) throw error
 }
 
 export async function signOutClient() {

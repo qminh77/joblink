@@ -1635,7 +1635,8 @@
         "contact_content": "Nội dung liên hệ",
         "contact_map_url": "Liên kết bản đồ",
         "maintenance_mode": "Bật chế độ bảo trì",
-        "maintenance_message": "Thông báo bảo trì"
+        "maintenance_message": "Thông báo bảo trì",
+        "google_auth_enabled": "Cho phép đăng nhập Google"
       }
     },
     "lookups": {

@@ -35,8 +35,10 @@ import { PasswordInput } from "./password-input"
 
 export function LoginForm({
   recaptcha,
+  googleEnabled = false,
 }: {
   recaptcha?: RecaptchaConfig
+  googleEnabled?: boolean
 } = {}) {
   const t = useTranslations("auth.login")
   const tv = useTranslations("auth.validation")
@@ -230,15 +232,19 @@ export function LoginForm({
           </p>
         ) : null}
 
-        <div className="flex items-center gap-3 pt-1">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">
-            {t("orContinueWith")}
-          </span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        {googleEnabled ? (
+          <>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">
+                {t("orContinueWith")}
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
 
-        <GoogleSignInButton />
+            <GoogleSignInButton />
+          </>
+        ) : null}
       </form>
     </Form>
   )
