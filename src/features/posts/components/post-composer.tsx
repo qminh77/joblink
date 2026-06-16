@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Minus, Plus, Users, X } from "lucide-react"
+import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Minus, Plus, Users, Video, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,8 +23,12 @@ import {
   MAX_POST_IMAGES,
   POST_IMAGE_ALLOWED_TYPES,
   POST_IMAGE_MAX_BYTES,
+  POST_VIDEO_ALLOWED_TYPES,
+  POST_VIDEO_MAX_BYTES,
   PostImageError,
+  uploadPostVideo,
   validatePostImage,
+  validatePostVideo,
   type PostImageErrorCode,
 } from "../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../hooks"
@@ -152,6 +156,7 @@ export function PostComposer({
 
   const isEdit = post != null
   const isSharedPost = post != null && readSharedOriginal(post.media) != null
+  const isVideoPost = post != null && post.postType === "video"
 
   const [content, setContent] = useState(post?.content ?? "")
   const [visibility, setVisibility] = useState<Visibility>(
@@ -163,9 +168,15 @@ export function PostComposer({
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""])
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
+  const [video, setVideo] = useState<{ file: File; previewUrl: string } | null>(
+    null,
+  )
   const fileRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
 
   // Reset state khi mở/đổi target — tránh giữ lại nội dung của lần trước.
+  // Đây là reset state cục bộ theo prop khi mở modal (hợp lệ cho effect).
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setContent(post?.content ?? "")
@@ -190,6 +201,10 @@ export function PostComposer({
         setKeptImages([])
       }
       setImageError(null)
+      setVideo((prev) => {
+        if (prev) URL.revokeObjectURL(prev.previewUrl)
+        return null
+      })
 
       if (post?.postType === "poll" && !readSharedOriginal(post.media)) {
         const pollData = readPollData(post.media)
@@ -203,6 +218,7 @@ export function PostComposer({
       }
     }
   }, [open, post])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const hasExistingPoll =
     isEdit && post?.postType === "poll" && !isSharedPost
@@ -221,6 +237,43 @@ export function PostComposer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function videoErrorMessage(code: PostImageErrorCode): string {
+    if (code === "tooLarge") {
+      const mb = (POST_VIDEO_MAX_BYTES / 1024 / 1024).toFixed(0)
+      return tPosts("errors.videoTooLarge", { max: mb })
+    }
+    if (code === "invalidType") {
+      const types = POST_VIDEO_ALLOWED_TYPES.map((ty) =>
+        ty.replace("video/", ""),
+      ).join(", ")
+      return tPosts("errors.videoInvalidType", { types })
+    }
+    if (code === "unauthorized") return tPosts("errors.imageUnauthorized")
+    return tPosts("errors.uploadFailed")
+  }
+
+  function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (videoRef.current) videoRef.current.value = ""
+    if (!file) return
+    const code = validatePostVideo(file)
+    if (code) {
+      toast.error(videoErrorMessage(code))
+      return
+    }
+    setVideo((prev) => {
+      if (prev) URL.revokeObjectURL(prev.previewUrl)
+      return { file, previewUrl: URL.createObjectURL(file) }
+    })
+  }
+
+  function removeVideo() {
+    setVideo((prev) => {
+      if (prev) URL.revokeObjectURL(prev.previewUrl)
+      return null
+    })
+  }
 
   function imageErrorMessage(code: PostImageErrorCode): string {
     if (code === "tooLarge") {
@@ -318,7 +371,7 @@ export function PostComposer({
     const hasNewImages = images.length > 0
     const hasAnyImage = totalImages > 0
 
-    if ((!text && !hasAnyImage && !hasValidPoll) || isPending) return
+    if ((!text && !hasAnyImage && !hasValidPoll && !video) || isPending) return
 
     if (hasValidPoll && hasAnyImage) {
       toast.error(tPosts("errors.pollAndMedia"))
@@ -375,7 +428,8 @@ export function PostComposer({
               optionText: opt,
             })),
           })
-        } else if (isSharedPost) {
+        } else if (isSharedPost || isVideoPost) {
+          // Bài share/video chỉ sửa caption + visibility, KHÔNG đụng media.
           const unchanged =
             text === post.content && visibility === post.visibility
           if (unchanged) {
@@ -422,6 +476,19 @@ export function PostComposer({
           visibility,
           options: activePollOptions,
         })
+      } else if (video) {
+        let videoUrl: string
+        try {
+          videoUrl = await uploadPostVideo(video.file, user.id)
+        } catch (err) {
+          const code: PostImageErrorCode =
+            err instanceof PostImageError ? err.code : "uploadFailed"
+          const msg = videoErrorMessage(code)
+          setImageError(msg)
+          toast.error(msg)
+          return
+        }
+        await createPost.mutateAsync({ content: text, visibility, videoUrl })
       } else {
         await createPost.mutateAsync({
           content: text,
@@ -433,6 +500,7 @@ export function PostComposer({
       setContent("")
       setVisibility("public")
       removeAllImages()
+      removeVideo()
       onClose()
     } finally {
       setUploading(false)
@@ -609,6 +677,24 @@ export function PostComposer({
                   onDismiss={() => setImageError(null)}
                 />
               ) : null}
+
+              {video ? (
+                <div className="mt-3 relative rounded-xl overflow-hidden bg-black">
+                  <video
+                    src={video.previewUrl}
+                    controls
+                    className="w-full max-h-80"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeVideo}
+                    aria-label={tPosts("removeVideo")}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : null}
             </div>
             <div className="p-4 border-t border-border/40 flex items-center justify-between">
               <div className="flex gap-2">
@@ -628,7 +714,10 @@ export function PostComposer({
                     fileRef.current?.click()
                   }}
                   disabled={
-                    isSharedPost || totalImages >= MAX_POST_IMAGES || pollMode
+                    isSharedPost ||
+                    totalImages >= MAX_POST_IMAGES ||
+                    pollMode ||
+                    video != null
                   }
                   className={`p-2 rounded-xl transition-colors ${
                     totalImages > 0
@@ -648,7 +737,12 @@ export function PostComposer({
                       removeAllImages()
                     }
                   }}
-                  disabled={hasExistingPoll || totalImages > 0 || isSharedPost}
+                  disabled={
+                    hasExistingPoll ||
+                    totalImages > 0 ||
+                    isSharedPost ||
+                    video != null
+                  }
                   className={`p-2 rounded-xl transition-colors ${
                     pollMode
                       ? "text-orange-500 bg-orange-500/10"
@@ -656,6 +750,29 @@ export function PostComposer({
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <BarChart2 className="w-5 h-5" />
+                </button>
+                <input
+                  ref={videoRef}
+                  type="file"
+                  accept={POST_VIDEO_ALLOWED_TYPES.join(",")}
+                  className="hidden"
+                  onChange={handleVideoSelect}
+                />
+                <button
+                  type="button"
+                  aria-label={tPosts("attachVideo")}
+                  onClick={() => {
+                    setPollMode(false)
+                    videoRef.current?.click()
+                  }}
+                  disabled={isSharedPost || totalImages > 0 || pollMode || isEdit}
+                  className={`p-2 rounded-xl transition-colors ${
+                    video
+                      ? "text-purple-500 bg-purple-500/10"
+                      : "text-purple-500 hover:bg-purple-500/10"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  <Video className="w-5 h-5" />
                 </button>
               </div>
               <Button

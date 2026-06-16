@@ -146,8 +146,12 @@
       "alreadyVoted": "You already voted on this poll",
       "votedOptionRemoveBlocked": "Cannot remove an option that has votes",
       "pollAndMedia": "Cannot add images to a poll post",
-      "unexpected": "Something went wrong, please try again"
-    }
+      "unexpected": "Something went wrong, please try again",
+      "videoTooLarge": "Video must be at most {max}MB",
+      "videoInvalidType": "Unsupported video format ({types})"
+    },
+    "attachVideo": "Attach video",
+    "removeVideo": "Remove video"
   },
   "languageSwitcher": {
     "label": "Language",

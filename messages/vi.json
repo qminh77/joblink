@@ -146,8 +146,12 @@
       "alreadyVoted": "Bạn đã bình chọn trong cuộc thăm dò này",
       "votedOptionRemoveBlocked": "Không thể xoá lựa chọn đã có phiếu bầu",
       "pollAndMedia": "Không thể thêm ảnh vào bài bình chọn",
-      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
-    }
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
+      "videoTooLarge": "Video tối đa {max}MB",
+      "videoInvalidType": "Định dạng video không hỗ trợ ({types})"
+    },
+    "attachVideo": "Đính kèm video",
+    "removeVideo": "Xóa video"
   },
   "languageSwitcher": {
     "label": "Ngôn ngữ",

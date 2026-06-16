@@ -192,6 +192,7 @@ export function useCreatePost() {
       visibility?: "public" | "connections" | "private"
       mediaItems?: { url: string; width?: number; height?: number }[]
       options?: string[]
+      videoUrl?: string
     }) => {
       const result = await createPostAction(input)
       if (!result.ok) throw new Error(result.error)

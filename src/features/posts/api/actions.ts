@@ -47,7 +47,7 @@ import {
 } from "../data/posts.repo"
 import { loadOriginalSnapshot } from "../data/posts.privileged"
 import { authorRefFrom, newFeedComment, newFeedPost } from "../lib/map"
-import { buildPollMedia, readPollData } from "../lib/poll"
+import { buildPollMedia } from "../lib/poll"
 import { buildSharedMedia } from "../lib/media"
 import {
   notifyComment,
@@ -126,6 +126,7 @@ export async function createPostAction(input: {
   visibility?: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
   options?: string[]
+  videoUrl?: string
 }): Promise<ActionResult<FeedPost>> {
   return action("posts.errors", async (t) => {
     const current = await requireCurrentUser()
@@ -186,6 +187,38 @@ export async function createPostAction(input: {
           voteCount: o.vote_count,
           viewerVoted: false,
         })),
+      })
+    }
+
+    // UC-34: bài viết video — 1 video, loại trừ với ảnh/poll. videoUrl đến từ
+    // storage-client (URL công khai của chính hệ thống).
+    const videoUrl =
+      typeof input.videoUrl === "string" && input.videoUrl.startsWith("http")
+        ? input.videoUrl
+        : null
+    if (videoUrl) {
+      const vData = parse(createPostInputSchema(t), { ...input, mediaItems: [] })
+      const videoMedia = { type: "video", url: videoUrl } as unknown as Json
+      const vrow = unwrap(
+        await insertPost(supabase, {
+          authorId: current.appUser.id,
+          content: vData.content,
+          postType: "video",
+          media: videoMedia,
+          visibility: vData.visibility,
+        }),
+        "createFailed",
+      )
+      revalidatePath("/home")
+      return newFeedPost({
+        id: vrow.id,
+        authorId: vrow.author_id,
+        content: vrow.content,
+        postType: vrow.post_type,
+        media: vrow.media,
+        visibility: vrow.visibility,
+        createdAt: vrow.created_at,
+        author: authorRefFrom(current),
       })
     }
 

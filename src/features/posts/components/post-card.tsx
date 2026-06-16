@@ -54,7 +54,7 @@ import { PostComposer } from "./post-composer"
 import { PostMediaView } from "./post-media-view"
 import { PollView } from "./poll-view"
 import { SharedPostQuote } from "./shared-post-quote"
-import { readSharedOriginal } from "../lib/media"
+import { readSharedOriginal, readVideoUrl } from "../lib/media"
 
 type Props = {
   post: FeedPost
@@ -95,6 +95,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
   const authorInitials = getInitials(post.author.displayName, "JL")
   const createdRel = useRelativeTime(post.createdAt)
   const sharedOriginal = readSharedOriginal(post.media)
+  const videoUrl = readVideoUrl(post.media)
   const isSharedPost = sharedOriginal != null
 
   return (
@@ -241,6 +242,10 @@ export function PostCard({ post, onShare, onSend }: Props) {
               media={post.media}
               onOpenLightbox={(items, index) => setLightbox({ items, index })}
             />
+          ) : videoUrl ? (
+            <div className="mt-4 rounded-xl overflow-hidden bg-black">
+              <video src={videoUrl} controls className="w-full max-h-[32rem]" />
+            </div>
           ) : (
             <PostMediaView
               media={post.media}

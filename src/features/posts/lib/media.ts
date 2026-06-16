@@ -17,7 +17,9 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
   if (!value || typeof value !== "object" || Array.isArray(value)) return []
   const obj = value as Record<string, unknown>
 
-  if (obj.type === "shared" || obj.type === "poll") return []
+  if (obj.type === "shared" || obj.type === "poll" || obj.type === "video") {
+    return []
+  }
 
   if (Array.isArray(obj.items)) {
     const out: MediaItem[] = []
@@ -30,6 +32,14 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
 
   const fromLegacy = toMediaItem(obj)
   return fromLegacy ? [fromLegacy] : []
+}
+
+// UC-34: media của bài video có dạng { type: "video", url }.
+export function readVideoUrl(value: FeedPost["media"]): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  const obj = value as Record<string, unknown>
+  if (obj.type !== "video") return null
+  return typeof obj.url === "string" ? obj.url : null
 }
 
 export type SharedOriginal = {

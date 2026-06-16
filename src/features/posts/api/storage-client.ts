@@ -175,6 +175,50 @@ export async function uploadPostImage(
   return { url: data.publicUrl, width: prepared.width, height: prepared.height }
 }
 
+// ── Video (UC-34) ────────────────────────────────────────────────────────────
+// Lưu ý: bucket "uploads" phải cho phép mime video và đủ giới hạn dung lượng.
+export const POST_VIDEO_MAX_BYTES = 50 * 1024 * 1024 // 50 MB
+export const POST_VIDEO_ALLOWED_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+] as const
+
+export function validatePostVideo(file: File): PostImageErrorCode | null {
+  if (!(POST_VIDEO_ALLOWED_TYPES as readonly string[]).includes(file.type)) {
+    return "invalidType"
+  }
+  if (file.size > POST_VIDEO_MAX_BYTES) return "tooLarge"
+  return null
+}
+
+// Upload video trực tiếp từ browser (không resize). Cùng cấu trúc path với ảnh
+// để khớp policy RLS storage: uploads/post-media/<YYYY>/<MM>/<userId>/...
+export async function uploadPostVideo(
+  file: File,
+  userId: number,
+): Promise<string> {
+  const localCode = validatePostVideo(file)
+  if (localCode) throw new PostImageError(localCode)
+
+  const supabase = createClient()
+  const ext = pickExt(file)
+  const now = new Date()
+  const year = now.getUTCFullYear().toString()
+  const month = (now.getUTCMonth() + 1).toString().padStart(2, "0")
+  const path = `${POST_MEDIA_PREFIX}/${year}/${month}/${userId}/${crypto.randomUUID()}.${ext}`
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: file.type || `video/${ext}`,
+    cacheControl: CACHE_CONTROL_IMMUTABLE,
+    upsert: false,
+  })
+  if (error) throw new PostImageError(mapSupabaseError(error.message), error.message)
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+
 // Upload nhiều file song song, nhưng giới hạn concurrency để tránh
 // đánh sập băng thông trên mạng yếu. Throw ngay lỗi đầu tiên — caller
 // tự dọn các file đã upload thành công nếu muốn rollback.
