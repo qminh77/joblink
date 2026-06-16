@@ -476,7 +476,8 @@
       "notifications": "Notifications",
       "language": "Language",
       "company": "Company profile",
-      "blocked": "Blocked"
+      "blocked": "Blocked",
+      "appeals": "Appeals"
     },
     "account": {
       "title": "Account information",
@@ -571,6 +572,29 @@
       "loading": "Loading...",
       "empty": "You haven't blocked anyone yet.",
       "unblock": "Unblock"
+    },
+    "appeals": {
+      "title": "Moderation appeals",
+      "subtitle": "Review moderation actions applied to your account and appeal if you believe there's been a mistake.",
+      "loading": "Loading...",
+      "empty": "Your account has no moderation actions.",
+      "appealAction": "Appeal",
+      "dialogTitle": "Submit an appeal",
+      "dialogHint": "Explain why you think this decision should be reconsidered. An administrator will respond.",
+      "reasonPlaceholder": "Write your appeal...",
+      "cancel": "Cancel",
+      "submit": "Submit appeal",
+      "submitting": "Submitting...",
+      "actions": {
+        "warn": "Warning",
+        "suspend": "Suspension",
+        "ban": "Ban"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      }
     }
   },
   "companies": {
@@ -1099,7 +1123,16 @@
       "descriptionMax": "Description up to 500 characters",
       "invalidData": "Invalid data",
       "createFailed": "Could not submit report",
-      "unexpected": "Something went wrong, please try again"
+      "unexpected": "Something went wrong, please try again",
+      "invalidAction": "Invalid moderation action",
+      "appealReasonRequired": "Please enter a reason for your appeal",
+      "appealReasonMax": "Reason must be at most 500 characters",
+      "actionNotFound": "No matching moderation action found",
+      "alreadyAppealed": "You've already appealed this action",
+      "appealFailed": "Couldn't submit appeal, please try again"
+    },
+    "appeal": {
+      "submitted": "Appeal submitted"
     }
   },
   "messages": {

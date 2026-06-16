@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Ban, Bell, Building2, Globe, Shield, User } from "lucide-react"
+import { Ban, Bell, Building2, Globe, Shield, ShieldAlert, User } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,6 +15,7 @@ import type {
 import type { ProvinceRow } from "@/types/database"
 
 import { AccountInfoCard } from "./account-info-card"
+import { AppealsCard } from "./appeals-card"
 import { BlockedAccountsCard } from "./blocked-accounts-card"
 import { NotificationPreferencesCard } from "./notification-preferences-card"
 import { OpenToHireCard } from "./open-to-hire-card"
@@ -70,6 +71,12 @@ export function SettingsTabs({
           <Ban className="w-4 h-4 mr-1.5" /> {t("tabs.blocked")}
         </TabsTrigger>
         <TabsTrigger
+          value="appeals"
+          className="rounded-lg text-sm px-4 whitespace-nowrap"
+        >
+          <ShieldAlert className="w-4 h-4 mr-1.5" /> {t("tabs.appeals")}
+        </TabsTrigger>
+        <TabsTrigger
           value="notifications"
           className="rounded-lg text-sm px-4 whitespace-nowrap"
         >
@@ -119,6 +126,10 @@ export function SettingsTabs({
 
       <TabsContent value="blocked" className="mt-6">
         <BlockedAccountsCard />
+      </TabsContent>
+
+      <TabsContent value="appeals" className="mt-6">
+        <AppealsCard />
       </TabsContent>
 
       <TabsContent value="notifications" className="mt-6">

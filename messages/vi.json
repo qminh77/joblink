@@ -476,7 +476,8 @@
       "notifications": "Thông báo",
       "language": "Ngôn ngữ",
       "company": "Hồ sơ công ty",
-      "blocked": "Đã chặn"
+      "blocked": "Đã chặn",
+      "appeals": "Khiếu nại"
     },
     "account": {
       "title": "Thông tin tài khoản",
@@ -571,6 +572,29 @@
       "loading": "Đang tải...",
       "empty": "Bạn chưa chặn tài khoản nào.",
       "unblock": "Bỏ chặn"
+    },
+    "appeals": {
+      "title": "Khiếu nại kiểm duyệt",
+      "subtitle": "Xem các hành động kiểm duyệt áp dụng cho tài khoản của bạn và gửi khiếu nại nếu cho rằng có nhầm lẫn.",
+      "loading": "Đang tải...",
+      "empty": "Tài khoản của bạn không có hành động kiểm duyệt nào.",
+      "appealAction": "Gửi khiếu nại",
+      "dialogTitle": "Gửi khiếu nại",
+      "dialogHint": "Mô tả lý do bạn cho rằng quyết định này cần được xem xét lại. Quản trị viên sẽ phản hồi.",
+      "reasonPlaceholder": "Nhập nội dung khiếu nại của bạn...",
+      "cancel": "Hủy",
+      "submit": "Gửi khiếu nại",
+      "submitting": "Đang gửi...",
+      "actions": {
+        "warn": "Cảnh báo",
+        "suspend": "Tạm khóa",
+        "ban": "Cấm vĩnh viễn"
+      },
+      "statuses": {
+        "pending": "Đang chờ xử lý",
+        "accepted": "Đã chấp nhận",
+        "rejected": "Đã từ chối"
+      }
     }
   },
   "companies": {
@@ -1099,7 +1123,16 @@
       "descriptionMax": "Mô tả tối đa 500 ký tự",
       "invalidData": "Dữ liệu không hợp lệ",
       "createFailed": "Không thể gửi báo cáo",
-      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
+      "invalidAction": "Hành động kiểm duyệt không hợp lệ",
+      "appealReasonRequired": "Vui lòng nhập lý do khiếu nại",
+      "appealReasonMax": "Lý do tối đa 500 ký tự",
+      "actionNotFound": "Không tìm thấy hành động kiểm duyệt phù hợp",
+      "alreadyAppealed": "Bạn đã gửi khiếu nại cho hành động này rồi",
+      "appealFailed": "Không thể gửi khiếu nại, vui lòng thử lại"
+    },
+    "appeal": {
+      "submitted": "Đã gửi khiếu nại"
     }
   },
   "messages": {
