@@ -4,6 +4,8 @@ import type { SessionUserSummary } from "@/features/auth/types"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
 import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
 import { MessagingDock } from "@/features/messaging/components/messaging-dock"
+import { loadMaintenanceState } from "@/features/system-settings/api/public-settings"
+import { MaintenanceScreen } from "@/features/system-settings/components/maintenance-screen"
 import { Navbar } from "@/components/navbar"
 
 export default async function MainLayout({
@@ -12,6 +14,15 @@ export default async function MainLayout({
   children: React.ReactNode
 }) {
   const user = await requireCurrentUser()
+
+  // UC-96: chế độ bảo trì tạm ngừng truy cập của người dùng thường; quản trị
+  // viên vẫn vào được (để tắt bảo trì). Chỉ đọc setting cho non-admin.
+  if (user.appUser.role !== "admin") {
+    const maintenance = await loadMaintenanceState()
+    if (maintenance.enabled) {
+      return <MaintenanceScreen message={maintenance.message} />
+    }
+  }
 
   const sessionUser: SessionUserSummary = {
     id: user.appUser.id,

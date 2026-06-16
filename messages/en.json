@@ -171,6 +171,15 @@
     "helpHint": "Contact, FAQ"
   },
   "auth": {
+    "hero": {
+      "tagline": "Professional recruitment network",
+      "headline": "Connect potential, build careers.",
+      "description": "Join the leading professional recruitment network. Discover your dream job and connect with trusted employers today.",
+      "companiesValue": "10K+",
+      "companiesLabel": "Companies",
+      "candidatesValue": "2M+",
+      "candidatesLabel": "Candidates"
+    },
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to JobLink to continue",
@@ -1527,7 +1536,9 @@
         "regional": "Regional",
         "smtp": "SMTP email",
         "recaptcha": "reCAPTCHA",
-        "security": "Security"
+        "security": "Security",
+        "contact": "Contact",
+        "maintenance": "Maintenance"
       },
       "fields": {
         "site_name": "Site name",
@@ -1550,7 +1561,14 @@
         "recaptcha_secret": "Secret",
         "login_rate_limit": "Login rate limit / min",
         "upload_max_mb": "Max upload size (MB)",
-        "require_2fa_admin": "Require 2FA for admin"
+        "require_2fa_admin": "Require 2FA for admin",
+        "contact_address": "Address",
+        "contact_email": "Contact email",
+        "contact_phone": "Phone number",
+        "contact_content": "Contact content",
+        "contact_map_url": "Map link",
+        "maintenance_mode": "Enable maintenance mode",
+        "maintenance_message": "Maintenance message"
       }
     },
     "lookups": {
@@ -1673,5 +1691,11 @@
       "openInTab": "Open in new tab",
       "mobileHint": "Mobile browsers can't display PDFs here. Tap below to open it in a new tab."
     }
+  },
+  "maintenance": {
+    "title": "Under maintenance",
+    "defaultMessage": "The system is under maintenance. Please check back in a few minutes.",
+    "logout": "Log out",
+    "loggingOut": "Logging out..."
   }
 }

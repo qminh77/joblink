@@ -7,11 +7,13 @@ import {
   Lock,
   Mail,
   MapPin,
+  Phone,
   PlugZap,
   Save,
   Send,
   Shield,
   Sparkles,
+  Wrench,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -39,6 +41,8 @@ const GROUP_ORDER = [
   "smtp",
   "recaptcha",
   "security",
+  "contact",
+  "maintenance",
 ] as const
 
 const GROUP_ICONS = {
@@ -47,11 +51,14 @@ const GROUP_ICONS = {
   smtp: Mail,
   recaptcha: Lock,
   security: Shield,
+  contact: Phone,
+  maintenance: Wrench,
 } as const
 
 const BOOLEAN_KEYS = new Set([
   "recaptcha_enabled",
   "require_2fa_admin",
+  "maintenance_mode",
 ])
 const NUMBER_KEYS = new Set([
   "smtp_port",
@@ -64,7 +71,12 @@ const SECRET_KEYS = new Set([
   "smtp_username",
   "recaptcha_secret",
 ])
-const TEXTAREA_KEYS = new Set(["site_description"])
+const TEXTAREA_KEYS = new Set([
+  "site_description",
+  "contact_address",
+  "contact_content",
+  "maintenance_message",
+])
 
 export function SettingsPanel({
   initialValues,

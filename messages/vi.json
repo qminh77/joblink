@@ -171,6 +171,15 @@
     "helpHint": "Liên hệ, câu hỏi thường gặp"
   },
   "auth": {
+    "hero": {
+      "tagline": "Mạng lưới tuyển dụng chuyên nghiệp",
+      "headline": "Kết nối tiềm năng, kiến tạo sự nghiệp.",
+      "description": "Gia nhập mạng lưới tuyển dụng hàng đầu. Khám phá cơ hội việc làm mơ ước và kết nối với các nhà tuyển dụng uy tín ngay hôm nay.",
+      "companiesValue": "10K+",
+      "companiesLabel": "Doanh nghiệp",
+      "candidatesValue": "2M+",
+      "candidatesLabel": "Ứng viên"
+    },
     "login": {
       "title": "Chào mừng trở lại",
       "subtitle": "Đăng nhập vào JobLink để tiếp tục",
@@ -1527,7 +1536,9 @@
         "regional": "Khu vực",
         "smtp": "Email SMTP",
         "recaptcha": "reCAPTCHA",
-        "security": "Bảo mật"
+        "security": "Bảo mật",
+        "contact": "Liên hệ",
+        "maintenance": "Bảo trì"
       },
       "fields": {
         "site_name": "Tên hệ thống",
@@ -1550,7 +1561,14 @@
         "recaptcha_secret": "Secret",
         "login_rate_limit": "Giới hạn đăng nhập / phút",
         "upload_max_mb": "Dung lượng upload tối đa (MB)",
-        "require_2fa_admin": "Yêu cầu 2FA cho admin"
+        "require_2fa_admin": "Yêu cầu 2FA cho admin",
+        "contact_address": "Địa chỉ",
+        "contact_email": "Email liên hệ",
+        "contact_phone": "Số điện thoại",
+        "contact_content": "Nội dung liên hệ",
+        "contact_map_url": "Liên kết bản đồ",
+        "maintenance_mode": "Bật chế độ bảo trì",
+        "maintenance_message": "Thông báo bảo trì"
       }
     },
     "lookups": {
@@ -1673,5 +1691,11 @@
       "openInTab": "Mở tab mới",
       "mobileHint": "Trình duyệt di động không xem được PDF tại đây. Nhấn nút bên dưới để mở trong tab mới."
     }
+  },
+  "maintenance": {
+    "title": "Đang bảo trì",
+    "defaultMessage": "Hệ thống đang được bảo trì. Vui lòng quay lại sau ít phút.",
+    "logout": "Đăng xuất",
+    "loggingOut": "Đang đăng xuất..."
   }
 }

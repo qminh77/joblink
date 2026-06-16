@@ -22,6 +22,14 @@ export const SETTING_GROUPS: Record<string, string[]> = {
   ],
   recaptcha: ["recaptcha_enabled", "recaptcha_site_key", "recaptcha_secret"],
   security: ["login_rate_limit", "upload_max_mb", "require_2fa_admin"],
+  contact: [
+    "contact_address",
+    "contact_email",
+    "contact_phone",
+    "contact_content",
+    "contact_map_url",
+  ],
+  maintenance: ["maintenance_mode", "maintenance_message"],
 }
 
 export const ALLOWED_SETTING_KEYS = new Set<string>(
