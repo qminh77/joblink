@@ -1392,7 +1392,11 @@
         "suspended": "User suspended",
         "banned": "User banned",
         "restored": "User restored"
-      }
+      },
+      "exportCsv": "Export CSV",
+      "exporting": "Exporting...",
+      "exportDone": "Users exported",
+      "exportFailed": "Export failed, please try again"
     },
     "companies": {
       "title": "Company verification",

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
-import { Filter, Search, Shield, ShieldOff, RotateCcw } from "lucide-react"
+import { Download, Filter, Search, Shield, ShieldOff, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { applyUserAction } from "@/features/admin/api/users"
+import { applyUserAction, exportUsersCsvAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
 import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
 import { getInitials } from "@/lib/utils/format"
@@ -70,6 +70,7 @@ export function UsersPanel({
   const format = useFormatter()
 
   const [search, setSearch] = useState(query.search ?? "")
+  const [exporting, setExporting] = useState(false)
   const [pending, startTransition] = useTransition()
   const [confirmTarget, setConfirmTarget] = useState<
     { user: AdminUserRow; action: Action } | null
@@ -89,6 +90,36 @@ export function UsersPanel({
   const onSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     updateParam("q", search.trim() || undefined)
+  }
+
+  // UC-87: xuất danh sách (theo bộ lọc đang áp dụng) ra CSV và tải về.
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const result = await exportUsersCsvAction({
+        search: query.search,
+        role: query.role,
+        status: query.status,
+      })
+      if (!result.ok) {
+        toast.error(t("exportFailed"))
+        return
+      }
+      const blob = new Blob([result.csv], {
+        type: "text/csv;charset=utf-8;",
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = result.filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success(t("exportDone"))
+    } finally {
+      setExporting(false)
+    }
   }
 
   const goToPage = (page: number) => {
@@ -183,6 +214,16 @@ export function UsersPanel({
         <p className="text-sm text-muted-foreground">
           {t("total", { count: initial.total })}
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={exporting}
+          className="rounded-lg gap-1.5 sm:ml-auto"
+        >
+          <Download className="w-4 h-4" />
+          {exporting ? t("exporting") : t("exportCsv")}
+        </Button>
       </div>
 
       <Card className="bg-card border-border/30 rounded-xl overflow-hidden p-0">

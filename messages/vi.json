@@ -1392,7 +1392,11 @@
         "suspended": "Đã tạm khóa người dùng",
         "banned": "Đã cấm người dùng",
         "restored": "Đã khôi phục người dùng"
-      }
+      },
+      "exportCsv": "Xuất CSV",
+      "exporting": "Đang xuất...",
+      "exportDone": "Đã xuất danh sách người dùng",
+      "exportFailed": "Không thể xuất, vui lòng thử lại"
     },
     "companies": {
       "title": "Xác minh doanh nghiệp",

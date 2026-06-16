@@ -109,6 +109,126 @@ export async function listAdminUsers(
   return { items, total: count ?? 0, page, pageSize }
 }
 
+// UC-87: xuất danh sách người dùng ra CSV, tôn trọng bộ lọc hiện tại. Đọc qua
+// service-role (admin), trả về chuỗi CSV để client tải xuống. Không cần migration.
+export type ExportUsersParams = {
+  search?: string
+  role?: string
+  status?: string
+}
+
+function csvCell(value: unknown): string {
+  const s = value == null ? "" : String(value)
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+export async function exportUsersCsvAction(
+  params: ExportUsersParams = {},
+): Promise<{ ok: true; filename: string; csv: string } | { ok: false }> {
+  const current = await requireAdmin()
+  const supabase = createAdminClient()
+
+  let query = supabase
+    .from("users")
+    .select("id, email, role, status, created_at, last_login_at")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(10000)
+
+  if (
+    params.role &&
+    params.role !== "all" &&
+    (USER_ROLES as readonly string[]).includes(params.role)
+  ) {
+    query = query.eq("role", params.role as UserRole)
+  }
+  if (
+    params.status &&
+    params.status !== "all" &&
+    (USER_STATUSES as readonly string[]).includes(params.status)
+  ) {
+    query = query.eq("status", params.status as UserStatus)
+  }
+  if (params.search?.trim()) {
+    query = query.ilike("email", `%${params.search.trim()}%`)
+  }
+
+  const { data, error } = await query
+  if (error) return { ok: false }
+
+  const rows = (data ?? []) as Array<{
+    id: number
+    email: string
+    role: UserRole
+    status: UserStatus
+    created_at: string
+    last_login_at: string | null
+  }>
+
+  const ids = rows.map((r) => r.id)
+  const names: Record<number, string> = {}
+  if (ids.length > 0) {
+    const [{ data: members }, { data: companies }] = await Promise.all([
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name")
+        .in("user_id", ids)
+        .is("deleted_at", null),
+      supabase
+        .from("company_profiles")
+        .select("user_id, name")
+        .in("user_id", ids)
+        .is("deleted_at", null),
+    ])
+    for (const m of members ?? []) names[m.user_id] = m.full_name
+    for (const c of companies ?? []) names[c.user_id] = c.name
+  }
+
+  const header = [
+    "id",
+    "email",
+    "display_name",
+    "role",
+    "status",
+    "created_at",
+    "last_login_at",
+  ]
+  const lines = [header.join(",")]
+  for (const r of rows) {
+    lines.push(
+      [
+        r.id,
+        r.email,
+        names[r.id] ?? "",
+        r.role,
+        r.status,
+        r.created_at,
+        r.last_login_at ?? "",
+      ]
+        .map(csvCell)
+        .join(","),
+    )
+  }
+  // BOM (U+FEFF) để Excel nhận UTF-8 (tên tiếng Việt), CRLF tương thích rộng.
+  const bom = String.fromCharCode(0xfeff)
+  const csv = bom + lines.join("\r\n")
+
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: "users.export_csv",
+    entityType: "users",
+    newData: {
+      count: rows.length,
+      role: params.role ?? "all",
+      status: params.status ?? "all",
+      search: params.search?.trim() || null,
+    },
+  })
+
+  const date = new Date().toISOString().slice(0, 10)
+  return { ok: true, filename: `joblink-users-${date}.csv`, csv }
+}
+
 export type UserActionResult =
   | { ok: true; newStatus: UserStatus }
   | { ok: false; error: string }
