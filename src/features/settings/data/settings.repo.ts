@@ -46,3 +46,16 @@ export function updateUserLocale(
     .update({ locale, updated_at: now() })
     .eq("id", userId)
 }
+
+// UC-66: đổi SĐT — reset phone_verified_at vì SĐT mới chưa được xác minh
+// (xác minh SĐT qua OTP là UC-08, chưa triển khai).
+export function updateUserPhone(
+  supabase: Supabase,
+  userId: number,
+  phone: string | null,
+) {
+  return supabase
+    .from("users")
+    .update({ phone, phone_verified_at: null, updated_at: now() })
+    .eq("id", userId)
+}

@@ -493,7 +493,13 @@
       "email": "Email đăng nhập",
       "role": "Vai trò",
       "status": "Trạng thái",
-      "locale": "Ngôn ngữ"
+      "locale": "Ngôn ngữ",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "Nhập số điện thoại",
+      "emailChangeHint": "Đổi email cần xác minh: chúng tôi gửi liên kết xác nhận tới email mới, email chỉ đổi sau khi bạn xác nhận.",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu...",
+      "emailConfirmSent": "Đã gửi liên kết xác nhận tới email mới. Email sẽ đổi sau khi bạn xác nhận."
     },
     "roles": {
       "member": "Thành viên",
@@ -564,12 +570,18 @@
       "newPasswordMin": "Mật khẩu mới tối thiểu 8 ký tự",
       "passwordMax": "Mật khẩu tối đa 72 ký tự",
       "confirmMismatch": "Xác nhận mật khẩu không khớp",
-      "localeInvalid": "Ngôn ngữ không hợp lệ"
+      "localeInvalid": "Ngôn ngữ không hợp lệ",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "phoneMax": "Số điện thoại tối đa 20 ký tự",
+      "phoneInvalid": "Số điện thoại không hợp lệ"
     },
     "errors": {
       "privacyMemberOnly": "Tùy chọn này chỉ áp dụng cho tài khoản thành viên",
       "openToHireCompanyOnly": "Tùy chọn này chỉ áp dụng cho tài khoản công ty",
-      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
+      "emailInUse": "Email này đã được sử dụng",
+      "emailUpdateFailed": "Không thể cập nhật email, vui lòng thử lại"
     },
     "company": {
       "title": "Hồ sơ công ty",

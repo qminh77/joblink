@@ -493,7 +493,13 @@
       "email": "Login email",
       "role": "Role",
       "status": "Status",
-      "locale": "Language"
+      "locale": "Language",
+      "phone": "Phone number",
+      "phonePlaceholder": "Enter phone number",
+      "emailChangeHint": "Changing email requires verification: we send a confirmation link to the new email, and it changes only after you confirm.",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "emailConfirmSent": "We sent a confirmation link to your new email. It will change after you confirm."
     },
     "roles": {
       "member": "Member",
@@ -564,12 +570,18 @@
       "newPasswordMin": "New password must be at least 8 characters",
       "passwordMax": "Password up to 72 characters",
       "confirmMismatch": "Password confirmation does not match",
-      "localeInvalid": "Invalid language"
+      "localeInvalid": "Invalid language",
+      "emailRequired": "Please enter an email",
+      "emailInvalid": "Invalid email",
+      "phoneMax": "Phone must be at most 20 characters",
+      "phoneInvalid": "Invalid phone number"
     },
     "errors": {
       "privacyMemberOnly": "This option only applies to member accounts",
       "openToHireCompanyOnly": "This option only applies to company accounts",
-      "unexpected": "Something went wrong, please try again"
+      "unexpected": "Something went wrong, please try again",
+      "emailInUse": "This email is already in use",
+      "emailUpdateFailed": "Couldn't update email, please try again"
     },
     "company": {
       "title": "Company profile",

@@ -7,11 +7,13 @@ import { toast } from "sonner"
 
 import {
   changePasswordAction,
+  updateAccountAction,
   updateCompanyOpenToHireAction,
   updateLocaleAction,
   updatePrivacyAction,
 } from "../api/actions"
 import type {
+  AccountInput,
   ChangePasswordInput,
   LocaleInput,
   PrivacyInput,
@@ -31,6 +33,23 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: wrap<ChangePasswordInput>(changePasswordAction),
     onSuccess: () => toast.success(t("success")),
+    onError: (error: Error) => toast.error(error.message),
+  })
+}
+
+export function useUpdateAccount() {
+  const router = useRouter()
+  const t = useTranslations("settings.account")
+  return useMutation({
+    mutationFn: async (input: AccountInput) => {
+      const result = await updateAccountAction(input)
+      if (!result.ok) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: (data) => {
+      toast.success(data?.emailChangeRequested ? t("emailConfirmSent") : t("saved"))
+      router.refresh()
+    },
     onError: (error: Error) => toast.error(error.message),
   })
 }

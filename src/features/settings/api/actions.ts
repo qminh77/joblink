@@ -9,9 +9,11 @@ import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
 
 import {
+  createAccountSchema,
   createChangePasswordSchema,
   createLocaleSchema,
   createPrivacySchema,
+  type AccountInput,
   type ChangePasswordInput,
   type LocaleInput,
   type PrivacyInput,
@@ -20,6 +22,7 @@ import {
   updateCompanyOpenToHire,
   updateMemberPrivacy,
   updateUserLocale,
+  updateUserPhone,
 } from "../data/settings.repo"
 
 function revalidateAll() {
@@ -129,5 +132,44 @@ export async function updateLocaleAction(
     }
 
     revalidateAll()
+  })
+}
+
+// UC-66: cập nhật email đăng nhập (cần xác minh lại qua link Supabase gửi tới
+// email mới) và số điện thoại. public.users.email được đồng bộ bởi trigger
+// on_auth_user_updated sau khi người dùng xác nhận; vì vậy KHÔNG tự ghi đè ở đây.
+export async function updateAccountAction(
+  input: AccountInput,
+): Promise<ActionResult<{ emailChangeRequested: boolean }>> {
+  return action("settings.errors", async () => {
+    const tv = await getTranslations("settings.validation")
+    const data = parse(createAccountSchema(tv), input)
+    const current = await requireCurrentUser()
+    const supabase = await createClient()
+
+    let emailChangeRequested = false
+
+    const newEmail = data.email.trim().toLowerCase()
+    if (newEmail !== current.appUser.email.toLowerCase()) {
+      const { error } = await supabase.auth.updateUser({ email: newEmail })
+      if (error) {
+        console.error("[updateAccountAction:email]", error)
+        throw ActionError.key(
+          error.code === "email_exists" ? "emailInUse" : "emailUpdateFailed",
+        )
+      }
+      emailChangeRequested = true
+    }
+
+    const newPhone = data.phone?.trim() ? data.phone.trim() : null
+    if (newPhone !== (current.appUser.phone ?? null)) {
+      assertOk(
+        await updateUserPhone(supabase, current.appUser.id, newPhone),
+        "unexpected",
+      )
+    }
+
+    revalidateAll()
+    return { emailChangeRequested }
   })
 }

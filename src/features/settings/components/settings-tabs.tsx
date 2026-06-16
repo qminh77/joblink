@@ -28,11 +28,13 @@ type Profile =
 
 export function SettingsTabs({
   user,
+  phone,
   profile,
   provinces,
   locale,
 }: {
   user: SessionUserSummary
+  phone: string | null
   profile: Profile
   provinces: ProvinceRow[]
   locale: string
@@ -109,7 +111,7 @@ export function SettingsTabs({
       ) : null}
 
       <TabsContent value="account" className="mt-6">
-        <AccountInfoCard user={user} locale={locale} />
+        <AccountInfoCard user={user} phone={phone} locale={locale} />
       </TabsContent>
 
       <TabsContent value="privacy" className="mt-6 space-y-5">

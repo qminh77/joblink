@@ -37,8 +37,26 @@ export function createLocaleSchema(t: Translator) {
   })
 }
 
+export function createAccountSchema(t: Translator) {
+  return z.object({
+    email: z
+      .string({ error: t("emailRequired") })
+      .trim()
+      .min(1, t("emailRequired"))
+      .email(t("emailInvalid")),
+    phone: z
+      .string()
+      .trim()
+      .max(20, t("phoneMax"))
+      .regex(/^[0-9+()\-\s]*$/, t("phoneInvalid"))
+      .nullable()
+      .optional(),
+  })
+}
+
 export type ChangePasswordInput = z.infer<
   ReturnType<typeof createChangePasswordSchema>
 >
 export type PrivacyInput = z.infer<ReturnType<typeof createPrivacySchema>>
 export type LocaleInput = z.infer<ReturnType<typeof createLocaleSchema>>
+export type AccountInput = z.infer<ReturnType<typeof createAccountSchema>>

@@ -50,6 +50,7 @@ export default async function SettingsPage() {
 
       <SettingsTabs
         user={sessionUser}
+        phone={current.appUser.phone}
         profile={profile}
         provinces={provinces}
         locale={current.appUser.locale}
