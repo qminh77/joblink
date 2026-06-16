@@ -5,8 +5,8 @@
 -- Thiết kế theo SRS Joblink v1.0 (phiên bản đơn giản hoá 19/05/2026)
 --
 -- ⮕ ĐÂY LÀ SCHEMA HỢP NHẤT (AUTHORITATIVE): bao gồm toàn bộ bảng, index, trigger,
---   view, RPC, RLS, realtime và storage đã gộp từ supabase/migrations (đến
---   20260528_021). Xem file này thay vì đọc từng migration.
+--   view, RPC, RLS, realtime và storage đã gộp từ TOÀN BỘ supabase/migrations
+--   (đến 20260601_031). Xem file này thay vì đọc từng migration.
 -- ⮕ ĐÃ LOẠI các bảng framework dư thừa không dùng trong stack Next.js + Supabase:
 --   cache, cache_locks, personal_access_tokens, password_reset_tokens,
 --   email_verification_tokens, và cột users.remember_token. Reset mật khẩu /
@@ -310,13 +310,17 @@ CREATE TABLE IF NOT EXISTS skills (
 );
 
 CREATE TABLE IF NOT EXISTS member_skills (
+    id                BIGSERIAL PRIMARY KEY,
     user_id           BIGINT NOT NULL,
-    skill_id          BIGINT NOT NULL,
+    -- Kỹ năng free-text riêng từng thành viên (migration 031): không còn FK tới
+    -- bảng danh mục `skills` dùng chung. `skills`/`job_skills` chỉ phục vụ tin tuyển dụng.
+    name              VARCHAR(100) NOT NULL,
     endorsement_count INT NOT NULL DEFAULT 0,
-    PRIMARY KEY (user_id, skill_id),
-    CONSTRAINT fk_member_skill_user  FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
-    CONSTRAINT fk_member_skill_skill FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+    CONSTRAINT fk_member_skill_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT uk_member_skill_user_name UNIQUE (user_id, name)
 );
+COMMENT ON TABLE public.member_skills IS
+  'Kỹ năng riêng từng thành viên (free-text). RLS: admin_all + view if can_view_member_profile + owner write';
 
 CREATE TABLE IF NOT EXISTS profile_view_logs (
     id             BIGSERIAL PRIMARY KEY,
@@ -352,7 +356,6 @@ CREATE INDEX IF NOT EXISTS idx_member_profiles_ward ON member_profiles(ward_id);
 CREATE INDEX IF NOT EXISTS idx_member_experiences_user  ON member_experiences(user_id);
 CREATE INDEX IF NOT EXISTS idx_member_educations_user   ON member_educations(user_id);
 CREATE INDEX IF NOT EXISTS idx_member_skills_user       ON member_skills(user_id);
-CREATE INDEX IF NOT EXISTS idx_member_skills_skill      ON member_skills(skill_id);
 CREATE INDEX IF NOT EXISTS idx_profile_view_target      ON profile_view_logs(target_user_id, viewed_at);
 CREATE INDEX IF NOT EXISTS idx_member_cvs_user          ON member_cvs(user_id, created_at DESC) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_member_cvs_default_per_user
@@ -1275,14 +1278,14 @@ SECURITY INVOKER
 STABLE
 AS $$
 DECLARE
-    v_me             BIGINT;
-    v_stats          JSONB;
-    v_suggestions    JSONB;
-    v_posts          JSONB;
-    v_excluded_ids   BIGINT[];
-    v_connection_ids BIGINT[];
+    v_me              BIGINT;
+    v_stats           JSONB;
+    v_suggestions     JSONB;
+    v_suggested_jobs  JSONB;
+    v_excluded_ids    BIGINT[];
+    v_connection_ids  BIGINT[];
+    v_job_suggest_lim CONSTANT INT := 5;
 BEGIN
-    -- Lấy app user id hiện tại từ auth context.
     SELECT u.id INTO v_me
       FROM public.users u
      WHERE u.auth_id = auth.uid()
@@ -1293,21 +1296,21 @@ BEGIN
         RETURN jsonb_build_object(
             'stats', jsonb_build_object('connection_count', 0, 'profile_view_count', 0),
             'suggestions', '[]'::jsonb,
+            'suggested_jobs', '[]'::jsonb,
             'posts', '[]'::jsonb,
+            'jobs', '[]'::jsonb,
             'connection_ids', '[]'::jsonb,
             'me', NULL,
             'next_cursor', NULL
         );
     END IF;
 
-    -- STATS — đọc trực tiếp counter cache (O(1))
     SELECT jsonb_build_object(
         'connection_count', u.connection_count,
         'profile_view_count', u.profile_view_count
     ) INTO v_stats
     FROM public.users u WHERE u.id = v_me;
 
-    -- Tập user ID đã liên quan (để loại khỏi suggestions, và để filter posts)
     SELECT COALESCE(array_agg(DISTINCT other_id), '{}')
       INTO v_excluded_ids
       FROM (
@@ -1327,7 +1330,7 @@ BEGIN
              AND (c.requester_id = v_me OR c.receiver_id = v_me)
       ) sub;
 
-    -- SUGGESTIONS — pick recent active users không thuộc excluded
+    -- SUGGESTIONS (people you may know) — giữ nguyên hành vi bản trước.
     WITH candidates AS (
         SELECT u.id, u.role
           FROM public.users u
@@ -1336,7 +1339,7 @@ BEGIN
            AND u.role <> 'admin'
            AND u.id <> v_me
            AND NOT (u.id = ANY(v_excluded_ids))
-         ORDER BY u.created_at DESC
+         ORDER BY RANDOM()
          LIMIT p_suggestion_limit
     )
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s) ORDER BY s.ord), '[]'::jsonb)
@@ -1365,87 +1368,195 @@ BEGIN
             LEFT JOIN public.wards cd  ON cd.id  = cp.ward_id
       ) s;
 
-    -- POSTS — của tôi + của connections; visibility = 'public' hoặc 'connections'
-    WITH visible_authors AS (
-        SELECT unnest(array_prepend(v_me, v_connection_ids)) AS author_id
-    ),
-    feed AS (
-        SELECT p.id, p.author_id, p.content, p.post_type, p.media,
-               p.visibility, p.created_at
-          FROM public.posts p
-          JOIN visible_authors va ON va.author_id = p.author_id
-         WHERE p.deleted_at IS NULL
-           AND p.status = 'active'
-           AND (p.visibility = 'public'
-                OR (p.visibility = 'connections' AND p.author_id = ANY(v_connection_ids))
-                OR p.author_id = v_me)
-           AND (p_posts_cursor IS NULL OR p.created_at < p_posts_cursor)
-         ORDER BY p.created_at DESC
-         LIMIT p_posts_limit
-    )
-    SELECT COALESCE(jsonb_agg(row_to_jsonb(x) ORDER BY x.ord), '[]'::jsonb)
-      INTO v_posts
+    -- SUGGESTED JOBS (sidebar "Việc làm gợi ý") — tin active mới nhất + viewer state.
+    SELECT COALESCE(jsonb_agg(s.j_obj ORDER BY s.created_at DESC), '[]'::jsonb)
+      INTO v_suggested_jobs
       FROM (
           SELECT
-              row_number() OVER (ORDER BY f.created_at DESC) AS ord,
-              f.id,
-              f.author_id   AS "authorId",
-              f.content,
-              f.post_type   AS "postType",
-              f.media,
-              f.visibility,
-              f.created_at  AS "createdAt",
+              j.created_at,
               jsonb_build_object(
-                  'userId',      f.author_id,
-                  'role',        au.role,
-                  'displayName', COALESCE(amp.full_name, acp.name),
-                  'avatarUrl',   COALESCE(amp.avatar_url, acp.logo_url),
-                  'headline',    COALESCE(amp.headline, acp.industry)
-              ) AS author,
-              (SELECT COUNT(*) FROM public.post_reactions r WHERE r.post_id = f.id) AS "reactionCount",
-              (SELECT COUNT(*) FROM public.post_comments  cm
-                WHERE cm.post_id = f.id AND cm.deleted_at IS NULL AND cm.status = 'active') AS "commentCount",
-              (SELECT COUNT(*) FROM public.post_shares    sh WHERE sh.post_id = f.id) AS "shareCount",
-              EXISTS (
-                  SELECT 1 FROM public.post_reactions r
-                   WHERE r.post_id = f.id AND r.user_id = v_me
-              ) AS "viewerReacted",
-              CASE
-                WHEN f.post_type = 'poll' THEN (
-                  SELECT COALESCE(jsonb_agg(
-                    jsonb_build_object(
-                      'id', po.id,
-                      'optionText', po.option_text,
-                      'voteCount', po.vote_count,
-                      'viewerVoted', CASE
-                        WHEN v_me IS NULL THEN FALSE
-                        ELSE EXISTS (
-                          SELECT 1 FROM public.poll_votes pv
-                           WHERE pv.option_id = po.id AND pv.user_id = v_me
-                        )
-                      END
-                    ) ORDER BY po.id
-                  ), '[]'::jsonb)
-                  FROM public.poll_options po
-                  WHERE po.post_id = f.id
-                )
-                ELSE NULL
-              END AS "pollOptions"
-            FROM feed f
-            JOIN public.users au ON au.id = f.author_id
-            LEFT JOIN public.member_profiles  amp ON amp.user_id = f.author_id AND amp.deleted_at IS NULL
-            LEFT JOIN public.company_profiles acp ON acp.user_id = f.author_id AND acp.deleted_at IS NULL
-      ) x;
+                  'id', j.id,
+                  'title', j.title,
+                  'companyUserId', j.company_user_id,
+                  'companyName', COALESCE(cp.name, u.email),
+                  'companyLogoUrl', cp.logo_url,
+                  'companyVerified', cp.verification_status = 'verified',
+                  'provinceName', pv.name,
+                  'wardName', w.name,
+                  'jobTypeName', jt.name,
+                  'workModeName', wm.name,
+                  'salaryMin', j.salary_min,
+                  'salaryMax', j.salary_max,
+                  'salaryVisible', j.salary_visible,
+                  'createdAt', j.created_at,
+                  'viewerSaved', EXISTS(
+                      SELECT 1 FROM public.saved_jobs sv
+                       WHERE sv.user_id = v_me AND sv.job_id = j.id
+                  ),
+                  'viewerApplied', EXISTS(
+                      SELECT 1 FROM public.job_applications a
+                       WHERE a.applicant_id = v_me AND a.job_id = j.id
+                  )
+              ) AS j_obj
+            FROM public.jobs j
+            JOIN public.users u ON u.id = j.company_user_id
+            LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
+            LEFT JOIN public.provinces pv ON pv.id = j.province_id
+            LEFT JOIN public.wards w ON w.id = j.ward_id
+            LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+            LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+           WHERE j.status = 'active'
+             AND j.deleted_at IS NULL
+             AND (j.expires_at IS NULL OR j.expires_at > NOW())
+           ORDER BY j.created_at DESC
+           LIMIT v_job_suggest_lim
+      ) s;
 
-    RETURN jsonb_build_object(
-        'stats',          v_stats,
-        'suggestions',    v_suggestions,
-        'posts',          v_posts,
-        'connection_ids', to_jsonb(v_connection_ids),
-        'me',             v_me,
-        'next_cursor', (
-            SELECT (v_posts -> (jsonb_array_length(v_posts) - 1) ->> 'createdAt')::TIMESTAMPTZ
-            WHERE jsonb_array_length(v_posts) = p_posts_limit
+    -- FEED — posts (me + connections) UNION jobs (active, public board), phân
+    -- trang theo unified cursor.
+    RETURN (
+        WITH visible_authors AS (
+            SELECT unnest(array_prepend(v_me, v_connection_ids)) AS author_id
+        ),
+        post_cand AS (
+            SELECT p.id, p.created_at
+              FROM public.posts p
+              JOIN visible_authors va ON va.author_id = p.author_id
+             WHERE p.deleted_at IS NULL
+               AND p.status = 'active'
+               AND (p.visibility = 'public'
+                    OR (p.visibility = 'connections' AND p.author_id = ANY(v_connection_ids))
+                    OR p.author_id = v_me)
+               AND (p_posts_cursor IS NULL OR p.created_at < p_posts_cursor)
+             ORDER BY p.created_at DESC
+             LIMIT p_posts_limit
+        ),
+        job_cand AS (
+            SELECT j.id, j.created_at
+              FROM public.jobs j
+             WHERE j.status = 'active'
+               AND j.deleted_at IS NULL
+               AND (j.expires_at IS NULL OR j.expires_at > NOW())
+               AND (p_posts_cursor IS NULL OR j.created_at < p_posts_cursor)
+             ORDER BY j.created_at DESC
+             LIMIT p_posts_limit
+        ),
+        unified AS (
+            SELECT kind, id, created_at
+              FROM (
+                  SELECT 'post'::text AS kind, id, created_at FROM post_cand
+                  UNION ALL
+                  SELECT 'job'::text  AS kind, id, created_at FROM job_cand
+              ) u
+             ORDER BY created_at DESC
+             LIMIT p_posts_limit
+        ),
+        posts_json AS (
+            SELECT COALESCE(jsonb_agg(x.obj ORDER BY x.created_at DESC), '[]'::jsonb) AS data
+              FROM (
+                  SELECT
+                      p.created_at,
+                      jsonb_build_object(
+                          'id', p.id,
+                          'authorId', p.author_id,
+                          'content', p.content,
+                          'postType', p.post_type,
+                          'media', p.media,
+                          'visibility', p.visibility,
+                          'createdAt', p.created_at,
+                          'author', jsonb_build_object(
+                              'userId',      p.author_id,
+                              'role',        au.role,
+                              'displayName', COALESCE(amp.full_name, acp.name),
+                              'avatarUrl',   COALESCE(amp.avatar_url, acp.logo_url),
+                              'headline',    COALESCE(amp.headline, acp.industry)
+                          ),
+                          'reactionCount', (SELECT COUNT(*) FROM public.post_reactions r WHERE r.post_id = p.id),
+                          'commentCount', (SELECT COUNT(*) FROM public.post_comments cm
+                                            WHERE cm.post_id = p.id AND cm.deleted_at IS NULL AND cm.status = 'active'),
+                          'shareCount', (SELECT COUNT(*) FROM public.post_shares sh WHERE sh.post_id = p.id),
+                          'viewerReacted', EXISTS (
+                              SELECT 1 FROM public.post_reactions r
+                               WHERE r.post_id = p.id AND r.user_id = v_me
+                          ),
+                          'pollOptions', CASE
+                            WHEN p.post_type = 'poll' THEN (
+                              SELECT COALESCE(jsonb_agg(
+                                jsonb_build_object(
+                                  'id', po.id,
+                                  'optionText', po.option_text,
+                                  'voteCount', po.vote_count,
+                                  'viewerVoted', EXISTS (
+                                    SELECT 1 FROM public.poll_votes pv
+                                     WHERE pv.option_id = po.id AND pv.user_id = v_me
+                                  )
+                                ) ORDER BY po.id
+                              ), '[]'::jsonb)
+                              FROM public.poll_options po
+                              WHERE po.post_id = p.id
+                            )
+                            ELSE NULL
+                          END
+                      ) AS obj
+                    FROM unified un
+                    JOIN public.posts p ON p.id = un.id AND un.kind = 'post'
+                    JOIN public.users au ON au.id = p.author_id
+                    LEFT JOIN public.member_profiles  amp ON amp.user_id = p.author_id AND amp.deleted_at IS NULL
+                    LEFT JOIN public.company_profiles acp ON acp.user_id = p.author_id AND acp.deleted_at IS NULL
+              ) x
+        ),
+        jobs_json AS (
+            SELECT COALESCE(jsonb_agg(y.obj ORDER BY y.created_at DESC), '[]'::jsonb) AS data
+              FROM (
+                  SELECT
+                      j.created_at,
+                      jsonb_build_object(
+                          'id', j.id,
+                          'title', j.title,
+                          'companyUserId', j.company_user_id,
+                          'companyName', COALESCE(cp.name, cu.email),
+                          'companyLogoUrl', cp.logo_url,
+                          'companyVerified', cp.verification_status = 'verified',
+                          'provinceName', pv.name,
+                          'wardName', w.name,
+                          'jobTypeName', jt.name,
+                          'workModeName', wm.name,
+                          'salaryMin', j.salary_min,
+                          'salaryMax', j.salary_max,
+                          'salaryVisible', j.salary_visible,
+                          'createdAt', j.created_at,
+                          'viewerSaved', EXISTS(
+                              SELECT 1 FROM public.saved_jobs sv
+                               WHERE sv.user_id = v_me AND sv.job_id = j.id
+                          ),
+                          'viewerApplied', EXISTS(
+                              SELECT 1 FROM public.job_applications a
+                               WHERE a.applicant_id = v_me AND a.job_id = j.id
+                          )
+                      ) AS obj
+                    FROM unified un
+                    JOIN public.jobs j ON j.id = un.id AND un.kind = 'job'
+                    JOIN public.users cu ON cu.id = j.company_user_id
+                    LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id AND cp.deleted_at IS NULL
+                    LEFT JOIN public.provinces pv ON pv.id = j.province_id
+                    LEFT JOIN public.wards w ON w.id = j.ward_id
+                    LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+                    LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+              ) y
+        ),
+        cursor_calc AS (
+            SELECT CASE WHEN COUNT(*) = p_posts_limit THEN MIN(created_at) ELSE NULL END AS next_cursor
+              FROM unified
+        )
+        SELECT jsonb_build_object(
+            'stats',          v_stats,
+            'suggestions',    v_suggestions,
+            'suggested_jobs', v_suggested_jobs,
+            'posts',          (SELECT data FROM posts_json),
+            'jobs',           (SELECT data FROM jobs_json),
+            'connection_ids', to_jsonb(v_connection_ids),
+            'me',             v_me,
+            'next_cursor',    (SELECT next_cursor FROM cursor_calc)
         )
     );
 END;
@@ -9086,4 +9197,449 @@ GRANT EXECUTE ON FUNCTION public.get_company_jobs(TEXT, TEXT, INT, INT) TO authe
 
 -- =============================================================================
 -- END MIGRATION 20260531_025
+-- =============================================================================
+
+-- =============================================================================
+-- 25. PROFILE DETAIL / EDIT RPCs + UPDATE JOB
+-- Synced from migrations 20260528_022, 20260528_027, 20260601_027,
+--   20260601_028 và 20260601_031 (member skills free-text per user).
+--   • get_profile_detail / get_profile_edit_overview: bản cuối (031) đọc
+--     member_skills.name trực tiếp, không JOIN bảng danh mục `skills`.
+--   • update_job: bản cuối (028) dùng tham số p_ward_id + position_title.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.get_profile_detail(
+    p_target_user_id BIGINT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me            BIGINT;
+    v_target        public.users%ROWTYPE;
+    v_is_owner      BOOLEAN;
+    v_relation      JSONB;
+    v_conn          RECORD;
+    v_profile       JSONB;
+    v_province      JSONB;
+    v_ward      JSONB;
+    v_is_visible    BOOLEAN;
+    v_experiences   JSONB;
+    v_educations    JSONB;
+    v_skills        JSONB;
+    v_follower_cnt  INT;
+    v_is_following  BOOLEAN;
+    v_visibility    TEXT;
+BEGIN
+    SELECT u.id INTO v_me
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT * INTO v_target
+      FROM public.users u
+     WHERE u.id = p_target_user_id
+       AND u.deleted_at IS NULL;
+
+    IF v_target.id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    v_is_owner := (v_me = v_target.id);
+
+    -- ---- Connection relation (hai chiều) -----------------------------------
+    IF v_is_owner THEN
+        v_relation := jsonb_build_object('kind', 'self');
+    ELSE
+        SELECT c.id, c.requester_id, c.status INTO v_conn
+          FROM public.connections c
+         WHERE (c.requester_id = v_me AND c.receiver_id = p_target_user_id)
+            OR (c.requester_id = p_target_user_id AND c.receiver_id = v_me)
+         LIMIT 1;
+
+        IF v_conn.id IS NULL THEN
+            v_relation := jsonb_build_object('kind', 'none');
+        ELSIF v_conn.status = 'accepted' THEN
+            v_relation := jsonb_build_object('kind', 'accepted', 'connectionId', v_conn.id);
+        ELSIF v_conn.status = 'rejected' THEN
+            v_relation := jsonb_build_object('kind', 'rejected', 'connectionId', v_conn.id);
+        ELSIF v_conn.status = 'blocked' THEN
+            v_relation := jsonb_build_object('kind', 'blocked', 'connectionId', v_conn.id);
+        ELSIF v_conn.requester_id = v_me THEN
+            v_relation := jsonb_build_object('kind', 'pending_outgoing', 'connectionId', v_conn.id);
+        ELSE
+            v_relation := jsonb_build_object('kind', 'pending_incoming', 'connectionId', v_conn.id);
+        END IF;
+    END IF;
+
+    -- ============================ COMPANY ===================================
+    IF v_target.role = 'company' THEN
+        SELECT to_jsonb(cp) INTO v_profile
+          FROM public.company_profiles cp
+         WHERE cp.user_id = v_target.id
+           AND cp.deleted_at IS NULL;
+
+        IF v_profile IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        SELECT jsonb_build_object('id', pv.id, 'name', pv.name) INTO v_province
+          FROM public.company_profiles cp
+          JOIN public.provinces pv ON pv.id = cp.province_id
+         WHERE cp.user_id = v_target.id AND cp.deleted_at IS NULL;
+
+        SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_ward
+          FROM public.company_profiles cp
+          JOIN public.wards dt ON dt.id = cp.ward_id
+         WHERE cp.user_id = v_target.id AND cp.deleted_at IS NULL;
+
+        SELECT COUNT(*)::INT INTO v_follower_cnt
+          FROM public.follows f
+         WHERE f.followable_type = 'company'
+           AND f.followable_id = v_target.id;
+
+        IF v_is_owner THEN
+            v_is_following := FALSE;
+        ELSE
+            SELECT EXISTS(
+                SELECT 1 FROM public.follows f
+                 WHERE f.follower_id = v_me
+                   AND f.followable_type = 'company'
+                   AND f.followable_id = v_target.id
+            ) INTO v_is_following;
+        END IF;
+
+        RETURN jsonb_build_object(
+            'kind', 'company',
+            'isOwner', v_is_owner,
+            'relation', v_relation,
+            'profile', v_profile,
+            'email', v_target.email,
+            'province', v_province,
+            'ward', v_ward,
+            'profileViewCount', v_target.profile_view_count,
+            'connectionCount', v_target.connection_count,
+            'followerCount', COALESCE(v_follower_cnt, 0),
+            'isFollowing', COALESCE(v_is_following, FALSE)
+        );
+    END IF;
+
+    -- ============================ MEMBER ====================================
+    SELECT to_jsonb(mp) INTO v_profile
+      FROM public.member_profiles mp
+     WHERE mp.user_id = v_target.id
+       AND mp.deleted_at IS NULL;
+
+    IF v_profile IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT jsonb_build_object('id', pv.id, 'name', pv.name) INTO v_province
+      FROM public.member_profiles mp
+      JOIN public.provinces pv ON pv.id = mp.province_id
+     WHERE mp.user_id = v_target.id AND mp.deleted_at IS NULL;
+
+    SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_ward
+      FROM public.member_profiles mp
+      JOIN public.wards dt ON dt.id = mp.ward_id
+     WHERE mp.user_id = v_target.id AND mp.deleted_at IS NULL;
+
+    v_visibility := v_profile ->> 'profile_visibility';
+    v_is_visible := (v_visibility IS DISTINCT FROM 'private') OR v_is_owner;
+
+    IF v_is_visible THEN
+        SELECT COALESCE(jsonb_agg(to_jsonb(e) ORDER BY e.is_current DESC, e.start_date DESC), '[]'::jsonb)
+          INTO v_experiences
+          FROM public.member_experiences e
+         WHERE e.user_id = v_target.id AND e.deleted_at IS NULL;
+
+        SELECT COALESCE(jsonb_agg(to_jsonb(ed) ORDER BY ed.start_date DESC), '[]'::jsonb)
+          INTO v_educations
+          FROM public.member_educations ed
+         WHERE ed.user_id = v_target.id AND ed.deleted_at IS NULL;
+
+        SELECT COALESCE(jsonb_agg(jsonb_build_object('id', ms.id, 'name', ms.name) ORDER BY ms.name), '[]'::jsonb)
+          INTO v_skills
+          FROM public.member_skills ms
+         WHERE ms.user_id = v_target.id;
+    ELSE
+        v_experiences := '[]'::jsonb;
+        v_educations  := '[]'::jsonb;
+        v_skills      := '[]'::jsonb;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'kind', 'member',
+        'isOwner', v_is_owner,
+        'relation', v_relation,
+        'profile', v_profile,
+        'email', v_target.email,
+        'province', v_province,
+        'ward', v_ward,
+        'profileViewCount', v_target.profile_view_count,
+        'connectionCount', v_target.connection_count,
+        'isVisible', v_is_visible,
+        'experiences', COALESCE(v_experiences, '[]'::jsonb),
+        'educations', COALESCE(v_educations, '[]'::jsonb),
+        'skills', COALESCE(v_skills, '[]'::jsonb)
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_profile_detail(BIGINT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_profile_edit_overview()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+DECLARE
+    v_me            BIGINT;
+    v_email         TEXT;
+    v_role          TEXT;
+    v_profile       JSONB;
+    v_province      JSONB;
+    v_ward      JSONB;
+    v_experiences   JSONB;
+    v_educations    JSONB;
+    v_skills        JSONB;
+    v_cvs           JSONB;
+    v_provinces     JSONB;
+BEGIN
+    SELECT u.id, u.email, u.role INTO v_me, v_email, v_role
+      FROM public.users u
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL OR v_role <> 'member' THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT to_jsonb(mp) INTO v_profile
+      FROM public.member_profiles mp
+     WHERE mp.user_id = v_me
+       AND mp.deleted_at IS NULL;
+
+    IF v_profile IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT jsonb_build_object('id', p.id, 'name', p.name) INTO v_province
+      FROM public.provinces p
+     WHERE p.id = (v_profile->>'province_id')::BIGINT
+     LIMIT 1;
+
+    SELECT jsonb_build_object('id', d.id, 'name', d.name) INTO v_ward
+      FROM public.wards d
+     WHERE d.id = (v_profile->>'ward_id')::BIGINT
+     LIMIT 1;
+
+    SELECT COALESCE(jsonb_agg(to_jsonb(e) ORDER BY e.is_current DESC, e.start_date DESC), '[]'::jsonb)
+      INTO v_experiences
+      FROM public.member_experiences e
+     WHERE e.user_id = v_me
+       AND e.deleted_at IS NULL;
+
+    SELECT COALESCE(jsonb_agg(to_jsonb(ed) ORDER BY ed.start_date DESC NULLS LAST), '[]'::jsonb)
+      INTO v_educations
+      FROM public.member_educations ed
+     WHERE ed.user_id = v_me
+       AND ed.deleted_at IS NULL;
+
+    SELECT COALESCE(jsonb_agg(jsonb_build_object('id', ms.id, 'name', ms.name) ORDER BY ms.name), '[]'::jsonb)
+      INTO v_skills
+      FROM public.member_skills ms
+     WHERE ms.user_id = v_me;
+
+    SELECT COALESCE(jsonb_agg(to_jsonb(c) ORDER BY c.is_default DESC, c.created_at DESC), '[]'::jsonb)
+      INTO v_cvs
+      FROM public.member_cvs c
+     WHERE c.user_id = v_me
+       AND c.deleted_at IS NULL;
+
+    SELECT COALESCE(jsonb_agg(
+             jsonb_build_object(
+               'id', p.id,
+               'code', p.code,
+               'name', p.name,
+               'name_en', p.name_en,
+               'sort_order', p.sort_order,
+               'is_active', p.is_active
+             )
+             ORDER BY p.sort_order, p.name
+           ), '[]'::jsonb)
+      INTO v_provinces
+      FROM public.provinces p
+     WHERE p.is_active = TRUE
+       AND p.deleted_at IS NULL;
+
+    RETURN jsonb_build_object(
+        'userId', v_me,
+        'email', v_email,
+        'profile', v_profile,
+        'province', v_province,
+        'ward', v_ward,
+        'experiences', v_experiences,
+        'educations', v_educations,
+        'skills', v_skills,
+        'cvs', v_cvs,
+        'provinces', v_provinces
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_profile_edit_overview() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.update_job(
+    p_job_id BIGINT,
+    p_title TEXT,
+    p_description TEXT,
+    p_requirements TEXT,
+    p_province_id BIGINT,
+    p_ward_id BIGINT,
+    p_salary_min BIGINT,
+    p_salary_max BIGINT,
+    p_salary_visible BOOLEAN,
+    p_job_type_id BIGINT,
+    p_work_mode_id BIGINT,
+    p_position_title TEXT,
+    p_expires_at TIMESTAMPTZ,
+    p_skills TEXT[]
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY INVOKER
+VOLATILE
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_role TEXT;
+    v_status TEXT;
+    v_company_user_id BIGINT;
+    v_old_status TEXT;
+    v_skill_name TEXT;
+    v_skill_id BIGINT;
+    v_position_title TEXT;
+BEGIN
+    SELECT u.id, u.role, u.status INTO v_me, v_role, v_status
+      FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+    IF v_role <> 'company' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany');
+    END IF;
+    IF v_status <> 'active' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'companyInactive');
+    END IF;
+
+    SELECT j.company_user_id, j.status
+      INTO v_company_user_id, v_old_status
+      FROM public.jobs j
+     WHERE j.id = p_job_id
+       AND j.deleted_at IS NULL
+     LIMIT 1;
+
+    IF v_company_user_id IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobNotFound');
+    END IF;
+    IF v_company_user_id <> v_me THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'notOwner');
+    END IF;
+    IF v_old_status = 'removed' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'jobRemoved');
+    END IF;
+
+    IF btrim(COALESCE(p_title, '')) = '' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidTitle');
+    END IF;
+    IF char_length(btrim(p_title)) > 255 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'titleTooLong');
+    END IF;
+    IF btrim(COALESCE(p_description, '')) = '' THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidDescription');
+    END IF;
+    IF p_salary_min IS NOT NULL AND p_salary_max IS NOT NULL
+       AND p_salary_min > p_salary_max THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidSalaryRange');
+    END IF;
+
+    IF NOT EXISTS(SELECT 1 FROM public.job_types WHERE id = p_job_type_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidJobType');
+    END IF;
+    IF NOT EXISTS(SELECT 1 FROM public.work_modes WHERE id = p_work_mode_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidWorkMode');
+    END IF;
+    IF p_province_id IS NOT NULL
+       AND NOT EXISTS(SELECT 1 FROM public.provinces WHERE id = p_province_id) THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidProvince');
+    END IF;
+
+    v_position_title := NULLIF(btrim(COALESCE(p_position_title, '')), '');
+    IF v_position_title IS NOT NULL AND char_length(v_position_title) > 255 THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'positionTitleTooLong');
+    END IF;
+
+    UPDATE public.jobs
+       SET title = btrim(p_title),
+           description = btrim(p_description),
+           requirements = NULLIF(btrim(COALESCE(p_requirements, '')), ''),
+           province_id = p_province_id,
+           ward_id = p_ward_id,
+           salary_min = p_salary_min,
+           salary_max = p_salary_max,
+           salary_visible = COALESCE(p_salary_visible, TRUE),
+           job_type_id = p_job_type_id,
+           work_mode_id = p_work_mode_id,
+           position_title = v_position_title,
+           expires_at = p_expires_at,
+           updated_at = NOW()
+     WHERE id = p_job_id;
+
+    -- Thay toàn bộ skills: xoá hết rồi chèn lại theo danh sách mới.
+    DELETE FROM public.job_skills WHERE job_id = p_job_id;
+
+    IF p_skills IS NOT NULL THEN
+        FOREACH v_skill_name IN ARRAY p_skills LOOP
+            v_skill_name := btrim(v_skill_name);
+            CONTINUE WHEN v_skill_name = '' OR char_length(v_skill_name) > 100;
+
+            SELECT id INTO v_skill_id FROM public.skills
+             WHERE name = v_skill_name LIMIT 1;
+
+            IF v_skill_id IS NULL THEN
+                INSERT INTO public.skills(name) VALUES (v_skill_name)
+                ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                RETURNING id INTO v_skill_id;
+            END IF;
+
+            INSERT INTO public.job_skills(job_id, skill_id, is_required)
+            VALUES (p_job_id, v_skill_id, TRUE)
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+    END IF;
+
+    RETURN jsonb_build_object('ok', TRUE, 'jobId', p_job_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_job(
+    BIGINT, TEXT, TEXT, TEXT, BIGINT, BIGINT, BIGINT, BIGINT, BOOLEAN,
+    BIGINT, BIGINT, TEXT, TIMESTAMPTZ, TEXT[]
+) TO authenticated;
+
+-- =============================================================================
+-- END SYNC (migrations through 20260601_031)
 -- =============================================================================

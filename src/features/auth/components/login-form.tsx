@@ -89,7 +89,7 @@ export function LoginForm({
                     type="email"
                     autoComplete="email"
                     placeholder="name@company.com"
-                    className="pl-11 h-12 bg-background border-border focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-card border-border focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
@@ -123,7 +123,7 @@ export function LoginForm({
                     {...field}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="pl-11 h-12 bg-background border-border focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-card border-border focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>

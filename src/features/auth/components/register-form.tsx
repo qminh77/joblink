@@ -100,7 +100,7 @@ const defaultValues: RegisterFormValues = {
 }
 
 const INPUT_CLASS =
-  "pl-11 h-12 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+  "pl-11 h-12 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
 
 export function RegisterForm({
   recaptcha,
@@ -410,7 +410,7 @@ export function RegisterForm({
                           {...field}
                           rows={2}
                           placeholder={t("businessAddressPlaceholder")}
-                          className="pl-11 pt-3 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
+                          className="pl-11 pt-3 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
                         />
                       </FormControl>
                     </div>
@@ -570,7 +570,7 @@ export function RegisterForm({
                           {...field}
                           rows={3}
                           placeholder={t("aboutPlaceholder")}
-                          className="pl-11 pt-3 bg-white dark:bg-background border-border hover:bg-muted/30 transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
+                          className="pl-11 pt-3 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
                         />
                       </FormControl>
                     </div>

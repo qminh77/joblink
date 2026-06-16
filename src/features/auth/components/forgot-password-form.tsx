@@ -58,7 +58,7 @@ export function ForgotPasswordForm() {
                     type="email"
                     autoComplete="email"
                     placeholder="name@company.com"
-                    className="pl-11 h-12 bg-background/50 border-border hover:bg-background transition-all duration-300 focus:bg-background focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
                   />
                 </FormControl>
               </div>
