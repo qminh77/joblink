@@ -475,7 +475,8 @@
       "privacy": "Quyền riêng tư",
       "notifications": "Thông báo",
       "language": "Ngôn ngữ",
-      "company": "Hồ sơ công ty"
+      "company": "Hồ sơ công ty",
+      "blocked": "Đã chặn"
     },
     "account": {
       "title": "Thông tin tài khoản",
@@ -560,6 +561,13 @@
     "company": {
       "title": "Hồ sơ công ty",
       "subtitle": "Cập nhật thông tin doanh nghiệp hiển thị với ứng viên và người theo dõi."
+    },
+    "blocked": {
+      "title": "Tài khoản bị chặn",
+      "subtitle": "Những người bạn đã chặn sẽ không thể nhắn tin, gửi lời mời kết nối hay xem hoạt động của bạn.",
+      "loading": "Đang tải...",
+      "empty": "Bạn chưa chặn tài khoản nào.",
+      "unblock": "Bỏ chặn"
     }
   },
   "companies": {
@@ -929,7 +937,9 @@
       "canceled": "Đã hủy lời mời kết nối",
       "accepted": "Đã chấp nhận lời mời kết nối",
       "rejected": "Đã từ chối lời mời kết nối",
-      "removed": "Đã hủy kết nối"
+      "removed": "Đã hủy kết nối",
+      "blocked": "Đã chặn người dùng",
+      "unblocked": "Đã bỏ chặn người dùng"
     },
     "errors": {
       "invalidUser": "Người dùng không hợp lệ",
@@ -949,10 +959,23 @@
       "connectionNotFound": "Kết nối không tồn tại",
       "noRemovePermission": "Bạn không có quyền hủy kết nối này",
       "notAccepted": "Kết nối này chưa được thiết lập",
-      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
+      "selfBlock": "Không thể tự chặn chính mình",
+      "cannotBlockAdmin": "Không thể chặn quản trị viên",
+      "alreadyBlocked": "Bạn đã chặn người này rồi",
+      "notBlocked": "Bạn chưa chặn người này"
     },
     "validation": {
       "keywordMax": "Từ khóa tối đa 100 ký tự"
+    },
+    "block": {
+      "menuLabel": "Tùy chọn khác",
+      "block": "Chặn người dùng",
+      "unblock": "Bỏ chặn",
+      "confirmTitle": "Chặn người dùng này?",
+      "confirmDescription": "Bạn có chắc muốn chặn {name}? Hai bên sẽ không thể nhắn tin, gửi lời mời kết nối hay xem hoạt động của nhau. Mọi kết nối hiện tại sẽ bị hủy.",
+      "confirm": "Chặn",
+      "cancel": "Hủy"
     }
   },
   "home": {

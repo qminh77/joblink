@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { getCurrentUser, requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import {
   ActionError,
@@ -14,7 +14,12 @@ import {
 import type { ActionResult } from "@/lib/action/result"
 
 import { createConnectionIdSchema, createTargetUserIdSchema } from "../schemas"
-import type { ConnectionRelation, NetworkOverview } from "../types"
+import type {
+  BlockStatus,
+  BlockedUserItem,
+  ConnectionRelation,
+  NetworkOverview,
+} from "../types"
 import {
   deleteConnection,
   findConnectionBetween,
@@ -24,6 +29,11 @@ import {
   reactivateRejectedConnection,
   updateConnectionStatus,
 } from "../data/connections.repo"
+import { deleteBlock, findMyBlock, insertBlock } from "../data/blocks.repo"
+import {
+  isBlockedEitherDirection,
+  listBlockedUsers,
+} from "../data/blocks.privileged"
 import {
   clearConnectionRequestNotifications,
   notifyConnectionAccepted,
@@ -66,6 +76,10 @@ export async function sendConnectionRequestAction(
     if (!targetUser) throw ActionError.key("userNotFound")
     if (targetUser.status !== "active") throw ActionError.key("targetInactive")
     if (targetUser.role === "admin") throw ActionError.key("targetIsAdmin")
+
+    // Đã chặn (bất kỳ chiều nào) thì không cho gửi lời mời. Thông điệp giữ chung
+    // chung để không tiết lộ ai đang chặn ai.
+    if (await isBlockedEitherDirection(me, target)) throw ActionError.key("blocked")
 
     const { data: existing } = await findConnectionBetween(supabase, me, target)
     if (existing) {
@@ -172,6 +186,74 @@ export async function removeConnectionAction(
     if (row.status !== "accepted") throw ActionError.key("notAccepted")
 
     assertOk(await deleteConnection(supabase, row.id), "unexpected")
+    revalidateAfterConnectionChange()
+  })
+}
+
+// ── Blocks (UC-46 / UC-47) ───────────────────────────────────────────────────
+
+export async function getBlockStatusAction(
+  targetUserId: number,
+): Promise<BlockStatus> {
+  const current = await getCurrentUser()
+  if (!current || current.appUser.id === targetUserId) {
+    return { blockedByMe: false }
+  }
+  const supabase = await createClient()
+  const { data } = await findMyBlock(supabase, current.appUser.id, targetUserId)
+  return { blockedByMe: data != null }
+}
+
+export async function listBlockedUsersAction(): Promise<BlockedUserItem[]> {
+  const current = await requireCurrentUser()
+  return listBlockedUsers(current.appUser.id)
+}
+
+export async function blockUserAction(
+  targetUserId: number,
+): Promise<ActionResult> {
+  return action("network.errors", async (t) => {
+    const target = parse(createTargetUserIdSchema(t), targetUserId)
+    const current = await requireCurrentUser()
+    const me = current.appUser.id
+    if (me === target) throw ActionError.key("selfBlock")
+
+    const supabase = await createClient()
+
+    const { data: targetUser } = await getConnectTarget(supabase, target)
+    if (!targetUser) throw ActionError.key("userNotFound")
+    if (targetUser.role === "admin") throw ActionError.key("cannotBlockAdmin")
+
+    const { data: existing } = await findMyBlock(supabase, me, target)
+    if (existing) throw ActionError.key("alreadyBlocked")
+
+    unwrap(await insertBlock(supabase, me, target), "unexpected")
+
+    // Chặn cắt mọi quan hệ kết nối hiện có (2 chiều) để hai bên không còn là kết
+    // nối — nhắn tin đã bị RPC chặn dựa trên user_blocks.
+    const { data: connection } = await findConnectionBetween(supabase, me, target)
+    if (connection) {
+      assertOk(await deleteConnection(supabase, connection.id), "unexpected")
+    }
+
+    revalidateAfterConnectionChange()
+  })
+}
+
+export async function unblockUserAction(
+  targetUserId: number,
+): Promise<ActionResult> {
+  return action("network.errors", async (t) => {
+    const target = parse(createTargetUserIdSchema(t), targetUserId)
+    const current = await requireCurrentUser()
+    const me = current.appUser.id
+
+    const supabase = await createClient()
+
+    const { data: existing } = await findMyBlock(supabase, me, target)
+    if (!existing) throw ActionError.key("notBlocked")
+
+    assertOk(await deleteBlock(supabase, me, target), "unexpected")
     revalidateAfterConnectionChange()
   })
 }

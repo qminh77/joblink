@@ -35,3 +35,18 @@ export type NetworkOverview = {
   incoming: InvitationItem[]
   outgoing: InvitationItem[]
 }
+
+// Trạng thái chặn theo góc nhìn của viewer với một người cụ thể. Chỉ mang chiều
+// "tôi đã chặn họ" — chiều ngược lại được ẩn theo quyền riêng tư (xem RLS).
+export type BlockStatus = {
+  blockedByMe: boolean
+}
+
+export type BlockedUserItem = {
+  blockId: number
+  userId: number
+  blockedAt: string
+  displayName: string
+  avatarUrl: string | null
+  headline: string | null
+}

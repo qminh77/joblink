@@ -6,7 +6,6 @@ import { useState } from "react"
 import {
   BadgeCheck,
   Briefcase,
-  Flag,
   GraduationCap,
   Eye,
   Globe,
@@ -22,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
+import { ProfileActionsMenu } from "@/features/network/components/profile-actions-menu"
 import { MessageButton } from "@/features/messaging/components/message-button"
 import { ReportDialog } from "@/features/reports/components/report-dialog"
 import type { ConnectionRelation } from "@/features/network/types"
@@ -156,14 +156,11 @@ export function MemberProfileView({
                         size="sm"
                       />
                     ) : null}
-                    <button
-                      type="button"
-                      onClick={() => setShowReport(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive px-3 h-8 rounded-lg transition-colors"
-                      title={tProfile("view.reportUser")}
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                    </button>
+                    <ProfileActionsMenu
+                      targetUserId={profile.user_id}
+                      targetName={profile.full_name}
+                      onReport={() => setShowReport(true)}
+                    />
                   </>
                 )}
               </div>

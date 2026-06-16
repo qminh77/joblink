@@ -475,7 +475,8 @@
       "privacy": "Privacy",
       "notifications": "Notifications",
       "language": "Language",
-      "company": "Company profile"
+      "company": "Company profile",
+      "blocked": "Blocked"
     },
     "account": {
       "title": "Account information",
@@ -560,6 +561,13 @@
     "company": {
       "title": "Company profile",
       "subtitle": "Update the business information shown to candidates and followers."
+    },
+    "blocked": {
+      "title": "Blocked accounts",
+      "subtitle": "People you've blocked can't message you, send connection requests, or see your activity.",
+      "loading": "Loading...",
+      "empty": "You haven't blocked anyone yet.",
+      "unblock": "Unblock"
     }
   },
   "companies": {
@@ -929,7 +937,9 @@
       "canceled": "Invitation cancelled",
       "accepted": "Invitation accepted",
       "rejected": "Invitation declined",
-      "removed": "Connection removed"
+      "removed": "Connection removed",
+      "blocked": "User blocked",
+      "unblocked": "User unblocked"
     },
     "errors": {
       "invalidUser": "Invalid user",
@@ -949,10 +959,23 @@
       "connectionNotFound": "Connection not found",
       "noRemovePermission": "You don't have permission to remove this connection",
       "notAccepted": "This connection is not established",
-      "unexpected": "Something went wrong, please try again"
+      "unexpected": "Something went wrong, please try again",
+      "selfBlock": "You can't block yourself",
+      "cannotBlockAdmin": "You can't block an administrator",
+      "alreadyBlocked": "You've already blocked this user",
+      "notBlocked": "You haven't blocked this user"
     },
     "validation": {
       "keywordMax": "Keyword up to 100 characters"
+    },
+    "block": {
+      "menuLabel": "More options",
+      "block": "Block user",
+      "unblock": "Unblock",
+      "confirmTitle": "Block this user?",
+      "confirmDescription": "Are you sure you want to block {name}? You won't be able to message each other, send connection requests, or see each other's activity. Any existing connection will be removed.",
+      "confirm": "Block",
+      "cancel": "Cancel"
     }
   },
   "home": {

@@ -13,17 +13,29 @@ import { toast } from "sonner"
 import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
 import {
+  blockUserAction,
   cancelConnectionRequestAction,
+  getBlockStatusAction,
   getConnectionRelationAction,
   getNetworkOverviewAction,
+  listBlockedUsersAction,
   removeConnectionAction,
   respondConnectionRequestAction,
   sendConnectionRequestAction,
+  unblockUserAction,
 } from "../api/actions"
-import type { ConnectionItem, ConnectionRelation, NetworkOverview } from "../types"
+import type {
+  BlockStatus,
+  BlockedUserItem,
+  ConnectionItem,
+  ConnectionRelation,
+  NetworkOverview,
+} from "../types"
 
 export const NETWORK_OVERVIEW_KEY = ["network", "overview"] as const
 export const CONNECTION_RELATION_KEY = ["network", "relation"] as const
+export const BLOCK_STATUS_KEY = ["network", "block-status"] as const
+export const BLOCKED_USERS_KEY = ["network", "blocked-users"] as const
 const SENT_IDS_KEY = ["network", "sent-ids"] as const
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -361,4 +373,89 @@ export function useRealtimeConnections(currentUserId: number | null) {
       void supabase.removeChannel(channel)
     }
   }, [currentUserId, queryClient])
+}
+
+// ---------------------------------------------------------------------------
+// Blocks (UC-46 / UC-47)
+// ---------------------------------------------------------------------------
+
+// Trạng thái "tôi đã chặn người này" — dùng cho menu hành động trên hồ sơ.
+export function useBlockStatus(targetUserId: number, initialData?: BlockStatus) {
+  return useQuery<BlockStatus>({
+    queryKey: [...BLOCK_STATUS_KEY, targetUserId],
+    queryFn: () => getBlockStatusAction(targetUserId),
+    initialData,
+    staleTime: 30_000,
+  })
+}
+
+// Danh sách tài khoản đã bị chặn — dùng cho trang Cài đặt.
+export function useBlockedUsers(initialData?: BlockedUserItem[]) {
+  return useQuery<BlockedUserItem[]>({
+    queryKey: BLOCKED_USERS_KEY,
+    queryFn: listBlockedUsersAction,
+    initialData,
+    staleTime: 30_000,
+  })
+}
+
+export function useBlockUser() {
+  const qc = useQueryClient()
+  const t = useTranslations("network.toast")
+  return useMutation<void, Error, number>({
+    mutationFn: (targetUserId) => run(blockUserAction, targetUserId),
+    onSuccess: (_data, targetUserId) => {
+      qc.setQueryData<BlockStatus>([...BLOCK_STATUS_KEY, targetUserId], {
+        blockedByMe: true,
+      })
+      toast.success(t("blocked"))
+    },
+    onError: (error) => toast.error(error.message),
+    onSettled: (_data, _error, targetUserId) => {
+      // Chặn cũng cắt kết nối → làm mới overview + quan hệ + danh sách chặn.
+      invalidateAfter(qc)
+      qc.invalidateQueries({ queryKey: BLOCKED_USERS_KEY })
+      qc.invalidateQueries({ queryKey: [...BLOCK_STATUS_KEY, targetUserId] })
+      qc.invalidateQueries({
+        queryKey: [...CONNECTION_RELATION_KEY, targetUserId],
+      })
+    },
+  })
+}
+
+export function useUnblockUser() {
+  const qc = useQueryClient()
+  const t = useTranslations("network.toast")
+  return useMutation<
+    void,
+    Error,
+    number,
+    { snapshot?: BlockedUserItem[] }
+  >({
+    mutationFn: (targetUserId) => run(unblockUserAction, targetUserId),
+    onMutate: async (targetUserId) => {
+      await qc.cancelQueries({ queryKey: BLOCKED_USERS_KEY })
+      const snapshot = qc.getQueryData<BlockedUserItem[]>(BLOCKED_USERS_KEY)
+      qc.setQueryData<BlockedUserItem[]>(BLOCKED_USERS_KEY, (prev) =>
+        (prev ?? []).filter((u) => u.userId !== targetUserId),
+      )
+      return { snapshot }
+    },
+    onError: (error, _targetUserId, context) => {
+      if (context?.snapshot) {
+        qc.setQueryData(BLOCKED_USERS_KEY, context.snapshot)
+      }
+      toast.error(error.message)
+    },
+    onSuccess: (_data, targetUserId) => {
+      qc.setQueryData<BlockStatus>([...BLOCK_STATUS_KEY, targetUserId], {
+        blockedByMe: false,
+      })
+      toast.success(t("unblocked"))
+    },
+    onSettled: (_data, _error, targetUserId) => {
+      qc.invalidateQueries({ queryKey: BLOCKED_USERS_KEY })
+      qc.invalidateQueries({ queryKey: [...BLOCK_STATUS_KEY, targetUserId] })
+    },
+  })
 }
