@@ -3,14 +3,18 @@
 import { getTranslations } from "next-intl/server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
-import { createClient } from "@/lib/supabase/server"
 
-import { sendPasswordResetEmail } from "./auth-mailer"
+import {
+  createUserAndSendVerification,
+  sendPasswordResetEmail,
+} from "./auth-mailer"
 
 import {
   COMPANY_SIZE_OPTIONS,
   createCompanyRegisterSchema,
+  createMemberRegisterSchema,
   type CompanyRegisterInput,
+  type MemberRegisterInput,
 } from "../schemas"
 
 export type CompanyRegisterResult =
@@ -60,30 +64,23 @@ export async function registerCompanyAction(
     }
   }
 
-  const supabase = await createClient()
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+  // Tạo user + gửi email xác minh qua SMTP của Admin (không dùng email Supabase).
+  const created = await createUserAndSendVerification({
     email: data.email,
     password: data.password,
-    options: {
-      data: {
-        role: "company",
-        company_name: data.companyName,
-      },
-    },
+    data: { role: "company", company_name: data.companyName },
   })
-
-  if (signUpError) {
+  if (!created.ok) {
+    const dup =
+      created.code === "email_exists" ||
+      created.code === "user_already_exists"
     return {
       ok: false,
-      code: signUpError.code ?? undefined,
-      error: signUpError.message,
+      code: created.code,
+      error: dup ? tErr("userAlreadyExists") : tErr("registrationFailed"),
     }
   }
-
-  const authId = signUpData.user?.id
-  if (!authId) {
-    return { ok: false, error: tErr("registrationFailed") }
-  }
+  const authId = created.authId
 
   const { data: userRow, error: userLookupError } = await admin
     .from("users")
@@ -127,8 +124,6 @@ export async function registerCompanyAction(
     })
     .eq("id", userRow.id)
 
-  await supabase.auth.signOut()
-
   return { ok: true }
 }
 
@@ -141,6 +136,41 @@ export async function requestPasswordResetAction(input: {
   const email = (input.email ?? "").trim().toLowerCase()
   if (email && /.+@.+\..+/.test(email)) {
     await sendPasswordResetEmail(email, input.locale === "en" ? "en" : "vi")
+  }
+  return { ok: true }
+}
+
+// Đăng ký Cá nhân (server): tạo user + gửi email xác minh qua SMTP của Admin.
+// Trigger handle_new_user tự tạo public.users + member_profile theo data.role.
+export async function registerMemberAction(
+  input: MemberRegisterInput,
+): Promise<{ ok: true } | { ok: false; error: string; code?: string }> {
+  const tv = await getTranslations("auth.validation")
+  const tErr = await getTranslations("auth.errors")
+
+  const parsed = createMemberRegisterSchema(tv).safeParse(input)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? tErr("registrationFailed"),
+    }
+  }
+  const data = parsed.data
+
+  const created = await createUserAndSendVerification({
+    email: data.email,
+    password: data.password,
+    data: { role: "member", full_name: data.fullName },
+  })
+  if (!created.ok) {
+    const dup =
+      created.code === "email_exists" ||
+      created.code === "user_already_exists"
+    return {
+      ok: false,
+      code: created.code,
+      error: dup ? tErr("userAlreadyExists") : tErr("registrationFailed"),
+    }
   }
   return { ok: true }
 }

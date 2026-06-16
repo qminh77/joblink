@@ -114,3 +114,61 @@ export async function sendPasswordResetEmail(
   if (!res.ok) console.error("[auth-mailer] sendMail recovery", res.error)
   return res.ok
 }
+
+function verifyStrings(site: string, locale: AuthMailLocale): RecoveryStrings {
+  if (locale === "en") {
+    return {
+      subject: `Verify your ${site} email`,
+      heading: "Verify your email",
+      intro: `Thanks for signing up for ${site}. Click the button below to verify your email and activate your account.`,
+      button: "Verify email",
+      hint: "If you didn't create this account, you can safely ignore this email.",
+    }
+  }
+  return {
+    subject: `Xác minh email ${site}`,
+    heading: "Xác minh email",
+    intro: `Cảm ơn bạn đã đăng ký ${site}. Nhấn nút bên dưới để xác minh email và kích hoạt tài khoản.`,
+    button: "Xác minh email",
+    hint: "Nếu bạn không tạo tài khoản này, hãy bỏ qua email.",
+  }
+}
+
+// Tạo tài khoản (chưa xác minh) bằng admin.generateLink('signup') — KHÔNG tự gửi
+// — rồi gửi email xác minh qua SMTP. Trigger handle_new_user tự tạo
+// public.users + profile theo data.role. Trả authId để caller (company) cập nhật
+// hồ sơ. Email trùng → ok:false kèm code.
+export async function createUserAndSendVerification(input: {
+  email: string
+  password: string
+  data: Record<string, unknown>
+  locale?: AuthMailLocale
+}): Promise<{ ok: true; authId: string } | { ok: false; code: string }> {
+  const admin = createAdminClient()
+  const redirectTo = `${siteUrl()}/auth/callback?next=/home`
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "signup",
+    email: input.email,
+    password: input.password,
+    options: { data: input.data, redirectTo },
+  })
+  const link = data?.properties?.action_link
+  if (error || !link || !data?.user) {
+    return { ok: false, code: error?.code || "signup_failed" }
+  }
+
+  const site = await siteName()
+  const s = verifyStrings(site, input.locale ?? "vi")
+  const { html, text } = renderEmail({
+    site,
+    heading: s.heading,
+    intro: s.intro,
+    buttonLabel: s.button,
+    link,
+    hint: s.hint,
+  })
+  const res = await sendMail({ to: input.email, subject: s.subject, html, text })
+  if (!res.ok) console.error("[auth-mailer] sendMail verify", res.error)
+  return { ok: true, authId: data.user.id }
+}

@@ -5,8 +5,10 @@ import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { registerCompanyAction } from "../api/auth-actions"
-import { signUpMemberClient } from "../api/auth-client"
+import {
+  registerCompanyAction,
+  registerMemberAction,
+} from "../api/auth-actions"
 import { getAuthErrorMessage } from "../lib/error-messages"
 import type { RegisterInput } from "../schemas"
 
@@ -29,8 +31,13 @@ export function useRegister() {
         }
         return { kind: "company" }
       }
-      const data = await signUpMemberClient(input)
-      return { kind: "member", hasSession: Boolean(data.session) }
+      // Đăng ký qua server action: tạo user + gửi email xác minh qua SMTP.
+      // Không tạo session — người dùng phải xác minh email trước khi đăng nhập.
+      const result = await registerMemberAction(input)
+      if (!result.ok) {
+        throw new Error(result.error)
+      }
+      return { kind: "member", hasSession: false }
     },
     onSuccess: (result) => {
       if (result.kind === "company") {

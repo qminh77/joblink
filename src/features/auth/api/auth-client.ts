@@ -2,34 +2,13 @@
 
 import { createClient } from "@/lib/supabase/client"
 
-import type { LoginInput, MemberRegisterInput } from "../schemas"
+import type { LoginInput } from "../schemas"
 
 export async function signInWithPasswordClient(input: LoginInput) {
   const supabase = createClient()
   const { data, error } = await supabase.auth.signInWithPassword({
     email: input.email,
     password: input.password,
-  })
-
-  if (error) throw error
-  return data
-}
-
-export async function signUpMemberClient(input: MemberRegisterInput) {
-  const supabase = createClient()
-
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/auth/callback`
-      : undefined
-
-  const { data, error } = await supabase.auth.signUp({
-    email: input.email,
-    password: input.password,
-    options: {
-      data: { role: "member", full_name: input.fullName },
-      emailRedirectTo: redirectTo,
-    },
   })
 
   if (error) throw error
