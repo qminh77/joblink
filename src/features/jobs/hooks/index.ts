@@ -14,8 +14,15 @@ import {
   toggleSavedJobAction,
   withdrawApplicationAction,
 } from "../api/actions"
+import {
+  createJobAlertAction,
+  deleteJobAlertAction,
+  listJobAlertsAction,
+} from "../api/alert-actions"
 import type {
   ApplyResult,
+  JobAlert,
+  JobAlertFilters,
   JobsListPage,
   RespondInterviewResult,
   SavedJobsPage,
@@ -235,5 +242,63 @@ export function useToggleSavedJob(options?: {
       options?.onRollback?.()
       toast.error(translateJobsError(te, error.message))
     },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Cảnh báo việc làm (UC-57/58)
+// ---------------------------------------------------------------------------
+export const JOB_ALERTS_KEY = ["jobs", "alerts"] as const
+
+export function useJobAlerts() {
+  return useQuery<JobAlert[]>({
+    queryKey: JOB_ALERTS_KEY,
+    queryFn: listJobAlertsAction,
+    staleTime: 30_000,
+  })
+}
+
+export function useCreateJobAlert() {
+  const qc = useQueryClient()
+  const t = useTranslations("jobs.alerts")
+  return useMutation({
+    mutationFn: async (input: {
+      name?: string | null
+      filters: JobAlertFilters
+    }) => {
+      const r = await createJobAlertAction(input)
+      if (!r.ok) throw new Error(r.error)
+      return r
+    },
+    onSuccess: () => {
+      toast.success(t("created"))
+      qc.invalidateQueries({ queryKey: JOB_ALERTS_KEY })
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+}
+
+export function useDeleteJobAlert() {
+  const qc = useQueryClient()
+  const t = useTranslations("jobs.alerts")
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const r = await deleteJobAlertAction(id)
+      if (!r.ok) throw new Error(r.error)
+    },
+    onMutate: async (id: number) => {
+      await qc.cancelQueries({ queryKey: JOB_ALERTS_KEY })
+      const prev = qc.getQueryData<JobAlert[]>(JOB_ALERTS_KEY)
+      qc.setQueryData<JobAlert[]>(JOB_ALERTS_KEY, (old) =>
+        (old ?? []).filter((a) => a.id !== id),
+      )
+      return { prev }
+    },
+    onError: (error: Error, _id, ctx) => {
+      if (ctx?.prev) qc.setQueryData(JOB_ALERTS_KEY, ctx.prev)
+      toast.error(error.message)
+    },
+    onSuccess: () => toast.success(t("deleted")),
+    onSettled: () => qc.invalidateQueries({ queryKey: JOB_ALERTS_KEY }),
   })
 }

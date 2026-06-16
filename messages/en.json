@@ -897,7 +897,10 @@
       "jobTypeRequired": "Please select a job type",
       "workModeRequired": "Please select a work mode",
       "interviewNotFound": "Interview not found",
-      "unknown": "Something went wrong, please try again"
+      "unknown": "Something went wrong, please try again",
+      "alertLimit": "You've reached the maximum number of alerts (20)",
+      "invalidAlert": "Invalid alert",
+      "unexpected": "Something went wrong, please try again"
     },
     "applications": {
       "heading": "My applications",
@@ -916,6 +919,15 @@
         "declined": "You declined"
       },
       "withdraw": "Withdraw"
+    },
+    "alerts": {
+      "title": "Job alerts",
+      "create": "Create alert from filters",
+      "created": "Job alert created",
+      "deleted": "Alert deleted",
+      "delete": "Delete",
+      "empty": "No alerts yet",
+      "allJobs": "All jobs"
     }
   },
   "network": {

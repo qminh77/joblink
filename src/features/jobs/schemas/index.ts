@@ -7,6 +7,22 @@ const MAX_DESCRIPTION = 20_000
 const MAX_REQUIREMENTS = 10_000
 const MAX_COVER_LETTER = 5000
 
+// UC-57: lưu bộ lọc tìm việc thành cảnh báo. Validate cấu trúc (không cần dịch).
+export const jobAlertFiltersSchema = z.object({
+  search: z.string().trim().max(200).nullable().optional(),
+  provinceId: z.number().int().positive().nullable().optional(),
+  jobTypeIds: z.array(z.number().int().positive()).max(20).nullable().optional(),
+  workModeIds: z.array(z.number().int().positive()).max(20).nullable().optional(),
+  salaryMin: z.number().int().nonnegative().nullable().optional(),
+})
+
+export const createJobAlertSchema = z.object({
+  name: z.string().trim().max(160).nullable().optional(),
+  filters: jobAlertFiltersSchema,
+})
+
+export type CreateJobAlertInput = z.infer<typeof createJobAlertSchema>
+
 export function createJobSchema(t: Translator) {
   return z
     .object({

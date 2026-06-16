@@ -150,6 +150,24 @@ export type WithdrawResult =
   | { ok: true; status: string }
   | { ok: false; error: string }
 
+// ── Cảnh báo việc làm (UC-57/58) ─────────────────────────────────────────────
+// Bộ lọc tìm việc được lưu thành cảnh báo (tập con của JobsListFilters).
+export type JobAlertFilters = {
+  search?: string | null
+  provinceId?: number | null
+  jobTypeIds?: number[] | null
+  workModeIds?: number[] | null
+  salaryMin?: number | null
+}
+
+export type JobAlert = {
+  id: number
+  name: string
+  filters: JobAlertFilters
+  alertEnabled: boolean
+  createdAt: string
+}
+
 export type ApplicationStatusValue =
   | "applied"
   | "reviewed"

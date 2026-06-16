@@ -897,7 +897,10 @@
       "jobTypeRequired": "Vui lòng chọn loại hình",
       "workModeRequired": "Vui lòng chọn hình thức",
       "interviewNotFound": "Không tìm thấy lịch phỏng vấn",
-      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
+      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại",
+      "alertLimit": "Bạn đã đạt giới hạn số cảnh báo (tối đa 20)",
+      "invalidAlert": "Cảnh báo không hợp lệ",
+      "unexpected": "Đã xảy ra lỗi, vui lòng thử lại"
     },
     "applications": {
       "heading": "Đơn ứng tuyển của tôi",
@@ -916,6 +919,15 @@
         "declined": "Bạn đã từ chối"
       },
       "withdraw": "Rút đơn"
+    },
+    "alerts": {
+      "title": "Cảnh báo việc làm",
+      "create": "Tạo cảnh báo từ bộ lọc",
+      "created": "Đã tạo cảnh báo việc làm",
+      "deleted": "Đã xóa cảnh báo",
+      "delete": "Xóa",
+      "empty": "Chưa có cảnh báo nào",
+      "allJobs": "Tất cả việc làm"
     }
   },
   "network": {
