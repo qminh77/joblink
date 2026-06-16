@@ -566,7 +566,7 @@
     },
     "notifications": {
       "title": "Tùy chỉnh thông báo",
-      "subtitle": "Chọn kênh nhận cho từng loại thông báo. Kênh trong ứng dụng có hiệu lực ngay; email áp dụng khi hệ thống bật gửi email.",
+      "subtitle": "Chọn kênh nhận cho từng loại thông báo. Trong ứng dụng mặc định bật; bật Email để nhận thêm qua hộp thư (mặc định tắt).",
       "items": {
         "like": "Thích bài viết",
         "likeDesc": "Khi ai đó thích bài viết của bạn",

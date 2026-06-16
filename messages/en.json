@@ -566,7 +566,7 @@
     },
     "notifications": {
       "title": "Notification preferences",
-      "subtitle": "Choose which channels to use for each type of notification. In-app applies immediately; email applies once email delivery is enabled.",
+      "subtitle": "Choose channels for each notification type. In-app is on by default; turn on Email to also receive them in your inbox (off by default).",
       "items": {
         "like": "Post likes",
         "likeDesc": "When someone likes your post",

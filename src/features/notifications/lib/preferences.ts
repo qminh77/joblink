@@ -42,10 +42,11 @@ export type NotificationPreferenceMap = Record<
   NotificationChannelPref
 >
 
-// Mặc định bật tất cả khi người dùng chưa có cấu hình (không có dòng nào).
+// Mặc định: in-app BẬT, email TẮT (opt-in) khi chưa có cấu hình — tránh spam
+// hộp thư. Người dùng tự bật Email cho từng nhóm trong Cài đặt thông báo.
 export const DEFAULT_CHANNEL_PREF: NotificationChannelPref = {
   inApp: true,
-  email: true,
+  email: false,
 }
 
 export function defaultPreferenceMap(): NotificationPreferenceMap {
