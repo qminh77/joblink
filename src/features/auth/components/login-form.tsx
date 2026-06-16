@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
@@ -25,6 +26,7 @@ import {
   type RecaptchaConfig,
 } from "@/features/system-settings/components/use-recaptcha"
 
+import { challengeAndVerify } from "../api/mfa-client"
 import { useLogin } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
 
@@ -46,11 +48,41 @@ export function LoginForm({
     defaultValues: { email: "", password: "", remember: false },
   })
 
-  const login = useLogin()
+  const router = useRouter()
+  const [mfaStep, setMfaStep] = useState(false)
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null)
+  const [mfaCode, setMfaCode] = useState("")
+  const [verifyingMfa, setVerifyingMfa] = useState(false)
+
+  const login = useLogin({
+    onMfaRequired: (factorId) => {
+      setMfaFactorId(factorId)
+      setMfaStep(true)
+    },
+  })
   const { enabled: captchaEnabled, getToken } = useRecaptcha(
     recaptcha ?? { enabled: false, siteKey: null },
   )
   const [verifying, setVerifying] = useState(false)
+
+  // UC-09/10: bước nhập mã 2FA sau khi mật khẩu đúng (tài khoản đã bật 2FA).
+  async function submitMfa() {
+    if (mfaCode.trim().length < 6) return
+    if (!mfaFactorId) {
+      toast.error(tErr("mfaUnavailable"))
+      return
+    }
+    setVerifyingMfa(true)
+    try {
+      await challengeAndVerify(mfaFactorId, mfaCode.trim())
+      toast.success(t("success"))
+      router.push("/home")
+    } catch {
+      toast.error(tErr("mfaInvalid"))
+    } finally {
+      setVerifyingMfa(false)
+    }
+  }
 
   async function onSubmit(values: LoginInput) {
     if (captchaEnabled) {
@@ -64,6 +96,37 @@ export function LoginForm({
       }
     }
     login.mutate(values)
+  }
+
+  if (mfaStep) {
+    return (
+      <div className="w-full space-y-4">
+        <div className="space-y-1">
+          <h2 className="font-headline font-bold text-lg text-foreground">
+            {t("mfa.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("mfa.hint")}</p>
+        </div>
+        <Input
+          value={mfaCode}
+          onChange={(e) =>
+            setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          placeholder="000000"
+          className="h-12 rounded-xl text-center tracking-[0.4em] text-lg"
+        />
+        <Button
+          type="button"
+          onClick={submitMfa}
+          disabled={verifyingMfa || mfaCode.trim().length < 6}
+          className="w-full h-12 text-base font-semibold rounded-xl"
+        >
+          {verifyingMfa ? t("mfa.verifying") : t("mfa.verify")}
+        </Button>
+      </div>
+    )
   }
 
   return (

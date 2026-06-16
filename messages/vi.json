@@ -193,7 +193,13 @@
       "register": "Đăng ký ngay",
       "success": "Đăng nhập thành công",
       "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA",
-      "orContinueWith": "Hoặc tiếp tục với"
+      "orContinueWith": "Hoặc tiếp tục với",
+      "mfa": {
+        "title": "Xác thực hai lớp",
+        "hint": "Nhập mã 6 số từ ứng dụng xác thực của bạn.",
+        "verify": "Xác nhận",
+        "verifying": "Đang xác nhận..."
+      }
     },
     "register": {
       "title": "Tạo tài khoản",
@@ -278,7 +284,9 @@
       "accountBanned": "Tài khoản đã bị cấm.",
       "taxIdAlreadyExists": "Mã số thuế này đã được đăng ký.",
       "registrationFailed": "Đăng ký không thành công, vui lòng thử lại.",
-      "recaptchaFailed": "Xác thực reCAPTCHA thất bại. Vui lòng thử lại."
+      "recaptchaFailed": "Xác thực reCAPTCHA thất bại. Vui lòng thử lại.",
+      "mfaInvalid": "Mã xác thực không đúng",
+      "mfaUnavailable": "Không tìm thấy thiết bị 2FA, vui lòng thử lại"
     },
     "validation": {
       "emailRequired": "Vui lòng nhập email",
@@ -622,6 +630,27 @@
         "accepted": "Đã chấp nhận",
         "rejected": "Đã từ chối"
       }
+    },
+    "twoFactor": {
+      "title": "Xác thực hai lớp (2FA)",
+      "subtitle": "Bảo vệ tài khoản bằng mã từ ứng dụng xác thực (Google Authenticator).",
+      "statusOn": "Đang bật",
+      "enable": "Bật 2FA",
+      "preparing": "Đang chuẩn bị...",
+      "scanHint": "Quét mã QR bằng Google Authenticator (hoặc app TOTP khác), rồi nhập mã 6 số.",
+      "secretHint": "Hoặc nhập thủ công khóa bí mật:",
+      "codeLabel": "Mã xác thực",
+      "verify": "Xác nhận",
+      "verifying": "Đang xác nhận...",
+      "cancel": "Hủy",
+      "enabled": "Đã bật xác thực hai lớp",
+      "invalidCode": "Mã không đúng, vui lòng thử lại",
+      "enrollError": "Không thể bật 2FA, vui lòng thử lại",
+      "disable": "Tắt 2FA",
+      "disabled": "Đã tắt xác thực hai lớp",
+      "disableError": "Không thể tắt 2FA, vui lòng thử lại",
+      "disableTitle": "Tắt xác thực hai lớp?",
+      "disableDescription": "Tài khoản sẽ kém an toàn hơn. Bạn có chắc muốn tắt 2FA?"
     }
   },
   "companies": {

@@ -23,6 +23,7 @@ import { createAccountSchema, type AccountInput } from "@/features/settings/sche
 
 import { ChangePasswordCard } from "./change-password-card"
 import { LocaleCard } from "./locale-card"
+import { TwoFactorCard } from "./two-factor-card"
 
 const STATUS_TONES: Record<SessionUserSummary["status"], string> = {
   active: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
@@ -149,6 +150,7 @@ export function AccountInfoCard({
       </Card>
 
       <ChangePasswordCard />
+      <TwoFactorCard />
       <LocaleCard initialLocale={locale} />
     </div>
   )

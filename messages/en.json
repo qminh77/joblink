@@ -193,7 +193,13 @@
       "register": "Sign up",
       "success": "Signed in successfully",
       "protectedByRecaptcha": "Protected by Google reCAPTCHA",
-      "orContinueWith": "Or continue with"
+      "orContinueWith": "Or continue with",
+      "mfa": {
+        "title": "Two-factor authentication",
+        "hint": "Enter the 6-digit code from your authenticator app.",
+        "verify": "Confirm",
+        "verifying": "Confirming..."
+      }
     },
     "register": {
       "title": "Create an account",
@@ -278,7 +284,9 @@
       "accountBanned": "This account has been banned.",
       "taxIdAlreadyExists": "This Tax ID is already registered.",
       "registrationFailed": "Registration failed, please try again.",
-      "recaptchaFailed": "reCAPTCHA verification failed. Please try again."
+      "recaptchaFailed": "reCAPTCHA verification failed. Please try again.",
+      "mfaInvalid": "Invalid verification code",
+      "mfaUnavailable": "No 2FA device found, please try again"
     },
     "validation": {
       "emailRequired": "Please enter your email",
@@ -622,6 +630,27 @@
         "accepted": "Accepted",
         "rejected": "Rejected"
       }
+    },
+    "twoFactor": {
+      "title": "Two-factor authentication (2FA)",
+      "subtitle": "Protect your account with a code from an authenticator app (Google Authenticator).",
+      "statusOn": "Enabled",
+      "enable": "Enable 2FA",
+      "preparing": "Preparing...",
+      "scanHint": "Scan the QR code with Google Authenticator (or another TOTP app), then enter the 6-digit code.",
+      "secretHint": "Or enter the secret key manually:",
+      "codeLabel": "Verification code",
+      "verify": "Confirm",
+      "verifying": "Confirming...",
+      "cancel": "Cancel",
+      "enabled": "Two-factor authentication enabled",
+      "invalidCode": "Incorrect code, please try again",
+      "enrollError": "Couldn't enable 2FA, please try again",
+      "disable": "Disable 2FA",
+      "disabled": "Two-factor authentication disabled",
+      "disableError": "Couldn't disable 2FA, please try again",
+      "disableTitle": "Disable two-factor authentication?",
+      "disableDescription": "Your account will be less secure. Are you sure you want to disable 2FA?"
     }
   },
   "companies": {
