@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import { ActionError, action, assertOk } from "@/lib/action/server"
+import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 
 import { loadNotifications, loadUnreadCount } from "./queries"
@@ -13,6 +13,16 @@ import {
   markNotificationRead,
   verifyNotificationTarget,
 } from "../data/notifications.repo"
+import { listPreferences, upsertPreference } from "../data/preferences.repo"
+import {
+  defaultPreferenceMap,
+  type NotificationCategory,
+  type NotificationPreferenceMap,
+} from "../lib/preferences"
+import {
+  updateNotificationPreferenceSchema,
+  type UpdateNotificationPreferenceInput,
+} from "../schemas"
 import type { NotificationItem } from "../types"
 
 function revalidateNotifications() {
@@ -62,5 +72,46 @@ export async function markAllNotificationsReadAction(): Promise<ActionResult> {
       "unexpected",
     )
     revalidateNotifications()
+  })
+}
+
+// ── Preferences (UC-65) ──────────────────────────────────────────────────────
+
+export async function getNotificationPreferencesAction(): Promise<NotificationPreferenceMap> {
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+  const { data } = await listPreferences(supabase, current.appUser.id)
+
+  const map = defaultPreferenceMap()
+  for (const row of data ?? []) {
+    const category = row.type as NotificationCategory
+    if (category in map) {
+      map[category] = {
+        inApp: row.in_app_enabled,
+        email: row.email_enabled,
+      }
+    }
+  }
+  return map
+}
+
+export async function updateNotificationPreferenceAction(
+  input: UpdateNotificationPreferenceInput,
+): Promise<ActionResult> {
+  return action("notifications.errors", async () => {
+    const data = parse(updateNotificationPreferenceSchema, input)
+    const current = await requireCurrentUser()
+    const supabase = await createClient()
+    assertOk(
+      await upsertPreference(
+        supabase,
+        current.appUser.id,
+        data.category,
+        data.inApp,
+        data.email,
+      ),
+      "unexpected",
+    )
+    revalidatePath("/settings")
   })
 }

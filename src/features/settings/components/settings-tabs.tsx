@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl"
 import { Ban, Bell, Building2, Globe, Shield, User } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { SessionUserSummary } from "@/features/auth/types"
 import { CompanyVerificationCard } from "@/features/companies/components/company-verification-card"
@@ -17,6 +16,7 @@ import type { ProvinceRow } from "@/types/database"
 
 import { AccountInfoCard } from "./account-info-card"
 import { BlockedAccountsCard } from "./blocked-accounts-card"
+import { NotificationPreferencesCard } from "./notification-preferences-card"
 import { OpenToHireCard } from "./open-to-hire-card"
 import { PrivacyCard } from "./privacy-card"
 
@@ -24,22 +24,6 @@ type Profile =
   | { kind: "member"; data: MemberProfileDetail }
   | { kind: "company"; data: CompanyProfileDetail }
   | null
-
-const NOTIFICATION_KEYS = [
-  "like",
-  "comment",
-  "newConnection",
-  "message",
-  "jobMatch",
-] as const
-
-const NOTIFICATION_DEFAULTS: Record<(typeof NOTIFICATION_KEYS)[number], boolean> = {
-  like: true,
-  comment: true,
-  newConnection: true,
-  message: true,
-  jobMatch: false,
-}
 
 export function SettingsTabs({
   user,
@@ -53,7 +37,6 @@ export function SettingsTabs({
   locale: string
 }) {
   const t = useTranslations("settings")
-  const tn = useTranslations("settings.notifications.items")
 
   const isCompany = profile?.kind === "company"
 
@@ -139,30 +122,7 @@ export function SettingsTabs({
       </TabsContent>
 
       <TabsContent value="notifications" className="mt-6">
-        <Card className="rounded-2xl bg-card border-border/40 p-6 space-y-1">
-          <h2 className="font-headline font-bold text-base text-foreground mb-1">
-            {t("notifications.title")}
-          </h2>
-          <p className="text-xs text-muted-foreground mb-4">
-            {t("notifications.subtitle")}
-          </p>
-          {NOTIFICATION_KEYS.map((key) => (
-            <div
-              key={key}
-              className="flex items-center justify-between p-3.5 rounded-xl hover:bg-muted/30 transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {tn(key)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {tn(`${key}Desc`)}
-                </p>
-              </div>
-              <Switch defaultChecked={NOTIFICATION_DEFAULTS[key]} disabled />
-            </div>
-          ))}
-        </Card>
+        <NotificationPreferencesCard />
       </TabsContent>
 
       <TabsContent value="language" className="mt-6">

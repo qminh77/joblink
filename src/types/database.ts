@@ -300,7 +300,9 @@ export type NotificationRow = {
 export type NotificationPreferenceRow = {
   id: number
   user_id: number
-  type: NotificationType
+  // Khoá nhóm tùy chỉnh (NotificationCategory, vd "like"/"message"), KHÔNG phải
+  // NotificationType — cột VARCHAR(80) gom nhiều loại notification vào 1 nhóm.
+  type: string
   in_app_enabled: boolean
   email_enabled: boolean
 }

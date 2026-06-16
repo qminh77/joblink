@@ -2,20 +2,26 @@
 
 import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
 import {
+  getNotificationPreferencesAction,
   getNotificationsAction,
   getUnreadCountAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
+  updateNotificationPreferenceAction,
 } from "../api/actions"
+import type { NotificationPreferenceMap } from "../lib/preferences"
+import type { UpdateNotificationPreferenceInput } from "../schemas"
 import type { NotificationItem } from "../types"
 
 export const NOTIFICATIONS_KEY = ["notifications", "list"] as const
 export const UNREAD_KEY = ["notifications", "unread"] as const
+export const NOTIFICATION_PREFS_KEY = ["notifications", "preferences"] as const
 
 export function useNotifications() {
   return useQuery<NotificationItem[]>({
@@ -93,4 +99,55 @@ export function useRealtimeNotifications(currentUserId: number | null) {
       void supabase.removeChannel(channel)
     }
   }, [currentUserId, queryClient])
+}
+
+// ---------------------------------------------------------------------------
+// Preferences (UC-65)
+// ---------------------------------------------------------------------------
+
+export function useNotificationPreferences() {
+  return useQuery<NotificationPreferenceMap>({
+    queryKey: NOTIFICATION_PREFS_KEY,
+    queryFn: getNotificationPreferencesAction,
+    staleTime: 60_000,
+  })
+}
+
+export function useUpdateNotificationPreference() {
+  const queryClient = useQueryClient()
+  const t = useTranslations("settings.notifications")
+  return useMutation<
+    void,
+    Error,
+    UpdateNotificationPreferenceInput,
+    { snapshot?: NotificationPreferenceMap }
+  >({
+    mutationFn: async (input) => {
+      const result = await updateNotificationPreferenceAction(input)
+      if (!result.ok) throw new Error(result.error)
+    },
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATION_PREFS_KEY })
+      const snapshot = queryClient.getQueryData<NotificationPreferenceMap>(
+        NOTIFICATION_PREFS_KEY,
+      )
+      queryClient.setQueryData<NotificationPreferenceMap>(
+        NOTIFICATION_PREFS_KEY,
+        (prev) =>
+          prev
+            ? { ...prev, [input.category]: { inApp: input.inApp, email: input.email } }
+            : prev,
+      )
+      return { snapshot }
+    },
+    onError: (error, _input, context) => {
+      if (context?.snapshot) {
+        queryClient.setQueryData(NOTIFICATION_PREFS_KEY, context.snapshot)
+      }
+      toast.error(error.message)
+    },
+    onSuccess: () => toast.success(t("saved")),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: NOTIFICATION_PREFS_KEY }),
+  })
 }

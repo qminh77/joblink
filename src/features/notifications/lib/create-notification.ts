@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import type { Json, NotificationType } from "@/types/database"
 
 import type { NotificationPayload } from "../types"
+import { CATEGORY_BY_TYPE } from "./preferences"
 
 type CreateNotificationInput = {
   userId: number
@@ -17,6 +18,18 @@ export async function createNotification({
   payload,
 }: CreateNotificationInput): Promise<void> {
   const admin = createAdminClient()
+
+  // UC-65: tôn trọng tùy chỉnh của người NHẬN. Nếu họ đã tắt kênh trong-ứng-dụng
+  // cho nhóm tương ứng thì không tạo notification (không có dòng = mặc định bật).
+  const category = CATEGORY_BY_TYPE[type]
+  const { data: pref } = await admin
+    .from("notification_preferences")
+    .select("in_app_enabled")
+    .eq("user_id", userId)
+    .eq("type", category)
+    .maybeSingle<{ in_app_enabled: boolean }>()
+  if (pref && pref.in_app_enabled === false) return
+
   const { error } = await admin.from("notifications").insert({
     user_id: userId,
     type,

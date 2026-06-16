@@ -532,7 +532,7 @@
     },
     "notifications": {
       "title": "Notification preferences",
-      "subtitle": "Channel configuration will be enabled when this feature is rolled out",
+      "subtitle": "Choose which channels to use for each type of notification. In-app applies immediately; email applies once email delivery is enabled.",
       "items": {
         "like": "Post likes",
         "likeDesc": "When someone likes your post",
@@ -544,7 +544,10 @@
         "messageDesc": "When you receive a new message",
         "jobMatch": "Job suggestions",
         "jobMatchDesc": "When a job matches your profile"
-      }
+      },
+      "inApp": "In-app",
+      "email": "Email",
+      "saved": "Notification preferences saved"
     },
     "validation": {
       "currentPasswordRequired": "Please enter the current password",

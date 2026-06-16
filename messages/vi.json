@@ -532,7 +532,7 @@
     },
     "notifications": {
       "title": "Tùy chỉnh thông báo",
-      "subtitle": "Cấu hình kênh thông báo sẽ được kích hoạt khi tính năng được triển khai",
+      "subtitle": "Chọn kênh nhận cho từng loại thông báo. Kênh trong ứng dụng có hiệu lực ngay; email áp dụng khi hệ thống bật gửi email.",
       "items": {
         "like": "Thích bài viết",
         "likeDesc": "Khi ai đó thích bài viết của bạn",
@@ -544,7 +544,10 @@
         "messageDesc": "Khi bạn nhận được tin nhắn mới",
         "jobMatch": "Việc làm gợi ý",
         "jobMatchDesc": "Khi có việc làm phù hợp với bạn"
-      }
+      },
+      "inApp": "Trong ứng dụng",
+      "email": "Email",
+      "saved": "Đã lưu tùy chỉnh thông báo"
     },
     "validation": {
       "currentPasswordRequired": "Vui lòng nhập mật khẩu hiện tại",
