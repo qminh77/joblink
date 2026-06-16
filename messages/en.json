@@ -192,7 +192,8 @@
       "noAccount": "Don't have an account?",
       "register": "Sign up",
       "success": "Signed in successfully",
-      "protectedByRecaptcha": "Protected by Google reCAPTCHA"
+      "protectedByRecaptcha": "Protected by Google reCAPTCHA",
+      "orContinueWith": "Or continue with"
     },
     "register": {
       "title": "Create an account",
@@ -305,6 +306,11 @@
       "textTooLong": "Text is too long",
       "termsRequired": "You must agree to the terms of service",
       "websiteInvalid": "Invalid website (must start with http:// or https://)"
+    },
+    "oauth": {
+      "google": "Continue with Google",
+      "redirecting": "Redirecting...",
+      "error": "Couldn't sign in with Google, please try again"
     }
   },
   "profile": {

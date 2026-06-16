@@ -28,6 +28,7 @@ import {
 import { useLogin } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
 
+import { GoogleSignInButton } from "./google-sign-in-button"
 import { PasswordInput } from "./password-input"
 
 export function LoginForm({
@@ -165,6 +166,16 @@ export function LoginForm({
             {t("protectedByRecaptcha")}
           </p>
         ) : null}
+
+        <div className="flex items-center gap-3 pt-1">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">
+            {t("orContinueWith")}
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <GoogleSignInButton />
       </form>
     </Form>
   )

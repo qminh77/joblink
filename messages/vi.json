@@ -192,7 +192,8 @@
       "noAccount": "Chưa có tài khoản?",
       "register": "Đăng ký ngay",
       "success": "Đăng nhập thành công",
-      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA"
+      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA",
+      "orContinueWith": "Hoặc tiếp tục với"
     },
     "register": {
       "title": "Tạo tài khoản",
@@ -305,6 +306,11 @@
       "textTooLong": "Nội dung quá dài",
       "termsRequired": "Bạn cần đồng ý với điều khoản dịch vụ",
       "websiteInvalid": "Website không hợp lệ (cần bắt đầu bằng http:// hoặc https://)"
+    },
+    "oauth": {
+      "google": "Tiếp tục với Google",
+      "redirecting": "Đang chuyển hướng...",
+      "error": "Không thể đăng nhập bằng Google, vui lòng thử lại"
     }
   },
   "profile": {
