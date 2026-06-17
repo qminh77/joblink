@@ -144,7 +144,10 @@ export async function requestPasswordResetAction(input: {
 // Trigger handle_new_user tự tạo public.users + member_profile theo data.role.
 export async function registerMemberAction(
   input: MemberRegisterInput,
-): Promise<{ ok: true } | { ok: false; error: string; code?: string }> {
+): Promise<
+  | { ok: true; verifyRequired: boolean }
+  | { ok: false; error: string; code?: string }
+> {
   const tv = await getTranslations("auth.validation")
   const tErr = await getTranslations("auth.errors")
 
@@ -172,5 +175,5 @@ export async function registerMemberAction(
       error: dup ? tErr("userAlreadyExists") : tErr("registrationFailed"),
     }
   }
-  return { ok: true }
+  return { ok: true, verifyRequired: created.verifyRequired }
 }

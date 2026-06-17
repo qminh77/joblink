@@ -260,7 +260,8 @@
       "phone": "Số điện thoại",
       "phonePlaceholder": "VD: 028 1234 5678",
       "about": "Giới thiệu công ty (tuỳ chọn)",
-      "aboutPlaceholder": "Mô tả ngắn về công ty, lĩnh vực hoạt động, ..."
+      "aboutPlaceholder": "Mô tả ngắn về công ty, lĩnh vực hoạt động, ...",
+      "successNoVerify": "Đăng ký thành công! Bạn có thể đăng nhập ngay."
     },
     "forgotPassword": {
       "title": "Quên mật khẩu?",
@@ -1636,7 +1637,8 @@
         "contact_map_url": "Liên kết bản đồ",
         "maintenance_mode": "Bật chế độ bảo trì",
         "maintenance_message": "Thông báo bảo trì",
-        "google_auth_enabled": "Cho phép đăng nhập Google"
+        "google_auth_enabled": "Cho phép đăng nhập Google",
+        "require_email_verification": "Bắt buộc xác minh email khi đăng ký"
       }
     },
     "lookups": {

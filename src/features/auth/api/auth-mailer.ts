@@ -134,17 +134,52 @@ function verifyStrings(site: string, locale: AuthMailLocale): RecoveryStrings {
   }
 }
 
-// Tạo tài khoản (chưa xác minh) bằng admin.generateLink('signup') — KHÔNG tự gửi
-// — rồi gửi email xác minh qua SMTP. Trigger handle_new_user tự tạo
-// public.users + profile theo data.role. Trả authId để caller (company) cập nhật
-// hồ sơ. Email trùng → ok:false kèm code.
+// Cờ admin: có bắt buộc xác minh email khi đăng ký không (mặc định CÓ).
+async function requireEmailVerification(): Promise<boolean> {
+  try {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from("system_settings")
+      .select("value")
+      .eq("setting_key", "require_email_verification")
+      .maybeSingle<{ value: unknown }>()
+    return data?.value !== false
+  } catch {
+    return true
+  }
+}
+
+// Tạo tài khoản + (tuỳ cấu hình) gửi email xác minh qua SMTP.
+//   • require=true  → admin.generateLink('signup') tạo user CHƯA xác minh +
+//     gửi link xác minh; người dùng phải xác nhận mới đăng nhập được.
+//   • require=false → admin.createUser(email_confirm:true) tạo user ĐÃ xác minh,
+//     đăng nhập ngay, không gửi email.
+// Trigger handle_new_user tự tạo public.users + profile theo data.role. Trả
+// authId để caller (company) cập nhật hồ sơ. Email trùng → ok:false kèm code.
 export async function createUserAndSendVerification(input: {
   email: string
   password: string
   data: Record<string, unknown>
   locale?: AuthMailLocale
-}): Promise<{ ok: true; authId: string } | { ok: false; code: string }> {
+}): Promise<
+  | { ok: true; authId: string; verifyRequired: boolean }
+  | { ok: false; code: string }
+> {
   const admin = createAdminClient()
+
+  if (!(await requireEmailVerification())) {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: input.data,
+    })
+    if (error || !data?.user) {
+      return { ok: false, code: error?.code || "signup_failed" }
+    }
+    return { ok: true, authId: data.user.id, verifyRequired: false }
+  }
+
   const redirectTo = `${siteUrl()}/auth/callback?next=/home`
 
   const { data, error } = await admin.auth.admin.generateLink({
@@ -170,7 +205,7 @@ export async function createUserAndSendVerification(input: {
   })
   const res = await sendMail({ to: input.email, subject: s.subject, html, text })
   if (!res.ok) console.error("[auth-mailer] sendMail verify", res.error)
-  return { ok: true, authId: data.user.id }
+  return { ok: true, authId: data.user.id, verifyRequired: true }
 }
 
 function emailChangeStrings(

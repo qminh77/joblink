@@ -260,7 +260,8 @@
       "phone": "Phone number",
       "phonePlaceholder": "e.g. 028 1234 5678",
       "about": "About the company (optional)",
-      "aboutPlaceholder": "A short description of your company and what you do, ..."
+      "aboutPlaceholder": "A short description of your company and what you do, ...",
+      "successNoVerify": "Registration successful! You can sign in now."
     },
     "forgotPassword": {
       "title": "Forgot password?",
@@ -1636,7 +1637,8 @@
         "contact_map_url": "Map link",
         "maintenance_mode": "Enable maintenance mode",
         "maintenance_message": "Maintenance message",
-        "google_auth_enabled": "Enable Google sign-in"
+        "google_auth_enabled": "Enable Google sign-in",
+        "require_email_verification": "Require email verification on signup"
       }
     },
     "lookups": {

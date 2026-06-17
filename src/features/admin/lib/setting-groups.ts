@@ -26,6 +26,7 @@ export const SETTING_GROUPS: Record<string, string[]> = {
     "upload_max_mb",
     "require_2fa_admin",
     "google_auth_enabled",
+    "require_email_verification",
   ],
   contact: [
     "contact_address",

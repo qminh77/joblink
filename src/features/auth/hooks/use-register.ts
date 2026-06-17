@@ -13,7 +13,7 @@ import { getAuthErrorMessage } from "../lib/error-messages"
 import type { RegisterInput } from "../schemas"
 
 type RegisterMutationResult =
-  | { kind: "member"; hasSession: boolean }
+  | { kind: "member"; verifyRequired: boolean }
   | { kind: "company" }
 
 export function useRegister() {
@@ -37,7 +37,7 @@ export function useRegister() {
       if (!result.ok) {
         throw new Error(result.error)
       }
-      return { kind: "member", hasSession: false }
+      return { kind: "member", verifyRequired: result.verifyRequired }
     },
     onSuccess: (result) => {
       if (result.kind === "company") {
@@ -45,12 +45,9 @@ export function useRegister() {
         router.replace("/login")
         return
       }
-      if (result.hasSession) {
-        toast.success(t("successWithSession"))
-        router.push("/home")
-        return
-      }
-      toast.success(t("successNeedVerify"))
+      toast.success(
+        result.verifyRequired ? t("successNeedVerify") : t("successNoVerify"),
+      )
       router.replace("/login")
     },
     onError: (error) => {

@@ -60,6 +60,7 @@ const BOOLEAN_KEYS = new Set([
   "require_2fa_admin",
   "maintenance_mode",
   "google_auth_enabled",
+  "require_email_verification",
 ])
 const NUMBER_KEYS = new Set([
   "smtp_port",
