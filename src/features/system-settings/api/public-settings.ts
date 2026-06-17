@@ -14,6 +14,7 @@ export type PublicAuthSettings = {
     description: string | null
   }
   googleAuthEnabled: boolean
+  passkeyEnabled: boolean
 }
 
 const KEYS = [
@@ -22,6 +23,7 @@ const KEYS = [
   "site_name",
   "site_description",
   "google_auth_enabled",
+  "passkey_enabled",
 ]
 
 export const loadPublicAuthSettings = cache(
@@ -30,6 +32,7 @@ export const loadPublicAuthSettings = cache(
       recaptcha: { enabled: false, siteKey: null },
       site: { name: "Joblink", description: null },
       googleAuthEnabled: false,
+      passkeyEnabled: false,
     }
 
     try {
@@ -62,6 +65,7 @@ export const loadPublicAuthSettings = cache(
           description: (map.get("site_description") as string | null) ?? null,
         },
         googleAuthEnabled: Boolean(map.get("google_auth_enabled")),
+        passkeyEnabled: Boolean(map.get("passkey_enabled")),
       }
     } catch {
       return fallback

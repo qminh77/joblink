@@ -23,6 +23,7 @@ import { createAccountSchema, type AccountInput } from "@/features/settings/sche
 
 import { ChangePasswordCard } from "./change-password-card"
 import { LocaleCard } from "./locale-card"
+import { PasskeysCard } from "./passkeys-card"
 import { TwoFactorCard } from "./two-factor-card"
 
 const STATUS_TONES: Record<SessionUserSummary["status"], string> = {
@@ -37,10 +38,12 @@ export function AccountInfoCard({
   user,
   phone,
   locale,
+  passkeyEnabled = false,
 }: {
   user: SessionUserSummary
   phone: string | null
   locale: string
+  passkeyEnabled?: boolean
 }) {
   const tv = useTranslations("settings.validation")
   const t = useTranslations("settings.account")
@@ -151,6 +154,7 @@ export function AccountInfoCard({
 
       <ChangePasswordCard />
       <TwoFactorCard />
+      {passkeyEnabled ? <PasskeysCard /> : null}
       <LocaleCard initialLocale={locale} />
     </div>
   )

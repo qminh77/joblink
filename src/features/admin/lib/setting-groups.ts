@@ -27,6 +27,7 @@ export const SETTING_GROUPS: Record<string, string[]> = {
     "require_2fa_admin",
     "google_auth_enabled",
     "require_email_verification",
+    "passkey_enabled",
   ],
   contact: [
     "contact_address",

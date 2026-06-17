@@ -32,12 +32,14 @@ export function SettingsTabs({
   profile,
   provinces,
   locale,
+  passkeyEnabled = false,
 }: {
   user: SessionUserSummary
   phone: string | null
   profile: Profile
   provinces: ProvinceRow[]
   locale: string
+  passkeyEnabled?: boolean
 }) {
   const t = useTranslations("settings")
 
@@ -111,7 +113,12 @@ export function SettingsTabs({
       ) : null}
 
       <TabsContent value="account" className="mt-6">
-        <AccountInfoCard user={user} phone={phone} locale={locale} />
+        <AccountInfoCard
+          user={user}
+          phone={phone}
+          locale={locale}
+          passkeyEnabled={passkeyEnabled}
+        />
       </TabsContent>
 
       <TabsContent value="privacy" className="mt-6 space-y-5">

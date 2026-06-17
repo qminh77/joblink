@@ -7,6 +7,7 @@ import {
   loadProvinces,
 } from "@/features/profile/api/queries"
 import type { SessionUserSummary } from "@/features/auth/types"
+import { loadPublicAuthSettings } from "@/features/system-settings/api/public-settings"
 import { SettingsTabs } from "@/features/settings/components/settings-tabs"
 
 export default async function SettingsPage() {
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
     current.appUser.role === "company" ? await loadOwnCompanyProfile() : null
   const provinces =
     current.appUser.role === "company" ? await loadProvinces() : []
+  const authSettings = await loadPublicAuthSettings()
 
   const profile =
     member !== null
@@ -54,6 +56,7 @@ export default async function SettingsPage() {
         profile={profile}
         provinces={provinces}
         locale={current.appUser.locale}
+        passkeyEnabled={authSettings.passkeyEnabled}
       />
     </div>
   )

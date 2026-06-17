@@ -324,6 +324,11 @@
       "google": "Continue with Google",
       "redirecting": "Redirecting...",
       "error": "Couldn't sign in with Google, please try again"
+    },
+    "passkey": {
+      "signIn": "Sign in with passkey",
+      "signingIn": "Authenticating...",
+      "signInError": "Passkey sign-in failed, please try again"
     }
   },
   "profile": {
@@ -656,6 +661,22 @@
       "disableError": "Couldn't disable 2FA, please try again",
       "disableTitle": "Disable two-factor authentication?",
       "disableDescription": "Your account will be less secure. Are you sure you want to disable 2FA?"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "subtitle": "Sign in without a password using fingerprint, Face ID, or a security key.",
+      "unsupported": "Your browser doesn't support passkeys.",
+      "empty": "You don't have any passkeys yet.",
+      "add": "Add passkey",
+      "adding": "Adding...",
+      "added": "Passkey added",
+      "addError": "Couldn't add passkey, please try again",
+      "delete": "Delete",
+      "deleted": "Passkey deleted",
+      "deleteError": "Couldn't delete passkey",
+      "defaultName": "Passkey",
+      "created": "Created {date}",
+      "lastUsed": "last used {date}"
     }
   },
   "companies": {
@@ -1638,7 +1659,8 @@
         "maintenance_mode": "Enable maintenance mode",
         "maintenance_message": "Maintenance message",
         "google_auth_enabled": "Enable Google sign-in",
-        "require_email_verification": "Require email verification on signup"
+        "require_email_verification": "Require email verification on signup",
+        "passkey_enabled": "Enable passkey sign-in"
       }
     },
     "lookups": {

@@ -31,14 +31,17 @@ import { useLogin } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
 
 import { GoogleSignInButton } from "./google-sign-in-button"
+import { PasskeySignInButton } from "./passkey-sign-in-button"
 import { PasswordInput } from "./password-input"
 
 export function LoginForm({
   recaptcha,
   googleEnabled = false,
+  passkeyEnabled = false,
 }: {
   recaptcha?: RecaptchaConfig
   googleEnabled?: boolean
+  passkeyEnabled?: boolean
 } = {}) {
   const t = useTranslations("auth.login")
   const tv = useTranslations("auth.validation")
@@ -232,7 +235,7 @@ export function LoginForm({
           </p>
         ) : null}
 
-        {googleEnabled ? (
+        {googleEnabled || passkeyEnabled ? (
           <>
             <div className="flex items-center gap-3 pt-1">
               <span className="h-px flex-1 bg-border" />
@@ -242,7 +245,8 @@ export function LoginForm({
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            <GoogleSignInButton />
+            {googleEnabled ? <GoogleSignInButton /> : null}
+            {passkeyEnabled ? <PasskeySignInButton /> : null}
           </>
         ) : null}
       </form>

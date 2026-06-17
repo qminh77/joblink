@@ -324,6 +324,11 @@
       "google": "Tiếp tục với Google",
       "redirecting": "Đang chuyển hướng...",
       "error": "Không thể đăng nhập bằng Google, vui lòng thử lại"
+    },
+    "passkey": {
+      "signIn": "Đăng nhập bằng Passkey",
+      "signingIn": "Đang xác thực...",
+      "signInError": "Đăng nhập Passkey thất bại, vui lòng thử lại"
     }
   },
   "profile": {
@@ -656,6 +661,22 @@
       "disableError": "Không thể tắt 2FA, vui lòng thử lại",
       "disableTitle": "Tắt xác thực hai lớp?",
       "disableDescription": "Tài khoản sẽ kém an toàn hơn. Bạn có chắc muốn tắt 2FA?"
+    },
+    "passkeys": {
+      "title": "Passkey",
+      "subtitle": "Đăng nhập không mật khẩu bằng vân tay, Face ID hoặc khóa bảo mật.",
+      "unsupported": "Trình duyệt của bạn không hỗ trợ Passkey.",
+      "empty": "Bạn chưa có passkey nào.",
+      "add": "Thêm passkey",
+      "adding": "Đang thêm...",
+      "added": "Đã thêm passkey",
+      "addError": "Không thể thêm passkey, vui lòng thử lại",
+      "delete": "Xóa",
+      "deleted": "Đã xóa passkey",
+      "deleteError": "Không thể xóa passkey",
+      "defaultName": "Passkey",
+      "created": "Tạo {date}",
+      "lastUsed": "dùng gần nhất {date}"
     }
   },
   "companies": {
@@ -1638,7 +1659,8 @@
         "maintenance_mode": "Bật chế độ bảo trì",
         "maintenance_message": "Thông báo bảo trì",
         "google_auth_enabled": "Cho phép đăng nhập Google",
-        "require_email_verification": "Bắt buộc xác minh email khi đăng ký"
+        "require_email_verification": "Bắt buộc xác minh email khi đăng ký",
+        "passkey_enabled": "Cho phép đăng nhập bằng Passkey"
       }
     },
     "lookups": {
