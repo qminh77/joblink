@@ -1767,5 +1767,12 @@
     "defaultMessage": "The system is under maintenance. Please check back in a few minutes.",
     "logout": "Log out",
     "loggingOut": "Logging out..."
+  },
+  "search": {
+    "people": "People",
+    "companies": "Companies",
+    "jobs": "Jobs",
+    "searching": "Searching...",
+    "noResults": "No results found"
   }
 }

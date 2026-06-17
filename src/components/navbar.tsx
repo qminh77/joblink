@@ -14,7 +14,6 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Plus,
-  Search,
   Users,
 } from "lucide-react"
 
@@ -40,8 +39,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { HeaderSearch } from "@/features/search/components/header-search"
 import { getInitials } from "@/lib/utils/format"
 
 const NAV_ITEMS = [
@@ -133,14 +132,7 @@ export function Navbar() {
             <Logo size="sm" />
           </Link>
 
-          <div className="hidden sm:flex relative items-center group">
-                  <Search className="absolute left-3 text-muted-foreground size-4 group-focus-within:text-primary transition-colors pointer-events-none" />
-            <Input
-              className="h-9 pl-9 pr-4 bg-muted border-none focus-visible:ring-1 focus-visible:ring-primary w-48 md:w-64 lg:w-80 rounded-full transition-all text-sm"
-              placeholder={tNav("searchPlaceholder")}
-              type="text"
-            />
-          </div>
+          <HeaderSearch />
         </div>
 
         <div className="flex items-center gap-1 lg:gap-2">
