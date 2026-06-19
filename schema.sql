@@ -332,19 +332,22 @@ CREATE TABLE IF NOT EXISTS profile_view_logs (
 );
 
 CREATE TABLE IF NOT EXISTS member_cvs (
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      BIGINT NOT NULL,
-    file_name    VARCHAR(160) NOT NULL,
-    storage_path TEXT NOT NULL,
-    file_size    INT NOT NULL,
-    mime_type    VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
-    is_default   BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at   TIMESTAMPTZ NULL,
+    id             BIGSERIAL PRIMARY KEY,
+    user_id        BIGINT NOT NULL,
+    file_name      VARCHAR(160) NOT NULL,
+    storage_path   TEXT NOT NULL,
+    file_size      INT NOT NULL,
+    mime_type      VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
+    source         VARCHAR(20) NOT NULL DEFAULT 'upload',
+    builder_config JSONB NULL,
+    is_default     BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at     TIMESTAMPTZ NULL,
     CONSTRAINT fk_member_cv_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT chk_member_cv_size CHECK (file_size > 0 AND file_size <= 5 * 1024 * 1024),
     CONSTRAINT chk_member_cv_mime CHECK (mime_type = 'application/pdf'),
+    CONSTRAINT chk_member_cv_source CHECK (source IN ('upload', 'builder')),
     CONSTRAINT uk_member_cv_path UNIQUE (storage_path)
 );
 
@@ -9952,3 +9955,75 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_distinct_audit_actions TO anon, authenticated;
+
+
+-- =================================================================================
+-- BACKFILL DỮ LIỆU LỊCH SỬ CHO O(1) ARCHITECTURE (TỪ MIGRATION 043)
+-- =================================================================================
+-- =================================================================================
+-- MIGRATION: BACKFILL DATA CHO KIẾN TRÚC O(1)
+-- =================================================================================
+-- Do chúng ta áp dụng cơ chế Denormalization và Push Model (Fan-out),
+-- các dữ liệu cũ (bài viết cũ, tin nhắn cũ) cần được tính toán lại 
+-- và nạp vào các cột tĩnh / bảng user_feeds để hiển thị đúng trên UI.
+-- =================================================================================
+
+-- 1. BACKFILL CHO BỘ ĐẾM POSTS (Counter Caches)
+UPDATE public.posts p
+   SET reaction_count = (SELECT COUNT(*)::INT FROM public.post_reactions r WHERE r.post_id = p.id),
+       comment_count = (SELECT COUNT(*)::INT FROM public.post_comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL AND c.status = 'active'),
+       share_count = (SELECT COUNT(*)::INT FROM public.post_shares s WHERE s.post_id = p.id);
+
+
+-- 2. BACKFILL CHO USER_FEEDS (Push Model)
+-- Nạp lại toàn bộ bài viết cũ đang active vào bảng user_feeds của tác giả và bạn bè
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT id, author_id, created_at, visibility FROM public.posts WHERE status = 'active' AND deleted_at IS NULL)
+    LOOP
+        -- Insert cho chính tác giả
+        INSERT INTO public.user_feeds (user_id, post_id, created_at) 
+        VALUES (r.author_id, r.id, r.created_at)
+        ON CONFLICT DO NOTHING;
+        
+        -- Fan-out cho bạn bè nếu không phải private
+        IF r.visibility IN ('public', 'connections') THEN
+            INSERT INTO public.user_feeds (user_id, post_id, created_at)
+            SELECT to_user_id, r.id, r.created_at 
+              FROM public.user_connections_view 
+             WHERE from_user_id = r.author_id AND status = 'accepted'
+            ON CONFLICT DO NOTHING;
+        END IF;
+    END LOOP;
+END
+$$;
+
+
+-- 3. BACKFILL CHO NHẮN TIN (Inbox O(1))
+-- Cập nhật tin nhắn cuối cùng cho mỗi đoạn hội thoại
+UPDATE public.conversations c
+   SET last_message_id = m.id,
+       last_content = m.content,
+       last_sender_id = m.sender_id,
+       last_message_created_at = m.created_at,
+       updated_at = GREATEST(c.updated_at, m.created_at)
+  FROM (
+      SELECT conversation_id, id, content, sender_id, created_at,
+             ROW_NUMBER() OVER(PARTITION BY conversation_id ORDER BY created_at DESC, id DESC) as rn
+        FROM public.messages
+       WHERE deleted_at IS NULL
+  ) m
+ WHERE m.conversation_id = c.id AND m.rn = 1;
+
+-- Khôi phục unread_count dựa trên lịch sử xem
+UPDATE public.conversation_participants cp
+   SET unread_count = (
+       SELECT COUNT(*)::INT 
+         FROM public.messages m
+        WHERE m.conversation_id = cp.conversation_id 
+          AND m.sender_id <> cp.user_id 
+          AND m.deleted_at IS NULL
+          AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+   );

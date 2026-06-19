@@ -197,6 +197,8 @@ export type MemberCvRow = {
   storage_path: string
   file_size: number
   mime_type: string
+  source: string
+  builder_config: Json | null
   is_default: boolean
   created_at: string
   updated_at: string
@@ -534,6 +536,8 @@ export type Database = {
         MemberCvRow,
         Omit<MemberCvRow, "id" | "created_at" | "updated_at" | "deleted_at"> & {
           is_default?: boolean
+          source?: string
+          builder_config?: Json | null
         }
       >
       profile_view_logs: TableDef<

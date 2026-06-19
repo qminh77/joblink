@@ -26,9 +26,10 @@ type PickerCv = {
   fileName: string
   fileSize: number
   isDefault: boolean
-  // Picker dùng MemberCv shape — bổ sung field không cần thiết để khớp type.
   storagePath: string
   mimeType: string
+  source: "upload" | "builder"
+  builderConfig: null
   createdAt: string
   updatedAt: string
 }
@@ -43,6 +44,8 @@ function toPickerCv(row: {
     ...row,
     storagePath: "",
     mimeType: "application/pdf",
+    source: "upload",
+    builderConfig: null,
     createdAt: "",
     updatedAt: "",
   }

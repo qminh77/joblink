@@ -28,6 +28,14 @@ export function createRegisterCvSchema(t: Translator) {
       .positive()
       .max(CV_MAX_BYTES, t("fileTooLarge")),
     mimeType: z.literal(CV_ALLOWED_MIME, { message: t("invalidMime") }),
+    source: z.enum(["upload", "builder"]).optional(),
+    builderConfig: z
+      .object({
+        experiences: z.array(z.number()),
+        educations: z.array(z.number()),
+        skills: z.array(z.string()),
+      })
+      .optional(),
     makeDefault: z.boolean().optional(),
   })
 }

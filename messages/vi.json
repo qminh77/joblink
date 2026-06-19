@@ -1712,8 +1712,9 @@
     "section": {
       "title": "CV của tôi",
       "description": "Tải lên và quản lý nhiều CV PDF (tối đa 5 MB). Một CV được đặt làm mặc định để dùng nhanh khi ứng tuyển.",
-      "empty": "Bạn chưa tải lên CV nào.",
-      "uploadButton": "Tải CV mới"
+      "empty": "Bạn chưa có CV nào.",
+      "uploadButton": "Tải CV lên",
+      "buildButton": "Tạo từ Profile"
     },
     "uploadDialog": {
       "title": "Tải CV lên",
@@ -1735,6 +1736,15 @@
     "deleteDialog": {
       "title": "Xoá CV",
       "description": "Bạn có chắc muốn xoá CV \"{name}\"? Các đơn ứng tuyển đã gửi vẫn giữ link cũ."
+    },
+    "builderDialog": {
+      "title": "Tạo CV từ Profile",
+      "experiences": "Kinh nghiệm làm việc",
+      "educations": "Học vấn",
+      "skills": "Kỹ năng",
+      "create": "Tạo CV",
+      "cancel": "Huỷ",
+      "loadError": "Không thể tải dữ liệu hồ sơ."
     },
     "picker": {
       "label": "Chọn CV để ứng tuyển",

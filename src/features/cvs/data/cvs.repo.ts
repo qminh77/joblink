@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { createClient } from "@/lib/supabase/server"
-import type { MemberCvRow } from "../types"
+import type { Json, MemberCvRow } from "@/types/database"
 
 // Lớp data-access của feature CV. KHÔNG auth/i18n; chạy bằng client RLS-aware
 // (createClient của @supabase/ssr). Action ở `api/actions.ts` gọi unwrap/assertOk.
@@ -42,6 +42,8 @@ export function insertMemberCv(
     storagePath: string
     fileSize: number
     mimeType: string
+    source?: string
+    builderConfig?: Json | null
     isDefault: boolean
   },
 ) {
@@ -53,6 +55,8 @@ export function insertMemberCv(
       storage_path: values.storagePath,
       file_size: values.fileSize,
       mime_type: values.mimeType,
+      source: values.source ?? "upload",
+      builder_config: values.builderConfig ?? null,
       is_default: values.isDefault,
     })
     .select("*")

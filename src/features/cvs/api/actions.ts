@@ -38,6 +38,98 @@ function revalidateCvs() {
   revalidatePath("/jobs", "layout")
 }
 
+// Load profile data (experiences, educations, skills) cho CV Builder dialog.
+export async function getProfileForCvBuilderAction(): Promise<
+  ActionResult<{
+    fullName: string
+    email: string
+    phone: string | null
+    headline: string | null
+    experiences: {
+      id: number
+      companyName: string
+      position: string
+      startDate: string
+      endDate: string | null
+      isCurrent: boolean
+      description: string | null
+    }[]
+    educations: {
+      id: number
+      schoolName: string
+      degree: string | null
+      fieldOfStudy: string | null
+      startDate: string | null
+      endDate: string | null
+      description: string | null
+    }[]
+    skills: { id: number; name: string }[]
+  }>
+> {
+  return action("cvs.errors", async () => {
+    const current = await requireRole("member")
+    const supabase = await createClient()
+
+    const [profileRes, expRes, eduRes, skillRes] = await Promise.all([
+      supabase
+        .from("member_profiles")
+        .select("full_name, phone, headline")
+        .eq("user_id", current.appUser.id)
+        .is("deleted_at", null)
+        .maybeSingle<{ full_name: string; phone: string | null; headline: string | null }>(),
+      supabase
+        .from("member_experiences")
+        .select("id, company_name, position, start_date, end_date, is_current, description")
+        .eq("user_id", current.appUser.id)
+        .is("deleted_at", null)
+        .order("is_current", { ascending: false })
+        .order("start_date", { ascending: false }),
+      supabase
+        .from("member_educations")
+        .select("id, school_name, degree, field_of_study, start_date, end_date, description")
+        .eq("user_id", current.appUser.id)
+        .is("deleted_at", null)
+        .order("start_date", { ascending: false }),
+      supabase
+        .from("member_skills")
+        .select("id, name")
+        .eq("user_id", current.appUser.id)
+        .order("name", { ascending: true }),
+    ])
+
+    if (!profileRes.data) throw ActionError.key("notFound")
+
+    return {
+      fullName: profileRes.data.full_name,
+      email: current.appUser.email ?? "",
+      phone: profileRes.data.phone,
+      headline: profileRes.data.headline,
+      experiences: (expRes.data ?? []).map((e) => ({
+        id: e.id,
+        companyName: e.company_name,
+        position: e.position,
+        startDate: e.start_date,
+        endDate: e.end_date,
+        isCurrent: e.is_current,
+        description: e.description,
+      })),
+      educations: (eduRes.data ?? []).map((e) => ({
+        id: e.id,
+        schoolName: e.school_name,
+        degree: e.degree,
+        fieldOfStudy: e.field_of_study,
+        startDate: e.start_date,
+        endDate: e.end_date,
+        description: e.description,
+      })),
+      skills: (skillRes.data ?? []).map((s) => ({
+        id: s.id,
+        name: s.name,
+      })),
+    }
+  })
+}
+
 // Sau khi client upload file PDF vào bucket `cv/<userId>/<uuid>.pdf` thành công,
 // gọi action này để ghi metadata vào member_cvs. Action verify lại path khớp
 // userId (chống user trick đăng ký path của người khác).
@@ -79,13 +171,15 @@ export async function registerCvAction(
         storagePath: data.storagePath,
         fileSize: data.fileSize,
         mimeType: data.mimeType,
+        source: data.source,
+        builderConfig: (data.builderConfig ?? null) as any,
         isDefault,
       }),
       "unexpected",
     )
 
     revalidateCvs()
-    return mapMemberCv(row)
+    return mapMemberCv(row as any)
   })
 }
 

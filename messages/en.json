@@ -1712,8 +1712,9 @@
     "section": {
       "title": "My CVs",
       "description": "Upload and manage multiple PDF CVs (max 5 MB). One CV is marked default for quick apply.",
-      "empty": "You haven't uploaded any CV yet.",
-      "uploadButton": "Upload CV"
+      "empty": "You haven't created any CV yet.",
+      "uploadButton": "Upload CV",
+      "buildButton": "Build from Profile"
     },
     "uploadDialog": {
       "title": "Upload a CV",
@@ -1735,6 +1736,15 @@
     "deleteDialog": {
       "title": "Delete CV",
       "description": "Delete the CV \"{name}\"? Existing applications keep their original link."
+    },
+    "builderDialog": {
+      "title": "Create CV from Profile",
+      "experiences": "Work Experience",
+      "educations": "Education",
+      "skills": "Skills",
+      "create": "Create CV",
+      "cancel": "Cancel",
+      "loadError": "Failed to load profile data."
     },
     "picker": {
       "label": "Choose a CV to apply",
