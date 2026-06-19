@@ -47,6 +47,9 @@ export type PostRow = {
   media: Json | null
   visibility: PostVisibility
   status: PostStatus
+  reaction_count?: number
+  comment_count?: number
+  share_count?: number
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -911,6 +914,14 @@ export type Database = {
       resubmit_company_verification: {
         Args: Record<string, never>
         Returns: Json
+      }
+      count_applications_per_job: {
+        Args: { p_job_ids: number[] }
+        Returns: { job_id: number; count: number }[]
+      }
+      get_distinct_audit_actions: {
+        Args: Record<string, never>
+        Returns: { action: string }[]
       }
     }
 

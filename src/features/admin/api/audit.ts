@@ -44,19 +44,17 @@ export async function listAuditLogs(
   if (params.entityType?.trim())
     query = query.eq("entity_type", params.entityType.trim())
 
+  if (params.search?.trim()) {
+    const q = params.search.trim()
+    query = query.or(
+      `action.ilike.%${q}%,entity_type.ilike.%${q}%,reason.ilike.%${q}%`,
+    )
+  }
+
   const { data, error } = await query
   if (error || !data) return []
 
-  let rows = data as unknown as RawRow[]
-  if (params.search?.trim()) {
-    const q = params.search.trim().toLowerCase()
-    rows = rows.filter(
-      (r) =>
-        r.action.toLowerCase().includes(q) ||
-        (r.entity_type ?? "").toLowerCase().includes(q) ||
-        (r.reason ?? "").toLowerCase().includes(q),
-    )
-  }
+  const rows = data as unknown as RawRow[]
 
   const actorIds = [
     ...new Set(
@@ -127,14 +125,6 @@ export async function listAuditLogs(
 export async function listDistinctActions(): Promise<string[]> {
   await requireAdmin()
   const supabase = createAdminClient()
-  const { data } = await supabase
-    .from("audit_logs")
-    .select("action")
-    .order("action", { ascending: true })
-    .limit(500)
-  const set = new Set<string>()
-  for (const row of (data ?? []) as Array<{ action: string }>) {
-    set.add(row.action)
-  }
-  return [...set]
+  const { data } = await supabase.rpc("get_distinct_audit_actions")
+  return ((data ?? []) as Array<{ action: string }>).map((r) => r.action)
 }

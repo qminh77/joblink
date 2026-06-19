@@ -348,9 +348,12 @@ export async function replacePollOptions(
 
   const ops: Promise<unknown>[] = []
 
-  for (const opt of toDelete) {
+  if (toDelete.length > 0) {
     ops.push(
-      supabase.from("poll_options").delete().eq("id", opt.id) as unknown as Promise<unknown>,
+      supabase
+        .from("poll_options")
+        .delete()
+        .in("id", toDelete.map((o) => o.id)) as unknown as Promise<unknown>,
     )
   }
 

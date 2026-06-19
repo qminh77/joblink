@@ -77,12 +77,12 @@ export async function listAdminJobs(
     }
   }
   if (jobIds.length > 0) {
-    const { data: apps } = await supabase
-      .from("job_applications")
-      .select("job_id")
-      .in("job_id", jobIds)
-    for (const row of (apps ?? []) as Array<{ job_id: number }>) {
-      appsMap[row.job_id] = (appsMap[row.job_id] ?? 0) + 1
+    const { data: appCounts } = await supabase.rpc(
+      "count_applications_per_job",
+      { p_job_ids: jobIds },
+    )
+    for (const row of (appCounts ?? []) as Array<{ job_id: number; count: number }>) {
+      appsMap[row.job_id] = row.count
     }
   }
 

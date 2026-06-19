@@ -51,6 +51,18 @@ function toIntlLocale(locale: string): string {
   return locale
 }
 
+const rtfCache = new Map<string, Intl.RelativeTimeFormat>()
+
+function getRTF(locale: string): Intl.RelativeTimeFormat {
+  const key = toIntlLocale(locale)
+  let rtf = rtfCache.get(key)
+  if (!rtf) {
+    rtf = new Intl.RelativeTimeFormat(key, { numeric: "auto" })
+    rtfCache.set(key, rtf)
+  }
+  return rtf
+}
+
 export function formatRelativeTime(
   value: string | Date | null | undefined,
   locale: string = "vi",
@@ -66,9 +78,7 @@ export function formatRelativeTime(
     return locale === "en" ? "just now" : "vừa xong"
   }
 
-  const rtf = new Intl.RelativeTimeFormat(toIntlLocale(locale), {
-    numeric: "auto",
-  })
+  const rtf = getRTF(locale)
 
   const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
     ["year", 60 * 60 * 24 * 365],

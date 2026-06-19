@@ -216,19 +216,29 @@ export async function listAdminReports(
     })
   }
 
+  // Build O(1) lookup maps thay vì Array.find() O(N) mỗi lần
+  const postAuthorMap = new Map(postRows.map((p) => [p.id, p.author_id]))
+  const commentAuthorMap = new Map(commentRows.map((c) => [c.id, c.user_id]))
+  const jobAuthorMap = new Map(jobRows.map((j) => [j.id, j.company_user_id]))
+
+  function getAuthorId(targetType: ReportTargetType, targetId: number): number | null {
+    if (targetType === "post") return postAuthorMap.get(targetId) ?? null
+    if (targetType === "comment") return commentAuthorMap.get(targetId) ?? null
+    if (targetType === "job") return jobAuthorMap.get(targetId) ?? null
+    return targetId
+  }
+
   // Collect all author user IDs
   const authorUserIds = new Set<number>()
   for (const p of postRows) authorUserIds.add(p.author_id)
   for (const c of commentRows) authorUserIds.add(c.user_id)
   for (const j of jobRows) authorUserIds.add(j.company_user_id)
-  // For user/company targets, the target itself is the author
   for (const r of rows) {
     if (r.target_type === "user" || r.target_type === "company") {
       authorUserIds.add(r.target_id)
     }
   }
 
-  // Fetch author display names and avatars
   const authorData = new Map<number, { name: string; avatar: string | null }>()
   const userIds = [...authorUserIds]
   if (userIds.length > 0) {
@@ -252,23 +262,6 @@ export async function listAdminReports(
         authorData.set(c.user_id, { name: c.name, avatar: c.logo_url })
       }
     }
-  }
-
-  function getAuthorId(targetType: ReportTargetType, targetId: number): number | null {
-    if (targetType === "post") {
-      const p = postRows.find(x => x.id === targetId)
-      return p?.author_id ?? null
-    }
-    if (targetType === "comment") {
-      const c = commentRows.find(x => x.id === targetId)
-      return c?.user_id ?? null
-    }
-    if (targetType === "job") {
-      const j = jobRows.find(x => x.id === targetId)
-      return j?.company_user_id ?? null
-    }
-    // user / company: the target is the author
-    return targetId
   }
 
   function getAuthorInfo(targetType: ReportTargetType, targetId: number): { name: string; avatar: string | null } | null {

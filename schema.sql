@@ -9916,3 +9916,39 @@ BEGIN
     );
 END;
 $$;
+
+
+-- =============================================================================
+-- RPC tối ưu hiệu suất Admin Panel (20260602_043_admin_perf_rpcs)
+-- =============================================================================
+
+-- 1. Đếm số lượng application cho từng job — 1 query GROUP BY
+CREATE OR REPLACE FUNCTION public.count_applications_per_job(p_job_ids BIGINT[])
+RETURNS TABLE(job_id BIGINT, count BIGINT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT ja.job_id, COUNT(*)::BIGINT
+  FROM public.job_applications ja
+  WHERE ja.job_id = ANY(p_job_ids)
+  GROUP BY ja.job_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.count_applications_per_job TO anon, authenticated;
+
+-- 2. Lấy danh sách action riêng biệt từ audit_logs — DISTINCT
+CREATE OR REPLACE FUNCTION public.get_distinct_audit_actions()
+RETURNS TABLE(action TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT DISTINCT a.action
+  FROM public.audit_logs a
+  ORDER BY a.action;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_distinct_audit_actions TO anon, authenticated;
