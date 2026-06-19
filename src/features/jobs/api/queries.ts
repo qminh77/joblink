@@ -140,23 +140,31 @@ export async function loadMyApplications(options?: {
 // ---------------------------------------------------------------------------
 export async function loadJobTypes(): Promise<JobTypeRef[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("job_types")
     .select("id, code, name")
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
+    
+  if (error) {
+    console.error("SUPABASE JOB TYPES ERROR:", error)
+  }
   return (data ?? []) as JobTypeRef[]
 }
 
 export async function loadWorkModes(): Promise<WorkModeRef[]> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("work_modes")
     .select("id, code, name")
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
+    
+  if (error) {
+    console.error("SUPABASE WORK MODES ERROR:", error)
+  }
   return (data ?? []) as WorkModeRef[]
 }
 

@@ -1461,11 +1461,30 @@ CREATE POLICY member_cvs_update_own ON public.member_cvs
 CREATE POLICY member_cvs_delete_own ON public.member_cvs
   FOR DELETE USING (user_id = public.auth_user_id());
 
-ALTER TABLE public.report_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.provinces ENABLE ROW LEVEL SECURITY;
+CREATE POLICY provinces_select_all ON public.provinces FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS report_types_select_authenticated ON public.report_types;
-CREATE POLICY report_types_select_authenticated ON public.report_types
-  FOR SELECT USING (true);
+ALTER TABLE public.wards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY wards_select_all ON public.wards FOR SELECT USING (true);
+
+ALTER TABLE public.job_types ENABLE ROW LEVEL SECURITY;
+CREATE POLICY job_types_select_all ON public.job_types FOR SELECT USING (true);
+
+ALTER TABLE public.work_modes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY work_modes_select_all ON public.work_modes FOR SELECT USING (true);
+
+ALTER TABLE public.job_positions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY job_positions_select_all ON public.job_positions FOR SELECT USING (true);
+
+ALTER TABLE public.skills ENABLE ROW LEVEL SECURITY;
+CREATE POLICY skills_select_all ON public.skills FOR SELECT USING (true);
+
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY system_settings_select_all ON public.system_settings FOR SELECT USING (true);
+
+ALTER TABLE public.report_types ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS report_types_select_all ON public.report_types;
+CREATE POLICY report_types_select_all ON public.report_types FOR SELECT USING (true);
 
 ALTER TABLE public.user_blocks ENABLE ROW LEVEL SECURITY;
 
@@ -2775,8 +2794,11 @@ JOIN provinces p ON p.code = w.province_code;
 -- 21. GRANTS
 -- =============================================================================
 
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO service_role;
 GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 
@@ -4418,6 +4440,40 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.mark_conversation_read(BIGINT) TO authenticated;
+
+-- =============================================================================
+-- SEED DATA (Dữ liệu mẫu)
+-- =============================================================================
+
+-- 1. Job Types
+INSERT INTO public.job_types (code, name, name_en, sort_order) VALUES
+('full_time', 'Toàn thời gian', 'Full-time', 1),
+('part_time', 'Bán thời gian', 'Part-time', 2),
+('internship', 'Thực tập', 'Internship', 3),
+('freelance', 'Tự do', 'Freelance', 4),
+('contract', 'Hợp đồng', 'Contract', 5)
+ON CONFLICT (code) DO NOTHING;
+
+-- 2. Work Modes
+INSERT INTO public.work_modes (code, name, name_en, sort_order) VALUES
+('on_site', 'Tại văn phòng', 'On-site', 1),
+('remote', 'Từ xa', 'Remote', 2),
+('hybrid', 'Linh hoạt', 'Hybrid', 3)
+ON CONFLICT (code) DO NOTHING;
+
+-- 3. Job Positions
+INSERT INTO public.job_positions (code, name, name_en, sort_order) VALUES
+('intern', 'Thực tập sinh', 'Intern', 1),
+('fresher', 'Mới tốt nghiệp', 'Fresher', 2),
+('junior', 'Sơ cấp', 'Junior', 3),
+('middle', 'Trung cấp', 'Middle', 4),
+('senior', 'Cao cấp', 'Senior', 5),
+('lead', 'Trưởng nhóm', 'Lead', 6),
+('manager', 'Quản lý', 'Manager', 7),
+('director', 'Giám đốc', 'Director', 8)
+ON CONFLICT (code) DO NOTHING;
+
+
 
 -- =============================================================================
 -- KẾT THÚC SCHEMA

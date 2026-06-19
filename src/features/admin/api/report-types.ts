@@ -36,12 +36,18 @@ export async function listReportTypes(): Promise<ReportTypeRow[]> {
   await requireAdmin()
   const supabase = createAdminClient()
 
-  const { data } = await (supabase
+  const { data, error } = await (supabase
     .from("report_types")
-    .select("id, code, name, name_en, sort_order, is_active, is_system")
+    .select("id, code, name, name_en, sort_order, is_active")
     .order("sort_order", { ascending: true }) as unknown as Promise<{
     data: Record<string, unknown>[] | null
+    error: Error | null
   }>)
+  
+  if (error) {
+    console.error("SUPABASE REPORT TYPES ERROR:", error)
+  }
+  
   const rawRows = data ?? []
 
   return rawRows.map((r) => ({
@@ -167,14 +173,13 @@ export async function deleteReportType(
 
   const target = await (supabase
     .from("report_types")
-    .select("id, is_system")
+    .select("id")
     .eq("id", parsed.data)
     .maybeSingle() as never) as {
-    data: { id: number; is_system: boolean } | null
+    data: { id: number } | null
   }
 
   if (!target.data) return { ok: false, error: "not_found" }
-  if (target.data.is_system) return { ok: false, error: "cannot_delete_system" }
 
   const { error } = await (supabase
     .from("report_types")
