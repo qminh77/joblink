@@ -42,7 +42,7 @@ export async function listAdminPosts(
 
   let query = supabase
     .from("posts")
-    .select("id, author_id, content, post_type, visibility, status, created_at")
+    .select("id, author_id, content, post_type, visibility, status, created_at, reaction_count, comment_count")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(limit)
@@ -66,14 +66,13 @@ export async function listAdminPosts(
     visibility: PostVisibility
     status: string
     created_at: string
+    reaction_count: number
+    comment_count: number
   }>
 
   const authorIds = [...new Set(rows.map((r) => r.author_id))]
-  const postIds = rows.map((r) => r.id)
 
   const authorMap: Record<number, { name: string; avatarUrl: string | null; role: string }> = {}
-  const reactionMap: Record<number, number> = {}
-  const commentMap: Record<number, number> = {}
 
   if (authorIds.length > 0) {
     const { data: users } = await supabase
@@ -118,25 +117,6 @@ export async function listAdminPosts(
     }
   }
 
-  if (postIds.length > 0) {
-    const { data: reactions } = await supabase
-      .from("post_reactions")
-      .select("post_id")
-      .in("post_id", postIds)
-    for (const r of (reactions ?? []) as Array<{ post_id: number }>) {
-      reactionMap[r.post_id] = (reactionMap[r.post_id] ?? 0) + 1
-    }
-
-    const { data: comments } = await supabase
-      .from("post_comments")
-      .select("post_id")
-      .in("post_id", postIds)
-      .is("deleted_at", null)
-      .eq("status", "active")
-    for (const c of (comments ?? []) as Array<{ post_id: number }>) {
-      commentMap[c.post_id] = (commentMap[c.post_id] ?? 0) + 1
-    }
-  }
 
   return rows.map((r) => ({
     id: r.id,
@@ -148,8 +128,8 @@ export async function listAdminPosts(
     authorName: authorMap[r.author_id]?.name ?? `user#${r.author_id}`,
     authorAvatarUrl: authorMap[r.author_id]?.avatarUrl ?? null,
     authorRole: authorMap[r.author_id]?.role ?? "member",
-    reactionCount: reactionMap[r.id] ?? 0,
-    commentCount: commentMap[r.id] ?? 0,
+    reactionCount: r.reaction_count,
+    commentCount: r.comment_count,
     createdAt: r.created_at,
   }))
 }

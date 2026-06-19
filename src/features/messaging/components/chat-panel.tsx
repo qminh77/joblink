@@ -214,7 +214,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
                   >
                     <div className="max-w-[75%] sm:max-w-[60%]">
                       <div
-                        className={`rounded-2xl px-3.5 py-2 text-sm inline-block whitespace-pre-wrap break-words ${
+                        className={`rounded-2xl px-3.5 py-2 text-sm inline-block whitespace-pre-wrap break-words break-all ${
                           isMe
                             ? "bg-primary text-primary-foreground rounded-br-md"
                             : "bg-muted border border-border/40 rounded-bl-md"

@@ -234,7 +234,7 @@ export function DockChatWindow({
                       >
                         <div className="max-w-[80%]">
                           <div
-                            className={`rounded-2xl px-3 py-1.5 text-[13px] inline-block whitespace-pre-wrap break-words ${
+                            className={`rounded-2xl px-3 py-1.5 text-[13px] inline-block whitespace-pre-wrap break-words break-all ${
                               isMe
                                 ? "bg-primary text-primary-foreground rounded-br-md"
                                 : "bg-muted border border-border/40 rounded-bl-md"
