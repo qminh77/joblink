@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 
 import {
   Dialog,
@@ -24,7 +25,11 @@ import { createClient } from "@/lib/supabase/client"
 
 import { getProfileForCvBuilderAction, registerCvAction } from "../api/actions"
 import { CV_BUCKET, CV_FILE_NAME_MAX } from "../lib/constants"
-import { CvBuilderPreview } from "./cv-builder-preview"
+import {
+  CvBuilderPreview,
+  type CvPreviewEducation,
+  type CvPreviewExperience,
+} from "./cv-builder-preview"
 
 type ProfileData = {
   fullName: string
@@ -110,6 +115,23 @@ function BuilderForm({
   const filteredExps = data.experiences.filter((e) => selectedExps.has(e.id))
   const filteredEdus = data.educations.filter((e) => selectedEdus.has(e.id))
   const filteredSkills = data.skills.filter((s) => selectedSkills.has(s.name))
+  const previewExperiences: CvPreviewExperience[] = filteredExps.map((exp) => ({
+    id: exp.id,
+    company_name: exp.companyName,
+    position: exp.position,
+    start_date: exp.startDate,
+    end_date: exp.endDate,
+    description: exp.description,
+  }))
+  const previewEducations: CvPreviewEducation[] = filteredEdus.map((edu) => ({
+    id: edu.id,
+    school_name: edu.schoolName,
+    degree: edu.degree,
+    field_of_study: edu.fieldOfStudy,
+    start_date: edu.startDate,
+    end_date: edu.endDate,
+    description: edu.description,
+  }))
 
   const generate = useCallback(async () => {
     if (!previewRef.current || !current) return
@@ -300,9 +322,9 @@ function BuilderForm({
           email={data.email}
           phone={data.phone}
           headline={data.headline}
-          experiences={filteredExps as any}
-          educations={filteredEdus as any}
-          skills={filteredSkills as any}
+          experiences={previewExperiences}
+          educations={previewEducations}
+          skills={filteredSkills}
         />
       </div>
 
@@ -337,22 +359,16 @@ function BuilderForm({
 }
 
 export function CvBuilderDialog({ open, onOpenChange }: Props) {
-  const [data, setData] = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(false)
   const t = useTranslations("cvs")
-
-  useEffect(() => {
-    if (!open) {
-      setData(null)
-      return
-    }
-    setLoading(true)
-    getProfileForCvBuilderAction()
-      .then((res) => {
-        if (res.ok) setData(res.data)
-      })
-      .finally(() => setLoading(false))
-  }, [open])
+  const { data, isLoading } = useQuery<ProfileData>({
+    queryKey: ["cvs", "builder-profile"],
+    enabled: open,
+    queryFn: async () => {
+      const result = await getProfileForCvBuilderAction()
+      if (!result.ok) throw new Error("load_failed")
+      return result.data
+    },
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -360,7 +376,7 @@ export function CvBuilderDialog({ open, onOpenChange }: Props) {
         className="rounded-2xl sm:max-w-lg"
         showCloseButton={false}
       >
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>

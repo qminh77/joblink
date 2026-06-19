@@ -28,3 +28,17 @@ export function getApplicationJobForNotify(
       jobs: { company_user_id: number; title: string } | null
     }>()
 }
+
+export function getApplicantCvForApplication(
+  supabase: Supabase,
+  cvId: number,
+  userId: number,
+) {
+  return supabase
+    .from("member_cvs")
+    .select("storage_path")
+    .eq("id", cvId)
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle<{ storage_path: string }>()
+}

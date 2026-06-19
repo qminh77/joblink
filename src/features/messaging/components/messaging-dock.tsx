@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -70,27 +70,33 @@ export function MessagingDock() {
     return map
   }, [items])
 
-  useEffect(() => {
-    setOpenWindows((prev) =>
-      prev.filter((w) => itemsById.has(w.conversationId)),
-    )
-  }, [itemsById])
+  const visibleOpenWindows = useMemo(
+    () => openWindows.filter((window) => itemsById.has(window.conversationId)),
+    [itemsById, openWindows],
+  )
 
   const openConversation = useCallback((conversationId: number) => {
     setOpenWindows((prev) => {
-      const existing = prev.find((w) => w.conversationId === conversationId)
+      const liveWindows = prev.filter(
+        (window) =>
+          window.conversationId === conversationId ||
+          itemsById.has(window.conversationId),
+      )
+      const existing = liveWindows.find(
+        (window) => window.conversationId === conversationId,
+      )
       if (existing) {
-        return prev.map((w) =>
-          w.conversationId === conversationId
-            ? { ...w, minimized: false }
-            : w,
+        return liveWindows.map((window) =>
+          window.conversationId === conversationId
+            ? { ...window, minimized: false }
+            : window,
         )
       }
-      const next = [{ conversationId, minimized: false }, ...prev]
+      const next = [{ conversationId, minimized: false }, ...liveWindows]
       return next.slice(0, MAX_OPEN_WINDOWS)
     })
     setListOpen(false)
-  }, [])
+  }, [itemsById])
 
   const closeWindow = useCallback((conversationId: number) => {
     setOpenWindows((prev) =>
@@ -116,7 +122,7 @@ export function MessagingDock() {
 
   return (
     <>
-      {openWindows.map((w, idx) => {
+      {visibleOpenWindows.map((w, idx) => {
         const conv = itemsById.get(w.conversationId)
         if (!conv) return null
         const rightPx = firstWindowRight + idx * (WINDOW_WIDTH + GAP)
@@ -197,7 +203,7 @@ export function MessagingDock() {
               ) : (
                 filtered.map((conv) => {
                   const name = conv.displayName ?? "—"
-                  const isOpen = openWindows.some(
+                  const isOpen = visibleOpenWindows.some(
                     (w) => w.conversationId === conv.conversationId,
                   )
                   return (

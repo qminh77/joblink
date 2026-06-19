@@ -5,7 +5,6 @@ import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import { rpcResult } from "@/lib/action/rpc"
 
 import {
   createApplicationIdSchema,
@@ -14,6 +13,15 @@ import {
   createJobSchema,
   updateJobSchema,
 } from "../schemas"
+import {
+  applyToJob,
+  createJob,
+  logJobView,
+  respondInterview,
+  toggleSavedJob,
+  updateJob,
+  withdrawApplication,
+} from "../services/jobs.service"
 import type {
   ApplyResult,
   CreateJobInput,
@@ -24,11 +32,12 @@ import type {
   UpdateJobResult,
   WithdrawResult,
 } from "../types"
-import {
-  notifyApplicationReceived,
-  notifyApplicationWithdrawn,
-  notifyInterviewResponse,
-} from "../services/application-notifications"
+
+type JobTranslator = Awaited<ReturnType<typeof getTranslations>>
+
+function validationError(te: JobTranslator, message?: string) {
+  return { ok: false as const, error: message ?? te("unknown") }
+}
 
 export async function createJobAction(
   input: CreateJobInput,
@@ -36,31 +45,12 @@ export async function createJobAction(
   const te = await getTranslations("jobs.errors")
   const parsed = createJobSchema(te).safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+    return validationError(te, parsed.error.issues[0]?.message)
   }
 
   await requireCurrentUser()
   const supabase = await createClient()
-
-  const result = await rpcResult<{ jobId: number }>(
-    supabase.rpc("create_job", {
-      p_title: parsed.data.title,
-      p_description: parsed.data.description,
-      p_requirements: parsed.data.requirements ?? null,
-      p_province_id: parsed.data.provinceId ?? null,
-      p_ward_id: parsed.data.wardId ?? null,
-      p_salary_min: parsed.data.salaryMin ?? null,
-      p_salary_max: parsed.data.salaryMax ?? null,
-      p_salary_visible: parsed.data.salaryVisible,
-      p_job_type_id: parsed.data.jobTypeId,
-      p_work_mode_id: parsed.data.workModeId,
-      p_job_position_id: null,
-      p_position_title: parsed.data.positionTitle ?? null,
-      p_status: parsed.data.status,
-      p_expires_at: parsed.data.expiresAt ?? null,
-      p_skills: parsed.data.skills ?? null,
-    }),
-  )
+  const result = await createJob(supabase, parsed.data)
 
   if (result.ok) {
     revalidatePath("/jobs")
@@ -75,30 +65,12 @@ export async function updateJobAction(
   const te = await getTranslations("jobs.errors")
   const parsed = updateJobSchema(te).safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+    return validationError(te, parsed.error.issues[0]?.message)
   }
 
   await requireCurrentUser()
   const supabase = await createClient()
-
-  const result = await rpcResult<{ jobId: number }>(
-    supabase.rpc("update_job", {
-      p_job_id: parsed.data.jobId,
-      p_title: parsed.data.title,
-      p_description: parsed.data.description,
-      p_requirements: parsed.data.requirements ?? null,
-      p_province_id: parsed.data.provinceId ?? null,
-      p_ward_id: parsed.data.wardId ?? null,
-      p_salary_min: parsed.data.salaryMin ?? null,
-      p_salary_max: parsed.data.salaryMax ?? null,
-      p_salary_visible: parsed.data.salaryVisible,
-      p_job_type_id: parsed.data.jobTypeId,
-      p_work_mode_id: parsed.data.workModeId,
-      p_position_title: parsed.data.positionTitle ?? null,
-      p_expires_at: parsed.data.expiresAt ?? null,
-      p_skills: parsed.data.skills ?? null,
-    }),
-  )
+  const result = await updateJob(supabase, parsed.data)
 
   if (result.ok) {
     revalidatePath("/jobs")
@@ -116,40 +88,19 @@ export async function applyToJobAction(input: {
   const te = await getTranslations("jobs.errors")
   const parsed = createApplySchema(te).safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+    return validationError(te, parsed.error.issues[0]?.message)
   }
 
   const current = await requireCurrentUser()
   const supabase = await createClient()
-
-  // Verify CV thuộc về applicant + chưa bị xoá → lưu storage_path vào resume_url.
-  // Đây là cơ chế "lưu path private" mà company-side dùng signed URL khi xem.
-  const { data: cv, error: cvErr } = await supabase
-    .from("member_cvs")
-    .select("storage_path, user_id, deleted_at")
-    .eq("id", parsed.data.resumeCvId)
-    .maybeSingle<{ storage_path: string; user_id: number; deleted_at: string | null }>()
-  if (cvErr || !cv || cv.user_id !== current.appUser.id || cv.deleted_at) {
-    return { ok: false, error: te("resumeRequired") }
-  }
-
-  const result = await rpcResult<{ applicationId: number; status: string }>(
-    supabase.rpc("apply_to_job", {
-      p_job_id: parsed.data.jobId,
-      p_cover_letter: parsed.data.coverLetter ?? null,
-      p_resume_url: cv.storage_path,
-    }),
+  const result = await applyToJob(
+    supabase,
+    current,
+    parsed.data,
+    te("resumeRequired"),
   )
 
-  if (result.ok) {
-    revalidatePath(`/jobs/${parsed.data.jobId}`)
-    await notifyApplicationReceived({
-      supabase,
-      jobId: parsed.data.jobId,
-      applicationId: result.applicationId,
-      current,
-    })
-  }
+  if (result.ok) revalidatePath(`/jobs/${parsed.data.jobId}`)
   return result
 }
 
@@ -159,24 +110,12 @@ export async function withdrawApplicationAction(
   const te = await getTranslations("jobs.errors")
   const parsed = createApplicationIdSchema(te).safeParse(applicationId)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+    return validationError(te, parsed.error.issues[0]?.message)
   }
 
   const current = await requireCurrentUser()
   const supabase = await createClient()
-
-  const result = await rpcResult<{ status: string }>(
-    supabase.rpc("withdraw_application", { p_application_id: parsed.data }),
-  )
-
-  if (result.ok) {
-    await notifyApplicationWithdrawn({
-      supabase,
-      applicationId: parsed.data,
-      current,
-    })
-  }
-  return result
+  return withdrawApplication(supabase, current, parsed.data)
 }
 
 export async function toggleSavedJobAction(
@@ -185,66 +124,31 @@ export async function toggleSavedJobAction(
   const te = await getTranslations("jobs.errors")
   const parsed = createJobIdSchema(te).safeParse(jobId)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
+    return validationError(te, parsed.error.issues[0]?.message)
   }
 
   await requireCurrentUser()
   const supabase = await createClient()
-
-  const result = await rpcResult<{ saved: boolean }>(
-    supabase.rpc("toggle_saved_job", { p_job_id: parsed.data }),
-  )
+  const result = await toggleSavedJob(supabase, parsed.data)
 
   if (result.ok) revalidatePath("/saved-jobs")
   return result
 }
 
-/**
- * Ứng viên xác nhận / từ chối lịch phỏng vấn. RPC tự check chủ đơn. Notify
- * recruiter kèm kết quả.
- */
 export async function respondInterviewAction(input: {
   interviewId: number
   accept: boolean
 }): Promise<RespondInterviewResult> {
   const current = await requireCurrentUser()
   const supabase = await createClient()
+  const result = await respondInterview(supabase, current, input)
 
-  const result = await rpcResult<{
-    status: "confirmed" | "declined"
-    companyUserId: number
-    jobId: number
-    jobTitle: string
-    applicationId: number
-  }>(
-    supabase.rpc("respond_interview", {
-      p_interview_id: input.interviewId,
-      p_accept: input.accept,
-    }),
-  )
-
-  if (result.ok) {
-    revalidatePath("/jobs/applications")
-    await notifyInterviewResponse({
-      companyUserId: result.companyUserId,
-      jobId: result.jobId,
-      jobTitle: result.jobTitle,
-      applicationId: result.applicationId,
-      accepted: input.accept,
-      current,
-    })
-  }
-  return result.ok
-    ? { ok: true, status: result.status }
-    : { ok: false, error: result.error }
+  if (result.ok) revalidatePath("/jobs/applications")
+  return result
 }
 
-/**
- * Ghi nhận lượt xem job (FR-M07-004). Best-effort — bỏ qua lỗi/dedupe trong RPC.
- * Không throw để không ảnh hưởng render trang job.
- */
 export async function logJobViewAction(jobId: number): Promise<void> {
   if (!Number.isInteger(jobId) || jobId <= 0) return
   const supabase = await createClient()
-  await supabase.rpc("log_job_view", { p_job_id: jobId })
+  await logJobView(supabase, jobId)
 }

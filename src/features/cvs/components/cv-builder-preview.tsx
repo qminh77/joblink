@@ -1,13 +1,35 @@
-import type { MemberEducationRow, MemberExperienceRow, SkillRow } from "@/types/database"
+export type CvPreviewExperience = {
+  id: number
+  company_name: string
+  position: string
+  start_date: string
+  end_date: string | null
+  description: string | null
+}
+
+export type CvPreviewEducation = {
+  id: number
+  school_name: string
+  degree: string | null
+  field_of_study: string | null
+  start_date: string | null
+  end_date: string | null
+  description: string | null
+}
+
+export type CvPreviewSkill = {
+  id: number
+  name: string
+}
 
 type Props = {
   fullName: string
   email: string
   phone?: string | null
   headline?: string | null
-  experiences: MemberExperienceRow[]
-  educations: MemberEducationRow[]
-  skills: SkillRow[]
+  experiences: CvPreviewExperience[]
+  educations: CvPreviewEducation[]
+  skills: CvPreviewSkill[]
 }
 
 function formatDate(d: string | null): string {

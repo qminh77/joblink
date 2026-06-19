@@ -55,6 +55,24 @@ export type AdminUserListResult = {
   pageSize: number
 }
 
+export type ListUsersParams = {
+  search?: string
+  role?: UserRole | "all"
+  status?: UserStatus | "all"
+  page?: number
+  pageSize?: number
+}
+
+export type ExportUsersParams = {
+  search?: string
+  role?: string
+  status?: string
+}
+
+export type UserActionResult =
+  | { ok: true; newStatus: UserStatus }
+  | { ok: false; error: string }
+
 export type AdminCompanyRow = {
   userId: number
   email: string
