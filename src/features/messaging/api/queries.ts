@@ -55,8 +55,18 @@ export async function loadMessagingOverview(): Promise<MessagingOverview> {
   }
 
   const payload = data as unknown as OverviewRpcResponse
+  const rawItems = payload?.items ?? []
+  
+  // Patch các trường bị thiếu do đợt refactor RPC gần đây trên Supabase
+  const patchedItems = rawItems.map(item => ({
+    ...item,
+    isConnected: item.isConnected ?? true,
+    blockedByMe: item.blockedByMe ?? false,
+    blockedMe: item.blockedMe ?? false,
+  }))
+
   return {
-    items: payload?.items ?? [],
+    items: patchedItems,
     unreadConversations: payload?.unreadConversations ?? 0,
   }
 }

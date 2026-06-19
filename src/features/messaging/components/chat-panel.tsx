@@ -12,7 +12,7 @@ import {
   Send,
 } from "lucide-react"
 
-import { btnTap, fadeUp, staggerSm } from "@/lib/animations"
+import { btnTap } from "@/lib/animations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
@@ -57,13 +57,28 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
 
   const [draft, setDraft] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
+  
   // Ghi nhớ message cuối đã được mark-read để tránh gọi mutate trùng lặp khi
   // chính user gửi tin (lastMessageId tăng nhưng không có gì để đánh dấu).
   const lastReadIdRef = useRef<number | null>(null)
+  
   // Ghi nhớ "user đang ở gần bottom" để chỉ auto-scroll khi họ thật sự đang
-  // theo dõi cuộc trò chuyện — tránh giật lên xuống khi user đang scroll lên
-  // đọc tin cũ.
+  // theo dõi cuộc trò chuyện — tránh giật lên xuống khi user đang scroll lên đọc tin cũ.
   const stickToBottomRef = useRef(true)
+
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleScroll = useCallback(() => {
+    if (scrollTimeoutRef.current) return
+    scrollTimeoutRef.current = setTimeout(() => {
+      const el = scrollRef.current
+      if (el) {
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+        stickToBottomRef.current = distanceFromBottom < 120
+      }
+      scrollTimeoutRef.current = null
+    }, 150)
+  }, [])
 
   const lastMessage = messages.at(-1) ?? null
   const lastMessageId = lastMessage?.id ?? null
@@ -93,13 +108,6 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
     lastReadIdRef.current = null
     stickToBottomRef.current = true
   }, [conversationId])
-
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-    stickToBottomRef.current = distanceFromBottom < 120
-  }, [])
 
   // Auto-scroll xuống đáy: chỉ khi user đang ở gần bottom hoặc đổi convo.
   // Đồng thời, tin mình tự gửi luôn cuộn xuống (UX chat thông thường).
@@ -187,12 +195,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
             {t("startConversation")}
           </div>
         ) : (
-          <motion.div
-            variants={staggerSm}
-            initial="hidden"
-            animate="show"
-            className="space-y-2"
-          >
+          <div className="space-y-2">
             {messages.map((msg, i) => {
               const isMe = msg.senderId === currentUserId
               const prev = messages[i - 1]
@@ -208,8 +211,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
                       {formatRel(msg.createdAt)}
                     </div>
                   )}
-                  <motion.div
-                    variants={fadeUp}
+                  <div
                     className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                   >
                     <div className="max-w-[75%] sm:max-w-[60%]">
@@ -232,11 +234,12 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
               )
             })}
-          </motion.div>
+            <div className="h-px w-full" />
+          </div>
         )}
       </div>
 
