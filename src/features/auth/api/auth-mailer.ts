@@ -143,9 +143,9 @@ async function requireEmailVerification(): Promise<boolean> {
       .select("value")
       .eq("setting_key", "require_email_verification")
       .maybeSingle<{ value: unknown }>()
-    return data?.value !== false
+    return data?.value === true
   } catch {
-    return true
+    return false
   }
 }
 

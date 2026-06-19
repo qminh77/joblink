@@ -2,6 +2,7 @@ import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import type { UserRole } from "@/lib/constants"
 import type {
   FeedComment,
@@ -163,8 +164,9 @@ export async function loadPostComments(
 
   const userIds = Array.from(new Set(comments.map((c) => c.user_id)))
 
+  const admin = createAdminClient()
   const [usersRes, memberRes, companyRes] = await Promise.all([
-    supabase.from("users").select("id, role").in("id", userIds),
+    admin.from("users").select("id, role").in("id", userIds),
     supabase
       .from("member_profiles")
       .select("user_id, full_name, avatar_url, headline")

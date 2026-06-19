@@ -94,6 +94,14 @@ export type AdminReportRow = {
   }
 }
 
+export type ListReportsParams = {
+  targetType?: ReportTargetType | "all"
+  status?: ReportStatus | "all"
+  limit?: number
+}
+
+export type AdminActionResult = { ok: boolean; error?: string }
+
 export type AdminAuditLogEntry = {
   id: number
   actorId: number | null

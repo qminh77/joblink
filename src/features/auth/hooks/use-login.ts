@@ -44,14 +44,22 @@ export function useLogin({
       if (!authId) return { mfaRequired: false, factorId: null } as LoginOutcome
 
       const supabase = createClient()
-      const { data: appUser } = await supabase
+      const { data: appUser, error: appUserError } = await supabase
         .from("users")
         .select("role, status")
         .eq("auth_id", authId)
         .is("deleted_at", null)
         .maybeSingle<{ role: string; status: string }>()
 
-      if (!appUser) return { mfaRequired: false, factorId: null } as LoginOutcome
+      if (appUserError) {
+        await signOutClient()
+        throw appUserError
+      }
+
+      if (!appUser) {
+        await signOutClient()
+        throw new Error(tErr("userNotFound"))
+      }
 
       if (
         appUser.role === "company" &&

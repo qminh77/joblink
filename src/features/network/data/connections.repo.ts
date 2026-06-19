@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import type { ConnectionRow } from "@/types/database"
 
 // Data-access cho connections, chạy bằng client RLS. Truy vấn lookup 2 chiều
@@ -23,7 +24,8 @@ function betweenFilter(me: number, other: number): string {
 }
 
 export function getConnectTarget(supabase: Supabase, userId: number) {
-  return supabase
+  const admin = createAdminClient()
+  return admin
     .from("users")
     .select("id, status, role")
     .eq("id", userId)

@@ -109,4 +109,51 @@ export type MentionableUser = {
   headline: string | null
 }
 
+export type CreatePostActionInput = {
+  content: string
+  visibility?: "public" | "connections" | "private"
+  mediaItems?: { url: string; width?: number; height?: number }[]
+  options?: string[]
+  videoUrl?: string
+}
+
+export type ToggleReactionResult = { reacted: boolean }
+
+export type VoteResult = { optionId: number; postId: number }
+
+export type CreateCommentActionInput = {
+  postId: number
+  content: string
+  parentId?: number | null
+}
+
+export type CreateCommentResult = { comment: FeedComment }
+
+export type DeleteCommentResult = { commentId: number; postId: number }
+
+export type SharePostActionInput = {
+  postId: number
+  commentContent?: string | null
+}
+
+export type SharePostResult = { shareId: number; post: FeedPost }
+
+export type UpdatePostActionInput = {
+  postId: number
+  content: string
+  visibility: "public" | "connections" | "private"
+  mediaItems?: { url: string; width?: number; height?: number }[]
+  options?: { id?: number; optionText: string }[]
+}
+
+export type UpdatePostResult = {
+  postId: number
+  content: string
+  visibility: PostVisibility
+  media: Json | null
+  postType: PostType
+  updatedAt: string
+  pollOptions?: { id: number; optionText: string; voteCount: number }[]
+}
+
 export type { PostReactionType }

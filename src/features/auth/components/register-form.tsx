@@ -4,24 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import {
-  AtSign,
-  Briefcase,
-  Building2,
-  FileBadge,
-  FileText,
-  Globe,
-  Info,
-  Layers,
-  Lock,
-  Mail,
-  MapPin,
-  Phone,
-  ShieldCheck,
-  User,
-  UserSquare,
-  Users,
-} from "lucide-react"
+import { Lock, Mail, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
 import { verifyAuthRecaptchaAction } from "@/features/system-settings/api/actions"
@@ -41,15 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
 
 import { useRegister } from "../hooks"
 import {
@@ -60,8 +35,10 @@ import {
 } from "../schemas"
 
 import { PasswordInput } from "./password-input"
+import { CompanyFields } from "./register/company-fields"
+import { MemberFields } from "./register/member-fields"
 
-type RegisterFormValues = {
+export type RegisterFormValues = {
   role: "member" | "company"
   fullName: string
   companyName: string
@@ -109,7 +86,6 @@ export function RegisterForm({
 } = {}) {
   const t = useTranslations("auth.register")
   const tv = useTranslations("auth.validation")
-  const tSize = useTranslations("auth.register.sizeOptions")
   const tErr = useTranslations("auth.errors")
   const registerSchema = useMemo(() => createRegisterSchema(tv), [tv])
   const { enabled: captchaEnabled, getToken } = useRecaptcha(
@@ -240,350 +216,9 @@ export function RegisterForm({
         />
 
         {role === "member" ? (
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-foreground/80">
-                  {t("fullName")}
-                </FormLabel>
-                <div className="relative group">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                    <User className="w-5 h-5" />
-                  </span>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      autoComplete="name"
-                      placeholder={t("fullNamePlaceholder")}
-                      className={INPUT_CLASS}
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <MemberFields control={form.control} inputClass={INPUT_CLASS} />
         ) : (
-          <>
-            <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs leading-relaxed text-foreground/80 flex gap-2">
-              <Info className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-              <span>{t("companyPendingNotice")}</span>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("companyInfoSection")}
-              </p>
-
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-foreground/80">
-                      {t("companyName")}
-                    </FormLabel>
-                    <div className="relative group">
-                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <Briefcase className="w-5 h-5" />
-                      </span>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="organization"
-                          placeholder={t("companyNamePlaceholder")}
-                          className={INPUT_CLASS}
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="taxId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-foreground/80">
-                      {t("taxId")}
-                    </FormLabel>
-                    <div className="relative group">
-                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <FileBadge className="w-5 h-5" />
-                      </span>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          inputMode="numeric"
-                          placeholder={t("taxIdPlaceholder")}
-                          className={INPUT_CLASS}
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="industry"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("industry")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                          <Building2 className="w-5 h-5" />
-                        </span>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder={t("industryPlaceholder")}
-                            className={INPUT_CLASS}
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("size")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                          <Users className="w-5 h-5" />
-                        </span>
-                        <Select
-                          value={field.value || undefined}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              className={`${INPUT_CLASS} w-full text-left`}
-                            >
-                              <SelectValue placeholder={t("sizePlaceholder")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {COMPANY_SIZE_OPTIONS.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {tSize(option)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="businessAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-foreground/80">
-                      {t("businessAddress")}
-                    </FormLabel>
-                    <div className="relative group">
-                      <span className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <MapPin className="w-5 h-5" />
-                      </span>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={2}
-                          placeholder={t("businessAddressPlaceholder")}
-                          className="pl-11 pt-3 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="businessEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-foreground/80">
-                      {t("businessEmail")}
-                    </FormLabel>
-                    <div className="relative group">
-                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <AtSign className="w-5 h-5" />
-                      </span>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder={t("businessEmailPlaceholder")}
-                          className={INPUT_CLASS}
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="representativeName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("representativeName")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                          <UserSquare className="w-5 h-5" />
-                        </span>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            autoComplete="name"
-                            placeholder={t("representativeNamePlaceholder")}
-                            className={INPUT_CLASS}
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="representativeTitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("representativeTitle")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                          <Layers className="w-5 h-5" />
-                        </span>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder={t("representativeTitlePlaceholder")}
-                            className={INPUT_CLASS}
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("website")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                          <Globe className="w-5 h-5" />
-                        </span>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            inputMode="url"
-                            placeholder={t("websitePlaceholder")}
-                            className={INPUT_CLASS}
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground/80">
-                        {t("phone")}
-                      </FormLabel>
-                      <div className="relative group">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                          <Phone className="w-5 h-5" />
-                        </span>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            inputMode="tel"
-                            autoComplete="tel"
-                            placeholder={t("phonePlaceholder")}
-                            className={INPUT_CLASS}
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="about"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-foreground/80">
-                      {t("about")}
-                    </FormLabel>
-                    <div className="relative group">
-                      <span className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-                        <FileText className="w-5 h-5" />
-                      </span>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          placeholder={t("aboutPlaceholder")}
-                          className="pl-11 pt-3 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl resize-none"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
-              {t("companyAccountSection")}
-            </p>
-          </>
+          <CompanyFields control={form.control} inputClass={INPUT_CLASS} />
         )}
 
         <FormField

@@ -116,14 +116,6 @@ export async function registerCompanyAction(
     return { ok: false, error: updateError.message }
   }
 
-  await admin
-    .from("users")
-    .update({
-      status: "pending_verification",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userRow.id)
-
   return { ok: true }
 }
 

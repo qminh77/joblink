@@ -7,18 +7,6 @@ import { useFormatter, useTranslations } from "next-intl"
 import { Download, Filter, Search, Shield, ShieldOff, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,25 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { applyUserAction, exportUsersCsvAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
 import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
-import { getInitials } from "@/lib/utils/format"
-import { profileHref } from "@/lib/utils/profile-url"
+import { type UserActionType, UsersActionDialog } from "./users/users-action-dialog"
+import { UsersTableRow } from "./users/users-table-row"
 
-const STATUS_STYLE: Record<string, string> = {
-  pending_verification:
-    "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  active:
-    "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  suspended:
-    "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  banned: "bg-red-500/10 text-red-600 border-red-500/20",
-  deleted: "bg-muted text-muted-foreground border-border/30",
-}
 
-type Action = "suspend" | "ban" | "restore"
 
 export function UsersPanel({
   initial,
@@ -72,9 +48,10 @@ export function UsersPanel({
   const [search, setSearch] = useState(query.search ?? "")
   const [exporting, setExporting] = useState(false)
   const [pending, startTransition] = useTransition()
-  const [confirmTarget, setConfirmTarget] = useState<
-    { user: AdminUserRow; action: Action } | null
-  >(null)
+  const [confirmTarget, setConfirmTarget] = useState<{
+    user: AdminUserRow
+    action: UserActionType
+  } | null>(null)
   const [reason, setReason] = useState("")
 
   const totalPages = Math.max(1, Math.ceil(initial.total / initial.pageSize))
@@ -258,98 +235,12 @@ export function UsersPanel({
                 </tr>
               ) : (
                 initial.items.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/20">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={profileHref(user.id, user.role)}
-                        className="flex items-center gap-3 group"
-                      >
-                        <Avatar className="w-8 h-8">
-                          {user.avatarUrl ? (
-                            <AvatarImage src={user.avatarUrl} />
-                          ) : null}
-                          <AvatarFallback className="text-xs">
-                            {getInitials(user.displayName, "JL")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground group-hover:text-primary truncate">
-                            {user.displayName}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs">
-                        {tRoles(user.role)}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${STATUS_STYLE[user.status] ?? ""}`}
-                      >
-                        {tStatuses(user.status)}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {format.dateTime(new Date(user.createdAt), {
-                        dateStyle: "short",
-                      })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        {user.status !== "banned" &&
-                        user.role !== "admin" ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-500/10"
-                            onClick={() =>
-                              setConfirmTarget({ user, action: "ban" })
-                            }
-                            title={t("actionBan")}
-                          >
-                            <ShieldOff className="w-4 h-4" />
-                          </Button>
-                        ) : null}
-                        {user.status === "active" &&
-                        user.role !== "admin" ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            className="h-8 w-8 p-0 rounded-lg text-amber-500 hover:bg-amber-500/10"
-                            onClick={() =>
-                              setConfirmTarget({ user, action: "suspend" })
-                            }
-                            title={t("actionSuspend")}
-                          >
-                            <Shield className="w-4 h-4" />
-                          </Button>
-                        ) : null}
-                        {(user.status === "suspended" ||
-                          user.status === "banned") && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            className="h-8 w-8 p-0 rounded-lg text-emerald-500 hover:bg-emerald-500/10"
-                            onClick={() =>
-                              setConfirmTarget({ user, action: "restore" })
-                            }
-                            title={t("actionRestore")}
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                  <UsersTableRow
+                    key={user.id}
+                    user={user}
+                    pending={pending}
+                    onAction={setConfirmTarget}
+                  />
                 ))
               )}
             </tbody>
@@ -381,59 +272,14 @@ export function UsersPanel({
         </div>
       </div>
 
-      <AlertDialog
-        open={!!confirmTarget}
-        onOpenChange={(open) => {
-          if (!open) {
-            setConfirmTarget(null)
-            setReason("")
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("confirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmTarget ? (
-                <>
-                  <strong>{t(`action${cap(confirmTarget.action)}` as never)}</strong>
-                  {" — "}
-                  {confirmTarget.user.displayName} ({confirmTarget.user.email})
-                </>
-              ) : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t("confirmReason")}
-            </label>
-            <Textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {tCommon("cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={pending || !reason.trim()}
-              onClick={(e) => {
-                e.preventDefault()
-                submitAction()
-              }}
-            >
-              {pending ? t("submitting") : t("submit")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UsersActionDialog
+        confirmTarget={confirmTarget}
+        setConfirmTarget={setConfirmTarget}
+        reason={reason}
+        setReason={setReason}
+        submitAction={submitAction}
+        pending={pending}
+      />
     </>
   )
-}
-
-function cap(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1)
 }

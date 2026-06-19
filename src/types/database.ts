@@ -26,6 +26,7 @@ export type AppUserRow = {
   phone: string | null
   phone_verified_at: string | null
   two_fa_enabled: boolean
+  two_fa_secret: string | null
   locale: string
   last_login_at: string | null
   connection_count: number
@@ -47,9 +48,9 @@ export type PostRow = {
   media: Json | null
   visibility: PostVisibility
   status: PostStatus
-  reaction_count?: number
-  comment_count?: number
-  share_count?: number
+  reaction_count: number | null
+  comment_count: number | null
+  share_count: number | null
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -113,6 +114,9 @@ export type ProvinceRow = {
   name_en: string | null
   sort_order: number
   is_active: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
 }
 
 export type WardRow = {
@@ -123,6 +127,9 @@ export type WardRow = {
   name_en: string | null
   sort_order: number
   is_active: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
 }
 
 export type MemberProfileRow = {
@@ -262,6 +269,10 @@ export type NotificationType =
 export type ConversationRow = {
   id: number
   type: "direct"
+  last_message_id: number | null
+  last_content: string | null
+  last_sender_id: number | null
+  last_message_created_at: string | null
   created_at: string
   updated_at: string
 }
@@ -269,6 +280,7 @@ export type ConversationRow = {
 export type ConversationParticipantRow = {
   conversation_id: number
   user_id: number
+  unread_count: number
   joined_at: string
   last_read_at: string | null
 }
@@ -345,6 +357,8 @@ export type JobPositionRow = {
   name_en: string | null
   sort_order: number
   is_active: boolean
+  parent_id: number | null
+  description: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -490,6 +504,7 @@ export type CompanyProfileRow = {
   representative_title: string | null
   business_address: string | null
   business_email: string | null
+  verification_documents: Json | null
   verification_status: CompanyVerification
   verification_note: string | null
   verified_at: string | null
@@ -497,6 +512,64 @@ export type CompanyProfileRow = {
   created_at: string
   updated_at: string
   deleted_at: string | null
+}
+
+export type FollowRow = {
+  id: number
+  follower_id: number
+  followable_type: string
+  followable_id: number
+  created_at: string
+}
+
+export type JobSkillRow = {
+  job_id: number
+  skill_id: number
+  is_required: boolean
+}
+
+export type ApplicationStatusHistoryRow = {
+  id: number
+  application_id: number
+  old_status: string
+  new_status: string
+  changed_by: number
+  note: string | null
+  changed_at: string
+}
+
+export type InterviewScheduleRow = {
+  id: number
+  application_id: number
+  scheduled_at: string
+  duration_minutes: number
+  location_or_link: string | null
+  note: string | null
+  created_by: number
+  status: "pending" | "accepted" | "rejected" | "cancelled"
+  responded_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type JobViewLogRow = {
+  id: number
+  job_id: number
+  viewer_user_id: number | null
+  viewed_at: string
+}
+
+export type NetworkSuggestionRow = {
+  user_id: number
+  suggested_user_id: number
+  score: number
+  created_at: string
+}
+
+export type UserFeedRow = {
+  user_id: number
+  post_id: number
+  created_at: string
 }
 
 type TableDef<TRow, TInsert = Partial<TRow>, TUpdate = Partial<TRow>> = {
@@ -545,6 +618,34 @@ export type Database = {
         Omit<ProfileViewLogRow, "id" | "viewed_at">
       >
       company_profiles: TableDef<CompanyProfileRow>
+      follows: TableDef<
+        FollowRow,
+        Omit<FollowRow, "id" | "created_at">
+      >
+      job_skills: TableDef<JobSkillRow>
+      application_status_history: TableDef<
+        ApplicationStatusHistoryRow,
+        Omit<ApplicationStatusHistoryRow, "id" | "changed_at">
+      >
+      interview_schedules: TableDef<
+        InterviewScheduleRow,
+        Omit<InterviewScheduleRow, "id" | "created_at" | "updated_at" | "status" | "responded_at"> & {
+          status?: InterviewScheduleRow["status"]
+          responded_at?: string | null
+        }
+      >
+      job_view_logs: TableDef<
+        JobViewLogRow,
+        Omit<JobViewLogRow, "id" | "viewed_at">
+      >
+      network_suggestions: TableDef<
+        NetworkSuggestionRow,
+        Omit<NetworkSuggestionRow, "created_at">
+      >
+      user_feeds: TableDef<
+        UserFeedRow,
+        Omit<UserFeedRow, "created_at">
+      >
       connections: TableDef<
         ConnectionRow,
         Omit<ConnectionRow, "id" | "requested_at" | "responded_at">
@@ -572,11 +673,17 @@ export type Database = {
           | "media"
           | "visibility"
           | "post_type"
+          | "reaction_count"
+          | "comment_count"
+          | "share_count"
         > & {
           status?: PostStatus
           visibility?: PostVisibility
           post_type?: PostType
           media?: Json | null
+          reaction_count?: number | null
+          comment_count?: number | null
+          share_count?: number | null
         },
         Partial<PostRow> & { deleted_at?: string | null }
       >
@@ -879,10 +986,6 @@ export type Database = {
       }
       get_my_saved_jobs: {
         Args: { p_limit?: number; p_offset?: number }
-        Returns: Json
-      }
-      get_admin_dashboard: {
-        Args: Record<string, never>
         Returns: Json
       }
       increment_poll_vote_count: {

@@ -3,18 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Globe, Image as ImageIcon, Loader2, Lock, Minus, Plus, Users, Video, X } from "lucide-react"
+import { BarChart2, Image as ImageIcon, Loader2, Video, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ErrorAlert } from "@/components/ui/error-alert"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { modalContent, modalOverlay } from "@/lib/animations"
 import { getInitials } from "@/lib/utils/format"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
@@ -35,6 +29,10 @@ import { useCreatePost, useUpdatePost } from "../hooks"
 import { readMediaItems, readSharedOriginal } from "../lib/media"
 import { readPollData } from "../lib/poll"
 import type { FeedPost } from "../types"
+import { ImagePreviewGrid } from "./post-composer/image-preview-grid"
+import { PollEditor } from "./post-composer/poll-editor"
+import { VideoPreview } from "./post-composer/video-preview"
+import { VisibilityMenu, type Visibility } from "./post-composer/visibility-menu"
 
 type PendingImage = {
   id: string
@@ -49,96 +47,6 @@ type KeptImage = {
   height?: number
 }
 
-type PreviewImage = { id: string; previewUrl: string }
-
-function ImagePreviewGrid({
-  images,
-  onRemove,
-  onAddMore,
-  addMoreLabel,
-}: {
-  images: PreviewImage[]
-  onRemove: (id: string) => void
-  onAddMore?: () => void
-  addMoreLabel: string
-}) {
-  // 1 ảnh: hiển thị full-size như trước; 2+: grid 3 cột, ô vuông.
-  if (images.length === 1) {
-    const img = images[0]!
-    return (
-      <div className="relative mt-3 rounded-xl overflow-hidden border border-border/30">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={img.previewUrl}
-          alt=""
-          className="w-full max-h-64 object-contain bg-muted/20"
-        />
-        <button
-          type="button"
-          onClick={() => onRemove(img.id)}
-          className="absolute top-2 right-2 p-1 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="remove"
-        >
-          <X className="w-4 h-4" />
-        </button>
-        {onAddMore ? (
-          <button
-            type="button"
-            onClick={onAddMore}
-            className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur-sm text-foreground hover:bg-background transition-colors text-[12px] font-medium"
-          >
-            <Plus className="w-3.5 h-3.5" /> {addMoreLabel}
-          </button>
-        ) : null}
-      </div>
-    )
-  }
-
-  return (
-    <div className="mt-3 grid grid-cols-3 gap-1.5">
-      {images.map((img) => (
-        <div
-          key={img.id}
-          className="relative aspect-square rounded-lg overflow-hidden border border-border/30 bg-muted/20"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={img.previewUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <button
-            type="button"
-            onClick={() => onRemove(img.id)}
-            className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="remove"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ))}
-      {onAddMore ? (
-        <button
-          type="button"
-          onClick={onAddMore}
-          className="aspect-square rounded-lg border border-dashed border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors flex flex-col items-center justify-center gap-1 text-[11px]"
-        >
-          <Plus className="w-5 h-5" />
-          <span>{addMoreLabel}</span>
-        </button>
-      ) : null}
-    </div>
-  )
-}
-
-type Visibility = "public" | "connections" | "private"
-
-const VISIBILITY_OPTIONS: { value: Visibility; icon: typeof Globe }[] = [
-  { value: "public", icon: Globe },
-  { value: "connections", icon: Users },
-  { value: "private", icon: Lock },
-]
-
 export function PostComposer({
   open,
   onClose,
@@ -150,7 +58,6 @@ export function PostComposer({
 }) {
   const tHome = useTranslations("home")
   const tPosts = useTranslations("posts")
-  const tVis = useTranslations("posts.visibility")
   const user = useCurrentUser()
   const userInitials = getInitials(user.displayName, "JL")
 
@@ -507,9 +414,6 @@ export function PostComposer({
     }
   }
 
-  const currentVisIcon =
-    VISIBILITY_OPTIONS.find((o) => o.value === visibility)?.icon ?? Globe
-
   return (
     <AnimatePresence>
       {open ? (
@@ -551,39 +455,10 @@ export function PostComposer({
                 </Avatar>
                 <div>
                   <h3 className="font-semibold text-sm">{user.displayName}</h3>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="text-[11px] bg-muted px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1 font-medium text-muted-foreground hover:bg-muted/80 transition-colors"
-                      >
-                        {(() => {
-                          const Icon = currentVisIcon
-                          return <Icon className="w-3 h-3" />
-                        })()}
-                        <span>{tVis(visibility)}</span>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      {VISIBILITY_OPTIONS.map(({ value, icon: Icon }) => (
-                        <DropdownMenuItem
-                          key={value}
-                          onClick={() => setVisibility(value)}
-                          className="cursor-pointer"
-                        >
-                          <Icon className="w-4 h-4 mr-2 shrink-0" />
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">
-                              {tVis(value)}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {tVis(`${value}Hint`)}
-                            </span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <VisibilityMenu
+                    visibility={visibility}
+                    onChange={setVisibility}
+                  />
                 </div>
               </div>
               <textarea
@@ -597,55 +472,7 @@ export function PostComposer({
               />
 
               {pollMode && !hasExistingPoll ? (
-                <div className="mt-3 space-y-2">
-                  {pollOptions.map((opt, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />
-                      <input
-                        value={opt}
-                        onChange={(e) => {
-                          const next = [...pollOptions]
-                          next[i] = e.target.value
-                          setPollOptions(next)
-                        }}
-                        placeholder={tPosts("pollOption", { n: i + 1 })}
-                        maxLength={255}
-                        className="flex-1 bg-transparent border border-border/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
-                      />
-                      {pollOptions.length > 2 ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPollOptions((prev) =>
-                              prev.filter((_, idx) => idx !== i),
-                            )
-                          }}
-                          className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          aria-label={tPosts("removeOption")}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
-                  {pollOptions.length < 10 ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPollOptions((prev) => [...prev, ""])
-                      }
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{tPosts("addOption")}</span>
-                    </button>
-                  ) : null}
-                  <p className="text-[11px] text-muted-foreground">
-                    {pollOptions.filter((o) => o.trim()).length < 2
-                      ? tPosts("minOptions")
-                      : null}
-                  </p>
-                </div>
+                <PollEditor options={pollOptions} onChange={setPollOptions} />
               ) : null}
 
               {totalImages > 0 && !isSharedPost ? (
@@ -679,21 +506,10 @@ export function PostComposer({
               ) : null}
 
               {video ? (
-                <div className="mt-3 relative rounded-xl overflow-hidden bg-black">
-                  <video
-                    src={video.previewUrl}
-                    controls
-                    className="w-full max-h-80"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeVideo}
-                    aria-label={tPosts("removeVideo")}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <VideoPreview
+                  previewUrl={video.previewUrl}
+                  onRemove={removeVideo}
+                />
               ) : null}
             </div>
             <div className="p-4 border-t border-border/40 flex items-center justify-between">

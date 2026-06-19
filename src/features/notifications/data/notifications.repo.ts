@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 import type { NotificationItem } from "../types"
 
@@ -40,6 +41,7 @@ export async function verifyNotificationTarget(
   supabase: Supabase,
   item: NotificationItem,
 ): Promise<boolean> {
+  const admin = createAdminClient()
   const payload = item.payload
 
   switch (item.type) {
@@ -62,7 +64,7 @@ export async function verifyNotificationTarget(
     case "company_followed": {
       // Click → /profile/{actor}; chỉ cần actor user còn tồn tại.
       if (!payload || payload.type !== item.type) return false
-      const { data } = await supabase
+      const { data } = await admin
         .from("users")
         .select("id")
         .eq("id", payload.userId)

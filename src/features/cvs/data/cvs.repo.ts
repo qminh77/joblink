@@ -88,6 +88,14 @@ export function softDeleteMemberCv(
     .eq("user_id", userId)
 }
 
+export function unsetDefaultMemberCvs(supabase: Supabase, userId: number) {
+  return supabase
+    .from("member_cvs")
+    .update({ is_default: false, updated_at: now() })
+    .eq("user_id", userId)
+    .eq("is_default", true)
+}
+
 // Đếm số CV đang hoạt động — dùng để quyết định auto-set default cho CV mới
 // upload khi user chưa có CV nào.
 export async function countActiveCvs(supabase: Supabase, userId: number) {
@@ -97,4 +105,83 @@ export async function countActiveCvs(supabase: Supabase, userId: number) {
     .eq("user_id", userId)
     .is("deleted_at", null)
   return count ?? 0
+}
+
+export function loadMemberProfileForCvBuilder(
+  supabase: Supabase,
+  userId: number,
+) {
+  return supabase
+    .from("member_profiles")
+    .select("full_name, headline")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle<{
+      full_name: string
+      headline: string | null
+    }>()
+}
+
+export function listMemberExperiencesForCvBuilder(
+  supabase: Supabase,
+  userId: number,
+) {
+  return supabase
+    .from("member_experiences")
+    .select("id, company_name, position, start_date, end_date, is_current, description")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("is_current", { ascending: false })
+    .order("start_date", { ascending: false })
+}
+
+export function listMemberEducationsForCvBuilder(
+  supabase: Supabase,
+  userId: number,
+) {
+  return supabase
+    .from("member_educations")
+    .select("id, school_name, degree, field_of_study, start_date, end_date, description")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("start_date", { ascending: false })
+}
+
+export function listMemberSkillsForCvBuilder(
+  supabase: Supabase,
+  userId: number,
+) {
+  return supabase
+    .from("member_skills")
+    .select("id, name")
+    .eq("user_id", userId)
+    .order("name", { ascending: true })
+}
+
+export function setDefaultMemberCvRpc(supabase: Supabase, cvId: number) {
+  return supabase.rpc("set_default_member_cv", { p_cv_id: cvId })
+}
+
+export function listOwnCvSummaries(supabase: Supabase, userId: number) {
+  return supabase
+    .from("member_cvs")
+    .select("id, file_name, file_size, is_default")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false })
+}
+
+export function findApplicationResumeForCompany(
+  supabase: Supabase,
+  applicationId: number,
+) {
+  return supabase
+    .from("job_applications")
+    .select("resume_url, jobs!inner(company_user_id)")
+    .eq("id", applicationId)
+    .maybeSingle<{
+      resume_url: string | null
+      jobs: { company_user_id: number } | null
+    }>()
 }
