@@ -234,12 +234,16 @@ export async function searchMentionableProfiles(
   }
 
   const ql = query.toLowerCase()
-  out.sort((a, b) => {
-    const ai = a.displayName.toLowerCase().indexOf(ql)
-    const bi = b.displayName.toLowerCase().indexOf(ql)
-    return ai - bi
-  })
-  return out.slice(0, limit)
+  
+  // Schwartzian Transform: Tính toán index 1 lần duy nhất cho mỗi phần tử để tránh gọi toLowerCase/indexOf nhiều lần trong sort
+  const mapped = out.map(item => ({
+    item,
+    matchIndex: item.displayName.toLowerCase().indexOf(ql)
+  }))
+
+  mapped.sort((a, b) => a.matchIndex - b.matchIndex)
+
+  return mapped.slice(0, limit).map(x => x.item)
 }
 
 export async function insertPollOptions(

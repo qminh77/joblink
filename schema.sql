@@ -1679,9 +1679,9 @@ BEGIN
                   'avatarUrl',   COALESCE(amp.avatar_url, acp.logo_url),
                   'headline',    COALESCE(amp.headline, acp.industry)
               ) AS author,
-              f.reaction_count AS \"reactionCount\",
-              f.comment_count AS \"commentCount\",
-              f.share_count AS \"shareCount\",
+              f.reaction_count AS "reactionCount",
+              f.comment_count AS "commentCount",
+              f.share_count AS "shareCount",
               CASE
                 WHEN v_me IS NULL THEN FALSE
                 ELSE EXISTS (
@@ -9778,6 +9778,11 @@ CREATE TABLE IF NOT EXISTS public.user_feeds (
     PRIMARY KEY (user_id, post_id)
 );
 CREATE INDEX IF NOT EXISTS idx_user_feeds_user_created ON public.user_feeds(user_id, created_at DESC);
+
+-- Grant quyền SELECT cho authenticated (get_home_feed dùng SECURITY INVOKER)
+GRANT SELECT ON public.user_feeds TO authenticated;
+GRANT SELECT ON public.user_connections_view TO authenticated;
+GRANT SELECT ON public.network_suggestions TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.fanout_post_to_feed() RETURNS trigger AS $$
 BEGIN

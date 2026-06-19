@@ -127,6 +127,9 @@ CREATE TABLE IF NOT EXISTS public.user_feeds (
 );
 CREATE INDEX IF NOT EXISTS idx_user_feeds_user_created ON public.user_feeds(user_id, created_at DESC);
 
+GRANT SELECT ON public.user_feeds TO authenticated;
+GRANT SELECT ON public.user_connections_view TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.fanout_post_to_feed() RETURNS trigger AS $$
 BEGIN
     IF NEW.status = 'active' AND NEW.deleted_at IS NULL THEN
@@ -376,9 +379,9 @@ BEGIN
                   'avatarUrl',   COALESCE(amp.avatar_url, acp.logo_url),
                   'headline',    COALESCE(amp.headline, acp.industry)
               ) AS author,
-              f.reaction_count AS \"reactionCount\",
-              f.comment_count AS \"commentCount\",
-              f.share_count AS \"shareCount\",
+              f.reaction_count AS "reactionCount",
+              f.comment_count AS "commentCount",
+              f.share_count AS "shareCount",
               CASE
                 WHEN v_me IS NULL THEN FALSE
                 ELSE EXISTS (

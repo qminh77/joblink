@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS public.user_feeds (
 );
 CREATE INDEX IF NOT EXISTS idx_user_feeds_user_created ON public.user_feeds(user_id, created_at DESC);
 
+-- 3b. QUAN TRỌNG: Grant quyền SELECT cho authenticated role
+-- (get_home_feed dùng SECURITY INVOKER nên cần được uỷ quyền)
+GRANT SELECT ON public.user_feeds TO authenticated;
+GRANT SELECT ON public.user_connections_view TO authenticated;
+
 -- 4. Fan-out trigger function & trigger
 CREATE OR REPLACE FUNCTION public.fanout_post_to_feed() RETURNS trigger AS $$
 BEGIN
