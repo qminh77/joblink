@@ -3861,7 +3861,14 @@ BEGIN
                    p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
                    p.share_count AS "shareCount",
                    EXISTS(SELECT 1 FROM public.post_reactions pr
-                           WHERE pr.post_id = p.id AND pr.user_id = v_me) AS "viewerReacted"
+                           WHERE pr.post_id = p.id AND pr.user_id = v_me) AS "viewerReacted",
+                   CASE WHEN p.post_type = 'poll' THEN (
+                       SELECT COALESCE(jsonb_agg(jsonb_build_object('id', po.id, 'optionText', po.option_text,
+                           'voteCount', po.vote_count, 'viewerVoted', CASE WHEN v_me IS NULL THEN FALSE
+                               ELSE EXISTS(SELECT 1 FROM public.poll_votes pv WHERE pv.option_id = po.id AND pv.user_id = v_me)
+                           END) ORDER BY po.id), '[]'::jsonb)
+                       FROM public.poll_options po WHERE po.post_id = p.id)
+                   ELSE NULL END AS "pollOptions"
               FROM unnest(v_post_ids) f(id) JOIN public.posts p ON p.id = f.id
               JOIN public.users u ON u.id = p.author_id
               LEFT JOIN public.member_profiles mp ON mp.user_id = p.author_id
