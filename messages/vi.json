@@ -165,7 +165,7 @@
   "profileMenu": {
     "viewProfileShort": "Xem hồ sơ",
     "viewProfile": "Xem trang cá nhân",
-    "viewProfileHint": "Hồ sơ chuyên nghiệp của bạn",
+    "viewProfileHint": "Hồ sơ  của bạn",
     "savedJobsHint": "Danh sách việc làm bạn theo dõi",
     "myApplications": "Đơn ứng tuyển",
     "myApplicationsHint": "Theo dõi đơn và lịch phỏng vấn",
@@ -178,7 +178,7 @@
   },
   "auth": {
     "hero": {
-      "tagline": "Mạng lưới tuyển dụng chuyên nghiệp",
+      "tagline": "Mạng lưới tuyển dụng ",
       "headline": "Kết nối tiềm năng, kiến tạo sự nghiệp.",
       "description": "Gia nhập mạng lưới tuyển dụng hàng đầu. Khám phá cơ hội việc làm mơ ước và kết nối với các nhà tuyển dụng uy tín ngay hôm nay.",
       "companiesValue": "10K+",

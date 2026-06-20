@@ -24,7 +24,7 @@ export const PROFILE_IMAGE_ALLOWED_TYPES = [
 // Output sau crop: kích thước cố định để feed/avatar render đồng đều.
 export const AVATAR_OUTPUT_SIZE = 512 // 512×512
 export const COVER_OUTPUT_WIDTH = 1500
-export const COVER_OUTPUT_HEIGHT = 500 // 3:1 — đủ rộng để banner trông chuyên nghiệp
+export const COVER_OUTPUT_HEIGHT = 500 // 3:1 — đủ rộng để banner trông 
 export const COVER_ASPECT = COVER_OUTPUT_WIDTH / COVER_OUTPUT_HEIGHT
 
 const JPEG_QUALITY = 0.9

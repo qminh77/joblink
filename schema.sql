@@ -2498,7 +2498,7 @@ ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO system_settings (setting_key, setting_group, value, encrypted) VALUES
     ('site_name',           'site_identity', '"Joblink"'::jsonb,                                          FALSE),
-    ('site_description',    'site_identity', '"Mạng xã hội việc làm và tuyển dụng chuyên nghiệp"'::jsonb, FALSE),
+    ('site_description',    'site_identity', '"Mạng xã hội việc làm và tuyển dụng "'::jsonb, FALSE),
     ('site_logo_url',       'site_identity', 'null'::jsonb,                                               FALSE),
     ('site_favicon_url',    'site_identity', 'null'::jsonb,                                               FALSE),
     ('default_locale',      'regional',      '"vi"'::jsonb,                                               FALSE),
