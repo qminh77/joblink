@@ -27,6 +27,7 @@
     "close": "Close",
     "loading": "Loading...",
     "submitting": "Processing...",
+    "sending": "Sending...",
     "back": "Back",
     "next": "Next",
     "yes": "Yes",
@@ -1898,6 +1899,15 @@
     "viewAllResults": "View all results"
   },
   "contact": {
+    "page": {
+      "title": "Contact us",
+      "subtitle": "Send us your questions, feedback or support requests."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address"
+    },
     "form": {
       "name": "Full name",
       "namePlaceholder": "Enter your full name",

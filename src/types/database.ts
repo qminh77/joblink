@@ -1083,6 +1083,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_poll_post: {
+        Args: {
+          p_content: string
+          p_visibility?: string
+          p_options?: Json
+        }
+        Returns: Json
+      }
     }
 
     Enums: Record<string, never>

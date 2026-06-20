@@ -281,6 +281,52 @@ export async function insertPollOptions(
     .returns<PollOptionRow[]>()
 }
 
+type CreatePollPostPayload =
+  | {
+      ok: true
+      postId: number
+      authorId: number
+      options: { id: number; optionText: string; voteCount: number }[]
+      totalVotes: number
+    }
+  | { ok: false; error: string }
+
+/**
+ * Tạo poll post qua RPC transaction atomic.
+ * INSERT post + INSERT poll_options + UPDATE media trong 1 transaction.
+ * Không cần 3 separate queries nữa — atomic rollback nếu bất kỳ lệnh nào fail.
+ */
+export async function createPollPostRpc(
+  supabase: Supabase,
+  values: {
+    content: string
+    visibility: PostVisibility
+    options: string[]
+  },
+) {
+  const { data, error } = await supabase.rpc("create_poll_post", {
+    p_content: values.content,
+    p_visibility: values.visibility,
+    p_options: JSON.parse(JSON.stringify(values.options.map((t) => [t]))),
+  })
+
+  if (error) return { data: null, error }
+
+  const payload = data as unknown as CreatePollPostPayload | null
+  if (!payload) return { data: null, error: { message: "unknown" } }
+  if (!payload.ok) return { data: null, error: { message: payload.error } }
+
+  return {
+    data: {
+      postId: payload.postId,
+      authorId: payload.authorId,
+      options: payload.options,
+      totalVotes: payload.totalVotes,
+    },
+    error: null,
+  }
+}
+
 export async function findPollByPostId(
   supabase: Supabase,
   postId: number,

@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
+import { checkRateLimit } from "@/lib/action/rate-limit"
 
 import {
   createApplicationStatusUpdateSchema,
@@ -42,6 +43,7 @@ export async function toggleFollowCompanyAction(
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "follow", 20, 60) // 20 follows / 60s
   const supabase = await createClient()
 
   const result = await rpcResult<{ isFollowing: boolean; followerCount: number }>(
@@ -73,6 +75,7 @@ export async function updateApplicationStatusAction(input: {
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "company_action", 10, 60) // 10 / 60s
   const supabase = await createClient()
 
   const result = await rpcResult<StatusPayload>(
@@ -145,6 +148,7 @@ export async function scheduleInterviewAction(
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "company_action", 10, 60)
   const supabase = await createClient()
 
   const result = await rpcResult<ScheduleInterviewPayload>(

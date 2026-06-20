@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
+import { checkRateLimit } from "@/lib/action/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -52,6 +53,7 @@ export async function createJobAction(
   const current = await requireCurrentUser()
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
+  await checkRateLimit(current.appUser.id, "job", 5, 60) // 5 creates / 60s
   const supabase = await createClient()
   const result = await createJob(supabase, parsed.data)
 
@@ -74,6 +76,7 @@ export async function updateJobAction(
   const current = await requireCurrentUser()
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
+  await checkRateLimit(current.appUser.id, "job", 10, 60) // 10 updates / 60s
   const supabase = await createClient()
   const result = await updateJob(supabase, parsed.data)
 
@@ -97,6 +100,7 @@ export async function applyToJobAction(input: {
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "application", 5, 60) // 5 applications / 60s
   const supabase = await createClient()
   const result = await applyToJob(
     supabase,

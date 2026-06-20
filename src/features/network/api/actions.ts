@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { getCurrentUser, requireCurrentUser } from "@/features/auth/api/auth-server"
 import { rpcResult } from "@/lib/action/rpc"
+import { checkRateLimit } from "@/lib/action/rate-limit"
 import { action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
@@ -57,6 +58,7 @@ export async function toggleFollowUserAction(
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "connection", 10, 60) // 10 connections / 60s
   const supabase = await createClient()
 
   const result = await rpcResult<{
@@ -87,6 +89,7 @@ export async function sendConnectionRequestAction(
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "connection", 10, 60)
     const supabase = await createClient()
 
     await sendConnectionRequest(supabase, current, target)

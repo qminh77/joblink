@@ -27,6 +27,7 @@
     "close": "Đóng",
     "loading": "Đang tải...",
     "submitting": "Đang xử lý...",
+    "sending": "Đang gửi...",
     "back": "Quay lại",
     "next": "Tiếp",
     "yes": "Có",
@@ -1898,6 +1899,15 @@
     "viewAllResults": "Xem tất cả kết quả"
   },
   "contact": {
+    "page": {
+      "title": "Liên hệ hỗ trợ",
+      "subtitle": "Gửi câu hỏi, góp ý hoặc yêu cầu hỗ trợ cho chúng tôi."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Điện thoại",
+      "address": "Địa chỉ"
+    },
     "form": {
       "name": "Họ và tên",
       "namePlaceholder": "Nhập họ tên của bạn",

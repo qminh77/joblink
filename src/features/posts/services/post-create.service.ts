@@ -5,9 +5,8 @@ import { unwrap } from "@/lib/action/server"
 import type { createClient } from "@/lib/supabase/server"
 import type { Json } from "@/types/database"
 
-import { insertPollOptions, insertPost, updatePost } from "../data/posts.repo"
+import { createPollPostRpc, insertPost } from "../data/posts.repo"
 import { authorRefFrom, newFeedPost } from "../lib/map"
-import { buildPollMedia } from "../lib/poll"
 import type { PollInput, PostInput } from "../schemas"
 import type { FeedPost } from "../types"
 import { imageMedia } from "./post-media.service"
@@ -19,50 +18,32 @@ export async function createPollPost(
   current: CurrentUser,
   data: PollInput,
 ): Promise<FeedPost> {
-  const row = unwrap(
-    await insertPost(supabase, {
-      authorId: current.appUser.id,
+  const result = unwrap(
+    await createPollPostRpc(supabase, {
       content: data.content,
-      postType: "poll",
-      media: null,
       visibility: data.visibility,
-    }),
-    "createFailed",
-  )
-
-  const inserted = unwrap(
-    await insertPollOptions(supabase, row.id, data.options),
-    "createFailed",
-  )
-
-  const pollOptions = inserted.map((option) => ({
-    id: option.id,
-    optionText: option.option_text,
-    voteCount: option.vote_count,
-  }))
-
-  const updated = unwrap(
-    await updatePost(supabase, row.id, current.appUser.id, {
-      content: row.content,
-      visibility: row.visibility,
-      media: buildPollMedia(pollOptions, 0),
+      options: data.options,
     }),
     "createFailed",
   )
 
   return newFeedPost({
-    id: row.id,
+    id: result.postId,
     authorId: current.appUser.id,
-    content: row.content,
+    content: data.content,
     postType: "poll",
-    media: updated.media,
-    visibility: row.visibility,
-    createdAt: row.created_at,
+    media: {
+      type: "poll",
+      options: result.options,
+      totalVotes: result.totalVotes,
+    } as unknown as Json,
+    visibility: data.visibility,
+    createdAt: new Date().toISOString(),
     author: authorRefFrom(current),
-    pollOptions: inserted.map((option) => ({
-      id: option.id,
-      optionText: option.option_text,
-      voteCount: option.vote_count,
+    pollOptions: result.options.map((opt) => ({
+      id: opt.id,
+      optionText: opt.optionText,
+      voteCount: opt.voteCount,
       viewerVoted: false,
     })),
   })

@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
+import { checkRateLimit } from "@/lib/action/rate-limit"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
 
 import {
@@ -84,6 +85,7 @@ export async function sendMessageAction(
   }
 
   const current = await requireCurrentUser()
+  await checkRateLimit(current.appUser.id, "message", 30, 60) // 30 messages / 60s
   const supabase = await createClient()
 
   const result = await rpcResult<{ message: MessageItem; recipientId: number }>(
