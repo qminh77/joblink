@@ -54,16 +54,24 @@ function applyMessageInsert(
   row: RealtimeMessageRow,
   currentUserId: number,
 ) {
-  const convId = row.conversation_id
+  const convId = Number(row.conversation_id)
+  row.id = Number(row.id)
+  row.conversation_id = convId
+  row.sender_id = Number(row.sender_id)
   const message = rowToMessage(row)
   const key = MESSAGING_MESSAGES_KEY(convId)
 
   const existing = qc.getQueryData<ConversationMessagesPage>(key)
   if (existing && !existing.items.some((item) => item.id === message.id)) {
-    qc.setQueryData<ConversationMessagesPage>(key, {
-      ...existing,
-      items: [...existing.items, message],
-    })
+    const hasOptimistic = existing.items.some(
+      (item) => item.id < 0 && item.senderId === message.senderId && item.content === message.content
+    )
+    if (!hasOptimistic) {
+      qc.setQueryData<ConversationMessagesPage>(key, {
+        ...existing,
+        items: [...existing.items, message],
+      })
+    }
   }
 
   const fromMe = row.sender_id === currentUserId
@@ -109,7 +117,9 @@ function applyMessageInsert(
 }
 
 function applyMessageUpdate(qc: QueryClient, row: RealtimeMessageRow) {
-  const key = MESSAGING_MESSAGES_KEY(row.conversation_id)
+  const convId = Number(row.conversation_id)
+  row.id = Number(row.id)
+  const key = MESSAGING_MESSAGES_KEY(convId)
   const existing = qc.getQueryData<ConversationMessagesPage>(key)
   if (!existing) return
 

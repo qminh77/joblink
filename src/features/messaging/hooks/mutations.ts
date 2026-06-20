@@ -64,6 +64,16 @@ export function useSendMessage(currentUserId: number) {
       const key = MESSAGING_MESSAGES_KEY(conversationId)
       qc.setQueryData<ConversationMessagesPage>(key, (prev) => {
         if (!prev) return { items: [message], hasMore: false, otherUserId: null }
+        
+        // If realtime hook already added the real message, just remove the optimistic one
+        const alreadyHasReal = prev.items.some(item => item.id === message.id)
+        if (alreadyHasReal) {
+          return {
+            ...prev,
+            items: prev.items.filter((item) => item.id !== context?.tempId)
+          }
+        }
+        
         const replaced = prev.items.map((item) =>
           item.id === context?.tempId ? message : item,
         )
