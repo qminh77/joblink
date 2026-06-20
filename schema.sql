@@ -3480,7 +3480,7 @@ GRANT USAGE, SELECT ON SEQUENCE public.job_view_logs_id_seq TO authenticated;
 CREATE OR REPLACE FUNCTION public.set_default_member_cv(p_cv_id BIGINT)
 RETURNS JSONB
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
     v_me       BIGINT;
@@ -4026,7 +4026,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_profile_detail(BIGINT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_profile_edit_overview()
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_email TEXT; v_role TEXT;
     v_profile JSONB; v_province JSONB; v_ward JSONB;
@@ -4068,7 +4068,7 @@ GRANT EXECUTE ON FUNCTION public.get_profile_edit_overview() TO authenticated;
 CREATE OR REPLACE FUNCTION public.get_company_public_overview(
     p_company_user_id BIGINT, p_jobs_limit INT DEFAULT 8
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_company JSONB; v_jobs JSONB;
     v_follower_count INT; v_jobs_count INT; v_is_following BOOLEAN; v_jobs_lim INT;
@@ -4118,7 +4118,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_company_public_overview(BIGINT, INT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.toggle_follow_company(p_company_user_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_target_role TEXT; v_target_status TEXT;
     v_existing BIGINT; v_is_following BOOLEAN; v_count INT;
@@ -4151,7 +4151,7 @@ GRANT EXECUTE ON FUNCTION public.toggle_follow_company(BIGINT) TO authenticated;
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_company_dashboard_overview()
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_active_jobs INT; v_total_apps INT;
     v_apps_this_month INT; v_hires_total INT; v_job_views INT;
@@ -4212,7 +4212,7 @@ CREATE OR REPLACE FUNCTION public.get_company_jobs(
     p_status TEXT DEFAULT 'all', p_search TEXT DEFAULT NULL,
     p_limit INT DEFAULT 20, p_offset INT DEFAULT 0
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_items JSONB; v_total INT; v_lim INT; v_off INT; v_q TEXT;
 BEGIN
@@ -4252,7 +4252,7 @@ CREATE OR REPLACE FUNCTION public.get_company_applicants(
     p_job_id BIGINT DEFAULT NULL, p_status TEXT DEFAULT 'all',
     p_search TEXT DEFAULT NULL, p_limit INT DEFAULT 50, p_offset INT DEFAULT 0
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_items JSONB; v_total INT; v_lim INT; v_off INT; v_q TEXT;
 BEGIN
@@ -4295,7 +4295,7 @@ GRANT EXECUTE ON FUNCTION public.get_company_applicants(BIGINT, TEXT, TEXT, INT,
 CREATE OR REPLACE FUNCTION public.update_application_status(
     p_application_id BIGINT, p_new_status TEXT, p_note TEXT DEFAULT NULL
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_company_user_id BIGINT; v_old_status TEXT; v_now TIMESTAMPTZ;
 BEGIN
@@ -4322,7 +4322,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.update_application_status(BIGINT, TEXT, TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.update_job_status(p_job_id BIGINT, p_new_status TEXT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_company_user_id BIGINT; v_old_status TEXT;
 BEGIN
@@ -4355,7 +4355,7 @@ CREATE OR REPLACE FUNCTION public.create_job(
     p_job_type_id BIGINT, p_work_mode_id BIGINT, p_job_position_id BIGINT,
     p_position_title TEXT, p_status TEXT, p_expires_at TIMESTAMPTZ, p_skills TEXT[]
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_status TEXT; v_job_id BIGINT;
     v_skill_name TEXT; v_skill_id BIGINT; v_pos_title TEXT;
@@ -4411,7 +4411,7 @@ GRANT EXECUTE ON FUNCTION public.create_job(
 ) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_job_detail(p_job_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_job JSONB; v_skills JSONB; v_viewer JSONB; v_company_user_id BIGINT;
 BEGIN
@@ -4454,7 +4454,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_job_detail(BIGINT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_job_for_edit(p_job_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_job JSONB; v_skills JSONB; v_company_user_id BIGINT;
 BEGIN
@@ -4483,7 +4483,7 @@ CREATE OR REPLACE FUNCTION public.update_job(
     p_job_type_id BIGINT, p_work_mode_id BIGINT, p_position_title TEXT,
     p_expires_at TIMESTAMPTZ, p_skills TEXT[]
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_status TEXT; v_company_user_id BIGINT;
     v_old_status TEXT; v_skill_name TEXT; v_skill_id BIGINT; v_position_title TEXT;
@@ -4548,7 +4548,7 @@ CREATE OR REPLACE FUNCTION public.get_jobs_list(
     p_salary_min BIGINT DEFAULT NULL, p_company_user_id BIGINT DEFAULT NULL,
     p_limit INT DEFAULT 20, p_offset INT DEFAULT 0
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_items JSONB; v_total INT; v_lim INT; v_off INT; v_q TEXT;
 BEGIN
@@ -4606,7 +4606,7 @@ GRANT EXECUTE ON FUNCTION public.get_jobs_list(
 CREATE OR REPLACE FUNCTION public.apply_to_job(
     p_job_id BIGINT, p_cover_letter TEXT, p_resume_url TEXT
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_role TEXT; v_job_status TEXT; v_job_expires TIMESTAMPTZ; v_application_id BIGINT;
 BEGIN
@@ -4637,7 +4637,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.apply_to_job(BIGINT, TEXT, TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.withdraw_application(p_application_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_applicant BIGINT; v_old_status TEXT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -4659,7 +4659,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.withdraw_application(BIGINT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.toggle_saved_job(p_job_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_role TEXT; v_existing INT; v_saved BOOLEAN;
 BEGIN
     SELECT u.id, u.role INTO v_me, v_role FROM public.users u
@@ -4678,7 +4678,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.toggle_saved_job(BIGINT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_my_saved_jobs(p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE v_me BIGINT; v_items JSONB; v_total INT; v_lim INT; v_off INT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -4723,7 +4723,7 @@ GRANT EXECUTE ON FUNCTION public.get_my_saved_jobs(INT, INT) TO authenticated;
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_my_applications(p_limit INT DEFAULT 30, p_offset INT DEFAULT 0)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE v_me BIGINT; v_items JSONB; v_total INT; v_lim INT; v_off INT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -4767,7 +4767,7 @@ CREATE OR REPLACE FUNCTION public.schedule_interview(
     p_application_id BIGINT, p_scheduled_at TIMESTAMPTZ,
     p_duration_minutes INT, p_location_or_link TEXT, p_note TEXT
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_company_user_id BIGINT; v_old_status TEXT;
     v_applicant_id BIGINT; v_job_id BIGINT; v_job_title TEXT;
@@ -4813,7 +4813,7 @@ GRANT EXECUTE ON FUNCTION public.schedule_interview(
 ) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.respond_interview(p_interview_id BIGINT, p_accept BOOLEAN)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
     v_me BIGINT; v_applicant_id BIGINT; v_company_user_id BIGINT;
     v_job_id BIGINT; v_job_title TEXT; v_application_id BIGINT; v_new_status TEXT;
@@ -4841,7 +4841,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.respond_interview(BIGINT, BOOLEAN) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.resubmit_company_verification()
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_role TEXT; v_status TEXT;
 BEGIN
     SELECT u.id, u.role INTO v_me, v_role FROM public.users u
@@ -4863,7 +4863,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.resubmit_company_verification() TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.log_job_view(p_job_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_owner BIGINT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -4890,7 +4890,7 @@ GRANT EXECUTE ON FUNCTION public.log_job_view(BIGINT) TO authenticated;
 CREATE OR REPLACE FUNCTION public.get_user_posts(
     p_target_user_id BIGINT, p_posts_cursor TIMESTAMPTZ DEFAULT NULL, p_posts_limit INT DEFAULT 10
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_is_owner BOOLEAN := FALSE; v_is_connected BOOLEAN := FALSE;
     v_can_view BOOLEAN := TRUE; v_target_role VARCHAR(20); v_visibility VARCHAR(20); v_posts JSONB;
