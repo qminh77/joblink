@@ -206,30 +206,38 @@ export function insertShareRecord(
 }
 
 /**
- * Gợi ý người để @mention. Đọc bằng client RLS (profiles không bật RLS nên
- * không cần service-role) và LỌC `profile_visibility != 'private'` ở tầng app
- * — vì DB chưa có policy theo visibility. Trước đây dùng admin client + không
- * lọc → hồ sơ private vẫn lộ trong gợi ý.
+ * Gợi ý người để @mention. Dùng full-text search qua GIN trigram index
+ * (idx_member_profiles_full_name_trgm) thay vì ilike → dùng được index,
+ * không full scan, không sort JS. DB trả kết quả đã sort theo relevance.
  */
 export async function searchMentionableProfiles(
   supabase: Supabase,
   query: string,
   limit: number,
 ): Promise<MentionableUser[]> {
-  const like = `%${query.replace(/[%_]/g, (m) => `\\${m}`)}%`
+  const tsQuery = query
+    .replace(/[%_]/g, (m) => `\\${m}`)
+    .replace(/[^\w\s\u00C0-\u024F]/g, " ")
+    .trim()
 
   const [memberRes, companyRes] = await Promise.all([
     supabase
       .from("member_profiles")
       .select("user_id, full_name, avatar_url, headline")
-      .ilike("full_name", like)
+      .textSearch("full_name", tsQuery, {
+        type: "websearch",
+        config: "simple",
+      })
       .neq("profile_visibility", "private")
       .is("deleted_at", null)
       .limit(limit),
     supabase
       .from("company_profiles")
       .select("user_id, name, logo_url, industry")
-      .ilike("name", like)
+      .textSearch("name", tsQuery, {
+        type: "websearch",
+        config: "simple",
+      })
       .is("deleted_at", null)
       .limit(limit),
   ])
@@ -254,17 +262,7 @@ export async function searchMentionableProfiles(
     })
   }
 
-  const ql = query.toLowerCase()
-  
-  // Schwartzian Transform: Tính toán index 1 lần duy nhất cho mỗi phần tử để tránh gọi toLowerCase/indexOf nhiều lần trong sort
-  const mapped = out.map(item => ({
-    item,
-    matchIndex: item.displayName.toLowerCase().indexOf(ql)
-  }))
-
-  mapped.sort((a, b) => a.matchIndex - b.matchIndex)
-
-  return mapped.slice(0, limit).map(x => x.item)
+  return out.slice(0, limit)
 }
 
 export async function insertPollOptions(
@@ -321,6 +319,42 @@ export function insertPollVote(
   return supabase
     .from("poll_votes")
     .insert({ post_id: postId, option_id: optionId, user_id: userId })
+}
+
+/**
+ * Share post qua RPC transaction atomic (INSERT post + INSERT share trong 1 transaction).
+ * Thay vì manual compensation, toàn bộ rollback tự động nếu bất kỳ lệnh nào fail.
+ */
+export async function sharePost(
+  supabase: Supabase,
+  values: {
+    content: string
+    originalPostId: number
+    commentText: string | null
+    media: Json | null
+  },
+) {
+  const { data, error } = await supabase.rpc("share_post", {
+    p_content: values.content,
+    p_original_post_id: values.originalPostId,
+    p_comment_text: values.commentText,
+    p_media: values.media,
+  })
+
+  if (error) return { data: null, error }
+
+  const payload = data as unknown as
+    | { ok: true; postId: number; shareId: number; authorId: number }
+    | { ok: false; error: string }
+    | null
+
+  if (!payload) return { data: null, error: { message: "unknown" } }
+  if (!payload.ok) return { data: null, error: { message: payload.error } }
+
+  return {
+    data: { postId: payload.postId, shareId: payload.shareId, authorId: payload.authorId },
+    error: null,
+  }
 }
 
 

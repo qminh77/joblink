@@ -10,70 +10,58 @@ export type UserPostsCache = InfiniteData<UserPostsPage>
 
 type PostsQueryClient = ReturnType<typeof useQueryClient>
 
-function mapCachePosts<T extends { posts: FeedPost[] }>(
-  cache: InfiniteData<T> | undefined,
-  postId: number,
-  updater: (post: FeedPost) => FeedPost,
-): InfiniteData<T> | undefined {
-  if (!cache) return cache
-  return {
-    ...cache,
-    pages: cache.pages.map((page) => ({
-      ...page,
-      posts: page.posts.map((post) =>
-        post.id === postId ? updater(post) : post,
-      ),
-    })),
+// ── Generic helper: áp dụng biến đổi lên posts trong mọi cache ──────────────
+
+/**
+ * Thu thập tất cả query keys liên quan đến posts (feed + user-posts).
+ */
+function collectPostCacheKeys(qc: PostsQueryClient): unknown[][] {
+  const keys: unknown[][] = [[FEED_QUERY_KEY]]
+  const userPostsQueries = qc.getQueriesData<unknown[][]>({
+    queryKey: ["user-posts"],
+  })
+  for (const [key] of userPostsQueries) {
+    keys.push(key as unknown[])
   }
+  return keys
 }
 
-function applyToPost(
-  cache: FeedCache | undefined,
-  postId: number,
-  updater: (post: FeedPost) => FeedPost,
-): FeedCache | undefined {
-  return mapCachePosts(cache, postId, updater)
-}
+// ── Public API ──────────────────────────────────────────────────────────────
 
+/**
+ * Áp dụng biến đổi lên 1 post trong TẤT CẢ cache (feed + user-posts).
+ */
 export function applyToAllPostCaches(
   qc: PostsQueryClient,
   postId: number,
   updater: (post: FeedPost) => FeedPost,
 ) {
-  qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) =>
-    applyToPost(cache, postId, updater),
-  )
-  const userPostsQueries = qc.getQueriesData<UserPostsCache>({
-    queryKey: ["user-posts"],
-  })
-  for (const [key] of userPostsQueries) {
-    qc.setQueryData<UserPostsCache>(key, (cache) =>
-      mapCachePosts(cache, postId, updater),
-    )
-  }
-}
-
-export function removePostFromAllCaches(qc: PostsQueryClient, postId: number) {
-  qc.setQueryData<FeedCache>(FEED_QUERY_KEY, (cache) => {
-    if (!cache) return cache
-    return {
-      ...cache,
-      pages: cache.pages.map((page) => ({
-        ...page,
-        posts: page.posts.filter((post) => post.id !== postId),
-      })),
-    }
-  })
-
-  const userPostsQueries = qc.getQueriesData<UserPostsCache>({
-    queryKey: ["user-posts"],
-  })
-  for (const [key] of userPostsQueries) {
-    qc.setQueryData<UserPostsCache>(key, (cache) => {
+  for (const key of collectPostCacheKeys(qc)) {
+    qc.setQueryData(key, (cache: FeedCache | UserPostsCache | undefined) => {
       if (!cache) return cache
       return {
         ...cache,
-        pages: cache.pages.map((page) => ({
+        pages: cache.pages.map((page: FeedPage | UserPostsPage) => ({
+          ...page,
+          posts: page.posts.map((post) =>
+            post.id === postId ? updater(post) : post,
+          ),
+        })),
+      }
+    })
+  }
+}
+
+/**
+ * Xoá 1 post khỏi TẤT CẢ cache (feed + user-posts).
+ */
+export function removePostFromAllCaches(qc: PostsQueryClient, postId: number) {
+  for (const key of collectPostCacheKeys(qc)) {
+    qc.setQueryData(key, (cache: FeedCache | UserPostsCache | undefined) => {
+      if (!cache) return cache
+      return {
+        ...cache,
+        pages: cache.pages.map((page: FeedPage | UserPostsPage) => ({
           ...page,
           posts: page.posts.filter((post) => post.id !== postId),
         })),
@@ -82,6 +70,9 @@ export function removePostFromAllCaches(qc: PostsQueryClient, postId: number) {
   }
 }
 
+/**
+ * Thêm 1 post mới vào đầu feed cache + user-posts cache.
+ */
 export function usePrependPost() {
   const qc = useQueryClient()
   return (post: FeedPost) => {

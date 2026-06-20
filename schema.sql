@@ -986,6 +986,48 @@ CREATE TABLE IF NOT EXISTS user_feeds (
     PRIMARY KEY (user_id, post_id)
 );
 
+-- #8: Rate Limiting — Theo dõi request per user per action
+CREATE TABLE IF NOT EXISTS public.rate_limits (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id      BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    action_type  TEXT NOT NULL,
+    window_start TIMESTAMPTZ NOT NULL DEFAULT date_trunc('second', NOW()),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "rate_limits_select_own"
+    ON public.rate_limits FOR SELECT
+    USING (user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid() AND deleted_at IS NULL));
+
+CREATE POLICY "rate_limits_insert_own"
+    ON public.rate_limits FOR INSERT
+    WITH CHECK (user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid() AND deleted_at IS NULL));
+
+CREATE POLICY "rate_limits_admin_all"
+    ON public.rate_limits FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role');
+
+-- #4: Fan-out optimization — Theo dõi lần hoạt động cuối
+CREATE TABLE IF NOT EXISTS public.user_last_active (
+    user_id    BIGINT PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+    last_active TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.user_last_active ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "user_last_active_select_all"
+    ON public.user_last_active FOR SELECT USING (true);
+
+CREATE POLICY "user_last_active_insert_own"
+    ON public.user_last_active FOR INSERT
+    WITH CHECK (user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid() AND deleted_at IS NULL));
+
+CREATE POLICY "user_last_active_update_own"
+    ON public.user_last_active FOR UPDATE
+    USING (user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid() AND deleted_at IS NULL));
+
 -- =============================================================================
 -- 13. INDEXES
 -- =============================================================================
@@ -1105,6 +1147,16 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action    ON audit_logs(action, create
 CREATE INDEX IF NOT EXISTS idx_system_settings_group ON system_settings(setting_group);
 
 CREATE INDEX IF NOT EXISTS idx_user_feeds_user_created ON user_feeds(user_id, created_at DESC);
+
+-- #8: Rate Limiting indexes
+CREATE INDEX IF NOT EXISTS idx_rate_limits_user_action
+    ON public.rate_limits(user_id, action_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup
+    ON public.rate_limits(created_at);
+
+-- #4: User last active index
+CREATE INDEX IF NOT EXISTS idx_user_last_active
+    ON public.user_last_active(last_active);
 
 -- =============================================================================
 -- 14. TRIGGER FUNCTIONS
@@ -1308,7 +1360,22 @@ BEGIN
 END;
 $$;
 
--- Fan-out
+-- #4: User last active trigger — cập nhật khi user đăng bài
+CREATE OR REPLACE FUNCTION public.update_user_last_active()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.user_last_active (user_id, last_active)
+  VALUES (NEW.author_id, NOW())
+  ON CONFLICT (user_id) DO UPDATE SET last_active = NOW();
+  RETURN NEW;
+END;
+$$;
+
+-- Fan-out (HYBRID: chỉ active connections)
 CREATE OR REPLACE FUNCTION public.fanout_post_to_feed() RETURNS trigger AS $$
 BEGIN
   IF TG_OP = 'UPDATE' THEN
@@ -1325,11 +1392,15 @@ BEGIN
     INSERT INTO public.user_feeds (user_id, post_id, created_at)
     VALUES (NEW.author_id, NEW.id, NEW.created_at) ON CONFLICT DO NOTHING;
     IF NEW.visibility IN ('public', 'connections') THEN
+      -- HYBRID: Chỉ fan-out cho connections có last_active trong 7 ngày
       INSERT INTO public.user_feeds (user_id, post_id, created_at)
-      SELECT to_user_id, NEW.id, NEW.created_at
-        FROM public.user_connections_view
-       WHERE from_user_id = NEW.author_id AND status = 'accepted'
-       ON CONFLICT DO NOTHING;
+      SELECT ucv.to_user_id, NEW.id, NEW.created_at
+        FROM public.user_connections_view ucv
+        LEFT JOIN public.user_last_active ula ON ula.user_id = ucv.to_user_id
+       WHERE ucv.from_user_id = NEW.author_id AND ucv.status = 'accepted'
+         AND ula.last_active IS NOT NULL
+         AND ula.last_active > NOW() - INTERVAL '7 days'
+      ON CONFLICT DO NOTHING;
     END IF;
   END IF;
   RETURN NEW;
@@ -1432,6 +1503,10 @@ CREATE TRIGGER trg_jobs_audit_soft_delete
   BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION joblink_audit_soft_delete_jobs();
 CREATE TRIGGER trg_company_profiles_audit_soft_delete
   BEFORE UPDATE ON company_profiles FOR EACH ROW EXECUTE FUNCTION joblink_audit_soft_delete_company_profiles();
+
+-- #4: User last active trigger — cập nhật khi user đăng bài
+CREATE TRIGGER trg_update_last_active_on_post
+  AFTER INSERT ON posts FOR EACH ROW EXECUTE FUNCTION public.update_user_last_active();
 
 CREATE TRIGGER trg_messages_after_insert
   AFTER INSERT ON messages FOR EACH ROW EXECUTE FUNCTION public.joblink_after_message_insert();
@@ -5454,6 +5529,120 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.mark_conversation_read(BIGINT) TO authenticated;
+
+-- =============================================================================
+-- #7: share_post RPC — Transaction atomic (INSERT post + INSERT share)
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.share_post(
+  p_content TEXT,
+  p_original_post_id BIGINT,
+  p_comment_text TEXT DEFAULT NULL,
+  p_media JSONB DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_author_id BIGINT;
+  v_new_post_id BIGINT;
+  v_share_id BIGINT;
+BEGIN
+  SELECT id INTO v_author_id FROM public.users
+   WHERE auth_id = auth.uid() AND deleted_at IS NULL;
+
+  IF v_author_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'unauthorized');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.posts
+     WHERE id = p_original_post_id AND deleted_at IS NULL AND status = 'active'
+  ) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalidPost');
+  END IF;
+
+  INSERT INTO public.posts (author_id, content, post_type, media, visibility)
+  VALUES (v_author_id, COALESCE(p_content, ''), 'text', p_media, 'public')
+  RETURNING id INTO v_new_post_id;
+
+  INSERT INTO public.post_shares (post_id, user_id, comment_content)
+  VALUES (p_original_post_id, v_author_id, p_comment_text)
+  RETURNING id INTO v_share_id;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'postId', v_new_post_id,
+    'shareId', v_share_id,
+    'authorId', v_author_id
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.share_post(TEXT, BIGINT, TEXT, JSONB) TO authenticated;
+
+-- =============================================================================
+-- #8: Rate Limiting RPCs
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.check_rate_limit(
+  p_user_id BIGINT,
+  p_action_type TEXT,
+  p_max_requests INT DEFAULT 10,
+  p_window_seconds INT DEFAULT 10
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count INT;
+BEGIN
+  DELETE FROM public.rate_limits
+   WHERE user_id = p_user_id
+     AND action_type = p_action_type
+     AND created_at < NOW() - (p_window_seconds || ' seconds')::INTERVAL;
+
+  SELECT COUNT(*) INTO v_count
+    FROM public.rate_limits
+   WHERE user_id = p_user_id
+     AND action_type = p_action_type
+     AND created_at >= NOW() - (p_window_seconds || ' seconds')::INTERVAL;
+
+  IF v_count < p_max_requests THEN
+    INSERT INTO public.rate_limits (user_id, action_type)
+    VALUES (p_user_id, p_action_type);
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.check_rate_limit(BIGINT, TEXT, INT, INT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.cleanup_rate_limits(
+  p_older_than_hours INT DEFAULT 24
+)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_deleted INT;
+BEGIN
+  DELETE FROM public.rate_limits
+   WHERE created_at < NOW() - (p_older_than_hours || ' hours')::INTERVAL;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.cleanup_rate_limits(INT) TO service_role;
 
 -- =============================================================================
 -- SEED DATA (Dữ liệu mẫu)

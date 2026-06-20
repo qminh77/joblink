@@ -11,11 +11,9 @@ import {
   findViewerPollVotes,
   insertComment,
   insertPollVote,
-  insertPost,
   insertReaction,
-  insertShareRecord,
+  sharePost as sharePostRpc,
   softDeleteComment,
-  softDeletePost,
 } from "../data/posts.repo"
 import { loadOriginalSnapshot } from "../data/posts.privileged"
 import { authorRefFrom, newFeedComment, newFeedPost } from "../lib/map"
@@ -147,46 +145,35 @@ export async function shareFeedPost(
   const sharedMedia = buildSharedMedia(snapshot)
   const commentText = (data.commentContent ?? "").trim()
 
-  const newPostRow = unwrap(
-    await insertPost(supabase, {
-      authorId: current.appUser.id,
+  // Dùng RPC transaction atomic: INSERT post + INSERT share trong 1 transaction.
+  // Nếu bất kỳ lệnh nào fail → rollback tự động, không cần manual compensation.
+  const result = unwrap(
+    await sharePostRpc(supabase, {
       content: commentText,
-      postType: "text",
+      originalPostId: snapshot.id,
+      commentText: commentText || null,
       media: sharedMedia,
-      visibility: "public",
     }),
     "shareFailed",
   )
 
-  const shareRes = await insertShareRecord(
-    supabase,
-    snapshot.id,
-    current.appUser.id,
-    commentText ? commentText : null,
-  )
-  if (shareRes.error || !shareRes.data) {
-    await softDeletePost(supabase, newPostRow.id, current.appUser.id)
-    console.error("[db:shareFailed]", shareRes.error)
-    throw ActionError.key("shareFailed")
-  }
-
   await notifyShare({
     snapshot,
-    shareId: shareRes.data.id,
+    shareId: result.shareId,
     commentText,
     current,
   })
 
   return {
-    shareId: shareRes.data.id,
+    shareId: result.shareId,
     post: newFeedPost({
-      id: newPostRow.id,
+      id: result.postId,
       authorId: current.appUser.id,
       content: commentText,
       postType: "text",
       media: sharedMedia,
       visibility: "public",
-      createdAt: newPostRow.created_at,
+      createdAt: new Date().toISOString(),
       author: authorRefFrom(current),
     }),
   }

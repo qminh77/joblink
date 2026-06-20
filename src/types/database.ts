@@ -1065,6 +1065,24 @@ export type Database = {
         Args: Record<string, never>
         Returns: { action: string }[]
       }
+      share_post: {
+        Args: {
+          p_content: string
+          p_original_post_id: number
+          p_comment_text?: string | null
+          p_media?: Json | null
+        }
+        Returns: Json
+      }
+      check_rate_limit: {
+        Args: {
+          p_user_id: number
+          p_action_type: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
     }
 
     Enums: Record<string, never>

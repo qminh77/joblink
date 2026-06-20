@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { action, parse } from "@/lib/action/server"
+import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
 
@@ -110,6 +111,7 @@ export async function createPostAction(
 ): Promise<ActionResult<FeedPost>> {
   return action("posts.errors", async (t) => {
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "post", 5, 60) // 5 posts / 60s
     const supabase = await createClient()
 
     const hasPoll = Array.isArray(input.options) && input.options.length >= 2
@@ -147,6 +149,7 @@ export async function toggleReactionAction(
       reactionType: "like",
     })
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "reaction", 30, 60) // 30 reactions / 60s
     const supabase = await createClient()
     return togglePostReaction(supabase, current, data)
   })
@@ -159,6 +162,7 @@ export async function voteAction(
   return action("posts.errors", async (t) => {
     const data = parse(createVoteInputSchema(t), { postId, optionId })
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "vote", 10, 60) // 10 votes / 60s
     const supabase = await createClient()
     return voteOnPoll(supabase, current, data)
   })
@@ -170,6 +174,7 @@ export async function createCommentAction(
   return action("posts.errors", async (t) => {
     const data = parse(createCommentInputSchema(t), input)
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "comment", 15, 60) // 15 comments / 60s
     const supabase = await createClient()
     return createPostComment(supabase, current, data)
   })
@@ -192,6 +197,7 @@ export async function sharePostAction(
   return action("posts.errors", async (t) => {
     const data = parse(createShareInputSchema(t), input)
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "share", 10, 60) // 10 shares / 60s
     const supabase = await createClient()
     const result = await shareFeedPost(supabase, current, data)
     revalidateHome()
@@ -204,6 +210,7 @@ export async function updatePostAction(
 ): Promise<ActionResult<UpdatePostResult>> {
   return action("posts.errors", async (t) => {
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 updates / 60s
     const supabase = await createClient()
 
     if (input.options) {
@@ -224,6 +231,7 @@ export async function deletePostAction(postId: number): Promise<ActionResult> {
   return action("posts.errors", async (t) => {
     const id = parse(createPostIdSchema(t), postId)
     const current = await requireCurrentUser()
+    await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 deletes / 60s
     const supabase = await createClient()
     await deleteOwnPost(supabase, current, id)
     revalidateHome()
