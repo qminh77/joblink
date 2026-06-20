@@ -2,7 +2,7 @@
 -- Cho phép company upload ảnh bìa giống member.
 
 ALTER TABLE company_profiles
-  ADD COLUMN cover_url text;
+  ADD COLUMN IF NOT EXISTS cover_url text;
 
 -- Migration: thêm cover_url vào RPC get_company_public_overview
 -- (nếu cần hiển thị ở trang public company)
@@ -57,30 +57,33 @@ BEGIN
     'followerCount',  (SELECT count(*)::int FROM company_followers WHERE company_id = (_result->>'companyId')::int),
     'isFollowing',    false,
     'isOwner',        false,
-    'jobs',           COALESCE((SELECT jsonb_agg(
-                                  jsonb_build_object(
-                                    'id',           j.id,
-                                    'title',        j.title,
-                                    'salaryMin',    j.salary_min,
-                                    'salaryMax',    j.salary_max,
-                                    'salaryVisible', j.salary_visible,
-                                    'provinceName', p.name,
-                                    'wardName',     w.name,
-                                    'jobTypeName',  jt.name,
-                                    'workModeName', wm.name,
-                                    'createdAt',    j.created_at
-                                  )
-                                  ORDER BY j.created_at DESC
-                                  LIMIT 50
-                                )
-                                FROM jobs j
-                                LEFT JOIN provinces p ON p.id = j.province_id
-                                LEFT JOIN wards w ON w.id = j.ward_id
-                                LEFT JOIN job_types jt ON jt.id = j.job_type_id
-                                LEFT JOIN work_modes wm ON wm.id = j.work_mode_id
-                                WHERE j.company_id = (_result->>'companyId')::int
-                                  AND j.status = 'active'
-                                  AND j.deleted_at IS NULL), '[]'::jsonb)
+    'jobs',           COALESCE(
+                          (SELECT jsonb_agg(sub.job)
+                           FROM (
+                             SELECT jsonb_build_object(
+                               'id',           j.id,
+                               'title',        j.title,
+                               'salaryMin',    j.salary_min,
+                               'salaryMax',    j.salary_max,
+                               'salaryVisible', j.salary_visible,
+                               'provinceName', p.name,
+                               'wardName',     w.name,
+                               'jobTypeName',  jt.name,
+                               'workModeName', wm.name,
+                               'createdAt',    j.created_at
+                             ) AS job
+                             FROM jobs j
+                             LEFT JOIN provinces p ON p.id = j.province_id
+                             LEFT JOIN wards w ON w.id = j.ward_id
+                             LEFT JOIN job_types jt ON jt.id = j.job_type_id
+                             LEFT JOIN work_modes wm ON wm.id = j.work_mode_id
+                             WHERE j.company_id = (_result->>'companyId')::int
+                               AND j.status = 'active'
+                               AND j.deleted_at IS NULL
+                             ORDER BY j.created_at DESC
+                             LIMIT 50
+                           ) sub
+                          ), '[]'::jsonb)
   );
 END;
 $$;

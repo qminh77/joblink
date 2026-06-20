@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -172,6 +173,9 @@ export function CropDialog({ file, kind, busy, onCancel, onConfirm }: Props) {
               ? "Căn chỉnh ảnh đại diện"
               : "Căn chỉnh ảnh bìa"}
           </DialogTitle>
+          <DialogDescription>
+            Kéo ảnh để di chuyển, dùng thanh trượt để phóng to.
+          </DialogDescription>
         </DialogHeader>
 
         {loadError ? (
