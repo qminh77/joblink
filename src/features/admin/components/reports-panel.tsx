@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl"
 import { Flag } from "lucide-react"
 
-import { Card } from "@/components/ui/card"
 import type { AdminReportRow } from "@/features/admin/types"
 import { ModerationDialog } from "./reports-panel/moderation-dialog"
 import { ReportCard } from "./reports-panel/report-card"
@@ -45,12 +44,12 @@ export function ReportsPanel({
         query={query}
       />
 
-      <div className="space-y-3">
+      <div className="flex flex-col">
         {items.length === 0 ? (
-          <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
+          <div className="bg-transparent border-none shadow-none rounded-xl p-8 text-center">
             <Flag className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">{t("empty")}</p>
-          </Card>
+          </div>
         ) : (
           items.map((report) => (
             <ReportCard

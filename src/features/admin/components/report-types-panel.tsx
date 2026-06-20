@@ -107,7 +107,7 @@ export function ReportTypesPanel({ items }: { items: ReportTypeRow[] }) {
         </Button>
       </header>
 
-      <Card className="bg-card border-border/30 rounded-xl overflow-hidden p-0">
+      <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

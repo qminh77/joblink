@@ -49,7 +49,10 @@ export function useRealtimeFeed(allowedAuthorIds: number[]) {
   }, [filterKey, qc])
 }
 
-export function useRealtimeEngagement(visiblePostIds: number[]) {
+export function useRealtimeEngagement(
+  visiblePostIds: number[],
+  currentUserId: number | null,
+) {
   const qc = useQueryClient()
   // Cap the filter list to prevent string from exceeding Supabase's realtime filter length limit.
   const cappedIds = useMemo(() => {
@@ -93,8 +96,24 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
 
                   const p: FeedPost = { ...post }
                   if (table === "post_reactions") {
-                    if (payload.eventType === "INSERT") p.reactionCount++
-                    else if (payload.eventType === "DELETE") p.reactionCount = Math.max(0, p.reactionCount - 1)
+                    const reactionUserId =
+                      (payload.new as Record<string, unknown> | null)
+                        ?.user_id ??
+                      (payload.old as Record<string, unknown> | null)
+                        ?.user_id
+                    const isOwnAction =
+                      currentUserId != null &&
+                      typeof reactionUserId === "number" &&
+                      reactionUserId === currentUserId
+                    if (isOwnAction) {
+                      if (payload.eventType === "INSERT") p.viewerReacted = true
+                      else if (payload.eventType === "DELETE")
+                        p.viewerReacted = false
+                    } else {
+                      if (payload.eventType === "INSERT") p.reactionCount++
+                      else if (payload.eventType === "DELETE")
+                        p.reactionCount = Math.max(0, p.reactionCount - 1)
+                    }
                   } else if (table === "post_comments") {
                     if (payload.eventType === "INSERT") p.commentCount++
                     else if (payload.eventType === "DELETE") p.commentCount = Math.max(0, p.commentCount - 1)

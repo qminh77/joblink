@@ -84,7 +84,7 @@ export function JobDetailClient({ detail }: Props) {
     >
       <div className="lg:col-span-2 space-y-6">
         <motion.div variants={fadeUp}>
-          <Card className="bg-card rounded-2xl p-6 border border-border/40">
+          <Card className="bg-card rounded-2xl p-6">
             <div className="flex items-start gap-4">
               <Avatar className="w-14 h-14 rounded-xl">
                 {job.companyLogoUrl ? (
@@ -256,52 +256,50 @@ export function JobDetailClient({ detail }: Props) {
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Card className="bg-card rounded-2xl p-6 border border-border/40">
-            <h2 className="font-headline text-lg font-bold text-foreground mb-3">
-              {t("description")}
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {job.description}
-            </p>
-          </Card>
-        </motion.div>
-
-        {job.requirements ? (
-          <motion.div variants={fadeUp}>
-            <Card className="bg-card rounded-2xl p-6 border border-border/40">
+          <Card className="bg-card rounded-2xl p-6 lg:p-8 space-y-8">
+            <div>
               <h2 className="font-headline text-lg font-bold text-foreground mb-3">
-                {t("requirements")}
+                {t("description")}
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {job.requirements}
+                {job.description}
               </p>
-            </Card>
-          </motion.div>
-        ) : null}
+            </div>
 
-        {skills.length > 0 ? (
-          <motion.div variants={fadeUp}>
-            <Card className="bg-card rounded-2xl p-6 border border-border/40">
-              <h2 className="font-headline text-lg font-bold text-foreground mb-3">
-                {t("requiredSkills")}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((s) => (
-                  <span
-                    key={s}
-                    className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground"
-                  >
-                    {s}
-                  </span>
-                ))}
+            {job.requirements ? (
+              <div>
+                <h2 className="font-headline text-lg font-bold text-foreground mb-3">
+                  {t("requirements")}
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {job.requirements}
+                </p>
               </div>
-            </Card>
-          </motion.div>
-        ) : null}
+            ) : null}
+
+            {skills.length > 0 ? (
+              <div>
+                <h2 className="font-headline text-lg font-bold text-foreground mb-3">
+                  {t("requiredSkills")}
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((s) => (
+                    <span
+                      key={s}
+                      className="inline-flex items-center px-3 h-7 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </Card>
+        </motion.div>
       </div>
 
       <motion.div variants={fadeUp} className="lg:col-span-1">
-        <Card className="bg-card rounded-2xl p-6 border border-border/40 text-center sticky top-24">
+        <Card className="bg-card rounded-2xl p-6 text-center sticky top-24">
           <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3 overflow-hidden">
             {job.companyLogoUrl ? (
               <Avatar className="w-16 h-16 rounded-xl">
@@ -323,21 +321,26 @@ export function JobDetailClient({ detail }: Props) {
           >
             {job.companyName}
           </Link>
-          {job.companyIndustry ? (
-            <p className="text-xs text-muted-foreground mt-1">
-              {job.companyIndustry}
-            </p>
-          ) : null}
-          {job.companySize ? (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
-              <Users className="w-3 h-3" /> {job.companySize}
-            </p>
-          ) : null}
-          {job.companyAbout ? (
-            <p className="text-xs text-muted-foreground mt-3 line-clamp-4 text-left">
-              {job.companyAbout}
-            </p>
-          ) : null}
+          <div className="mt-5 text-left space-y-3 pt-4 border-t border-border/20">
+            <div>
+              <p className="text-xs font-semibold text-foreground mb-1">Ngành nghề</p>
+              <p className="text-xs text-muted-foreground">
+                {job.companyIndustry || "Chưa cập nhật"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-foreground mb-1">Quy mô</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" /> {job.companySize || "Chưa cập nhật"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-foreground mb-1">Về công ty</p>
+              <p className="text-xs text-muted-foreground line-clamp-4 leading-relaxed">
+                {job.companyAbout || "Chưa có thông tin giới thiệu."}
+              </p>
+            </div>
+          </div>
           <Link
             href={`/company/${job.companyUserId}`}
             className="inline-flex items-center justify-center w-full mt-4 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"

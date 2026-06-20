@@ -122,7 +122,7 @@ export function AppealsPanel({
 
       <div className="space-y-3">
         {items.length === 0 ? (
-          <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
+          <Card className="bg-transparent border-none shadow-none rounded-xl p-8 text-center">
             <Gavel className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">{t("empty")}</p>
           </Card>
@@ -130,7 +130,7 @@ export function AppealsPanel({
           items.map((a) => (
             <Card
               key={a.id}
-              className="bg-card border-border/30 rounded-xl p-5"
+              className="bg-transparent border-none shadow-none rounded-xl p-5"
             >
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                 <div className="flex-1 min-w-0">

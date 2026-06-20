@@ -253,7 +253,8 @@ export function Navbar() {
         </div>
       </nav>
 
-      <nav className="md:hidden fixed bottom-0 w-full bg-background/90 backdrop-blur-xl border-t border-border/40 z-50 pb-safe">
+      {!pathname.startsWith("/admin") && (
+        <nav className="md:hidden fixed bottom-0 w-full bg-background/90 backdrop-blur-xl border-t border-border/40 z-50 pb-safe">
         <div className="flex justify-around items-center h-16">
           {NAV_ITEMS.map((item) => {
             const isActive =
@@ -278,7 +279,8 @@ export function Navbar() {
             )
           })}
         </div>
-      </nav>
+        </nav>
+      )}
     </>
   )
 }

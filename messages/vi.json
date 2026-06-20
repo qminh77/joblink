@@ -1289,7 +1289,13 @@
       "auditLog": "Nhật ký",
       "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
-      "lookups": "Danh mục"
+      "lookups": "Danh mục",
+      "groups": {
+        "overview": "Tổng quan",
+        "management": "Quản lý",
+        "moderation": "Kiểm duyệt",
+        "system": "Hệ thống"
+      }
     },
     "jobs": {
       "title": "Quản lý tin tuyển dụng",
@@ -1542,6 +1548,10 @@
       "actionTake": "Xử lý",
       "actionDismiss": "Bỏ qua",
       "actionMarkReview": "Đang xem xét",
+      "reportedThe": "đã báo cáo",
+      "forReason": "với lý do",
+      "viewDetails": "Xem chi tiết",
+      "noPreview": "Không có nội dung xem trước",
       "actionHide": "Ẩn nội dung",
       "actionDelete": "Xóa nội dung",
       "actionWarn": "Cảnh báo",

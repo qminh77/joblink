@@ -41,7 +41,7 @@ export function PostFilters({
           placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          className="pl-9 h-10 rounded-lg bg-card border-border/30 text-sm"
+          className="pl-9 h-10 rounded-lg bg-transparent border-none shadow-none text-sm"
         />
       </form>
       <Select

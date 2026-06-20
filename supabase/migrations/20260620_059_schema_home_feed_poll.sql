@@ -1,4 +1,8 @@
--- Fix get_home_feed to include pollOptions for polls
+
+-- =============================================================================
+-- 24. RPCs — get_home_feed (UNIFIED) — phiên bản 049 mới nhất
+-- =============================================================================
+
 CREATE OR REPLACE FUNCTION public.get_home_feed(
     p_posts_cursor TIMESTAMPTZ DEFAULT NULL,
     p_posts_limit INT DEFAULT 20,
@@ -31,32 +35,31 @@ BEGIN
               FROM public.network_suggestions c JOIN public.users u ON u.id = c.suggested_user_id
               LEFT JOIN public.member_profiles mp ON mp.user_id = u.id
               LEFT JOIN public.company_profiles cp ON cp.user_id = u.id
-             WHERE c.user_id = v_me AND u.deleted_at IS NULL
-             ORDER BY c.score DESC LIMIT p_suggestion_limit) s;
+             WHERE c.user_id = v_me ORDER BY RANDOM() LIMIT p_suggestion_limit) s;
 
-    PERFORM public.generate_suggested_jobs(v_me, p_suggestion_limit);
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_suggested_jobs
-      FROM (SELECT sj.job_id AS "jobId", j.title, cp.name AS "companyName",
-                   cp.logo_url AS "companyLogo", j.location, j.employment_type AS "employmentType",
-                   j.created_at AS "postedAt"
-              FROM public.suggested_jobs sj JOIN public.jobs j ON j.id = sj.job_id
-              JOIN public.company_profiles cp ON cp.user_id = j.company_id
-             WHERE sj.user_id = v_me AND j.deleted_at IS NULL AND j.status = 'active'
+      FROM (SELECT j.id, j.title, j.company_user_id AS "companyUserId",
+                   COALESCE(cp.name, u.email) AS "companyName", cp.logo_url AS "companyLogoUrl",
+                   cp.verification_status = 'verified' AS "companyVerified",
+                   pv.name AS "provinceName", w.name AS "wardName",
+                   jt.name AS "jobTypeName", wm.name AS "workModeName",
+                   j.salary_min AS "salaryMin", j.salary_max AS "salaryMax",
+                   j.salary_visible AS "salaryVisible", j.created_at AS "createdAt",
+                   FALSE AS "viewerSaved", FALSE AS "viewerApplied"
+              FROM public.jobs j JOIN public.users u ON u.id = j.company_user_id
+              LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id
+              LEFT JOIN public.provinces pv ON pv.id = j.province_id
+              LEFT JOIN public.wards w ON w.id = j.ward_id
+              LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+              LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
+             WHERE j.status = 'active' AND j.deleted_at IS NULL
                AND (j.expires_at IS NULL OR j.expires_at > NOW())
-             ORDER BY sj.score DESC LIMIT p_suggestion_limit) s;
+             ORDER BY j.created_at DESC LIMIT 5) s;
 
     WITH combined_stream AS (
-        SELECT id, 'post' AS kind, created_at
-          FROM public.posts p
-         WHERE p.status = 'active' AND p.deleted_at IS NULL
-           AND (p.visibility = 'public' OR p.author_id = v_me
-             OR (p.visibility = 'connections' AND EXISTS (
-                 SELECT 1 FROM public.user_connections_view c
-                  WHERE c.status = 'accepted'
-                    AND ((c.from_user_id = v_me AND c.to_user_id = p.author_id)
-                      OR (c.to_user_id = v_me AND c.from_user_id = p.author_id))
-             )))
-           AND (p_posts_cursor IS NULL OR p.created_at < p_posts_cursor)
+        SELECT post_id AS id, 'post' AS kind, created_at
+          FROM public.user_feeds
+         WHERE user_id = v_me AND (p_posts_cursor IS NULL OR created_at < p_posts_cursor)
         UNION ALL
         SELECT id, 'job' AS kind, created_at
           FROM public.jobs
@@ -97,23 +100,25 @@ BEGIN
               LEFT JOIN public.company_profiles cp ON cp.user_id = p.author_id
              WHERE p.status = 'active' AND p.deleted_at IS NULL
                AND (p.visibility = 'public' OR p.author_id = v_me
-                 OR (p.visibility = 'connections' AND EXISTS (
-                     SELECT 1 FROM public.user_connections_view c
-                      WHERE c.status = 'accepted'
-                        AND ((c.from_user_id = v_me AND c.to_user_id = p.author_id)
-                          OR (c.to_user_id = v_me AND c.from_user_id = p.author_id))
-                 )))
+                 OR (p.visibility = 'connections' AND public.is_connected_with(p.author_id)))
              ORDER BY p.created_at DESC) s;
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_jobs
-      FROM (SELECT j.id, j.company_id AS "companyId", j.title, j.location,
-                   j.employment_type AS "employmentType", j.salary_range AS "salaryRange",
-                   j.is_remote AS "isRemote", j.created_at AS "createdAt",
-                   jsonb_build_object('name', cp.name, 'logoUrl', cp.logo_url) AS company,
-                   EXISTS(SELECT 1 FROM public.saved_jobs sj WHERE sj.job_id = j.id AND sj.user_id = v_me) AS "isSaved"
+      FROM (SELECT j.id, j.title, j.company_user_id AS "companyUserId",
+                   COALESCE(cp.name, u.email) AS "companyName", cp.logo_url AS "companyLogoUrl",
+                   cp.verification_status = 'verified' AS "companyVerified",
+                   pv.name AS "provinceName", w.name AS "wardName",
+                   jt.name AS "jobTypeName", wm.name AS "workModeName",
+                   j.salary_min AS "salaryMin", j.salary_max AS "salaryMax",
+                   j.salary_visible AS "salaryVisible", j.created_at AS "createdAt",
+                   FALSE AS "viewerSaved", FALSE AS "viewerApplied"
               FROM unnest(v_job_ids) f(id) JOIN public.jobs j ON j.id = f.id
-              JOIN public.company_profiles cp ON cp.user_id = j.company_id
-             WHERE j.status = 'active' AND j.deleted_at IS NULL
+              JOIN public.users u ON u.id = j.company_user_id
+              LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id
+              LEFT JOIN public.provinces pv ON pv.id = j.province_id
+              LEFT JOIN public.wards w ON w.id = j.ward_id
+              LEFT JOIN public.job_types jt ON jt.id = j.job_type_id
+              LEFT JOIN public.work_modes wm ON wm.id = j.work_mode_id
              ORDER BY j.created_at DESC) s;
 
     RETURN jsonb_build_object('stats', v_stats, 'suggestions', v_suggestions,
@@ -121,3 +126,4 @@ BEGIN
         'connection_ids', to_jsonb(v_connection_ids), 'me', v_me, 'next_cursor', v_next_cursor);
 END;
 $$;
+

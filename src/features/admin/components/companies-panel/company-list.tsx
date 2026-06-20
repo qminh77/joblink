@@ -21,7 +21,7 @@ export function CompanyList({
 
   if (items.length === 0) {
     return (
-      <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
+      <Card className="bg-transparent border-none shadow-none rounded-xl p-8 text-center">
         <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       </Card>

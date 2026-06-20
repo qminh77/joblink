@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import {
   Lock,
   Mail,
@@ -27,6 +27,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   sendTestEmail,
@@ -92,8 +99,17 @@ export function SettingsPanel({
   const tGroups = useTranslations("admin.settings.groups")
   const tFields = useTranslations("admin.settings.fields")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [values, setValues] = useState<AdminSettingsMap>(initialValues)
   const [pending, startTransition] = useTransition()
+
+  const activeTab = searchParams.get("tab") || "site_identity"
+  const setActiveTab = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", tab)
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   const setKey = (key: string, value: AdminSettingsValue) => {
     setValues((prev) => ({ ...prev, [key]: value }))
@@ -118,46 +134,43 @@ export function SettingsPanel({
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </header>
 
-      <Tabs defaultValue="site_identity">
-        <TabsList className="bg-muted/60 p-1 rounded-xl flex-wrap">
-          {GROUP_ORDER.map((g) => {
-            const Icon = GROUP_ICONS[g]
-            return (
-              <TabsTrigger
-                key={g}
-                value={g}
-                className="rounded-lg text-sm px-3 gap-1.5"
-              >
-                <Icon className="w-4 h-4" />
-                {tGroups(g)}
-              </TabsTrigger>
-            )
-          })}
-        </TabsList>
+      <div className="mt-6 flex-1 min-w-0 pb-10">
+        {GROUP_ORDER.map((group) => {
+          if (group !== activeTab) return null
 
-        {GROUP_ORDER.map((group) => (
-          <TabsContent key={group} value={group} className="mt-4 space-y-4">
-            <Card className="bg-card border-border/30 rounded-2xl p-6 space-y-5">
-              {(groups[group] ?? []).map((key) => (
-                <Field
-                  key={key}
-                  k={key}
-                  label={tFields(key as never)}
-                  value={values[key] ?? null}
-                  onChange={(v) => setKey(key, v)}
-                />
-              ))}
-            </Card>
-            {group === "smtp" ? <SmtpTestCard /> : null}
-          </TabsContent>
-        ))}
-      </Tabs>
+          return (
+            <div key={group} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">{tGroups(group)}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cấu hình các thiết lập liên quan đến {tGroups(group).toLowerCase()}
+                  </p>
+                </div>
+                
+                <div className="bg-card border border-border/30 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
+                  {(groups[group] ?? []).map((key) => (
+                    <Field
+                      key={key}
+                      k={key}
+                      label={tFields(key as never)}
+                      value={values[key] ?? null}
+                      onChange={(v) => setKey(key, v)}
+                    />
+                  ))}
+                </div>
+              </div>
+              {group === "smtp" ? <div className="mt-6"><SmtpTestCard /></div> : null}
+            </div>
+          )
+        })}
 
-      <div className="flex justify-end">
-        <Button onClick={submit} disabled={pending} className="rounded-lg gap-1.5">
-          <Save className="w-4 h-4" />
-          {pending ? t("saving") : t("saveAll")}
-        </Button>
+        <div className="mt-8 flex justify-end">
+          <Button onClick={submit} disabled={pending} className="rounded-lg gap-2 px-6">
+            <Save className="w-4 h-4" />
+            {pending ? t("saving") : t("saveAll")}
+          </Button>
+        </div>
       </div>
     </>
   )
@@ -191,7 +204,7 @@ function SmtpTestCard() {
   }
 
   return (
-    <Card className="bg-card border-border/30 rounded-2xl p-6 space-y-4">
+    <Card className="bg-transparent border-none shadow-none rounded-2xl p-4 sm:p-6 space-y-4">
       <div>
         <h3 className="font-semibold text-foreground flex items-center gap-2">
           <PlugZap className="w-4 h-4 text-primary" />
@@ -249,8 +262,11 @@ function Field({
 }) {
   if (BOOLEAN_KEYS.has(k)) {
     return (
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">{label}</label>
+      <div className="flex items-center justify-between py-1">
+        <div>
+          <label className="text-sm font-medium">{label}</label>
+          <p className="text-xs text-muted-foreground mt-0.5">Bật hoặc tắt chức năng này</p>
+        </div>
         <Switch
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked)}
@@ -260,8 +276,8 @@ function Field({
   }
   if (NUMBER_KEYS.has(k)) {
     return (
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">{label}</label>
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">{label}</label>
         <Input
           type="number"
           value={typeof value === "number" ? value : Number(value ?? 0)}
@@ -273,10 +289,10 @@ function Field({
   }
   if (ARRAY_KEYS.has(k)) {
     return (
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">{label}</label>
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">{label}</label>
         <Input
-          value={Array.isArray(value) ? value.join(",") : (value as string) ?? ""}
+          value={Array.isArray(value) ? value.join(", ") : (value as string) ?? ""}
           onChange={(e) =>
             onChange(
               e.target.value
@@ -285,27 +301,29 @@ function Field({
                 .filter(Boolean),
             )
           }
-          className="rounded-lg max-w-md"
+          placeholder="Ví dụ: item1, item2, item3"
+          className="max-w-xl rounded-lg"
         />
+        <p className="text-[11px] text-muted-foreground mt-1">Cách nhau bằng dấu phẩy (,)</p>
       </div>
     )
   }
   if (TEXTAREA_KEYS.has(k)) {
     return (
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">{label}</label>
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">{label}</label>
         <Textarea
           rows={3}
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-lg max-w-md resize-none"
+          className="rounded-lg max-w-xl resize-none"
         />
       </div>
     )
   }
   return (
-    <div>
-      <label className="text-sm font-medium mb-1.5 block">{label}</label>
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium">{label}</label>
       <Input
         type={SECRET_KEYS.has(k) ? "password" : "text"}
         value={(value as string) ?? ""}

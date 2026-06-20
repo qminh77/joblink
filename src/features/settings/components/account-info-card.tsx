@@ -21,10 +21,7 @@ import type { SessionUserSummary } from "@/features/auth/types"
 import { useUpdateAccount } from "@/features/settings/hooks"
 import { createAccountSchema, type AccountInput } from "@/features/settings/schemas"
 
-import { ChangePasswordCard } from "./change-password-card"
 import { LocaleCard } from "./locale-card"
-import { PasskeysCard } from "./passkeys-card"
-import { TwoFactorCard } from "./two-factor-card"
 
 const STATUS_TONES: Record<SessionUserSummary["status"], string> = {
   active: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
@@ -38,12 +35,10 @@ export function AccountInfoCard({
   user,
   phone,
   locale,
-  passkeyEnabled = false,
 }: {
   user: SessionUserSummary
   phone: string | null
   locale: string
-  passkeyEnabled?: boolean
 }) {
   const tv = useTranslations("settings.validation")
   const t = useTranslations("settings.account")
@@ -152,9 +147,6 @@ export function AccountInfoCard({
         </Form>
       </Card>
 
-      <ChangePasswordCard />
-      <TwoFactorCard />
-      {passkeyEnabled ? <PasskeysCard /> : null}
       <LocaleCard initialLocale={locale} />
     </div>
   )

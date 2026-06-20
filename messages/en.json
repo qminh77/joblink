@@ -1289,7 +1289,13 @@
       "auditLog": "Audit log",
       "settings": "Settings",
       "reportTypes": "Report types",
-      "lookups": "Lookups"
+      "lookups": "Lookups",
+      "groups": {
+        "overview": "Overview",
+        "management": "Management",
+        "moderation": "Moderation",
+        "system": "System"
+      }
     },
     "jobs": {
       "title": "Job listings management",
@@ -1542,6 +1548,10 @@
       "actionTake": "Take action",
       "actionDismiss": "Dismiss",
       "actionMarkReview": "Mark in review",
+      "reportedThe": "reported a",
+      "forReason": "for",
+      "viewDetails": "View details",
+      "noPreview": "No preview available",
       "actionHide": "Hide content",
       "actionDelete": "Delete content",
       "actionWarn": "Warn",

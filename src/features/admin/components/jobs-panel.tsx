@@ -119,7 +119,7 @@ export function JobsPanel({
             placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10 rounded-lg bg-card border-border/30 text-sm"
+            className="pl-9 h-10 rounded-lg bg-transparent border-none shadow-none text-sm"
           />
         </form>
         <Select
@@ -143,7 +143,7 @@ export function JobsPanel({
         </p>
       </div>
 
-      <Card className="bg-card border-border/30 rounded-xl overflow-hidden p-0">
+      <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

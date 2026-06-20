@@ -64,7 +64,7 @@ export function ModerationDialog({
           </DialogDescription>
         </DialogHeader>
         {openTarget?.description ? (
-          <Card className="bg-muted/30 border-border/20 rounded-lg p-3 text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
+          <Card className="bg-transparent border-none shadow-none rounded-lg p-3 text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
             &ldquo;{openTarget.description}&rdquo;
           </Card>
         ) : null}

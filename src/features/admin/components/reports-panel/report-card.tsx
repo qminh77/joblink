@@ -6,7 +6,6 @@ import { ExternalLink, MessageSquare } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import type { AdminReportRow } from "@/features/admin/types"
 import type { ReportStatus } from "@/lib/constants"
 import { getInitials } from "@/lib/utils/format"
@@ -30,130 +29,116 @@ export function ReportCard({
   const Icon = TARGET_ICON[report.targetType]
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl overflow-hidden">
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          <Avatar className="w-9 h-9 shrink-0 mt-0.5 border border-border/30">
-            {report.reporterAvatar ? (
-              <AvatarImage src={report.reporterAvatar} />
-            ) : null}
-            <AvatarFallback className="text-[11px]">
-              {getInitials(report.reporterName, "?")}
-            </AvatarFallback>
-          </Avatar>
+    <div className="py-4 border-b border-border/40 last:border-0 hover:bg-muted/10 transition-colors px-2 rounded-lg -mx-2">
+      <div className="flex gap-3">
+        <Avatar className="w-10 h-10 shrink-0 mt-0.5 border border-border/30">
+          {report.reporterAvatar ? (
+            <AvatarImage src={report.reporterAvatar} />
+          ) : null}
+          <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+            {getInitials(report.reporterName, "?")}
+          </AvatarFallback>
+        </Avatar>
 
-          <div className="min-w-0 flex-1 space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <Icon className="w-3 h-3" />
-                    {tTypes(report.targetType)}
-                  </Badge>
-                  <span className="text-sm font-medium text-foreground">
-                    {report.reasonName}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs ${STATUS_STYLE[report.status]}`}
-                  >
-                    {tStatuses(report.status)}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("reportedBy")}{" "}
-                  <span className="font-medium text-foreground">
-                    {report.reporterName}
-                  </span>
-                  {" - "}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-sm">
+                <span className="font-semibold text-foreground hover:underline cursor-pointer">{report.reporterName}</span>
+                <span className="text-muted-foreground"> {t("reportedThe")} </span>
+                <span className="font-medium text-foreground lowercase">{tTypes(report.targetType)}</span>
+                <span className="text-muted-foreground"> {t("forReason")} </span>
+                <span className="font-semibold text-destructive">{report.reasonName}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                <span>
                   {format.dateTime(new Date(report.createdAt), {
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}
-                </p>
+                </span>
+                <span>•</span>
+                <span className={`font-medium ${STATUS_STYLE[report.status]}`}>
+                  {tStatuses(report.status)}
+                </span>
               </div>
+            </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {report.status === "pending" ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={pending}
-                    onClick={() => onQuickStatus(report, "in_review")}
-                  >
-                    {t("actionMarkReview")}
-                  </Button>
-                ) : null}
-                {report.status !== "dismissed" &&
-                report.status !== "resolved" ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={pending}
-                    onClick={() => onQuickStatus(report, "dismissed")}
-                  >
-                    {t("actionDismiss")}
-                  </Button>
-                ) : null}
+            <div className="flex items-center gap-2 shrink-0">
+              {report.status === "pending" ? (
                 <Button
                   size="sm"
+                  variant="outline"
                   disabled={pending}
-                  onClick={() => onOpenAction(report)}
+                  onClick={() => onQuickStatus(report, "in_review")}
                 >
-                  {t("actionTake")}
+                  {t("actionMarkReview")}
                 </Button>
-              </div>
+              ) : null}
+              {report.status !== "dismissed" && report.status !== "resolved" ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => onQuickStatus(report, "dismissed")}
+                >
+                  {t("actionDismiss")}
+                </Button>
+              ) : null}
+              <Button
+                size="sm"
+                disabled={pending}
+                onClick={() => onOpenAction(report)}
+              >
+                {t("actionTake")}
+              </Button>
             </div>
+          </div>
 
-            <div className="rounded-lg bg-muted/50 border border-border/20 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Icon className="w-3.5 h-3.5 shrink-0" />
-                <span className="font-medium text-foreground">
-                  {report.targetPreview.label}
-                </span>
-                <span className="text-muted-foreground/60">
-                  #{report.targetId}
-                </span>
-                {report.targetAuthorName ? (
-                  <>
-                    <span className="text-muted-foreground/40">-</span>
-                    <span className="text-muted-foreground">
-                      {t("targetAuthor")}:{" "}
-                    </span>
-                    <span className="font-medium text-foreground">
-                      {report.targetAuthorName}
-                    </span>
-                  </>
-                ) : null}
-                {report.targetPreview.url ? (
-                  <a
-                    href={report.targetPreview.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-0.5 text-primary hover:underline ml-auto"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : null}
-              </div>
-              {report.targetPreview.snippet ? (
-                <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
-                  {report.targetPreview.snippet}
-                </p>
+          {report.description ? (
+            <div className="mt-2 text-sm text-foreground/80 bg-muted/30 p-2.5 rounded-lg border border-border/40">
+              <p className="whitespace-pre-line leading-relaxed italic">&ldquo;{report.description}&rdquo;</p>
+            </div>
+          ) : null}
+
+          <div className="mt-3 pl-3.5 border-l-2 border-primary/30 py-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="font-medium text-foreground">
+                {report.targetPreview.label}
+              </span>
+              <span>#{report.targetId}</span>
+              {report.targetAuthorName ? (
+                <>
+                  <span>•</span>
+                  <span>{t("targetAuthor")}: </span>
+                  <span className="font-medium text-foreground">
+                    {report.targetAuthorName}
+                  </span>
+                </>
+              ) : null}
+              {report.targetPreview.url ? (
+                <a
+                  href={report.targetPreview.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline ml-1"
+                >
+                  {t("viewDetails")} <ExternalLink className="w-3 h-3" />
+                </a>
               ) : null}
             </div>
-
-            {report.description ? (
-              <div className="flex items-start gap-2 text-sm">
-                <MessageSquare className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-foreground/70 whitespace-pre-line leading-relaxed line-clamp-3">
-                  &ldquo;{report.description}&rdquo;
-                </p>
-              </div>
-            ) : null}
+            {report.targetPreview.snippet ? (
+              <p className="text-sm text-foreground/70 leading-relaxed line-clamp-3">
+                {report.targetPreview.snippet}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50 italic">{t("noPreview")}</p>
+            )}
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

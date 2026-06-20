@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 
 import { staggerSm } from "@/lib/animations"
+import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
 import { useHomeFeed, useRealtimeEngagement, useRealtimeFeed } from "../hooks"
 import type { FeedJob, FeedPage, FeedPost } from "../types"
@@ -63,7 +64,8 @@ export function PostsFeed({ initialPage, realtimeAuthorIds }: Props) {
     [data],
   )
   const visiblePostIds = useMemo(() => posts.map((p) => p.id), [posts])
-  useRealtimeEngagement(visiblePostIds)
+  const user = useCurrentUser()
+  useRealtimeEngagement(visiblePostIds, user.id)
 
   // Trộn posts + jobs từ mọi trang, sort theo created_at giảm dần. Cursor phía
   // server đã thống nhất nên thứ tự không lệch ở ranh giới trang.

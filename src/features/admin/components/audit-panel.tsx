@@ -68,7 +68,7 @@ export function AuditPanel({
             placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10 rounded-lg bg-card border-border/30 text-sm"
+            className="pl-9 h-10 rounded-lg bg-transparent border-none shadow-none text-sm"
           />
         </form>
         <Select
@@ -112,7 +112,7 @@ export function AuditPanel({
 
       <div className="space-y-3">
         {entries.length === 0 ? (
-          <Card className="bg-card border-border/30 rounded-xl p-8 text-center">
+          <Card className="bg-transparent border-none shadow-none rounded-xl p-8 text-center">
             <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">{t("empty")}</p>
           </Card>
@@ -120,7 +120,7 @@ export function AuditPanel({
           entries.map((e) => (
             <Card
               key={e.id}
-              className="bg-card border-border/30 rounded-xl p-5"
+              className="bg-transparent border-none shadow-none rounded-xl p-5"
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">

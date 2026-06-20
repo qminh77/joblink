@@ -25,7 +25,7 @@ export function CompanyCard({
   const format = useFormatter()
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl p-5">
+    <Card className="bg-transparent border-none shadow-none rounded-xl p-5">
       <div className="flex flex-col md:flex-row md:items-start gap-4 justify-between">
         <div className="flex items-start gap-4 min-w-0 flex-1">
           <Avatar className="w-12 h-12 rounded-xl">

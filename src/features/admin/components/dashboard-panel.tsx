@@ -66,7 +66,7 @@ export function DashboardPanel({ data }: { data: AdminDashboardData }) {
           return (
             <Card
               key={key}
-              className="bg-card border-border/30 rounded-2xl p-4"
+              className="bg-transparent border-none shadow-none rounded-2xl p-4"
             >
               <div className="flex items-center justify-between gap-3 mb-2">
                 <span className="text-xs text-muted-foreground font-medium">
@@ -109,7 +109,7 @@ export function DashboardPanel({ data }: { data: AdminDashboardData }) {
         />
       </div>
 
-      <Card className="bg-card border-border/30 rounded-2xl p-5">
+      <Card className="bg-transparent border-none shadow-none rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-foreground">
             {t("breakdown.recentActions")}
@@ -179,7 +179,7 @@ function BreakdownCard({
   const filtered = rows.filter((r) => r.value > 0)
   const total = filtered.reduce((acc, r) => acc + r.value, 0) || 1
   return (
-    <Card className="bg-card border-border/30 rounded-2xl p-5">
+    <Card className="bg-transparent border-none shadow-none rounded-2xl p-5">
       <h3 className="font-semibold text-sm text-foreground mb-3">{title}</h3>
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground py-6 text-center">

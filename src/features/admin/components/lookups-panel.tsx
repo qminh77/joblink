@@ -178,7 +178,7 @@ export function LookupsPanel({
         </TabsList>
 
         <TabsContent value={kind} className="mt-4">
-          <Card className="bg-card border-border/30 rounded-xl overflow-hidden p-0">
+          <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

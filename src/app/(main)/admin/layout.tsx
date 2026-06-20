@@ -1,5 +1,8 @@
 import { requireAdmin } from "@/features/admin/api/admin-guard"
-import { AdminSidebar } from "@/features/admin/components/admin-sidebar"
+import {
+  AdminSidebar,
+  AdminMobileNav,
+} from "@/features/admin/components/admin-sidebar"
 
 export default async function AdminLayout({
   children,
@@ -8,9 +11,17 @@ export default async function AdminLayout({
 }) {
   await requireAdmin()
   return (
-    <div className="flex gap-6">
-      <AdminSidebar />
-      <div className="flex-1 min-w-0 space-y-6">{children}</div>
+    <div className="-mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 -mb-4 md:-mb-6">
+      <div className="flex flex-col lg:flex-row gap-6 px-3 sm:px-4 md:px-6 lg:px-8">
+        <AdminSidebar />
+        <div className="flex-1 min-w-0 flex flex-col space-y-4 lg:space-y-6">
+          <div className="lg:hidden flex items-center h-12 border-b border-border/30 mb-2">
+            <AdminMobileNav />
+            <span className="font-semibold text-sm ml-2">Admin Panel</span>
+          </div>
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

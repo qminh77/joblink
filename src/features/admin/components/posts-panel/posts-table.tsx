@@ -41,7 +41,7 @@ export function PostsTable({
   const format = useFormatter()
 
   return (
-    <Card className="bg-card border-border/30 rounded-xl overflow-hidden p-0">
+    <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
