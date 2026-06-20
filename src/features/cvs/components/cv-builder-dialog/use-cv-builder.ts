@@ -125,11 +125,11 @@ export function useCvBuilder({
         logging: false,
         backgroundColor: "#ffffff",
       })
-      const imgData = canvas.toDataURL("image/png")
+      const imgData = canvas.toDataURL("image/jpeg", 0.7)
       const pdf = new jsPDF("p", "mm", "a4")
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST")
       const blob = pdf.output("blob")
       const file = new File([blob], `${fileName}.pdf`, {
         type: "application/pdf",
