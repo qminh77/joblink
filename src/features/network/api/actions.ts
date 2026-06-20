@@ -1,8 +1,10 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { getTranslations } from "next-intl/server"
 
 import { getCurrentUser, requireCurrentUser } from "@/features/auth/api/auth-server"
+import { rpcResult } from "@/lib/action/rpc"
 import { action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
@@ -18,11 +20,13 @@ import {
   sendConnectionRequest,
   unblockUser,
 } from "../services/connections.service"
+import { notifyUserFollowed } from "../services/connection-notifications"
 import type {
   BlockStatus,
   BlockedUserItem,
   ConnectionRelation,
   NetworkOverview,
+  ToggleFollowUserResult,
 } from "../types"
 import { loadConnectionRelation, loadNetworkOverview } from "./queries"
 
@@ -38,6 +42,43 @@ export async function getConnectionRelationAction(
   targetUserId: number,
 ): Promise<ConnectionRelation> {
   return loadConnectionRelation(targetUserId)
+}
+
+export async function toggleFollowUserAction(
+  targetUserId: number,
+): Promise<ToggleFollowUserResult> {
+  const te = await getTranslations("network.errors")
+  const parsed = createTargetUserIdSchema(te).safeParse(targetUserId)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? te("unexpected"),
+    }
+  }
+
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+
+  const result = await rpcResult<{
+    isFollowing: boolean
+    followerCount: number
+  }>(
+    supabase.rpc("toggle_follow_user", {
+      p_target_user_id: parsed.data,
+    }),
+  )
+
+  if (result.ok) {
+    revalidateAfterConnectionChange()
+    revalidatePath(`/profile/${parsed.data}`)
+    if (result.isFollowing) {
+      await notifyUserFollowed({
+        targetUserId: parsed.data,
+        current,
+      })
+    }
+  }
+  return result
 }
 
 export async function sendConnectionRequestAction(

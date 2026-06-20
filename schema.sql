@@ -363,6 +363,7 @@ CREATE TABLE IF NOT EXISTS company_profiles (
     name                   VARCHAR(255) NOT NULL,
     slug                   VARCHAR(255) NOT NULL,
     logo_url               TEXT NULL,
+    cover_url              TEXT NULL,
     about                  TEXT NULL,
     website                TEXT NULL,
     province_id            BIGINT NULL,
@@ -2030,7 +2031,39 @@ CREATE POLICY follows_admin_all ON public.follows
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 CREATE POLICY follows_select_all ON public.follows FOR SELECT USING (TRUE);
 CREATE POLICY follows_insert_own ON public.follows
-  FOR INSERT WITH CHECK (follower_id = public.auth_user_id() AND public.is_active_user());
+  FOR INSERT WITH CHECK (
+    follower_id = public.auth_user_id()
+    AND public.is_active_user()
+    AND followable_id <> follower_id
+    AND (
+      (
+        followable_type = 'user'
+        AND EXISTS (
+          SELECT 1
+            FROM public.users u
+           WHERE u.id = followable_id
+             AND u.role = 'member'
+             AND u.status = 'active'
+             AND u.deleted_at IS NULL
+        )
+      )
+      OR (
+        followable_type = 'company'
+        AND EXISTS (
+          SELECT 1
+            FROM public.users u
+            JOIN public.company_profiles cp
+              ON cp.user_id = u.id
+             AND cp.deleted_at IS NULL
+             AND cp.verification_status = 'verified'
+           WHERE u.id = followable_id
+             AND u.role = 'company'
+             AND u.status = 'active'
+             AND u.deleted_at IS NULL
+        )
+      )
+    )
+  );
 CREATE POLICY follows_delete_own ON public.follows
   FOR DELETE USING (follower_id = public.auth_user_id() AND public.is_active_user());
 
@@ -4070,6 +4103,12 @@ BEGIN
     SELECT jsonb_build_object('id', dt.id, 'name', dt.name) INTO v_ward
       FROM public.member_profiles mp JOIN public.wards dt ON dt.id = mp.ward_id
      WHERE mp.user_id = v_target.id AND mp.deleted_at IS NULL;
+    SELECT COUNT(*)::INT INTO v_follower_cnt FROM public.follows f
+     WHERE f.followable_type = 'user' AND f.followable_id = v_target.id;
+    IF v_is_owner THEN v_is_following := FALSE;
+    ELSE SELECT EXISTS(SELECT 1 FROM public.follows f WHERE f.follower_id = v_me
+         AND f.followable_type = 'user' AND f.followable_id = v_target.id) INTO v_is_following;
+    END IF;
     v_visibility := v_profile ->> 'profile_visibility';
     v_is_visible := (v_visibility IS DISTINCT FROM 'private') OR v_is_owner;
     IF v_is_visible THEN
@@ -4104,6 +4143,7 @@ BEGIN
     RETURN jsonb_build_object('kind', 'member', 'isOwner', v_is_owner, 'relation', v_relation,
         'profile', v_profile, 'email', v_target.email, 'province', v_province, 'ward', v_ward,
         'profileViewCount', v_target.profile_view_count, 'connectionCount', v_target.connection_count,
+        'followerCount', COALESCE(v_follower_cnt, 0), 'isFollowing', COALESCE(v_is_following, FALSE),
         'isVisible', v_is_visible, 'experiences', COALESCE(v_experiences, '[]'::jsonb),
         'educations', COALESCE(v_educations, '[]'::jsonb), 'skills', COALESCE(v_skills, '[]'::jsonb));
 END;
@@ -4148,7 +4188,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_profile_edit_overview() TO authenticated;
 
 -- =============================================================================
--- 26. RPCs — get_company_public_overview + toggle_follow_company
+-- 26. RPCs — get_company_public_overview + follow toggles
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_company_public_overview(
@@ -4163,7 +4203,8 @@ BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     SELECT jsonb_build_object('userId', u.id, 'companyId', cp.id, 'name', cp.name,
-        'slug', cp.slug, 'logoUrl', cp.logo_url, 'about', cp.about, 'website', cp.website,
+        'slug', cp.slug, 'logoUrl', cp.logo_url, 'coverUrl', cp.cover_url,
+        'about', cp.about, 'website', cp.website,
         'industry', cp.industry, 'size', cp.size, 'openToHire', cp.open_to_hire,
         'verificationStatus', cp.verification_status, 'provinceName', pv.name,
         'wardName', dt.name, 'businessAddress', cp.business_address,
@@ -4171,7 +4212,11 @@ BEGIN
         'representativeTitle', cp.representative_title, 'createdAt', cp.created_at)
       INTO v_company FROM public.users u JOIN public.company_profiles cp ON cp.user_id = u.id AND cp.deleted_at IS NULL
       LEFT JOIN public.provinces pv ON pv.id = cp.province_id LEFT JOIN public.wards dt ON dt.id = cp.ward_id
-     WHERE u.id = p_company_user_id AND u.deleted_at IS NULL AND u.role = 'company' AND u.status = 'active';
+     WHERE u.id = p_company_user_id
+       AND u.deleted_at IS NULL
+       AND u.role = 'company'
+       AND u.status = 'active'
+       AND (u.id = v_me OR cp.verification_status = 'verified');
     IF v_company IS NULL THEN RETURN NULL; END IF;
     SELECT COUNT(*)::INT INTO v_jobs_count FROM public.jobs j
      WHERE j.company_user_id = p_company_user_id AND j.status = 'active'
@@ -4206,18 +4251,24 @@ GRANT EXECUTE ON FUNCTION public.get_company_public_overview(BIGINT, INT) TO aut
 CREATE OR REPLACE FUNCTION public.toggle_follow_company(p_company_user_id BIGINT)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE
-    v_me BIGINT; v_target_role TEXT; v_target_status TEXT;
+    v_me BIGINT; v_target_role TEXT; v_target_status TEXT; v_verification_status TEXT;
     v_existing BIGINT; v_is_following BOOLEAN; v_count INT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_me = p_company_user_id THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'selfFollow'); END IF;
-    SELECT u.role, u.status INTO v_target_role, v_target_status FROM public.users u
+    SELECT u.role, u.status, cp.verification_status
+      INTO v_target_role, v_target_status, v_verification_status
+      FROM public.users u
+      LEFT JOIN public.company_profiles cp
+        ON cp.user_id = u.id
+       AND cp.deleted_at IS NULL
      WHERE u.id = p_company_user_id AND u.deleted_at IS NULL LIMIT 1;
     IF v_target_role IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'companyNotFound'); END IF;
     IF v_target_role <> 'company' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany'); END IF;
     IF v_target_status <> 'active' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'companyInactive'); END IF;
+    IF COALESCE(v_verification_status, '') <> 'verified' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'companyNotFound'); END IF;
     SELECT id INTO v_existing FROM public.follows
      WHERE follower_id = v_me AND followable_type = 'company' AND followable_id = p_company_user_id LIMIT 1;
     IF v_existing IS NOT NULL THEN DELETE FROM public.follows WHERE id = v_existing; v_is_following := FALSE;
@@ -4231,6 +4282,44 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.toggle_follow_company(BIGINT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.toggle_follow_user(p_target_user_id BIGINT)
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
+DECLARE
+    v_me BIGINT; v_target_role TEXT; v_target_status TEXT;
+    v_existing BIGINT; v_is_following BOOLEAN; v_count INT;
+BEGIN
+    SELECT u.id INTO v_me FROM public.users u
+     WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
+    IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
+    IF v_me = p_target_user_id THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'selfFollow'); END IF;
+
+    SELECT u.role, u.status INTO v_target_role, v_target_status
+      FROM public.users u
+     WHERE u.id = p_target_user_id AND u.deleted_at IS NULL LIMIT 1;
+    IF v_target_role IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'userNotFound'); END IF;
+    IF v_target_role <> 'member' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'userNotFound'); END IF;
+    IF v_target_status <> 'active' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'targetInactive'); END IF;
+
+    SELECT id INTO v_existing FROM public.follows
+     WHERE follower_id = v_me AND followable_type = 'user' AND followable_id = p_target_user_id LIMIT 1;
+    IF v_existing IS NOT NULL THEN
+        DELETE FROM public.follows WHERE id = v_existing;
+        v_is_following := FALSE;
+    ELSE
+        INSERT INTO public.follows(follower_id, followable_type, followable_id)
+        VALUES (v_me, 'user', p_target_user_id)
+        ON CONFLICT DO NOTHING;
+        v_is_following := TRUE;
+    END IF;
+
+    SELECT COUNT(*)::INT INTO v_count FROM public.follows
+     WHERE followable_type = 'user' AND followable_id = p_target_user_id;
+    RETURN jsonb_build_object('ok', TRUE, 'isFollowing', v_is_following, 'followerCount', v_count);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.toggle_follow_user(BIGINT) TO authenticated;
 
 -- =============================================================================
 -- 27. RPCs — Company Dashboard

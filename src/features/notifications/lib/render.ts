@@ -91,6 +91,10 @@ const VISUALS: Record<
     icon: UserPlus,
     iconClassName: "text-emerald-500 bg-emerald-500/10",
   },
+  user_followed: {
+    icon: UserPlus,
+    iconClassName: "text-emerald-500 bg-emerald-500/10",
+  },
   job_application_received: {
     icon: Send,
     iconClassName: "text-blue-500 bg-blue-500/10",
@@ -174,7 +178,8 @@ export function getNotificationVisual(
         actorUserId: payload?.type === item.type ? payload.userId : null,
       }
     case "company_followed":
-      // Recipient = company owner; click → xem profile follower.
+    case "user_followed":
+      // Recipient = target user/company owner; click -> xem profile follower.
       return {
         ...base,
         href:

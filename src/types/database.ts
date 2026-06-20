@@ -259,6 +259,7 @@ export type NotificationType =
   | "comment_mention"
   | "new_message"
   | "company_followed"
+  | "user_followed"
   | "job_application_received"
   | "application_status_changed"
   | "application_withdrawn"
@@ -881,6 +882,10 @@ export type Database = {
       }
       toggle_follow_company: {
         Args: { p_company_user_id: number }
+        Returns: Json
+      }
+      toggle_follow_user: {
+        Args: { p_target_user_id: number }
         Returns: Json
       }
       get_company_dashboard_overview: {

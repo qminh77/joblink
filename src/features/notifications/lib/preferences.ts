@@ -24,6 +24,7 @@ export const CATEGORY_BY_TYPE: Record<NotificationType, NotificationCategory> = 
   connection_request: "newConnection",
   connection_accepted: "newConnection",
   company_followed: "newConnection",
+  user_followed: "newConnection",
   new_message: "message",
   job_application_received: "jobMatch",
   application_status_changed: "jobMatch",

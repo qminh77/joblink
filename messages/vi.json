@@ -432,6 +432,8 @@
       "openToWork": "Đang tìm việc",
       "editProfile": "Chỉnh sửa hồ sơ",
       "editProfileSubtitle": "Quản lý thông tin cá nhân, kinh nghiệm, học vấn và kỹ năng",
+      "follow": "Theo dõi",
+      "following": "Đang theo dõi",
       "about": "Giới thiệu",
       "experiences": "Kinh nghiệm",
       "experiencesEmpty": "Chưa có kinh nghiệm được thêm.",
@@ -445,7 +447,8 @@
       "reportUser": "Báo cáo người dùng"
     },
     "stats": {
-      "connections": "{count} kết nối"
+      "connections": "{count} kết nối",
+      "followers": "{count, plural, one {# người theo dõi} other {# người theo dõi}}"
     },
     "posts": {
       "heading": "Bài viết",
@@ -1070,7 +1073,9 @@
       "invalidUser": "Người dùng không hợp lệ",
       "invalidConnection": "Kết nối không hợp lệ",
       "invalidData": "Dữ liệu không hợp lệ",
+      "unauthorized": "Vui lòng đăng nhập lại",
       "selfConnect": "Không thể tự kết nối với chính mình",
+      "selfFollow": "Không thể tự theo dõi chính mình",
       "userNotFound": "Người dùng không tồn tại",
       "targetInactive": "Tài khoản này hiện không hoạt động",
       "targetIsAdmin": "Không thể gửi lời mời tới quản trị viên",
@@ -1088,7 +1093,8 @@
       "selfBlock": "Không thể tự chặn chính mình",
       "cannotBlockAdmin": "Không thể chặn quản trị viên",
       "alreadyBlocked": "Bạn đã chặn người này rồi",
-      "notBlocked": "Bạn chưa chặn người này"
+      "notBlocked": "Bạn chưa chặn người này",
+      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
     "validation": {
       "keywordMax": "Từ khóa tối đa 100 ký tự"
@@ -1178,6 +1184,7 @@
       "comment_mention": "đã nhắc đến bạn trong một bình luận",
       "new_message": "đã gửi cho bạn một tin nhắn",
       "company_followed": "đã theo dõi công ty của bạn",
+      "user_followed": "đã theo dõi bạn",
       "job_application_received": "đã ứng tuyển vào {jobTitle}",
       "application_status_changed": "đã cập nhật đơn của bạn tại {jobTitle} thành {status}",
       "application_withdrawn": "đã rút đơn ứng tuyển vào {jobTitle}",

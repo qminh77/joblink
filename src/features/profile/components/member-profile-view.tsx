@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { useState } from "react"
 import {
   BadgeCheck,
+  Bell,
   Briefcase,
   GraduationCap,
   Eye,
@@ -21,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { ConnectButton } from "@/features/network/components/connect-button"
+import { FollowButton } from "@/features/network/components/follow-button"
 import { ProfileActionsMenu } from "@/features/network/components/profile-actions-menu"
 import { MessageButton } from "@/features/messaging/components/message-button"
 import { ReportDialog } from "@/features/reports/components/report-dialog"
@@ -48,6 +50,10 @@ export function MemberProfileView({
 }) {
   const tProfile = useTranslations("profile")
   const [showReport, setShowReport] = useState(false)
+  const [followState, setFollowState] = useState({
+    isFollowing: profile.isFollowing,
+    followerCount: profile.followerCount,
+  })
   const initials = getInitials(profile.full_name, "JL")
   const visibilityLabel = PROFILE_VISIBILITY_LABELS[profile.profile_visibility]
   const locationText = [profile.ward?.name, profile.province?.name]
@@ -145,6 +151,13 @@ export function MemberProfileView({
                   </Link>
                 ) : (
                   <>
+                    <FollowButton
+                      targetUserId={profile.user_id}
+                      initialIsFollowing={followState.isFollowing}
+                      initialFollowerCount={followState.followerCount}
+                      size="sm"
+                      onStateChange={setFollowState}
+                    />
                     <ConnectButton
                       relation={relation}
                       targetUserId={profile.user_id}
@@ -171,6 +184,12 @@ export function MemberProfileView({
                 <Users className="w-3.5 h-3.5" />
                 {tProfile("stats.connections", {
                   count: profile.connectionCount,
+                })}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5" />
+                {tProfile("stats.followers", {
+                  count: followState.followerCount,
                 })}
               </span>
               {profile.isOwner ? (

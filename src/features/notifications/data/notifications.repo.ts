@@ -61,7 +61,8 @@ export async function verifyNotificationTarget(
       return data != null
     }
     case "connection_accepted":
-    case "company_followed": {
+    case "company_followed":
+    case "user_followed": {
       // Click → /profile/{actor}; chỉ cần actor user còn tồn tại.
       if (!payload || payload.type !== item.type) return false
       const { data } = await admin

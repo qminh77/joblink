@@ -18,6 +18,8 @@ export type MemberProfileDetail = MemberProfileRow & {
   skills: SkillRow[]
   profileViewCount: number
   connectionCount: number
+  followerCount: number
+  isFollowing: boolean
   isOwner: boolean
   isVisible: boolean
 }

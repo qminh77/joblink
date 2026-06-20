@@ -49,6 +49,8 @@ export type CompanyFollowedPayload = ActorRef & {
   // riêng, nhưng giữ field actor để render avatar + link tới /profile/{actor}.
 }
 
+export type UserFollowedPayload = ActorRef
+
 export type JobApplicationReceivedPayload = ActorRef & {
   jobId: number
   jobTitle: string
@@ -102,6 +104,7 @@ export type NotificationPayload =
   | ({ type: "comment_mention" } & CommentMentionPayload)
   | ({ type: "new_message" } & NewMessagePayload)
   | ({ type: "company_followed" } & CompanyFollowedPayload)
+  | ({ type: "user_followed" } & UserFollowedPayload)
   | ({ type: "job_application_received" } & JobApplicationReceivedPayload)
   | ({ type: "application_status_changed" } & ApplicationStatusChangedPayload)
   | ({ type: "application_withdrawn" } & ApplicationWithdrawnPayload)

@@ -51,6 +51,21 @@ export async function notifyConnectionAccepted(opts: {
   })
 }
 
+export async function notifyUserFollowed(opts: {
+  targetUserId: number
+  current: CurrentUser
+}): Promise<void> {
+  if (opts.targetUserId === opts.current.appUser.id) return
+  await createNotification({
+    userId: opts.targetUserId,
+    type: "user_followed",
+    payload: {
+      type: "user_followed",
+      ...actorRef(opts.current),
+    },
+  })
+}
+
 // Dọn thông báo "X muốn kết nối" còn treo ở receiver khi sender huỷ lời mời.
 export async function clearConnectionRequestNotifications(
   connectionId: number,

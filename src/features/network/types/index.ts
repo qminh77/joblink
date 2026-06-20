@@ -36,6 +36,10 @@ export type NetworkOverview = {
   outgoing: InvitationItem[]
 }
 
+export type ToggleFollowUserResult =
+  | { ok: true; isFollowing: boolean; followerCount: number }
+  | { ok: false; error: string }
+
 // Trạng thái chặn theo góc nhìn của viewer với một người cụ thể. Chỉ mang chiều
 // "tôi đã chặn họ" — chiều ngược lại được ẩn theo quyền riêng tư (xem RLS).
 export type BlockStatus = {

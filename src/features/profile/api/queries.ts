@@ -145,6 +145,8 @@ export async function loadProfileById(
     skills: r.skills ?? [],
     profileViewCount: r.profileViewCount,
     connectionCount: r.connectionCount,
+    followerCount: r.followerCount ?? 0,
+    isFollowing: r.isFollowing ?? false,
     isOwner: r.isOwner,
     isVisible: r.isVisible ?? true,
   }
@@ -200,6 +202,8 @@ export async function loadProfileEditOverview(): Promise<ProfileEditOverview | n
     skills: r.skills ?? [],
     profileViewCount: current.appUser.profile_view_count,
     connectionCount: current.appUser.connection_count,
+    followerCount: 0,
+    isFollowing: false,
     isOwner: true,
     isVisible: true,
   }
@@ -252,16 +256,35 @@ async function loadMemberProfileDetail(
     .eq("user_id", target.id)
     .order("name", { ascending: true })
 
+  const followerPromise = supabase
+    .from("follows")
+    .select("id", { count: "exact", head: true })
+    .eq("followable_type", "user")
+    .eq("followable_id", target.id)
+
+  const viewerFollowPromise = isOwner
+    ? null
+    : supabase
+        .from("follows")
+        .select("id", { head: true, count: "exact" })
+        .eq("follower_id", viewerUserId)
+        .eq("followable_type", "user")
+        .eq("followable_id", target.id)
+
   const [
     { data: profileRow },
     { data: expData },
     { data: eduData },
     { data: skillData },
+    { count: followerCount },
+    viewerFollow,
   ] = await Promise.all([
     profilePromise,
     experiencesPromise,
     educationsPromise,
     skillsPromise,
+    followerPromise,
+    viewerFollowPromise,
   ])
 
   if (!profileRow) return null
@@ -283,6 +306,8 @@ async function loadMemberProfileDetail(
     skills,
     profileViewCount: target.profile_view_count,
     connectionCount: target.connection_count,
+    followerCount: followerCount ?? 0,
+    isFollowing: (viewerFollow?.count ?? 0) > 0,
     isOwner,
     isVisible,
   }
