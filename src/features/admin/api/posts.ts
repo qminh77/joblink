@@ -3,188 +3,45 @@
 import { revalidatePath } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { PostType, PostVisibility } from "@/types/database"
 
 import { requireAdmin } from "./admin-guard"
-import { writeAuditLog } from "./audit-log"
 import { postActionSchema, type PostActionInput } from "../schemas"
+import {
+  applyPostModerationAction,
+  loadAdminPosts,
+} from "../services/posts.service"
+import type { AdminActionResult, AdminPostRow, ListPostsParams } from "../types"
 
-export type AdminPostRow = {
-  id: number
-  content: string
-  postType: PostType
-  visibility: PostVisibility
-  status: string
-  authorId: number
-  authorName: string
-  authorAvatarUrl: string | null
-  authorRole: string
-  reactionCount: number
-  commentCount: number
-  createdAt: string
-}
-
-export type ListPostsParams = {
-  search?: string
-  type?: PostType | "all"
-  status?: string
-  limit?: number
-}
-
-const POST_STATUSES = ["active", "hidden", "deleted"] as const
+export type { AdminPostRow, ListPostsParams } from "../types"
 
 export async function listAdminPosts(
   params: ListPostsParams = {},
 ): Promise<AdminPostRow[]> {
   await requireAdmin()
   const supabase = createAdminClient()
-  const limit = Math.min(200, Math.max(10, params.limit ?? 100))
-
-  let query = supabase
-    .from("posts")
-    .select("id, author_id, content, post_type, visibility, status, created_at, reaction_count, comment_count")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(limit)
-
-  if (params.type && params.type !== "all") {
-    query = query.eq("post_type", params.type as never)
-  }
-  if (params.status && params.status !== "all") {
-    query = query.eq("status", params.status as never)
-  }
-  if (params.search?.trim()) {
-    query = query.ilike("content", `%${params.search.trim()}%`)
-  }
-
-  const { data } = await query
-  const rows = (data ?? []) as Array<{
-    id: number
-    author_id: number
-    content: string
-    post_type: PostType
-    visibility: PostVisibility
-    status: string
-    created_at: string
-    reaction_count: number
-    comment_count: number
-  }>
-
-  const authorIds = [...new Set(rows.map((r) => r.author_id))]
-
-  const authorMap: Record<number, { name: string; avatarUrl: string | null; role: string }> = {}
-
-  if (authorIds.length > 0) {
-    const { data: users } = await supabase
-      .from("users")
-      .select("id, role")
-      .in("id", authorIds)
-    const userRoles: Record<number, string> = {}
-    for (const u of (users ?? []) as Array<{ id: number; role: string }>) {
-      userRoles[u.id] = u.role
-    }
-
-    const { data: members } = await supabase
-      .from("member_profiles")
-      .select("user_id, full_name, avatar_url")
-      .in("user_id", authorIds)
-      .is("deleted_at", null)
-    for (const m of (members ?? []) as Array<{ user_id: number; full_name: string | null; avatar_url: string | null }>) {
-      authorMap[m.user_id] = {
-        name: m.full_name ?? `user#${m.user_id}`,
-        avatarUrl: m.avatar_url,
-        role: userRoles[m.user_id] ?? "member",
-      }
-    }
-
-    const { data: companies } = await supabase
-      .from("company_profiles")
-      .select("user_id, name, logo_url")
-      .in("user_id", authorIds)
-      .is("deleted_at", null)
-    for (const c of (companies ?? []) as Array<{ user_id: number; name: string; logo_url: string | null }>) {
-      authorMap[c.user_id] = {
-        name: c.name,
-        avatarUrl: c.logo_url,
-        role: userRoles[c.user_id] ?? "company",
-      }
-    }
-
-    for (const id of authorIds) {
-      if (!authorMap[id]) {
-        authorMap[id] = { name: `user#${id}`, avatarUrl: null, role: userRoles[id] ?? "member" }
-      }
-    }
-  }
-
-
-  return rows.map((r) => ({
-    id: r.id,
-    content: r.content,
-    postType: r.post_type,
-    visibility: r.visibility,
-    status: r.status,
-    authorId: r.author_id,
-    authorName: authorMap[r.author_id]?.name ?? `user#${r.author_id}`,
-    authorAvatarUrl: authorMap[r.author_id]?.avatarUrl ?? null,
-    authorRole: authorMap[r.author_id]?.role ?? "member",
-    reactionCount: r.reaction_count,
-    commentCount: r.comment_count,
-    createdAt: r.created_at,
-  }))
+  return loadAdminPosts(supabase, params)
 }
 
 export async function applyPostAction(
   input: PostActionInput,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<AdminActionResult> {
   const parsed = postActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
   const current = await requireAdmin()
   const supabase = createAdminClient()
+  const result = await applyPostModerationAction(
+    supabase,
+    current,
+    parsed.data,
+  )
 
-  const { data: target } = await supabase
-    .from("posts")
-    .select("id, status, content, author_id")
-    .eq("id", parsed.data.postId)
-    .is("deleted_at", null)
-    .maybeSingle<{
-      id: number
-      status: string
-      content: string
-      author_id: number
-    }>()
-  if (!target) return { ok: false, error: "not_found" }
+  if (result.ok) revalidateAdminPostViews()
+  return result
+}
 
-  const action = parsed.data.action
-  const patch: Record<string, string> = {}
-
-  if (action === "hide") {
-    patch.status = "hidden"
-  } else if (action === "restore") {
-    patch.status = "active"
-  } else if (action === "delete") {
-    patch.deleted_at = new Date().toISOString()
-  }
-
-  const { error } = await supabase
-    .from("posts")
-    .update(patch as never)
-    .eq("id", parsed.data.postId)
-  if (error) return { ok: false, error: "update_failed" }
-
-  await writeAuditLog({
-    actorId: current.appUser.id,
-    action: `post.${action}`,
-    entityType: "posts",
-    entityId: parsed.data.postId,
-    oldData: { status: target.status, content: target.content.substring(0, 200) },
-    newData: patch,
-    reason: parsed.data.reason,
-  })
-
+function revalidateAdminPostViews() {
   revalidatePath("/admin/posts")
   revalidatePath("/admin/audit-log")
   revalidatePath("/admin/dashboard")
-  return { ok: true }
 }

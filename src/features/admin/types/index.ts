@@ -1,6 +1,8 @@
 import type {
   CompanyVerification,
   ModerationActionType,
+  PostType,
+  PostVisibility,
   ReportStatus,
   ReportTargetType,
 } from "@/types/database"
@@ -91,6 +93,21 @@ export type AdminCompanyRow = {
   submittedAt: string
 }
 
+export type ListCompaniesParams = {
+  status?: CompanyVerification | "all"
+  search?: string
+  limit?: number
+}
+
+export type AdminCompanyListResult = {
+  items: AdminCompanyRow[]
+  counts: Record<CompanyVerification | "all", number>
+}
+
+export type CompanyActionResult =
+  | { ok: true; status: CompanyVerification }
+  | { ok: false; error: string }
+
 export type AdminReportRow = {
   id: number
   reporterId: number
@@ -110,6 +127,28 @@ export type AdminReportRow = {
     snippet: string | null
     url: string | null
   }
+}
+
+export type AdminPostRow = {
+  id: number
+  content: string
+  postType: PostType
+  visibility: PostVisibility
+  status: string
+  authorId: number
+  authorName: string
+  authorAvatarUrl: string | null
+  authorRole: string
+  reactionCount: number
+  commentCount: number
+  createdAt: string
+}
+
+export type ListPostsParams = {
+  search?: string
+  type?: PostType | "all"
+  status?: string
+  limit?: number
 }
 
 export type ListReportsParams = {

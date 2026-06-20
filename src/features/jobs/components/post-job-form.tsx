@@ -1,12 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useTranslations } from "next-intl"
 import { Briefcase, Loader2, Plus, X } from "lucide-react"
-import { toast } from "sonner"
 
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,8 +19,8 @@ import { LocationSelect } from "@/components/common/location-select"
 import { fadeUp, pageEntrance, staggerMd, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
-import { createJobAction, updateJobAction } from "../api/actions"
 import type { JobEditData, JobTypeRef, WorkModeRef } from "../types"
+import { usePostJobForm } from "./post-job-form/use-post-job-form"
 
 type Props = {
   provinces: ProvinceRow[]
@@ -34,118 +30,42 @@ type Props = {
   editJob?: JobEditData
 }
 
-// ISO (vd 2026-06-01T23:59:59Z) → YYYY-MM-DD cho <input type="date">.
-function isoToDateInput(iso: string | null | undefined): string {
-  if (!iso) return ""
-  return iso.slice(0, 10)
-}
-
 export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) {
-  const t = useTranslations("jobs.post")
-  const router = useRouter()
-
-  const isEdit = Boolean(editJob)
-  const init = editJob?.job
-
-  const [title, setTitle] = useState(init?.title ?? "")
-  const [description, setDescription] = useState(init?.description ?? "")
-  const [requirements, setRequirements] = useState(init?.requirements ?? "")
-  const [provinceId, setProvinceId] = useState<number | null>(
-    init?.provinceId ?? null,
-  )
-  const [wardId, setWardId] = useState<number | null>(init?.wardId ?? null)
-  const [jobTypeId, setJobTypeId] = useState<string>(
-    init?.jobTypeId != null ? String(init.jobTypeId) : "",
-  )
-  const [workModeId, setWorkModeId] = useState<string>(
-    init?.workModeId != null ? String(init.workModeId) : "",
-  )
-  const [positionTitle, setPositionTitle] = useState(init?.positionTitle ?? "")
-  const [expiresAt, setExpiresAt] = useState(isoToDateInput(init?.expiresAt))
-  const [salaryMin, setSalaryMin] = useState(
-    init?.salaryMin != null ? String(init.salaryMin) : "",
-  )
-  const [salaryMax, setSalaryMax] = useState(
-    init?.salaryMax != null ? String(init.salaryMax) : "",
-  )
-  const [skills, setSkills] = useState<string[]>(editJob?.skills ?? [])
-  const [skillInput, setSkillInput] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-
-  function addSkill() {
-    const v = skillInput.trim()
-    if (!v || skills.includes(v) || skills.length >= 20) return
-    setSkills((prev) => [...prev, v])
-    setSkillInput("")
-  }
-
-  function removeSkill(s: string) {
-    setSkills((prev) => prev.filter((x) => x !== s))
-  }
-
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>,
-    status: "draft" | "active",
-  ) {
-    e.preventDefault()
-    if (submitting) return
-    if (!jobTypeId) {
-      toast.error(t("jobTypeRequired"))
-      return
-    }
-    if (!workModeId) {
-      toast.error(t("workModeRequired"))
-      return
-    }
-
-    // Hạn nộp đơn dạng YYYY-MM-DD từ <input type="date"> → ISO cuối ngày
-    // (23:59 local) để cùng ngày người dùng vẫn ứng tuyển được.
-    const expiresAtIso = expiresAt
-      ? new Date(`${expiresAt}T23:59:59`).toISOString()
-      : null
-
-    // Nội dung chung cho cả tạo & sửa (sửa không gửi `status`).
-    const content = {
-      title,
-      description,
-      requirements: requirements || null,
-      provinceId,
-      wardId,
-      jobTypeId: Number(jobTypeId),
-      workModeId: Number(workModeId),
-      positionTitle: positionTitle.trim() || null,
-      salaryMin: salaryMin ? Number(salaryMin) : null,
-      salaryMax: salaryMax ? Number(salaryMax) : null,
-      salaryVisible: true,
-      expiresAt: expiresAtIso,
-      skills: skills.length > 0 ? skills : undefined,
-    }
-
-    setSubmitting(true)
-    const result =
-      isEdit && editJob
-        ? await updateJobAction({ ...content, jobId: editJob.job.id })
-        : await createJobAction({ ...content, status })
-    setSubmitting(false)
-
-    if (!result.ok) {
-      toast.error(result.error)
-      return
-    }
-
-    if (isEdit && editJob) {
-      toast.success(t("updateSuccess"))
-      router.push(`/jobs/${editJob.job.id}`)
-      return
-    }
-
-    toast.success(
-      status === "active" ? t("publishSuccess") : t("draftSuccess"),
-    )
-    router.push(
-      status === "active" ? `/jobs/${result.jobId}` : "/company/dashboard",
-    )
-  }
+  const {
+    addSkill,
+    cancelHref,
+    description,
+    expiresAt,
+    isEdit,
+    jobTypeId,
+    minExpiresAt,
+    positionTitle,
+    provinceId,
+    removeSkill,
+    requirements,
+    salaryMax,
+    salaryMin,
+    setDescription,
+    setExpiresAt,
+    setJobTypeId,
+    setPositionTitle,
+    setProvinceId,
+    setRequirements,
+    setSalaryMax,
+    setSalaryMin,
+    setSkillInput,
+    setTitle,
+    setWardId,
+    setWorkModeId,
+    skillInput,
+    skills,
+    submit,
+    submitting,
+    t,
+    title,
+    wardId,
+    workModeId,
+  } = usePostJobForm({ editJob })
 
   return (
     <motion.div
@@ -167,7 +87,10 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
         variants={staggerMd}
         initial="hidden"
         animate="show"
-        onSubmit={(e) => handleSubmit(e, "active")}
+        onSubmit={(event) => {
+          event.preventDefault()
+          void submit("active")
+        }}
         className="space-y-6"
       >
         <motion.div variants={fadeUp}>
@@ -256,7 +179,7 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
                 <Input
                   id="expires-at"
                   type="date"
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={minExpiresAt}
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
                   className="h-11 rounded-xl"
@@ -400,7 +323,7 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
           className="flex items-center justify-end gap-1 pt-2"
         >
           <Link
-            href={isEdit && editJob ? `/jobs/${editJob.job.id}` : "/company/dashboard"}
+            href={cancelHref}
             className="text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors inline-flex items-center"
           >
             {t("cancel")}
@@ -410,12 +333,7 @@ export function PostJobForm({ provinces, jobTypes, workModes, editJob }: Props) 
             <button
               type="button"
               disabled={submitting}
-              onClick={(e) =>
-                handleSubmit(
-                  e as unknown as React.FormEvent<HTMLFormElement>,
-                  "draft",
-                )
-              }
+              onClick={() => void submit("draft")}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
             >
               {submitting ? (
