@@ -1299,6 +1299,7 @@
       "reports": "Báo cáo",
       "appeals": "Khiếu nại",
       "auditLog": "Nhật ký",
+      "contactSubmissions": "Yêu cầu liên hệ",
       "brand": "Thương hiệu",
       "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
@@ -1656,7 +1657,7 @@
         "default_locale": "Ngôn ngữ mặc định",
         "default_timezone": "Múi giờ",
         "default_currency": "Đơn vị tiền tệ",
-        "available_locales": "Ngôn ngữ khả dụng (CSV)",
+        "available_locales": "Ngôn ngữ khả dụng",
         "smtp_host": "SMTP Host",
         "smtp_port": "SMTP Port",
         "smtp_username": "Username",
@@ -1763,6 +1764,26 @@
       "errors": {
         "code_required": "Trường mã không được để trống",
         "province_required": "Vui lòng chọn tỉnh/thành"
+      }
+    },
+    "contactSubmissions": {
+      "title": "Yêu cầu liên hệ",
+      "subtitle": "Quản lý các yêu cầu hỗ trợ từ người dùng",
+      "empty": "Chưa có yêu cầu nào",
+      "reply": "Trả lời",
+      "replyTitle": "Trả lời yêu cầu",
+      "replyPlaceholder": "Nhập nội dung trả lời...",
+      "replyLabel": "Phản hồi:",
+      "sendReply": "Gửi trả lời",
+      "sending": "Đang gửi...",
+      "cancel": "Huỷ",
+      "replied": "Đã gửi trả lời",
+      "closed": "Đã đóng yêu cầu",
+      "status": {
+        "pending": "Chờ xử lý",
+        "read": "Đã xem",
+        "replied": "Đã trả lời",
+        "closed": "Đã đóng"
       }
     }
   },
@@ -1875,5 +1896,22 @@
     "noResultsTab": "Không tìm thấy {tab} nào",
     "typeToSearch": "Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm",
     "viewAllResults": "Xem tất cả kết quả"
+  },
+  "contact": {
+    "form": {
+      "name": "Họ và tên",
+      "namePlaceholder": "Nhập họ tên của bạn",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "subject": "Tiêu đề",
+      "subjectPlaceholder": "Tiêu đề yêu cầu hỗ trợ",
+      "message": "Nội dung",
+      "messagePlaceholder": "Mô tả chi tiết vấn đề của bạn...",
+      "submit": "Gửi yêu cầu",
+      "success": "Đã gửi yêu cầu thành công!",
+      "thankYou": "Cảm ơn bạn!",
+      "thankYouDesc": "Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi trong thời gian sớm nhất."
+    }
   }
 }
+

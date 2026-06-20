@@ -434,6 +434,22 @@ export type SystemSettingsRow = {
   updated_at: string
 }
 
+export type ContactSubmissionRow = {
+  id: number
+  name: string
+  email: string
+  subject: string
+  message: string
+  status: string
+  user_id: number | null
+  replied_at: string | null
+  reply_message: string | null
+  replied_by: number | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
 export type ModerationActionType =
   | "hide"
   | "delete"
@@ -779,6 +795,10 @@ export type Database = {
       moderation_actions: TableDef<
         ModerationActionRow,
         Omit<ModerationActionRow, "id" | "created_at">
+      >
+      contact_submissions: TableDef<
+        ContactSubmissionRow,
+        Omit<ContactSubmissionRow, "id" | "created_at" | "updated_at" | "deleted_at">
       >
       system_settings: TableDef<
         SystemSettingsRow,

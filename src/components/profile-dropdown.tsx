@@ -265,17 +265,19 @@ export function ProfileDropdown() {
               animate="show"
               transition={{ delay: 0.14 }}
             >
-              <DropdownMenuItem className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted">
-                <HelpCircle className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-foreground">
-                    {tMenu("help")}
-                  </span>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {tMenu("helpHint")}
-                  </p>
-                </div>
-              </DropdownMenuItem>
+              <Link href="/contact">
+                <DropdownMenuItem className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted">
+                  <HelpCircle className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground">
+                      {tMenu("help")}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {tMenu("helpHint")}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              </Link>
             </motion.div>
           </DropdownMenuGroup>
 

@@ -7,6 +7,7 @@ import { MessagingDock } from "@/features/messaging/components/messaging-dock"
 import { loadMaintenanceState } from "@/features/system-settings/api/public-settings"
 import { MaintenanceScreen } from "@/features/system-settings/components/maintenance-screen"
 import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 
 export default async function MainLayout({
   children,
@@ -41,11 +42,12 @@ export default async function MainLayout({
     <CurrentUserProvider user={sessionUser}>
       <RealtimeNotifications />
       <RealtimeMessaging />
-      <div className="min-h-screen bg-zinc-50/50 dark:bg-background font-body text-foreground pt-16">
+      <div className="min-h-screen bg-zinc-50/50 dark:bg-background font-body text-foreground pt-16 flex flex-col">
         <Navbar />
-        <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-24 md:pb-6">
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-24 md:pb-6 w-full">
           {children}
         </main>
+        <Footer />
       </div>
       <MessagingDock />
     </CurrentUserProvider>

@@ -1299,6 +1299,7 @@
       "reports": "Reports",
       "appeals": "Appeals",
       "auditLog": "Audit log",
+      "contactSubmissions": "Contact submissions",
       "brand": "Branding",
       "settings": "Settings",
       "reportTypes": "Report types",
@@ -1656,7 +1657,7 @@
         "default_locale": "Default locale",
         "default_timezone": "Timezone",
         "default_currency": "Currency",
-        "available_locales": "Available locales (CSV)",
+        "available_locales": "Available locales",
         "smtp_host": "SMTP host",
         "smtp_port": "SMTP port",
         "smtp_username": "Username",
@@ -1763,6 +1764,26 @@
       "errors": {
         "code_required": "Code is required",
         "province_required": "Please select a province"
+      }
+    },
+    "contactSubmissions": {
+      "title": "Contact submissions",
+      "subtitle": "Manage user support requests",
+      "empty": "No submissions yet",
+      "reply": "Reply",
+      "replyTitle": "Reply to request",
+      "replyPlaceholder": "Enter your reply...",
+      "replyLabel": "Reply:",
+      "sendReply": "Send reply",
+      "sending": "Sending...",
+      "cancel": "Cancel",
+      "replied": "Reply sent",
+      "closed": "Request closed",
+      "status": {
+        "pending": "Pending",
+        "read": "Read",
+        "replied": "Replied",
+        "closed": "Closed"
       }
     }
   },
@@ -1875,5 +1896,22 @@
     "noResultsTab": "No {tab} found",
     "typeToSearch": "Type at least 2 characters to start searching",
     "viewAllResults": "View all results"
+  },
+  "contact": {
+    "form": {
+      "name": "Full name",
+      "namePlaceholder": "Enter your full name",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "Support request subject",
+      "message": "Message",
+      "messagePlaceholder": "Describe your issue in detail...",
+      "submit": "Send request",
+      "success": "Request sent successfully!",
+      "thankYou": "Thank you!",
+      "thankYouDesc": "We have received your request and will get back to you shortly."
+    }
   }
 }
+

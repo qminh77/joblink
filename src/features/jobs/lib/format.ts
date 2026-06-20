@@ -1,17 +1,23 @@
-const vnNumber = new Intl.NumberFormat("vi-VN")
-
-export function formatSalary(input: {
-  salaryMin: number | null
-  salaryMax: number | null
-  salaryVisible: boolean
-}): string | null {
+export function formatSalary(
+  input: {
+    salaryMin: number | null
+    salaryMax: number | null
+    salaryVisible: boolean
+  },
+  locale = "vi",
+  currency?: string,
+): string | null {
   if (!input.salaryVisible) return null
   const { salaryMin: min, salaryMax: max } = input
   if (min == null && max == null) return null
+  const intlLoc = locale === "vi" ? "vi-VN" : locale === "en" ? "en-US" : locale
+  const fmt = new Intl.NumberFormat(intlLoc)
   if (min != null && max != null) {
-    return `${vnNumber.format(min)} – ${vnNumber.format(max)}`
+    const range = `${fmt.format(min)} – ${fmt.format(max)}`
+    return currency ? `${range} ${currency}` : range
   }
-  return vnNumber.format(min ?? max ?? 0)
+  const val = fmt.format(min ?? max ?? 0)
+  return currency ? `${val} ${currency}` : val
 }
 
 export function formatLocation(parts: {

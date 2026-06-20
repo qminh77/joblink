@@ -2,19 +2,13 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 import {
   createLookup,
   deleteLookup,
@@ -26,18 +20,6 @@ import type {
 } from "@/features/admin/types"
 
 import { type EditingLookup, LookupDialog } from "./lookups/lookup-dialog"
-
-const TAB_ORDER: AdminLookupKind[] = [
-  "provinces",
-  "wards",
-  "job_types",
-  "work_modes",
-  "job_positions",
-  "report_types",
-  "skills",
-]
-
-
 
 const ERROR_KEY_MAP: Record<string, string> = {
   code_required: "admin.lookups.errors.code_required",
@@ -52,11 +34,9 @@ export function LookupsPanel({
   data: Record<AdminLookupKind, AdminLookupRow[]>
 }) {
   const t = useTranslations("admin.lookups")
-  const tTabs = useTranslations("admin.lookups.tabs")
   const tErrors = useTranslations("admin.lookups.errors")
   const tCommon = useTranslations("common")
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [pending, startTransition] = useTransition()
   const [editing, setEditing] = useState<EditingLookup | null>(null)
 
@@ -65,12 +45,6 @@ export function LookupsPanel({
   const provinces = data.provinces ?? []
   const jobPositions = data.job_positions ?? []
   const isSkills = kind === "skills"
-
-  const setKind = (next: string) => {
-    const sp = new URLSearchParams(searchParams.toString())
-    sp.set("kind", next)
-    startTransition(() => router.replace(`/admin/lookups?${sp.toString()}`))
-  }
 
   const openCreate = () => {
     setEditing({
@@ -165,20 +139,8 @@ export function LookupsPanel({
         </Button>
       </header>
 
-      <Tabs value={kind} onValueChange={setKind}>
-        <TabsList className="bg-muted/60 p-1 rounded-xl flex-wrap">
-          {TAB_ORDER.map((k) => (
-            <TabsTrigger key={k} value={k} className="rounded-lg text-sm px-3">
-              {tTabs(k)}{" "}
-              <span className="ml-1 text-xs opacity-70">
-                ({data[k]?.length ?? 0})
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value={kind} className="mt-4">
-          <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
+      <div className="mt-6">
+        <Card className="bg-transparent border-none shadow-none rounded-xl overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -319,8 +281,7 @@ export function LookupsPanel({
               </table>
             </div>
           </Card>
-        </TabsContent>
-      </Tabs>
+      </div>
 
       <LookupDialog
         editing={editing}

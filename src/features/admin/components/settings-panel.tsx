@@ -18,6 +18,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -72,7 +73,6 @@ const NUMBER_KEYS = new Set([
   "login_rate_limit",
   "upload_max_mb",
 ])
-const ARRAY_KEYS = new Set(["available_locales"])
 const SECRET_KEYS = new Set([
   "smtp_password",
   "smtp_username",
@@ -84,6 +84,48 @@ const TEXTAREA_KEYS = new Set([
   "contact_content",
   "maintenance_message",
 ])
+
+const SELECT_KEYS = new Set(["default_locale", "default_timezone", "default_currency"])
+
+const SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  default_locale: [
+    { value: "vi", label: "Tiếng Việt" },
+    { value: "en", label: "English" },
+  ],
+  default_timezone: [
+    { value: "Asia/Ho_Chi_Minh", label: "Asia/Ho_Chi_Minh (UTC+7)" },
+    { value: "Asia/Bangkok", label: "Asia/Bangkok (UTC+7)" },
+    { value: "Asia/Singapore", label: "Asia/Singapore (UTC+8)" },
+    { value: "Asia/Tokyo", label: "Asia/Tokyo (UTC+9)" },
+    { value: "Asia/Seoul", label: "Asia/Seoul (UTC+9)" },
+    { value: "Asia/Hong_Kong", label: "Asia/Hong_Kong (UTC+8)" },
+    { value: "Asia/Taipei", label: "Asia/Taipei (UTC+8)" },
+    { value: "America/New_York", label: "America/New_York (UTC-5)" },
+    { value: "America/Chicago", label: "America/Chicago (UTC-6)" },
+    { value: "America/Los_Angeles", label: "America/Los_Angeles (UTC-8)" },
+    { value: "Europe/London", label: "Europe/London (UTC+0)" },
+    { value: "Europe/Paris", label: "Europe/Paris (UTC+1)" },
+    { value: "Australia/Sydney", label: "Australia/Sydney (UTC+10)" },
+    { value: "Pacific/Auckland", label: "Pacific/Auckland (UTC+12)" },
+  ],
+  default_currency: [
+    { value: "VND", label: "VND (₫)" },
+    { value: "USD", label: "USD ($)" },
+    { value: "EUR", label: "EUR (€)" },
+    { value: "JPY", label: "JPY (¥)" },
+    { value: "GBP", label: "GBP (£)" },
+    { value: "CNY", label: "CNY (¥)" },
+    { value: "KRW", label: "KRW (₩)" },
+    { value: "SGD", label: "SGD (S$)" },
+    { value: "THB", label: "THB (฿)" },
+    { value: "AUD", label: "AUD (A$)" },
+  ],
+}
+
+const CHECKBOX_LOCALES = [
+  { value: "vi", label: "Tiếng Việt" },
+  { value: "en", label: "English" },
+]
 
 export function SettingsPanel({
   initialValues,
@@ -284,24 +326,53 @@ function Field({
       </div>
     )
   }
-  if (ARRAY_KEYS.has(k)) {
+  if (k === "available_locales") {
+    const selected = Array.isArray(value) ? value : []
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium">{label}</label>
+        <div className="flex flex-wrap gap-4">
+          {CHECKBOX_LOCALES.map((loc) => (
+            <label key={loc.value} className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox
+                checked={selected.includes(loc.value)}
+                onCheckedChange={(checked) => {
+                  const next = checked
+                    ? [...selected, loc.value]
+                    : selected.filter((v: string) => v !== loc.value)
+                  onChange(next.length > 0 ? next : null)
+                }}
+              />
+              {loc.label}
+            </label>
+          ))}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Chọn ngôn ngữ cho phép trên hệ thống
+        </p>
+      </div>
+    )
+  }
+  if (SELECT_KEYS.has(k)) {
+    const opts = SELECT_OPTIONS[k] ?? []
     return (
       <div className="space-y-1.5">
         <label className="text-sm font-medium">{label}</label>
-        <Input
-          value={Array.isArray(value) ? value.join(", ") : (value as string) ?? ""}
-          onChange={(e) =>
-            onChange(
-              e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            )
-          }
-          placeholder="Ví dụ: item1, item2, item3"
-          className="max-w-xl rounded-lg"
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">Cách nhau bằng dấu phẩy (,)</p>
+        <Select
+          value={(value as string) ?? ""}
+          onValueChange={(v) => onChange(v)}
+        >
+          <SelectTrigger className="rounded-lg max-w-xs">
+            <SelectValue placeholder="Chọn..." />
+          </SelectTrigger>
+          <SelectContent>
+            {opts.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     )
   }

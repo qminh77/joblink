@@ -17,13 +17,29 @@ export type PublicAuthSettings = {
   passkeyEnabled: boolean
 }
 
-const KEYS = [
+export type PublicContactSettings = {
+  email: string | null
+  phone: string | null
+  address: string | null
+  content: string | null
+  mapUrl: string | null
+}
+
+const AUTH_KEYS = [
   "recaptcha_enabled",
   "recaptcha_site_key",
   "site_name",
   "site_description",
   "google_auth_enabled",
   "passkey_enabled",
+]
+
+const CONTACT_KEYS = [
+  "contact_email",
+  "contact_phone",
+  "contact_address",
+  "contact_content",
+  "contact_map_url",
 ]
 
 export const loadPublicAuthSettings = cache(
@@ -40,7 +56,7 @@ export const loadPublicAuthSettings = cache(
       const { data, error } = await supabase
         .from("system_settings")
         .select("setting_key, value")
-        .in("setting_key", KEYS)
+        .in("setting_key", AUTH_KEYS)
 
       if (error || !data) return fallback
 
@@ -66,6 +82,46 @@ export const loadPublicAuthSettings = cache(
         },
         googleAuthEnabled: Boolean(map.get("google_auth_enabled")),
         passkeyEnabled: Boolean(map.get("passkey_enabled")),
+      }
+    } catch {
+      return fallback
+    }
+  },
+)
+
+export const loadPublicContactSettings = cache(
+  async (): Promise<PublicContactSettings> => {
+    const fallback: PublicContactSettings = {
+      email: null,
+      phone: null,
+      address: null,
+      content: null,
+      mapUrl: null,
+    }
+
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("setting_key, value")
+        .in("setting_key", CONTACT_KEYS)
+
+      if (error || !data) return fallback
+
+      const map = new Map<string, unknown>()
+      for (const row of data as Array<{
+        setting_key: string
+        value: unknown
+      }>) {
+        map.set(row.setting_key, row.value)
+      }
+
+      return {
+        email: (map.get("contact_email") as string) || null,
+        phone: (map.get("contact_phone") as string) || null,
+        address: (map.get("contact_address") as string) || null,
+        content: (map.get("contact_content") as string) || null,
+        mapUrl: (map.get("contact_map_url") as string) || null,
       }
     } catch {
       return fallback

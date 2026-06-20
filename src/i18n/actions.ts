@@ -5,11 +5,16 @@ import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 
 import { isLocale, LOCALE_COOKIE, type Locale } from "./config"
+import { loadSystemAvailableLocales } from "./request"
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
-export async function setLocaleAction(locale: string): Promise<void> {
-  if (!isLocale(locale)) return
+export async function setLocaleAction(locale: string): Promise<{ ok: boolean }> {
+  if (!isLocale(locale)) return { ok: false }
+
+  const available = await loadSystemAvailableLocales()
+  if (available.length > 0 && !available.includes(locale)) return { ok: false }
+
   const cookieStore = await cookies()
   cookieStore.set(LOCALE_COOKIE, locale, {
     path: "/",
@@ -17,7 +22,6 @@ export async function setLocaleAction(locale: string): Promise<void> {
     sameSite: "lax",
   })
 
-  // Nếu user đã đăng nhập thì đồng bộ users.locale (best-effort)
   try {
     const supabase = await createClient()
     const {
@@ -30,6 +34,8 @@ export async function setLocaleAction(locale: string): Promise<void> {
         .eq("auth_id", user.id)
     }
   } catch {
-    // ignore — cookie đã đủ cho phiên hiện tại
+    // ignore
   }
+
+  return { ok: true }
 }
