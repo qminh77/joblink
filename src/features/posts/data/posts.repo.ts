@@ -323,14 +323,6 @@ export function insertPollVote(
     .insert({ post_id: postId, option_id: optionId, user_id: userId })
 }
 
-export function incrementOptionVoteCount(
-  supabase: Supabase,
-  optionId: number,
-) {
-  return supabase.rpc("increment_poll_vote_count", {
-    p_option_id: optionId,
-  })
-}
 
 export async function findPollOptionById(
   supabase: Supabase,

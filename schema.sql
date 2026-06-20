@@ -1407,6 +1407,9 @@ CREATE TRIGGER trg_connections_counter
 CREATE TRIGGER trg_sync_feeds_on_connection
   AFTER INSERT OR UPDATE OF status OR DELETE ON connections
   FOR EACH ROW EXECUTE FUNCTION public.sync_feeds_on_connection();
+CREATE TRIGGER trg_poll_votes_counter
+  AFTER INSERT OR DELETE ON poll_votes
+  FOR EACH ROW EXECUTE FUNCTION public.poll_votes_counter_trigger();
 CREATE TRIGGER trg_profile_view_counter
   AFTER INSERT OR DELETE ON profile_view_logs
   FOR EACH ROW EXECUTE FUNCTION public.profile_view_counter_trigger();
@@ -3599,18 +3602,19 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.increment_poll_vote_count(p_option_id BIGINT)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION public.poll_votes_counter_trigger()
+RETURNS trigger AS $$
 BEGIN
-    UPDATE public.poll_options
-       SET vote_count = vote_count + 1
-     WHERE id = p_option_id;
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.poll_options SET vote_count = vote_count + 1 WHERE id = NEW.option_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.poll_options SET vote_count = GREATEST(0, vote_count - 1) WHERE id = OLD.option_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.count_applications_per_job(p_job_ids BIGINT[])
 RETURNS TABLE(job_id BIGINT, count BIGINT)
@@ -3638,7 +3642,6 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.set_default_member_cv(BIGINT) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.increment_poll_vote_count(BIGINT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.count_applications_per_job(BIGINT[]) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_distinct_audit_actions() TO anon, authenticated;
 

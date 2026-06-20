@@ -13,7 +13,7 @@ import {
 } from "../api/actions"
 import { translateMessagingError } from "../lib/translate-error"
 import type { ConversationMessagesPage, MessageItem } from "../types"
-import { MESSAGING_MESSAGES_KEY } from "./keys"
+import { MESSAGING_MESSAGES_KEY, MESSAGING_OVERVIEW_KEY } from "./keys"
 import { invalidateMessaging } from "./shared"
 
 type SendMessageVars = { conversationId: number; content: string }
@@ -90,11 +90,26 @@ export function useMarkConversationRead() {
 }
 
 export function useEnsureConversation() {
+  const qc = useQueryClient()
   return useMutation<number, Error, number>({
     mutationFn: async (targetUserId) => {
       const result = await ensureConversationWithAction(targetUserId)
       if (!result.ok) throw new Error(result.error)
       return result.conversationId
     },
+    onSuccess: (cid, targetUserId) => {
+      qc.setQueryData<Record<string, unknown>>(MESSAGING_OVERVIEW_KEY, (prev: Record<string, unknown> | undefined) => {
+        if (!prev || !Array.isArray(prev.items)) return prev
+        return {
+          ...prev,
+          items: prev.items.map((item: Record<string, unknown>) =>
+            item.otherUserId === targetUserId
+              ? { ...item, conversationId: cid }
+              : item
+          ),
+        }
+      })
+      invalidateMessaging(qc)
+    }
   })
 }

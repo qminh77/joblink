@@ -14,6 +14,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useMessagingOverview } from "@/features/messaging/hooks"
 import { getInitials } from "@/lib/utils/format"
+import { useEnsureConversation } from "@/features/messaging/hooks"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { translateMessagingError } from "@/features/messaging/lib/translate-error"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
 const stagger = {
@@ -34,13 +38,26 @@ export function MessageDropdown({
   children: React.ReactNode
 }) {
   const t = useTranslations("messages")
+  const tErr = useTranslations("messages.errors")
   const { data } = useMessagingOverview()
   const formatRel = useRelativeTimeFormatter()
+  const ensure = useEnsureConversation()
+  const router = useRouter()
+
+  const handleItemClick = (conv: any) => {
+    if (conv.conversationId != null) {
+      router.push(`/messages?c=${conv.conversationId}`)
+      return
+    }
+    ensure.mutate(conv.otherUserId, {
+      onSuccess: (cid) => router.push(`/messages?c=${cid}`),
+      onError: (err) => toast.error(translateMessagingError(tErr, err.message))
+    })
+  }
+
   // Dropdown chỉ hiển thị các conversation thật (đã có tin), không kèm
   // placeholder connections — tránh nhiễu cho người đang xem nhanh inbox.
-  const allItems = (data?.items ?? []).filter(
-    (c) => c.conversationId != null,
-  )
+  const allItems = data?.items ?? []
   const items = allItems.slice(0, PREVIEW_LIMIT)
   const unreadConversations = allItems.filter((c) => c.unreadCount > 0).length
 
@@ -93,13 +110,14 @@ export function MessageDropdown({
                 const name = conv.displayName ?? "—"
                 return (
                   <motion.div key={conv.conversationId} variants={fadeIn}>
-                    <Link
-                      href={`/messages?c=${conv.conversationId ?? ""}`}
-                      className={`flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
+                    <button
+                      onClick={() => handleItemClick(conv)}
+                      disabled={ensure.isPending && ensure.variables === conv.otherUserId}
+                      className={`w-full text-left flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
                         index < items.length - 1
                           ? "border-b border-border/10"
                           : ""
-                      } ${conv.unreadCount > 0 ? "bg-primary/[0.02]" : ""}`}
+                      } ${conv.unreadCount > 0 ? "bg-primary/[0.02]" : ""} ${ensure.isPending && ensure.variables === conv.otherUserId ? "opacity-50 pointer-events-none" : ""}`}
                     >
                       <div className="relative shrink-0">
                         <Avatar className="w-10 h-10 rounded-xl">
@@ -143,7 +161,7 @@ export function MessageDropdown({
                           {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                         </div>
                       )}
-                    </Link>
+                    </button>
                   </motion.div>
                 )
               })}

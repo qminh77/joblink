@@ -9,7 +9,6 @@ import {
   findPollOptionById,
   findReaction,
   findViewerPollVotes,
-  incrementOptionVoteCount,
   insertComment,
   insertPollVote,
   insertPost,
@@ -88,7 +87,6 @@ export async function voteOnPoll(
     await insertPollVote(supabase, data.postId, data.optionId, me),
     "voteFailed",
   )
-  assertOk(await incrementOptionVoteCount(supabase, data.optionId), "voteFailed")
 
   const option = await findPollOptionById(supabase, data.optionId)
   if (option) {

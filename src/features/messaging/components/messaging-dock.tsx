@@ -11,7 +11,9 @@ import { useCurrentUser } from "@/features/auth/components/current-user-provider
 import { getInitials } from "@/lib/utils/format"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 
-import { useMessagingOverview } from "../hooks"
+import { useEnsureConversation, useMessagingOverview } from "../hooks"
+import { toast } from "sonner"
+import { translateMessagingError } from "../lib/translate-error"
 import type { ConversationItem } from "../types"
 
 import { DockChatWindow } from "./dock-chat-window"
@@ -47,11 +49,12 @@ export function MessagingDock() {
   const [listOpen, setListOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([])
+  const ensure = useEnsureConversation()
+  const tErr = useTranslations("messages.errors")
 
-  const items = useMemo(
-    () => (data?.items ?? []).filter((c) => c.conversationId != null),
-    [data],
-  )
+
+
+  const items = useMemo(() => data?.items ?? [], [data])
   const unreadConversations = items.filter((c) => c.unreadCount > 0).length
 
   const filtered = useMemo(() => {
@@ -97,6 +100,19 @@ export function MessagingDock() {
     })
     setListOpen(false)
   }, [itemsById])
+
+
+
+  const handleItemClick = useCallback((conv: ConversationItem) => {
+    if (conv.conversationId != null) {
+      openConversation(conv.conversationId)
+      return
+    }
+    ensure.mutate(conv.otherUserId, {
+      onSuccess: (cid) => openConversation(cid),
+      onError: (err) => toast.error(translateMessagingError(tErr, err.message))
+    })
+  }, [ensure, openConversation, tErr])
 
   const closeWindow = useCallback((conversationId: number) => {
     setOpenWindows((prev) =>
@@ -208,14 +224,13 @@ export function MessagingDock() {
                   )
                   return (
                     <button
-                      key={conv.conversationId}
+                      key={conv.conversationId ?? `user-${conv.otherUserId}`}
                       type="button"
-                      onClick={() =>
-                        openConversation(conv.conversationId as number)
-                      }
+                      onClick={() => handleItemClick(conv)}
+                      disabled={ensure.isPending && ensure.variables === conv.otherUserId}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border/10 last:border-b-0 cursor-pointer ${
                         isOpen ? "bg-primary/[0.04]" : ""
-                      }`}
+                      } ${ensure.isPending && ensure.variables === conv.otherUserId ? "opacity-50 pointer-events-none" : ""}`}
                     >
                       <Avatar className="w-9 h-9 shrink-0">
                         {conv.avatarUrl ? (

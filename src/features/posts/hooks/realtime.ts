@@ -66,7 +66,7 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
       "post_reactions",
       "post_comments",
       "post_shares",
-      "poll_votes",
+      "poll_options",
     ]) {
       channel.on(
         "postgres_changes",
@@ -77,8 +77,8 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
           filter: `post_id=in.(${cappedIds})`,
         },
         (payload) => {
-          const row = (payload.new as { post_id?: number, option_id?: number } | null) ?? (payload.old as { post_id?: number, option_id?: number } | null)
-          if (!row || !row.post_id) return
+          const row = (payload.new as Record<string, unknown> | null) ?? (payload.old as Record<string, unknown> | null)
+          if (!row || typeof row.post_id !== "number") return
           const postId = row.post_id
 
           // O(1) Cache Updates for Feed
@@ -100,11 +100,11 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
                     else if (payload.eventType === "DELETE") p.commentCount = Math.max(0, p.commentCount - 1)
                   } else if (table === "post_shares") {
                     if (payload.eventType === "INSERT") p.shareCount++
-                  } else if (table === "poll_votes" && payload.eventType === "INSERT") {
-                    if (p.pollOptions && row.option_id) {
+                  } else if (table === "poll_options" && payload.eventType === "UPDATE") {
+                    if (p.pollOptions && typeof row.id === "number" && typeof row.vote_count === "number") {
                       p.pollOptions = p.pollOptions.map((opt) =>
-                        opt.id === row.option_id
-                          ? { ...opt, voteCount: opt.voteCount + 1 }
+                        opt.id === row.id
+                          ? { ...opt, voteCount: row.vote_count as number }
                           : opt
                       )
                     }
