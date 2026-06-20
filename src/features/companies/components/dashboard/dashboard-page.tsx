@@ -22,7 +22,13 @@ import { DashboardClient } from "./dashboard-client"
  */
 export async function CompanyDashboardServer() {
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "company") notFound()
+  if (
+    current.appUser.role !== "company" ||
+    current.appUser.status !== "active" ||
+    current.profile.companyVerificationStatus !== "verified"
+  ) {
+    notFound()
+  }
 
   const [overview, jobsPage, applicantsPage, publicOverview, tDashboard] =
     await Promise.all([

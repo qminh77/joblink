@@ -47,6 +47,19 @@ export async function updateSession(request: NextRequest) {
   const { pathname, search } = request.nextUrl
   const isPublic = isPublicPath(pathname)
   const isRoot = pathname === "/"
+  const isAuthCallback = pathname.startsWith("/auth/callback")
+
+  if (user && !isAuthCallback) {
+    const blockedReason = await getBlockedSessionReason(supabase, user.id)
+    if (blockedReason) {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      url.search = ""
+      url.searchParams.set("reason", blockedReason)
+      return NextResponse.redirect(url)
+    }
+  }
 
   if (!user && !isPublic && !isRoot) {
     const url = request.nextUrl.clone()
@@ -59,7 +72,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && (isPublic || isRoot)) {
-    if (pathname.startsWith("/auth/callback")) {
+    if (isAuthCallback) {
       return supabaseResponse
     }
     const url = request.nextUrl.clone()
@@ -76,4 +89,37 @@ export async function updateSession(request: NextRequest) {
   }
 
   return supabaseResponse
+}
+
+async function getBlockedSessionReason(
+  supabase: ReturnType<typeof createServerClient<Database>>,
+  authId: string,
+) {
+  const { data } = await supabase
+    .from("users")
+    .select("id, role, status")
+    .eq("auth_id", authId)
+    .is("deleted_at", null)
+    .maybeSingle<{ id: number; role: string; status: string }>()
+
+  if (!data) return "account_missing"
+  if (data.role === "company" && data.status === "pending_verification") {
+    return "company_pending"
+  }
+  if (data.role === "company" && data.status === "active") {
+    const { data: company } = await supabase
+      .from("company_profiles")
+      .select("verification_status")
+      .eq("user_id", data.id)
+      .is("deleted_at", null)
+      .maybeSingle<{ verification_status: string }>()
+    if (company?.verification_status !== "verified") {
+      return "company_pending"
+    }
+  }
+  if (data.status === "suspended") return "account_suspended"
+  if (data.status === "banned" || data.status === "deleted") {
+    return "account_banned"
+  }
+  return null
 }

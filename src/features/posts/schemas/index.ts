@@ -1,6 +1,9 @@
 import { z } from "zod"
 
-type Translator = (key: string) => string
+type Translator = (
+  key: string,
+  values?: Record<string, string | number>,
+) => string
 
 const POST_VISIBILITY = ["public", "connections", "private"] as const
 const REACTION_TYPES = [
@@ -31,7 +34,7 @@ export function createPostInputSchema(t: Translator) {
             height: z.number().int().positive().optional(),
           }),
         )
-        .max(MAX_MEDIA_ITEMS, t("tooManyImages"))
+        .max(MAX_MEDIA_ITEMS, t("tooManyImages", { max: MAX_MEDIA_ITEMS }))
         .optional()
         .default([]),
     })
@@ -65,7 +68,7 @@ export function createPostUpdateSchema(t: Translator) {
             height: z.number().int().positive().optional(),
           }),
         )
-        .max(MAX_MEDIA_ITEMS, t("tooManyImages"))
+        .max(MAX_MEDIA_ITEMS, t("tooManyImages", { max: MAX_MEDIA_ITEMS }))
         .optional(),
     })
     .refine(

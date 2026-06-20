@@ -9,7 +9,13 @@ import { PostJobForm } from "./post-job-form"
 
 export async function PostJobServerPage() {
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "company") notFound()
+  if (
+    current.appUser.role !== "company" ||
+    current.appUser.status !== "active" ||
+    current.profile.companyVerificationStatus !== "verified"
+  ) {
+    notFound()
+  }
 
   const [provinces, jobTypes, workModes] = await Promise.all([
     loadProvinces(),
@@ -28,7 +34,13 @@ export async function PostJobServerPage() {
 
 export async function EditJobServerPage({ jobId }: { jobId: number }) {
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "company") notFound()
+  if (
+    current.appUser.role !== "company" ||
+    current.appUser.status !== "active" ||
+    current.profile.companyVerificationStatus !== "verified"
+  ) {
+    notFound()
+  }
 
   const [provinces, jobTypes, workModes, editJob] = await Promise.all([
     loadProvinces(),

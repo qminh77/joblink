@@ -1269,8 +1269,23 @@ RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users u
+      JOIN public.company_profiles cp ON cp.user_id = u.id
      WHERE u.id = public.auth_user_id()
        AND u.role = 'company'
+       AND u.status = 'active'
+       AND cp.verification_status = 'verified'
+       AND cp.deleted_at IS NULL
+       AND u.deleted_at IS NULL
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_active_user()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users u
+     WHERE u.id = public.auth_user_id()
+       AND u.status = 'active'
        AND u.deleted_at IS NULL
   );
 $$;
@@ -1358,6 +1373,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.is_company() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_active_user() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_member() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.can_view_member_profile(BIGINT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.company_owns_job(BIGINT) TO anon, authenticated;
@@ -1547,12 +1563,17 @@ CREATE POLICY posts_admin_all ON public.posts
 CREATE POLICY posts_select_visible ON public.posts
   FOR SELECT USING (public.can_view_post(id));
 CREATE POLICY posts_insert_own ON public.posts
-  FOR INSERT WITH CHECK (author_id = public.auth_user_id());
+  FOR INSERT TO authenticated
+  WITH CHECK (author_id = public.auth_user_id() AND public.is_active_user());
 CREATE POLICY posts_update_own ON public.posts
-  FOR UPDATE USING (author_id = public.auth_user_id() AND deleted_at IS NULL)
-  WITH CHECK (author_id = public.auth_user_id());
+  FOR UPDATE USING (
+    author_id = public.auth_user_id()
+    AND deleted_at IS NULL
+    AND public.is_active_user()
+  )
+  WITH CHECK (author_id = public.auth_user_id() AND public.is_active_user());
 CREATE POLICY posts_delete_own ON public.posts
-  FOR DELETE USING (author_id = public.auth_user_id());
+  FOR DELETE USING (author_id = public.auth_user_id() AND public.is_active_user());
 
 CREATE POLICY poll_options_admin_all ON public.poll_options
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
@@ -1644,12 +1665,17 @@ CREATE POLICY jobs_select_visible ON public.jobs
     )
   );
 CREATE POLICY jobs_insert_own ON public.jobs
-  FOR INSERT WITH CHECK (company_user_id = public.auth_user_id() AND public.is_company());
+  FOR INSERT TO authenticated
+  WITH CHECK (company_user_id = public.auth_user_id() AND public.is_company());
 CREATE POLICY jobs_update_own ON public.jobs
-  FOR UPDATE USING (company_user_id = public.auth_user_id() AND deleted_at IS NULL)
-  WITH CHECK (company_user_id = public.auth_user_id());
+  FOR UPDATE USING (
+    company_user_id = public.auth_user_id()
+    AND deleted_at IS NULL
+    AND public.is_company()
+  )
+  WITH CHECK (company_user_id = public.auth_user_id() AND public.is_company());
 CREATE POLICY jobs_delete_own ON public.jobs
-  FOR DELETE USING (company_user_id = public.auth_user_id());
+  FOR DELETE USING (company_user_id = public.auth_user_id() AND public.is_company());
 
 CREATE POLICY job_skills_admin_all ON public.job_skills
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());

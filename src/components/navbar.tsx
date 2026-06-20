@@ -223,7 +223,8 @@ export function Navbar() {
                     </p>
                   </div>
                 </DropdownMenuItem>
-                {user.role === "company" ? (
+                {user.role === "company" &&
+                user.companyVerificationStatus === "verified" ? (
                   <DropdownMenuItem
                     onClick={() => router.push("/company/post-job")}
                     className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"

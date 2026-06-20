@@ -186,7 +186,8 @@ export function ProfileDropdown() {
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />
 
-          {user.role === "company" ? (
+          {user.role === "company" &&
+          user.companyVerificationStatus === "verified" ? (
             <DropdownMenuGroup>
               <motion.div
                 variants={itemVariants}

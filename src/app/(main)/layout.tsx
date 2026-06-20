@@ -34,6 +34,7 @@ export default async function MainLayout({
     avatarUrl: user.profile.avatarUrl,
     coverUrl: user.profile.coverUrl,
     headline: user.profile.headline,
+    companyVerificationStatus: user.profile.companyVerificationStatus,
   }
 
   return (

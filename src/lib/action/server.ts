@@ -9,7 +9,10 @@ import type { UserRole } from "@/lib/constants"
 
 import { ok, fail, type ActionResult } from "./result"
 
-type Translator = (key: string) => string
+type Translator = (
+  key: string,
+  values?: Record<string, string | number>,
+) => string
 
 /**
  * Lỗi "đã biết" của một action — mang theo thông điệp an toàn để hiển thị.

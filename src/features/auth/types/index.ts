@@ -1,5 +1,5 @@
 import type { UserRole, UserStatus } from "@/lib/constants"
-import type { AppUserRow } from "@/types/database"
+import type { AppUserRow, CompanyVerification } from "@/types/database"
 
 export type CurrentUser = {
   appUser: AppUserRow
@@ -8,6 +8,7 @@ export type CurrentUser = {
     avatarUrl: string | null
     coverUrl: string | null
     headline: string | null
+    companyVerificationStatus?: CompanyVerification | null
   }
 }
 
@@ -21,4 +22,5 @@ export type SessionUserSummary = {
   avatarUrl: string | null
   coverUrl: string | null
   headline: string | null
+  companyVerificationStatus?: CompanyVerification | null
 }

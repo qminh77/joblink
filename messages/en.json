@@ -928,6 +928,7 @@
       "unauthorized": "Please sign in again",
       "memberOnly": "Only candidates can perform this action",
       "notCompany": "Account is not a company",
+      "companyPendingApproval": "Your business account is awaiting Admin approval",
       "companyInactive": "Company is currently suspended",
       "jobNotFound": "Job not found",
       "jobNotActive": "Job is no longer accepting applications",

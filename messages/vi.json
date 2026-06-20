@@ -928,6 +928,7 @@
       "unauthorized": "Vui lòng đăng nhập lại",
       "memberOnly": "Chỉ ứng viên mới được thực hiện",
       "notCompany": "Tài khoản không phải công ty",
+      "companyPendingApproval": "Tài khoản doanh nghiệp đang chờ Admin phê duyệt",
       "companyInactive": "Công ty đang bị tạm khoá",
       "jobNotFound": "Không tìm thấy việc làm",
       "jobNotActive": "Việc làm không còn nhận ứng tuyển",

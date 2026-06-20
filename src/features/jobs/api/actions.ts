@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import type { CurrentUser } from "@/features/auth/types"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -48,7 +49,9 @@ export async function createJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  await requireCurrentUser()
+  const current = await requireCurrentUser()
+  const companyGate = ensureCompanyCanManageJobs(current, te)
+  if (companyGate) return companyGate
   const supabase = await createClient()
   const result = await createJob(supabase, parsed.data)
 
@@ -68,7 +71,9 @@ export async function updateJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  await requireCurrentUser()
+  const current = await requireCurrentUser()
+  const companyGate = ensureCompanyCanManageJobs(current, te)
+  if (companyGate) return companyGate
   const supabase = await createClient()
   const result = await updateJob(supabase, parsed.data)
 
@@ -151,4 +156,20 @@ export async function logJobViewAction(jobId: number): Promise<void> {
   if (!Number.isInteger(jobId) || jobId <= 0) return
   const supabase = await createClient()
   await logJobView(supabase, jobId)
+}
+
+function ensureCompanyCanManageJobs(
+  current: CurrentUser,
+  te: JobTranslator,
+): { ok: false; error: string } | null {
+  if (current.appUser.role !== "company") {
+    return { ok: false, error: te("notCompany") }
+  }
+  if (
+    current.appUser.status !== "active" ||
+    current.profile.companyVerificationStatus !== "verified"
+  ) {
+    return { ok: false, error: te("companyPendingApproval") }
+  }
+  return null
 }
