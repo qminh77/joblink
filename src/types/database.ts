@@ -800,6 +800,15 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      create_post: {
+        Args: {
+          p_content: string
+          p_post_type?: PostType
+          p_media?: Json | null
+          p_visibility?: PostVisibility
+        }
+        Returns: Json
+      }
       get_home_feed: {
         Args: {
           p_posts_cursor?: string | null

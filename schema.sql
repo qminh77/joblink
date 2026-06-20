@@ -3,7 +3,7 @@
 -- PostgreSQL / Supabase
 -- Charset: UTF8
 -- 
--- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260620_054).
+-- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260620_056).
 -- ⮕ ĐÃ LOẠI các bảng legacy không dùng.
 -- ⮕ ĐÃ SỬA: create_job (FOREACH thiếu END LOOP), is_connected_with (thêm mới),
 --   interview_schedules (giữ lại vì schedule_interview dùng), storage uploads/cvs.
@@ -3566,6 +3566,64 @@ GRANT EXECUTE ON FUNCTION public.increment_poll_vote_count(BIGINT) TO authentica
 GRANT EXECUTE ON FUNCTION public.count_applications_per_job(BIGINT[]) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_distinct_audit_actions() TO anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.create_post(
+    p_content TEXT,
+    p_post_type TEXT DEFAULT 'text',
+    p_media JSONB DEFAULT NULL,
+    p_visibility TEXT DEFAULT 'public'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_me BIGINT;
+    v_content TEXT := btrim(COALESCE(p_content, ''));
+    v_row public.posts%ROWTYPE;
+BEGIN
+    v_me := public.auth_user_id();
+    IF v_me IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized');
+    END IF;
+
+    IF NOT public.is_active_user() THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'accountInactive');
+    END IF;
+
+    IF p_post_type NOT IN ('text','image','video','article','poll') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidPostType');
+    END IF;
+
+    IF p_visibility NOT IN ('public','connections','private') THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidVisibility');
+    END IF;
+
+    IF v_content = '' AND p_media IS NULL THEN
+        RETURN jsonb_build_object('ok', FALSE, 'error', 'emptyContent');
+    END IF;
+
+    INSERT INTO public.posts(author_id, content, post_type, media, visibility)
+    VALUES (v_me, v_content, p_post_type, p_media, p_visibility)
+    RETURNING * INTO v_row;
+
+    RETURN jsonb_build_object(
+        'ok', TRUE,
+        'post', jsonb_build_object(
+            'id', v_row.id,
+            'author_id', v_row.author_id,
+            'content', v_row.content,
+            'post_type', v_row.post_type,
+            'media', v_row.media,
+            'visibility', v_row.visibility,
+            'created_at', v_row.created_at
+        )
+    );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_post(TEXT, TEXT, JSONB, TEXT) TO authenticated;
+
 -- =============================================================================
 -- 23. RPCs — network_suggestions + expire_due_jobs
 -- =============================================================================
@@ -3765,7 +3823,7 @@ GRANT EXECUTE ON FUNCTION public.get_home_feed(TIMESTAMPTZ, INT, INT) TO authent
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_network_overview(p_suggestion_limit INT DEFAULT 24)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
     v_me BIGINT;
     v_suggestions JSONB; v_connections JSONB; v_incoming JSONB; v_outgoing JSONB;
@@ -4900,7 +4958,7 @@ GRANT EXECUTE ON FUNCTION public.get_user_posts(BIGINT, TIMESTAMPTZ, INT) TO ano
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_messaging_overview(p_limit INT DEFAULT 50)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public AS $$
 DECLARE v_me BIGINT; v_items JSONB;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -5008,7 +5066,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_messaging_overview(INT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_unread_conversations_count()
-RETURNS INT LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public AS $$
 DECLARE v_me BIGINT; v_count INT;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -5029,7 +5087,7 @@ CREATE OR REPLACE FUNCTION public.get_conversation_messages(
     p_conversation_id BIGINT, p_before_created_at TIMESTAMPTZ DEFAULT NULL,
     p_before_id BIGINT DEFAULT NULL, p_limit INT DEFAULT 40
 )
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER STABLE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public AS $$
 DECLARE
     v_me BIGINT; v_is_participant BOOLEAN; v_other_user_id BIGINT;
     v_items JSONB; v_has_more BOOLEAN; v_limit INT;
@@ -5066,7 +5124,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_conversation_messages(BIGINT, TIMESTAMPTZ, BIGINT, INT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(p_other_user_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER VOLATILE SET search_path = public AS $$
 DECLARE v_me BIGINT; v_conv_id BIGINT; v_ok BOOLEAN; v_blocked BOOLEAN;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
@@ -5100,7 +5158,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.find_or_create_direct_conversation(BIGINT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.send_message(p_conversation_id BIGINT, p_content TEXT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER VOLATILE SET search_path = public AS $$
 DECLARE
     v_me BIGINT; v_other BIGINT; v_ok BOOLEAN; v_blocked BOOLEAN;
     v_recent INT; v_new_id BIGINT; v_created_at TIMESTAMPTZ; v_trim TEXT;
@@ -5138,12 +5196,15 @@ $$;
 GRANT EXECUTE ON FUNCTION public.send_message(BIGINT, TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.mark_conversation_read(p_conversation_id BIGINT)
-RETURNS JSONB LANGUAGE plpgsql SECURITY INVOKER VOLATILE AS $$
-DECLARE v_me BIGINT;
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER VOLATILE SET search_path = public AS $$
+DECLARE v_me BIGINT; v_is_participant BOOLEAN;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
+    SELECT EXISTS(SELECT 1 FROM public.conversation_participants cp
+     WHERE cp.conversation_id = p_conversation_id AND cp.user_id = v_me) INTO v_is_participant;
+    IF NOT v_is_participant THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'notParticipant'); END IF;
     UPDATE public.conversation_participants SET last_read_at = NOW()
      WHERE conversation_id = p_conversation_id AND user_id = v_me;
     UPDATE public.messages SET read_at = NOW()

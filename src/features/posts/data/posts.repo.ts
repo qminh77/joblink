@@ -28,7 +28,15 @@ export type InsertedPostRow = {
   created_at: string
 }
 
-export function insertPost(
+type CreatePostRpcPayload =
+  | { ok: true; post: InsertedPostRow }
+  | { ok: false; error: string }
+
+function rpcError(message: string) {
+  return { message }
+}
+
+export async function insertPost(
   supabase: Supabase,
   values: {
     authorId: number
@@ -38,17 +46,30 @@ export function insertPost(
     visibility: PostVisibility
   },
 ) {
-  return supabase
-    .from("posts")
-    .insert({
-      author_id: values.authorId,
-      content: values.content,
-      post_type: values.postType,
-      media: values.media,
-      visibility: values.visibility,
-    })
-    .select("id, author_id, content, post_type, media, visibility, created_at")
-    .single<InsertedPostRow>()
+  const { data, error } = await supabase.rpc("create_post", {
+    p_content: values.content,
+    p_post_type: values.postType,
+    p_media: values.media,
+    p_visibility: values.visibility,
+  })
+
+  if (error) return { data: null, error }
+
+  const payload = data as CreatePostRpcPayload | null
+  if (!payload) return { data: null, error: rpcError("unknown") }
+  if (!payload.ok) return { data: null, error: rpcError(payload.error) }
+
+  if (payload.post.author_id !== values.authorId) {
+    return {
+      data: null,
+      error: rpcError("authorMismatch"),
+    }
+  }
+
+  return {
+    data: payload.post,
+    error: null,
+  }
 }
 
 export type UpdatedPostRow = {
