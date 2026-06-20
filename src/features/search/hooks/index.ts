@@ -2,12 +2,20 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { globalSearchAction } from "../api/actions"
-import type { GlobalSearchResults } from "../types"
+import { globalSearchAction, searchAllTabAction, searchPageAction } from "../api/actions"
+import type {
+  GlobalSearchResults,
+  SearchCompaniesResult,
+  SearchJobsResult,
+  SearchPagePerson,
+  SearchPagePost,
+  SearchPeopleResult,
+  SearchPostsResult,
+  SearchTab,
+} from "../types"
 
 const EMPTY: GlobalSearchResults = { people: [], companies: [], jobs: [] }
 
-// query nên là giá trị ĐÃ debounce ở component. Chỉ chạy khi >= 2 ký tự.
 export function useGlobalSearch(query: string) {
   const q = query.trim()
   return useQuery<GlobalSearchResults>({
@@ -15,6 +23,72 @@ export function useGlobalSearch(query: string) {
     queryFn: () => globalSearchAction(q),
     enabled: q.length >= 2,
     initialData: q.length >= 2 ? undefined : EMPTY,
+    staleTime: 30_000,
+  })
+}
+
+export type SearchAllData = {
+  people: SearchPeopleResult
+  companies: SearchCompaniesResult
+  jobs: SearchJobsResult
+  posts: SearchPostsResult
+}
+
+export function useSearchAllTab(query: string) {
+  const q = query.trim()
+  return useQuery<SearchAllData>({
+    queryKey: ["search-all", q],
+    queryFn: () => searchAllTabAction(q),
+    enabled: q.length >= 2,
+    staleTime: 30_000,
+  })
+}
+
+export function useSearchTabResults(
+  query: string,
+  tab: SearchTab,
+  offset: number,
+  filters?: {
+    peopleLocation?: string | null
+    companyIndustry?: string | null
+    jobProvinceId?: number | null
+    jobTypeIds?: number[] | null
+    workModeIds?: number[] | null
+    salaryMin?: number | null
+  },
+) {
+  const q = query.trim()
+  return useQuery<
+    | SearchPeopleResult
+    | SearchCompaniesResult
+    | SearchJobsResult
+    | SearchPostsResult
+  >({
+    queryKey: ["search-tab", q, tab, offset, filters],
+    queryFn: () => searchPageAction(q, tab, offset, filters),
+    enabled: q.length >= 2 && tab !== "all",
+    staleTime: 30_000,
+  })
+}
+
+export function useSearchMore(
+  query: string,
+  tab: SearchTab,
+  offset: number,
+  filters?: {
+    peopleLocation?: string | null
+    companyIndustry?: string | null
+    jobProvinceId?: number | null
+    jobTypeIds?: number[] | null
+    workModeIds?: number[] | null
+    salaryMin?: number | null
+  },
+) {
+  const q = query.trim()
+  return useQuery({
+    queryKey: ["search-more", q, tab, offset, filters],
+    queryFn: () => searchPageAction(q, tab, offset, filters),
+    enabled: q.length >= 2 && tab !== "all" && offset > 0,
     staleTime: 30_000,
   })
 }

@@ -18,6 +18,7 @@ import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 import { Skeleton } from "@/components/ui/skeleton"
+import { MessageContent } from "@/features/posts/components/post-link-preview"
 
 import {
   useActiveConversation,
@@ -222,7 +223,7 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
                             : "bg-muted border border-border/40 rounded-bl-md"
                         }`}
                       >
-                        {msg.content}
+                        <MessageContent text={msg.content ?? ""} isMe={isMe} />
                       </div>
                       {isMe && (
                         <div className="flex items-center justify-end gap-1 mt-0.5 px-1">

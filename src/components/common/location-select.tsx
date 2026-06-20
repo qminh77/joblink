@@ -1,16 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SearchSelect, type SearchOption } from "@/components/ui/search-select"
 import {
   fetchWardsAction,
   type WardOption,
@@ -48,7 +42,6 @@ export function LocationSelect({
   const t = useTranslations("common.location")
   const [wards, setWards] = useState<WardOption[]>([])
   const [loadingWards, setLoadingWards] = useState(false)
-  // Tỉnh ứng với danh sách ward hiện có — tránh nạp lại thừa.
   const loadedProvinceRef = useRef<number | null>(null)
 
   const { provinceId, wardId } = value
@@ -76,19 +69,27 @@ export function LocationSelect({
     }
   }, [provinceId])
 
-  function handleProvince(next: string) {
-    const id = next === NONE ? null : Number(next)
-    // Đổi tỉnh → ward cũ không còn hợp lệ, reset về null.
-    onChange({ provinceId: id, wardId: null })
-  }
+  const handleProvince = useCallback(
+    (next: string) => {
+      const id = next === NONE ? null : Number(next)
+      onChange({ provinceId: id, wardId: null })
+    },
+    [onChange],
+  )
 
-  function handleWard(next: string) {
-    onChange({ provinceId, wardId: next === NONE ? null : Number(next) })
-  }
+  const handleWard = useCallback(
+    (next: string) => {
+      onChange({ provinceId, wardId: next === NONE ? null : Number(next) })
+    },
+    [onChange, provinceId],
+  )
 
-  // Danh sách ward để render: ưu tiên list đã nạp; nếu chưa nạp mà có wardId +
-  // tên đã lưu thì dựng tạm một option để value hiển thị đúng.
-  const wardOptions: WardOption[] =
+  const provinceOptions = useMemo<SearchOption[]>(
+    () => provinces.map((p) => ({ value: String(p.id), label: p.name })),
+    [provinces],
+  )
+
+  const wardRaw: WardOption[] =
     provinceId == null
       ? []
       : wards.length > 0
@@ -97,52 +98,39 @@ export function LocationSelect({
           ? [{ id: wardId, name: initialWardName }]
           : []
 
+  const wardOptions = useMemo<SearchOption[]>(
+    () => wardRaw.map((w) => ({ value: String(w.id), label: w.name })),
+    [wardRaw],
+  )
+
   const wardDisabled = disabled || provinceId == null || loadingWards
 
   return (
     <div className={className ?? "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
       <div className="space-y-2">
         <Label>{t("province")}</Label>
-        <Select
+        <SearchSelect
+          options={provinceOptions}
           value={provinceId != null ? String(provinceId) : NONE}
           onValueChange={handleProvince}
+          placeholder={t("selectProvince")}
+          searchPlaceholder={t("searchProvince")}
           disabled={disabled}
-        >
-          <SelectTrigger className="h-10 rounded-xl w-full">
-            <SelectValue placeholder={t("selectProvince")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>{t("none")}</SelectItem>
-            {provinces.map((province) => (
-              <SelectItem key={province.id} value={String(province.id)}>
-                {province.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       <div className="space-y-2">
         <Label>{t("ward")}</Label>
-        <Select
+        <SearchSelect
+          options={wardOptions}
           value={wardId != null ? String(wardId) : NONE}
           onValueChange={handleWard}
+          placeholder={
+            loadingWards ? t("loading") : t("selectWard")
+          }
+          searchPlaceholder={t("searchWard")}
           disabled={wardDisabled}
-        >
-          <SelectTrigger className="h-10 rounded-xl w-full">
-            <SelectValue
-              placeholder={loadingWards ? t("loading") : t("selectWard")}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>{t("none")}</SelectItem>
-            {wardOptions.map((ward) => (
-              <SelectItem key={ward.id} value={String(ward.id)}>
-                {ward.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
       </div>
     </div>
   )

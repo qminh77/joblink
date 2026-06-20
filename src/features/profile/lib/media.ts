@@ -5,9 +5,13 @@ import { createClient } from "@/lib/supabase/client"
 // Hai prefix riêng để dễ phân quyền & dọn rác sau này:
 //   - member-avatar: ảnh đại diện (crop 1:1)
 //   - member-cover:  ảnh bìa     (crop 3:1)
+//   - company-logo:  logo công ty (crop 1:1)
+//   - company-cover: ảnh bìa công ty (crop 3:1)
 const BUCKET = "uploads"
 const AVATAR_PREFIX = "member-avatar"
 const COVER_PREFIX = "member-cover"
+const COMPANY_AVATAR_PREFIX = "company-logo"
+const COMPANY_COVER_PREFIX = "company-cover"
 
 export const PROFILE_IMAGE_MAX_BYTES = 10 * 1024 * 1024
 export const PROFILE_IMAGE_ALLOWED_TYPES = [
@@ -72,6 +76,10 @@ function mapSupabaseError(message: string): ProfileImageErrorCode {
 
 function prefixFor(kind: ProfileImageKind) {
   return kind === "avatar" ? AVATAR_PREFIX : COVER_PREFIX
+}
+
+function companyPrefixFor(kind: ProfileImageKind) {
+  return kind === "avatar" ? COMPANY_AVATAR_PREFIX : COMPANY_COVER_PREFIX
 }
 
 function outputDimensions(kind: ProfileImageKind) {
@@ -171,6 +179,45 @@ export async function uploadMemberImage(args: {
   const year = now.getUTCFullYear().toString()
   const month = (now.getUTCMonth() + 1).toString().padStart(2, "0")
   const path = `${prefixFor(args.kind)}/${year}/${month}/${args.userId}/${crypto.randomUUID()}.jpg`
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+    contentType: "image/jpeg",
+    cacheControl: CACHE_CONTROL_IMMUTABLE,
+    upsert: false,
+  })
+  if (error) {
+    throw new ProfileImageError(mapSupabaseError(error.message), error.message)
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+
+/** Upload ảnh đại diện / ảnh bìa cho company — tương tự uploadMemberImage. */
+export async function uploadCompanyImage(args: {
+  file: File
+  crop: CropRect
+  kind: ProfileImageKind
+  userId: number
+}): Promise<string> {
+  const localCode = validateProfileImage(args.file)
+  if (localCode) throw new ProfileImageError(localCode)
+
+  const bitmap = await readImageBitmap(args.file)
+  const { width: outW, height: outH } = outputDimensions(args.kind)
+
+  let blob: Blob
+  try {
+    blob = await cropToJpeg(bitmap, args.crop, outW, outH)
+  } finally {
+    bitmap.close()
+  }
+
+  const supabase = createClient()
+  const now = new Date()
+  const year = now.getUTCFullYear().toString()
+  const month = (now.getUTCMonth() + 1).toString().padStart(2, "0")
+  const path = `${companyPrefixFor(args.kind)}/${year}/${month}/${args.userId}/${crypto.randomUUID()}.jpg`
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
     contentType: "image/jpeg",

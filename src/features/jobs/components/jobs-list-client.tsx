@@ -8,6 +8,7 @@ import { Loader2, Search, SlidersHorizontal } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { SearchSelect } from "@/components/ui/search-select"
 import { fadeUp, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
@@ -154,21 +155,22 @@ export function JobsListClient({
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 {t("location")}
               </h3>
-              <select
-                value={provinceId ?? ""}
-                onChange={(e) => {
-                  setProvinceId(e.target.value ? Number(e.target.value) : null)
+              <SearchSelect
+                options={[
+                  { value: "", label: t("allLocations") },
+                  ...provinces.map((p) => ({
+                    value: String(p.id),
+                    label: p.name,
+                  })),
+                ]}
+                value={provinceId != null ? String(provinceId) : ""}
+                onValueChange={(v) => {
+                  setProvinceId(v ? Number(v) : null)
                   setPage(0)
                 }}
-                className="w-full h-9 px-3 bg-muted border-0 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
-              >
-                <option value="">{t("allLocations")}</option>
-                {provinces.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                placeholder={t("allLocations")}
+                searchPlaceholder={t("searchLocation")}
+              />
             </div>
 
             <div className="mb-5">

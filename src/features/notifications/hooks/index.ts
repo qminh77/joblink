@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -11,6 +11,7 @@ import {
   getNotificationPreferencesAction,
   getNotificationsAction,
   getUnreadCountAction,
+  loadMoreNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
   updateNotificationPreferenceAction,
@@ -23,10 +24,11 @@ export const NOTIFICATIONS_KEY = ["notifications", "list"] as const
 export const UNREAD_KEY = ["notifications", "unread"] as const
 export const NOTIFICATION_PREFS_KEY = ["notifications", "preferences"] as const
 
-export function useNotifications() {
+export function useNotifications(initialData?: NotificationItem[]) {
   return useQuery<NotificationItem[]>({
     queryKey: NOTIFICATIONS_KEY,
     queryFn: getNotificationsAction,
+    initialData: initialData,
     staleTime: 30_000,
   })
 }
@@ -36,6 +38,20 @@ export function useUnreadNotificationCount() {
     queryKey: UNREAD_KEY,
     queryFn: getUnreadCountAction,
     staleTime: 30_000,
+  })
+}
+
+export function useLoadMoreNotifications() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: loadMoreNotificationsAction,
+    onSuccess: (result) => {
+      queryClient.setQueryData<NotificationItem[]>(
+        NOTIFICATIONS_KEY,
+        (prev) => [...(prev ?? []), ...result.items],
+      )
+    },
+    onError: (error: Error) => toast.error(error.message),
   })
 }
 

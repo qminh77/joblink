@@ -238,6 +238,97 @@ export async function loadPostComments(
   })
 }
 
+export async function loadSinglePost(
+  postId: number,
+): Promise<FeedPost | null> {
+  const current = await getCurrentUser()
+  const supabase = await createClient()
+  const admin = createAdminClient()
+
+  const { data: post } = await admin
+    .from("posts")
+    .select("id, author_id, content, post_type, media, visibility, created_at")
+    .eq("id", postId)
+    .is("deleted_at", null)
+    .eq("status", "active")
+    .maybeSingle<{
+      id: number
+      author_id: number
+      content: string
+      post_type: string
+      media: unknown
+      visibility: string
+      created_at: string
+    }>()
+
+  if (!post) return null
+
+  const [usersRes, memberRes, companyRes, countRes, reactedRes] =
+    await Promise.all([
+      admin
+        .from("users")
+        .select("id, role")
+        .eq("id", post.author_id)
+        .single<{ id: number; role: UserRole }>(),
+      supabase
+        .from("member_profiles")
+        .select("user_id, full_name, avatar_url, headline")
+        .eq("user_id", post.author_id)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      supabase
+        .from("company_profiles")
+        .select("user_id, name, logo_url, industry")
+        .eq("user_id", post.author_id)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      admin
+        .from("posts")
+        .select("reaction_count, comment_count, share_count")
+        .eq("id", postId)
+        .single<{ reaction_count: number; comment_count: number; share_count: number }>(),
+      supabase
+        .from("post_reactions")
+        .select("id", { count: "exact", head: true })
+        .eq("post_id", postId)
+        .eq("user_id", current?.appUser.id ?? 0),
+    ])
+
+  const role = usersRes.data?.role ?? "member"
+  const member = memberRes.data
+  const company = companyRes.data
+  const displayName = member?.full_name ?? company?.name ?? "JobLink"
+  const avatarUrl = member?.avatar_url ?? company?.logo_url ?? null
+  const headline = member?.headline ?? company?.industry ?? null
+
+  const counts = countRes.data ?? {
+    reaction_count: 0,
+    comment_count: 0,
+    share_count: 0,
+  }
+
+  return {
+    id: post.id,
+    authorId: post.author_id,
+    content: post.content,
+    postType: post.post_type as FeedPost["postType"],
+    media: post.media as FeedPost["media"],
+    visibility: post.visibility as FeedPost["visibility"],
+    createdAt: post.created_at,
+    author: {
+      userId: post.author_id,
+      role,
+      displayName,
+      avatarUrl,
+      headline,
+    },
+    reactionCount: counts.reaction_count,
+    commentCount: counts.comment_count,
+    shareCount: counts.share_count,
+    viewerReacted: (reactedRes.count ?? 0) > 0,
+  }
+}
+
 export async function loadHomeStats(): Promise<HomeFeedStats> {
   const current = await getCurrentUser()
   if (!current) return EMPTY_STATS

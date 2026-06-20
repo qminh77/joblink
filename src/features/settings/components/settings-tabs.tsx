@@ -1,13 +1,25 @@
 "use client"
 
+import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Ban, Bell, Building2, KeyRound, Shield, ShieldAlert, User } from "lucide-react"
+import {
+  Ban,
+  Bell,
+  Building2,
+  KeyRound,
+  Menu,
+  Shield,
+  ShieldAlert,
+  User,
+} from "lucide-react"
 
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import type { SessionUserSummary } from "@/features/auth/types"
-import { CompanyVerificationCard } from "@/features/companies/components/company-verification-card"
-import { CompanyInfoForm } from "@/features/profile/components/edit/company-info-form"
 import type {
   CompanyProfileDetail,
   MemberProfileDetail,
@@ -15,6 +27,7 @@ import type {
 import type { ProvinceRow } from "@/types/database"
 
 import { AccountInfoCard } from "./account-info-card"
+import { CompanyInfoCard } from "./company-info-card"
 import { AppealsCard } from "./appeals-card"
 import { BlockedAccountsCard } from "./blocked-accounts-card"
 import { ChangePasswordCard } from "./change-password-card"
@@ -28,6 +41,12 @@ type Profile =
   | { kind: "member"; data: MemberProfileDetail }
   | { kind: "company"; data: CompanyProfileDetail }
   | null
+
+interface NavItem {
+  value: string
+  icon: React.ElementType
+  label: string
+}
 
 export function SettingsTabs({
   user,
@@ -45,136 +64,146 @@ export function SettingsTabs({
   passkeyEnabled?: boolean
 }) {
   const t = useTranslations("settings")
-
   const isCompany = profile?.kind === "company"
+  const [activeTab, setActiveTab] = useState(
+    isCompany ? "company" : "account",
+  )
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const navItems: NavItem[] = []
+
+  if (isCompany) {
+    navItems.push({
+      value: "company",
+      icon: Building2,
+      label: t("tabs.company"),
+    })
+  }
+  navItems.push(
+    { value: "account", icon: User, label: t("tabs.account") },
+    { value: "security", icon: KeyRound, label: "Bảo mật & Đăng nhập" },
+    { value: "privacy", icon: Shield, label: t("tabs.privacy") },
+    { value: "blocked", icon: Ban, label: t("tabs.blocked") },
+    { value: "appeals", icon: ShieldAlert, label: t("tabs.appeals") },
+    { value: "notifications", icon: Bell, label: t("tabs.notifications") },
+  )
+
+  function handleNavigate(value: string) {
+    setActiveTab(value)
+    setMobileOpen(false)
+  }
 
   return (
-    <Tabs defaultValue={isCompany ? "company" : "account"} className="flex flex-col md:!flex-row gap-6 lg:gap-10 mt-6">
-      <TabsList className="flex flex-row md:!flex-col justify-start !h-auto bg-transparent p-0 w-full md:w-56 shrink-0 overflow-x-auto overflow-y-hidden border-b md:border-b-0 md:border-r border-border/30 rounded-none hide-scrollbar gap-1">
-        {isCompany ? (
-          <TabsTrigger
-            value="company"
-            className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 mt-6">
+      <aside className="hidden lg:flex flex-col w-56 shrink-0">
+        <nav className="sticky top-24 space-y-0.5">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeTab === item.value
+            return (
+              <button
+                key={item.value}
+                onClick={() => handleNavigate(item.value)}
+                className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors outline-none ${
+                  isActive
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {item.label}
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
+
+      <div className="flex lg:hidden items-center gap-2 pb-2 border-b border-border/30">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <button className="p-2 -ml-2 text-muted-foreground hover:text-foreground outline-none">
+              <Menu className="w-5 h-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="w-[260px] sm:w-[300px] p-0 flex flex-col gap-0 border-r-0"
           >
-            <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-              <Building2 className="w-4 h-4 shrink-0" />
+            <div className="p-4 border-b border-border/30">
+              <SheetTitle className="text-base font-semibold">
+                {t("title")}
+              </SheetTitle>
             </div>
-            {t("tabs.company")}
-          </TabsTrigger>
-        ) : null}
-        <TabsTrigger
-          value="account"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <User className="w-4 h-4 shrink-0" />
-          </div>
-          {t("tabs.account")}
-        </TabsTrigger>
-        <TabsTrigger
-          value="security"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <KeyRound className="w-4 h-4 shrink-0" />
-          </div>
-          Bảo mật & Đăng nhập
-        </TabsTrigger>
-        <TabsTrigger
-          value="privacy"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <Shield className="w-4 h-4 shrink-0" />
-          </div>
-          {t("tabs.privacy")}
-        </TabsTrigger>
-        <TabsTrigger
-          value="blocked"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <Ban className="w-4 h-4 shrink-0" />
-          </div>
-          {t("tabs.blocked")}
-        </TabsTrigger>
-        <TabsTrigger
-          value="appeals"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-          </div>
-          {t("tabs.appeals")}
-        </TabsTrigger>
-        <TabsTrigger
-          value="notifications"
-          className="group w-full justify-start rounded-xl text-sm px-2.5 py-2 gap-3 data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all border border-transparent whitespace-nowrap"
-        >
-          <div className="w-8 h-8 rounded-full border border-border/40 bg-muted/40 text-muted-foreground flex items-center justify-center shrink-0 transition-colors group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary/20 group-hover:bg-muted/80">
-            <Bell className="w-4 h-4 shrink-0" />
-          </div>
-          {t("tabs.notifications")}
-        </TabsTrigger>
-      </TabsList>
+            <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeTab === item.value
+                return (
+                  <button
+                    key={item.value}
+                    onClick={() => handleNavigate(item.value)}
+                    className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors outline-none ${
+                      isActive
+                        ? "text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    {item.label}
+                  </button>
+                )
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
+        <span className="text-sm font-medium text-foreground">
+          {navItems.find((i) => i.value === activeTab)?.label}
+        </span>
+      </div>
 
       <div className="flex-1 min-w-0 pb-10">
-        {isCompany && profile?.kind === "company" ? (
-          <TabsContent value="company" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <Card className="rounded-2xl bg-card border-border/40 p-6">
-            <h2 className="font-headline font-bold text-base text-foreground mb-1">
-              {t("company.title")}
-            </h2>
-            <p className="text-xs text-muted-foreground mb-5">
-              {t("company.subtitle")}
-            </p>
-            <CompanyVerificationCard
-              status={profile.data.verification_status}
-              note={profile.data.verification_note}
-            />
-            <CompanyInfoForm company={profile.data} provinces={provinces} />
-          </Card>
-        </TabsContent>
-      ) : null}
+        {isCompany && profile?.kind === "company" && activeTab === "company" ? (
+          <CompanyInfoCard
+            user={user}
+            company={profile.data}
+            provinces={provinces}
+          />
+        ) : null}
 
-      <TabsContent value="account" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-        <AccountInfoCard
-          user={user}
-          phone={phone}
-          locale={locale}
-        />
-      </TabsContent>
+        {activeTab === "account" ? (
+          <AccountInfoCard
+            user={user}
+            phone={phone}
+            locale={locale}
+          />
+        ) : null}
 
-        <TabsContent value="security" className="m-0 space-y-6 focus-visible:outline-none focus-visible:ring-0">
-          <ChangePasswordCard />
-          <TwoFactorCard />
-          {passkeyEnabled ? <PasskeysCard /> : null}
-        </TabsContent>
+        {activeTab === "security" ? (
+          <div className="space-y-6">
+            <ChangePasswordCard />
+            <TwoFactorCard />
+            {passkeyEnabled ? <PasskeysCard /> : null}
+          </div>
+        ) : null}
 
-        <TabsContent value="privacy" className="m-0 space-y-6 focus-visible:outline-none focus-visible:ring-0">
-          {profile?.kind === "member" ? (
-            <PrivacyCard
-              initialVisibility={profile.data.profile_visibility}
-              initialOpenToWork={profile.data.open_to_work}
-            />
-          ) : null}
-          {profile?.kind === "company" ? (
-            <OpenToHireCard initialValue={profile.data.open_to_hire} />
-          ) : null}
-        </TabsContent>
+        {activeTab === "privacy" ? (
+          <div className="space-y-6">
+            {profile?.kind === "member" ? (
+              <PrivacyCard
+                initialVisibility={profile.data.profile_visibility}
+                initialOpenToWork={profile.data.open_to_work}
+              />
+            ) : null}
+            {profile?.kind === "company" ? (
+              <OpenToHireCard initialValue={profile.data.open_to_hire} />
+            ) : null}
+          </div>
+        ) : null}
 
-        <TabsContent value="blocked" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <BlockedAccountsCard />
-        </TabsContent>
-
-        <TabsContent value="appeals" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <AppealsCard />
-        </TabsContent>
-
-        <TabsContent value="notifications" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <NotificationPreferencesCard />
-        </TabsContent>
+        {activeTab === "blocked" ? <BlockedAccountsCard /> : null}
+        {activeTab === "appeals" ? <AppealsCard /> : null}
+        {activeTab === "notifications" ? <NotificationPreferencesCard /> : null}
       </div>
-    </Tabs>
+    </div>
   )
 }

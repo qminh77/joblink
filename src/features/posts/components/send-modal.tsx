@@ -22,6 +22,7 @@ import {
 import { translateMessagingError } from "@/features/messaging/lib/translate-error"
 import { useNetworkOverview } from "@/features/network/hooks"
 
+import { PostLinkPreview } from "./post-link-preview"
 import type { FeedPost } from "../types"
 
 type Props = {
@@ -140,7 +141,7 @@ function SendModalInner({
           </button>
         </div>
 
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-3 space-y-2">
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -149,6 +150,9 @@ function SendModalInner({
             maxLength={2000}
             className="w-full text-sm bg-muted/40 border border-border/40 rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
+          <div className="pointer-events-none opacity-80">
+            <PostLinkPreview postId={post.id} />
+          </div>
         </div>
 
         <div className="p-4 pt-3 border-b border-border/40">

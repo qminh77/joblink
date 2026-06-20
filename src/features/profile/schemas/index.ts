@@ -98,6 +98,7 @@ export function createCompanyProfileSchema(t: Translator) {
       .max(255, t("companyNameMax")),
     about: optionalText(4000),
     logoUrl: optionalUrl(t),
+    coverUrl: optionalUrl(t),
     website: optionalUrl(t),
     phone: optionalText(20),
     industry: optionalText(160),

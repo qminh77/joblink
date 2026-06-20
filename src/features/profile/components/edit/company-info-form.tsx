@@ -34,6 +34,7 @@ import type { CompanyProfileDetail } from "@/features/profile/types"
 import type { ProvinceRow } from "@/types/database"
 
 import { useUpdateCompanyProfile } from "@/features/profile/hooks"
+import { CompanyAvatarCoverEditor } from "./company-avatar-cover-editor"
 
 export function CompanyInfoForm({
   company,
@@ -54,6 +55,7 @@ export function CompanyInfoForm({
       name: company.name,
       about: company.about ?? "",
       logoUrl: company.logo_url ?? "",
+      coverUrl: company.cover_url ?? "",
       website: company.website ?? "",
       phone: company.phone ?? "",
       industry: company.industry ?? "",
@@ -80,6 +82,13 @@ export function CompanyInfoForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <CompanyAvatarCoverEditor
+          userId={company.user_id}
+          companyName={company.name}
+          logoUrl={company.logo_url}
+          coverUrl={company.cover_url}
+        />
+
         <FormField
           control={form.control}
           name="name"
@@ -95,25 +104,6 @@ export function CompanyInfoForm({
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="logoUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("logoUrl")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    className="h-10 rounded-xl"
-                    placeholder="https://..."
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <FormField
             control={form.control}
             name="website"

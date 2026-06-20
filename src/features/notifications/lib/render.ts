@@ -154,7 +154,10 @@ export function getNotificationVisual(
     case "poll_vote":
       return {
         ...base,
-        href: "/home",
+        href:
+          payload?.type === item.type
+            ? `/posts/${payload.postId}`
+            : "/home",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

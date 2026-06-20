@@ -1,13 +1,14 @@
 "use client"
 
 import { useMemo } from "react"
+import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import { ShieldCheck } from "lucide-react"
+import { Eye, Pencil, ShieldCheck } from "lucide-react"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -20,6 +21,8 @@ import { Input } from "@/components/ui/input"
 import type { SessionUserSummary } from "@/features/auth/types"
 import { useUpdateAccount } from "@/features/settings/hooks"
 import { createAccountSchema, type AccountInput } from "@/features/settings/schemas"
+import { getInitials } from "@/lib/utils/format"
+import { profileHref } from "@/lib/utils/profile-url"
 
 import { LocaleCard } from "./locale-card"
 
@@ -45,6 +48,9 @@ export function AccountInfoCard({
   const tRoles = useTranslations("settings.roles")
   const tStatus = useTranslations("settings.statuses")
 
+  const initials = getInitials(user.displayName)
+  const selfHref = profileHref(user.id, user.role)
+
   const schema = useMemo(() => createAccountSchema(tv), [tv])
   const form = useForm<AccountInput>({
     resolver: zodResolver(schema),
@@ -55,8 +61,6 @@ export function AccountInfoCard({
   function onSubmit(values: AccountInput) {
     updateAccount.mutate(values, {
       onSuccess: (data) => {
-        // Email chỉ đổi sau khi xác nhận qua link → tạm trả field về email hiện
-        // tại để không hiển thị nhầm là đã đổi.
         if (data?.emailChangeRequested) form.setValue("email", user.email)
       },
     })
@@ -64,10 +68,69 @@ export function AccountInfoCard({
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-2xl bg-card border-border/40 p-6 space-y-5">
-        <h2 className="font-headline font-bold text-base text-foreground">
+      <div className="space-y-4">
+        <div className="relative overflow-hidden">
+          {user.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.coverUrl}
+              alt=""
+              className="h-20 sm:h-24 w-full object-cover bg-muted"
+            />
+          ) : (
+            <div className="h-20 sm:h-24 bg-gradient-to-r from-primary/15 to-primary/5" />
+          )}
+          <div className="px-0 -mt-10 sm:-mt-12">
+            <div className="flex items-end gap-3 sm:gap-4">
+              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 ring-2 ring-background">
+                {user.avatarUrl ? (
+                  <AvatarImage src={user.avatarUrl} />
+                ) : null}
+                <AvatarFallback className="text-base sm:text-lg font-semibold text-foreground bg-muted">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 pb-1">
+                <h2 className="font-headline font-bold text-base sm:text-lg text-foreground truncate">
+                  {user.displayName}
+                </h2>
+                {user.headline ? (
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                    {user.headline}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href={selfHref}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Xem trang cá nhân
+          </Link>
+          {user.role === "member" ? (
+            <Link
+              href="/profile/edit"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Chỉnh sửa hồ sơ
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <h3 className="font-headline font-bold text-base text-foreground">
           {t("title")}
-        </h2>
+        </h3>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -118,7 +181,9 @@ export function AccountInfoCard({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">{t("role")}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {t("role")}
+                </p>
                 <p className="text-foreground">{tRoles(user.role)}</p>
               </div>
               <div>
@@ -129,7 +194,8 @@ export function AccountInfoCard({
                   variant="outline"
                   className={`border-0 ${STATUS_TONES[user.status]}`}
                 >
-                  <ShieldCheck className="w-3 h-3 mr-1" /> {tStatus(user.status)}
+                  <ShieldCheck className="w-3 h-3 mr-1" />{" "}
+                  {tStatus(user.status)}
                 </Badge>
               </div>
             </div>
@@ -145,7 +211,7 @@ export function AccountInfoCard({
             </div>
           </form>
         </Form>
-      </Card>
+      </div>
 
       <LocaleCard initialLocale={locale} />
     </div>

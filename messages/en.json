@@ -11,6 +11,8 @@
       "ward": "Ward",
       "selectProvince": "Select province/city",
       "selectWard": "Select ward",
+      "searchProvince": "Search province/city...",
+      "searchWard": "Search ward...",
       "none": "— —",
       "loading": "Loading..."
     },
@@ -846,6 +848,7 @@
       "clearFilters": "Clear",
       "location": "Location",
       "allLocations": "All locations",
+      "searchLocation": "Search location...",
       "jobType": "Job type",
       "workMode": "Work mode",
       "searchPlaceholder": "Search by skill, title...",
@@ -1812,10 +1815,16 @@
     "loggingOut": "Logging out..."
   },
   "search": {
+    "pageTitle": "Search",
+    "all": "All",
     "people": "People",
     "companies": "Companies",
     "jobs": "Jobs",
+    "posts": "Posts",
     "searching": "Searching...",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "noResultsTab": "No {tab} found",
+    "typeToSearch": "Type at least 2 characters to start searching",
+    "viewAllResults": "View all results"
   }
 }

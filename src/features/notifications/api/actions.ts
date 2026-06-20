@@ -24,6 +24,7 @@ import {
   type UpdateNotificationPreferenceInput,
 } from "../schemas"
 import type { NotificationItem } from "../types"
+import { loadMoreNotifications } from "./queries"
 
 function revalidateNotifications() {
   revalidatePath("/notifications")
@@ -32,6 +33,12 @@ function revalidateNotifications() {
 
 export async function getNotificationsAction(): Promise<NotificationItem[]> {
   return loadNotifications()
+}
+
+export async function loadMoreNotificationsAction(
+  cursor: string,
+): Promise<{ items: NotificationItem[]; hasMore: boolean }> {
+  return loadMoreNotifications(cursor)
 }
 
 export async function getUnreadCountAction(): Promise<number> {

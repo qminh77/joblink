@@ -11,6 +11,8 @@
       "ward": "Xã/Phường",
       "selectProvince": "Chọn Tỉnh/Thành phố",
       "selectWard": "Chọn Xã/Phường",
+      "searchProvince": "Tìm tỉnh/thành phố...",
+      "searchWard": "Tìm phường/xã...",
       "none": "— —",
       "loading": "Đang tải..."
     },
@@ -846,6 +848,7 @@
       "clearFilters": "Xoá lọc",
       "location": "Địa điểm",
       "allLocations": "Tất cả địa điểm",
+      "searchLocation": "Tìm địa điểm...",
       "jobType": "Loại công việc",
       "workMode": "Hình thức làm việc",
       "searchPlaceholder": "Tìm kiếm việc làm theo kỹ năng, chức vụ...",
@@ -1812,10 +1815,16 @@
     "loggingOut": "Đang đăng xuất..."
   },
   "search": {
+    "pageTitle": "Tìm kiếm",
+    "all": "Tất cả",
     "people": "Người dùng",
     "companies": "Công ty",
     "jobs": "Việc làm",
+    "posts": "Bài viết",
     "searching": "Đang tìm...",
-    "noResults": "Không tìm thấy kết quả"
+    "noResults": "Không tìm thấy kết quả",
+    "noResultsTab": "Không tìm thấy {tab} nào",
+    "typeToSearch": "Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm",
+    "viewAllResults": "Xem tất cả kết quả"
   }
 }

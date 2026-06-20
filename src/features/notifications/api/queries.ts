@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import type { NotificationRow } from "@/types/database"
 
 import type { NotificationItem, NotificationPayload } from "../types"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 const LIST_LIMIT = 50
 
@@ -25,7 +26,7 @@ export async function loadNotifications(): Promise<NotificationItem[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from("notifications")
-    .select("id, type, title, payload, read_at, created_at")
+    .select("id, type, payload, read_at, created_at")
     .eq("user_id", current.appUser.id)
     .order("created_at", { ascending: false })
     .limit(LIST_LIMIT)
@@ -45,4 +46,55 @@ export async function loadUnreadCount(): Promise<number> {
     .is("read_at", null)
 
   return count ?? 0
+}
+
+export async function loadNotificationsPageData(): Promise<{
+  items: NotificationItem[]
+  unreadCount: number
+  hasMore: boolean
+}> {
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("notifications")
+    .select("id, type, payload, read_at, created_at")
+    .eq("user_id", current.appUser.id)
+    .order("created_at", { ascending: false })
+    .limit(LIST_LIMIT + 1)
+
+  const items = ((data ?? []) as NotificationRow[]).map(toItem)
+  const hasMore = items.length > LIST_LIMIT
+  if (hasMore) items.pop()
+
+  return {
+    items,
+    unreadCount: items.filter((i) => !i.isRead).length,
+    hasMore,
+  }
+}
+
+export async function loadMoreNotifications(
+  cursor: string,
+): Promise<{
+  items: NotificationItem[]
+  hasMore: boolean
+}> {
+  const current = await getCurrentUser()
+  if (!current) return { items: [], hasMore: false }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("notifications")
+    .select("id, type, payload, read_at, created_at")
+    .eq("user_id", current.appUser.id)
+    .order("created_at", { ascending: false })
+    .lt("created_at", cursor)
+    .limit(LIST_LIMIT + 1)
+
+  const items = ((data ?? []) as NotificationRow[]).map(toItem)
+  const hasMore = items.length > LIST_LIMIT
+  if (hasMore) items.pop()
+
+  return { items, hasMore }
 }

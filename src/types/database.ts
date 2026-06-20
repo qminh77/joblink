@@ -491,6 +491,7 @@ export type CompanyProfileRow = {
   name: string
   slug: string
   logo_url: string | null
+  cover_url: string | null
   about: string | null
   website: string | null
   phone: string | null

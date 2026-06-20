@@ -198,6 +198,21 @@ export function insertProfileViewLog(
     .insert({ target_user_id: targetUserId, viewer_user_id: viewerUserId })
 }
 
+export function updateCompanyMedia(
+  supabase: Supabase,
+  userId: number,
+  input: { logoUrl?: string | null; coverUrl?: string | null },
+) {
+  const patch: {
+    logo_url?: string | null
+    cover_url?: string | null
+    updated_at: string
+  } = { updated_at: now() }
+  if (input.logoUrl !== undefined) patch.logo_url = emptyToNull(input.logoUrl)
+  if (input.coverUrl !== undefined) patch.cover_url = emptyToNull(input.coverUrl)
+  return supabase.from("company_profiles").update(patch).eq("user_id", userId)
+}
+
 export function updateCompanyProfile(
   supabase: Supabase,
   userId: number,
@@ -209,6 +224,7 @@ export function updateCompanyProfile(
       name: input.name,
       about: emptyToNull(input.about),
       logo_url: emptyToNull(input.logoUrl),
+      cover_url: emptyToNull(input.coverUrl),
       website: emptyToNull(input.website),
       phone: emptyToNull(input.phone),
       industry: emptyToNull(input.industry),

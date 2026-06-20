@@ -23,6 +23,7 @@ export function SharedPostQuote({
   const t = useTranslations("posts")
   const original = readSharedOriginal(media)
   const createdRel = useRelativeTime(original?.createdAt ?? null)
+  const viewLabel = t("viewOriginalPost")
   if (!original) return null
 
   if (original.deleted) {
@@ -77,12 +78,14 @@ export function SharedPostQuote({
 
       <PostMediaView media={original.media} onOpen={onOpenLightbox} />
 
-      <Link
-        href={`/posts/${original.id}`}
-        className="block px-3 sm:px-4 py-2 text-[11px] text-primary hover:underline border-t border-border/30"
-      >
-        {t("viewOriginalPost")}
-      </Link>
+      <div className="px-3 sm:px-4 py-2 flex items-center border-t border-border/30">
+        <Link
+          href={`/posts/${original.id}`}
+          className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-[12px] font-semibold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+        >
+          {viewLabel}
+        </Link>
+      </div>
     </div>
   )
 }

@@ -75,12 +75,13 @@ async function loadMemberProfile(supabase: SupabaseServer, userId: number) {
 async function loadCompanyProfile(supabase: SupabaseServer, userId: number) {
   const { data } = await supabase
     .from("company_profiles")
-    .select("name, logo_url, industry, verification_status")
+    .select("name, logo_url, cover_url, industry, verification_status")
     .eq("user_id", userId)
     .is("deleted_at", null)
     .maybeSingle<{
       name: string
       logo_url: string | null
+      cover_url: string | null
       industry: string | null
       verification_status: CompanyVerification
     }>()
@@ -88,7 +89,7 @@ async function loadCompanyProfile(supabase: SupabaseServer, userId: number) {
   return {
     displayName: data?.name ?? "Công ty",
     avatarUrl: data?.logo_url ?? null,
-    coverUrl: null,
+    coverUrl: data?.cover_url ?? null,
     headline: data?.industry ?? null,
     companyVerificationStatus: data?.verification_status ?? null,
   }

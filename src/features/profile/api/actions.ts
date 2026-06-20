@@ -30,6 +30,7 @@ import {
   getProfileStats,
   logProfileView,
   removeSkill,
+  updateCompanyMedia,
   updateCompanyProfile,
   updateMemberMedia,
   updateMemberProfile,
@@ -68,6 +69,20 @@ export async function updateMemberMediaAction(input: {
     const supabase = await createClient()
 
     await updateMemberMedia(supabase, current.appUser.id, input)
+    revalidateProfile(current.appUser.id)
+  })
+}
+
+export async function updateCompanyMediaAction(input: {
+  logoUrl?: string | null
+  coverUrl?: string | null
+}): Promise<ActionResult> {
+  return action("profile.errors", async () => {
+    const current = await requireRole("company")
+    if (input.logoUrl === undefined && input.coverUrl === undefined) return
+    const supabase = await createClient()
+
+    await updateCompanyMedia(supabase, current.appUser.id, input)
     revalidateProfile(current.appUser.id)
   })
 }

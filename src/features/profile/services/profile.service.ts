@@ -12,6 +12,7 @@ import {
   loadProfileStats,
   softDeleteEducation,
   softDeleteExperience,
+  updateCompanyMedia as updateCompanyMediaRow,
   updateCompanyProfile as updateCompanyProfileRow,
   updateEducation,
   updateExperience,
@@ -157,6 +158,14 @@ export async function logProfileView(
     await insertProfileViewLog(supabase, targetUserId, viewerId),
     "unexpected",
   )
+}
+
+export async function updateCompanyMedia(
+  supabase: Supabase,
+  userId: number,
+  input: { logoUrl?: string | null; coverUrl?: string | null },
+) {
+  assertOk(await updateCompanyMediaRow(supabase, userId, input), "unexpected")
 }
 
 export async function updateCompanyProfile(

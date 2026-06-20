@@ -8,6 +8,7 @@ export type CompanyPublicCore = {
   name: string
   slug: string
   logoUrl: string | null
+  coverUrl: string | null
   about: string | null
   website: string | null
   phone: string | null

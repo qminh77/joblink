@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { SearchSelect } from "@/components/ui/search-select"
 
 type Props = {
   // "YYYY-MM" — schema regex `^\d{4}-\d{2}(-\d{2})?$`. DB DATE thêm "-01" ở repo.
@@ -56,6 +57,14 @@ export function MonthYearPicker({
     return new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" })
       .format(new Date(y, m - 1, 1))
   }, [y, m, locale, t])
+
+  const yearOptions = useMemo(() => {
+    const years: { value: string; label: string }[] = []
+    for (let y = min; y <= max; y++) {
+      years.push({ value: String(y), label: String(y) })
+    }
+    return years
+  }, [min, max])
 
   function pick(monthIdx: number) {
     const mm = String(monthIdx + 1).padStart(2, "0")
@@ -107,47 +116,36 @@ export function MonthYearPicker({
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="start" className="w-64 p-2">
-        <div className="flex items-center justify-between px-1 pb-2">
-          <button
-            type="button"
-            onClick={() => setViewYear((v) => Math.max(min, v - 1))}
-            disabled={viewYear <= min}
-            aria-label={t("prevYear")}
-            className="w-7 h-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="text-sm font-medium tabular-nums">{viewYear}</div>
-          <button
-            type="button"
-            onClick={() => setViewYear((v) => Math.min(max, v + 1))}
-            disabled={viewYear >= max}
-            aria-label={t("nextYear")}
-            className="w-7 h-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          {monthLabels.map((label, i) => {
-            const selected = y === viewYear && m === i + 1
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => pick(i)}
-                className={cn(
-                  "h-9 rounded-md text-sm transition-colors",
-                  selected
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            )
-          })}
+      <PopoverContent align="start" className="w-72 p-3">
+        <div className="space-y-3">
+          <SearchSelect
+            options={yearOptions}
+            value={String(viewYear)}
+            onValueChange={(v) => setViewYear(Number(v))}
+            placeholder="Year"
+            searchPlaceholder="Search year..."
+            closeOnSelect={false}
+          />
+          <div className="grid grid-cols-3 gap-1">
+            {monthLabels.map((label, i) => {
+              const selected = y === viewYear && m === i + 1
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => pick(i)}
+                  className={cn(
+                    "h-9 rounded-md text-sm transition-colors",
+                    selected
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </PopoverContent>
     </Popover>

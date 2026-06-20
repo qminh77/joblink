@@ -115,8 +115,19 @@ export function useRealtimeEngagement(
                         p.reactionCount = Math.max(0, p.reactionCount - 1)
                     }
                   } else if (table === "post_comments") {
-                    if (payload.eventType === "INSERT") p.commentCount++
-                    else if (payload.eventType === "DELETE") p.commentCount = Math.max(0, p.commentCount - 1)
+                    const commentUserId =
+                      (payload.new as Record<string, unknown> | null)
+                        ?.user_id ??
+                      (payload.old as Record<string, unknown> | null)
+                        ?.user_id
+                    const isOwnComment =
+                      currentUserId != null &&
+                      typeof commentUserId === "number" &&
+                      commentUserId === currentUserId
+                    if (!isOwnComment) {
+                      if (payload.eventType === "INSERT") p.commentCount++
+                      else if (payload.eventType === "DELETE") p.commentCount = Math.max(0, p.commentCount - 1)
+                    }
                   } else if (table === "post_shares") {
                     if (payload.eventType === "INSERT") p.shareCount++
                   } else if (table === "poll_options" && payload.eventType === "UPDATE") {

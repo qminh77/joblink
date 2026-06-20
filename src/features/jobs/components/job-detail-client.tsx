@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   BadgeCheck,
   Bookmark,
@@ -16,6 +16,8 @@ import {
   Flag,
   MapPin,
   Pencil,
+  Send,
+  Share2,
   Users,
   XCircle,
 } from "lucide-react"
@@ -31,17 +33,21 @@ import {
   useWithdrawApplication,
 } from "../hooks"
 import { formatLocation, formatSalary } from "../lib/format"
+import { formatDate } from "@/lib/utils/format"
 import type { JobDetail } from "../types"
 
 import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import { ApplyDialog } from "./apply-dialog"
+import { JobShareModal } from "./job-share-modal"
+import { JobSendModal } from "./job-send-modal"
 
 type Props = {
   detail: JobDetail
 }
 
 export function JobDetailClient({ detail }: Props) {
+  const locale = useLocale()
   const t = useTranslations("jobs.public")
   const tAppStatus = useTranslations("companies.dashboard.appStatus")
   const formatRel = useRelativeTimeFormatter()
@@ -49,6 +55,8 @@ export function JobDetailClient({ detail }: Props) {
   const [saved, setSaved] = useState(detail.viewer.viewerSaved)
   const [showApply, setShowApply] = useState(false)
   const [showReport, setShowReport] = useState(false)
+  const [showShare, setShowShare] = useState(false)
+  const [showSend, setShowSend] = useState(false)
 
   const toggle = useToggleSavedJob({
     onRollback: () => setSaved((v) => !v),
@@ -142,7 +150,7 @@ export function JobDetailClient({ detail }: Props) {
                           >
                             <CalendarClock className="w-4 h-4" />
                             {t("deadlineLabel", {
-                              date: new Date(job.expiresAt).toLocaleDateString(),
+                              date: formatDate(job.expiresAt, locale),
                             })}
                           </span>
                         </>
@@ -218,6 +226,22 @@ export function JobDetailClient({ detail }: Props) {
                             className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
                           />
                           {saved ? t("saved") : t("save")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowShare(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground px-3 h-8 rounded-lg transition-colors"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Chia sẻ</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowSend(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground px-3 h-8 rounded-lg transition-colors"
+                        >
+                          <Send className="w-4 h-4" />
+                          <span className="hidden sm:inline">Gửi</span>
                         </button>
                         <button
                           type="button"
@@ -363,6 +387,22 @@ export function JobDetailClient({ detail }: Props) {
         onClose={() => setShowReport(false)}
         targetType="job"
         targetId={job.id}
+      />
+
+      <JobShareModal
+        jobId={job.id}
+        jobTitle={job.title}
+        companyName={job.companyName}
+        open={showShare}
+        onClose={() => setShowShare(false)}
+      />
+
+      <JobSendModal
+        jobId={job.id}
+        jobTitle={job.title}
+        companyName={job.companyName}
+        open={showSend}
+        onClose={() => setShowSend(false)}
       />
     </motion.div>
   )

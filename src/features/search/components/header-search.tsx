@@ -7,6 +7,7 @@ import { Briefcase, Building2, Loader2, Search } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 
@@ -71,6 +72,9 @@ export function HeaderSearch() {
         onFocus={() => setOpen(true)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setOpen(false)
+          if (e.key === "Enter" && debounced.length >= 2) {
+            go(`/search?q=${encodeURIComponent(debounced)}`)
+          }
         }}
         placeholder={tNav("searchPlaceholder")}
         type="text"
@@ -183,6 +187,16 @@ export function HeaderSearch() {
                   ))}
                 </section>
               ) : null}
+
+              <Separator className="my-1" />
+              <button
+                type="button"
+                onClick={() => go(`/search?q=${encodeURIComponent(debounced)}`)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+              >
+                <Search className="w-3.5 h-3.5" />
+                {t("viewAllResults")}
+              </button>
             </>
           )}
         </div>
