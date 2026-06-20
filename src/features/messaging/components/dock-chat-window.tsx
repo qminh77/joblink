@@ -29,9 +29,8 @@ type Props = {
 }
 
 /**
- * Cửa sổ chat nổi (compact ~320×420) cho dock messenger. Tái sử dụng cùng
- * hooks như /messages nên realtime + cache hoạt động đồng bộ — đóng cửa sổ
- * này không mất state, mở /messages thấy y nguyên.
+ * Cửa sổ chat nổi (compact ~320×420) cho dock messenger. Khi thu nhỏ, parent
+ * trả hội thoại về avatar tròn ở rail bên phải.
  */
 export function DockChatWindow({
   conversation,
@@ -131,7 +130,7 @@ export function DockChatWindow({
     <div
       className={`w-80 ${
         minimized ? "h-12" : "h-[420px]"
-      } bg-card border border-border/40 rounded-t-2xl shadow-2xl shadow-black/10 flex flex-col overflow-hidden transition-all duration-200`}
+      } bg-card border border-border/40 rounded-2xl shadow-2xl shadow-black/10 flex flex-col overflow-hidden transition-all duration-200`}
     >
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 shrink-0">
         <button

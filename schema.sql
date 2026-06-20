@@ -4047,6 +4047,7 @@ DECLARE
     v_province JSONB; v_ward JSONB; v_is_visible BOOLEAN;
     v_experiences JSONB; v_educations JSONB; v_skills JSONB;
     v_follower_cnt INT; v_is_following BOOLEAN; v_visibility TEXT;
+    v_is_connected BOOLEAN := FALSE; v_is_admin BOOLEAN := FALSE;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
@@ -4055,6 +4056,7 @@ BEGIN
      WHERE u.id = p_target_user_id AND u.deleted_at IS NULL;
     IF v_target.id IS NULL THEN RETURN NULL; END IF;
     v_is_owner := (v_me = v_target.id);
+    v_is_admin := public.is_admin();
 
     IF v_is_owner THEN v_relation := jsonb_build_object('kind', 'self');
     ELSE
@@ -4062,7 +4064,9 @@ BEGIN
          WHERE (c.requester_id = v_me AND c.receiver_id = p_target_user_id)
             OR (c.requester_id = p_target_user_id AND c.receiver_id = v_me) LIMIT 1;
         IF v_conn.id IS NULL THEN v_relation := jsonb_build_object('kind', 'none');
-        ELSIF v_conn.status = 'accepted' THEN v_relation := jsonb_build_object('kind', 'accepted', 'connectionId', v_conn.id);
+        ELSIF v_conn.status = 'accepted' THEN
+            v_is_connected := TRUE;
+            v_relation := jsonb_build_object('kind', 'accepted', 'connectionId', v_conn.id);
         ELSIF v_conn.status = 'rejected' THEN v_relation := jsonb_build_object('kind', 'rejected', 'connectionId', v_conn.id);
         ELSIF v_conn.status = 'blocked' THEN v_relation := jsonb_build_object('kind', 'blocked', 'connectionId', v_conn.id);
         ELSIF v_conn.requester_id = v_me THEN v_relation := jsonb_build_object('kind', 'pending_outgoing', 'connectionId', v_conn.id);
@@ -4110,7 +4114,8 @@ BEGIN
          AND f.followable_type = 'user' AND f.followable_id = v_target.id) INTO v_is_following;
     END IF;
     v_visibility := v_profile ->> 'profile_visibility';
-    v_is_visible := (v_visibility IS DISTINCT FROM 'private') OR v_is_owner;
+    v_is_visible := v_is_admin OR v_is_owner OR v_visibility = 'public'
+        OR (v_visibility = 'connections' AND v_is_connected);
     IF v_is_visible THEN
         SELECT COALESCE(jsonb_agg(to_jsonb(e) ORDER BY e.is_current DESC, e.start_date DESC), '[]'::jsonb)
           INTO v_experiences FROM public.member_experiences e WHERE e.user_id = v_target.id AND e.deleted_at IS NULL;
@@ -5068,7 +5073,8 @@ CREATE OR REPLACE FUNCTION public.get_user_posts(
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
 DECLARE
     v_me BIGINT; v_is_owner BOOLEAN := FALSE; v_is_connected BOOLEAN := FALSE;
-    v_can_view BOOLEAN := TRUE; v_target_role VARCHAR(20); v_visibility VARCHAR(20); v_posts JSONB;
+    v_is_admin BOOLEAN := FALSE; v_can_view BOOLEAN := TRUE;
+    v_target_role VARCHAR(20); v_visibility VARCHAR(20); v_posts JSONB;
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
@@ -5077,10 +5083,22 @@ BEGIN
     IF v_target_role IS NULL THEN
         RETURN jsonb_build_object('posts', '[]'::jsonb, 'next_cursor', NULL, 'can_view', FALSE); END IF;
     v_is_owner := (v_me IS NOT NULL AND v_me = p_target_user_id);
+    v_is_admin := public.is_admin();
     IF v_target_role = 'member' THEN
         SELECT mp.profile_visibility INTO v_visibility FROM public.member_profiles mp
          WHERE mp.user_id = p_target_user_id AND mp.deleted_at IS NULL LIMIT 1;
-        IF v_visibility = 'private' AND NOT v_is_owner THEN v_can_view := FALSE; END IF;
+        IF v_visibility = 'private' AND NOT (v_is_owner OR v_is_admin) THEN
+            v_can_view := FALSE;
+        ELSIF v_visibility = 'connections' AND NOT (v_is_owner OR v_is_admin) THEN
+            IF v_me IS NULL THEN
+                v_can_view := FALSE;
+            ELSE
+                SELECT EXISTS(SELECT 1 FROM public.connections c WHERE c.status = 'accepted'
+                    AND ((c.requester_id = v_me AND c.receiver_id = p_target_user_id)
+                      OR (c.receiver_id = v_me AND c.requester_id = p_target_user_id))) INTO v_is_connected;
+                IF NOT v_is_connected THEN v_can_view := FALSE; END IF;
+            END IF;
+        END IF;
     END IF;
     IF NOT v_can_view THEN
         RETURN jsonb_build_object('posts', '[]'::jsonb, 'next_cursor', NULL, 'can_view', FALSE); END IF;
@@ -5094,7 +5112,7 @@ BEGIN
                p.visibility, p.created_at, p.reaction_count, p.comment_count, p.share_count
           FROM public.posts p
          WHERE p.author_id = p_target_user_id AND p.deleted_at IS NULL AND p.status = 'active'
-           AND (v_is_owner OR p.visibility = 'public'
+           AND (v_is_admin OR v_is_owner OR p.visibility = 'public'
              OR (p.visibility = 'connections' AND v_is_connected))
            AND (p_posts_cursor IS NULL OR p.created_at < p_posts_cursor)
          ORDER BY p.created_at DESC LIMIT p_posts_limit

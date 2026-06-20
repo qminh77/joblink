@@ -24,6 +24,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { fadeUp, pageEntrance } from "@/lib/animations"
 import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
@@ -106,156 +107,163 @@ export function JobDetailClient({ detail }: Props) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h1 className="font-headline font-bold text-2xl text-foreground">
-                      {job.title}
-                    </h1>
-                    <Link
-                      href={`/company/${job.companyUserId}`}
-                      className="text-primary hover:opacity-80 font-medium text-sm inline-flex items-center gap-1"
-                    >
-                      {job.companyName}
-                      {job.companyVerified ? (
-                        <BadgeCheck className="w-4 h-4" />
-                      ) : null}
-                    </Link>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                      {location ? (
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4" /> {location}
-                        </span>
-                      ) : null}
-                      {salary ? (
-                        <>
-                          <span className="w-1 h-1 rounded-full bg-border" />
-                          <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                            <DollarSign className="w-4 h-4" /> {salary}
-                          </span>
-                        </>
-                      ) : null}
-                      <span className="w-1 h-1 rounded-full bg-border" />
+                <div className="min-w-0">
+                  <h1 className="font-headline font-bold text-2xl text-foreground break-words">
+                    {job.title}
+                  </h1>
+                  <Link
+                    href={`/company/${job.companyUserId}`}
+                    className="text-primary hover:opacity-80 font-medium text-sm inline-flex items-center gap-1"
+                  >
+                    {job.companyName}
+                    {job.companyVerified ? (
+                      <BadgeCheck className="w-4 h-4" />
+                    ) : null}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                    {location ? (
                       <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" /> {formatRel(job.createdAt)}
+                        <MapPin className="w-4 h-4" /> {location}
                       </span>
-                      {job.expiresAt ? (
-                        <>
-                          <span className="w-1 h-1 rounded-full bg-border" />
-                          <span
-                            className={`flex items-center gap-1.5 ${
-                              new Date(job.expiresAt) < new Date()
-                                ? "text-destructive"
-                                : ""
-                            }`}
-                          >
-                            <CalendarClock className="w-4 h-4" />
-                            {t("deadlineLabel", {
-                              date: formatDate(job.expiresAt, locale),
-                            })}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 shrink-0 items-end">
-                    {viewer.isOwner ? (
-                      <Link
-                        href="/company/dashboard"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                        {t("manageOnDashboard")}
-                      </Link>
-                    ) : viewer.viewerApplied ? (
-                      <div className="flex flex-col gap-1 items-end">
-                        <Badge
-                          variant="outline"
-                          className="border-0 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 gap-1"
-                        >
-                          <CheckCircle2 className="w-3 h-3" />
-                          {viewer.applicationStatus
-                            ? tAppStatus(viewer.applicationStatus)
-                            : t("applied")}
-                        </Badge>
-                        {viewer.applicationId &&
-                        !["hired", "rejected", "withdrawn"].includes(
-                          viewer.applicationStatus ?? "",
-                        ) ? (
-                          <button
-                            type="button"
-                            disabled={withdraw.isPending}
-                            onClick={() =>
-                              withdraw.mutate(viewer.applicationId as number)
-                            }
-                            className="text-[11px] text-destructive hover:underline disabled:opacity-50"
-                          >
-                            {withdraw.isPending
-                              ? t("withdrawing")
-                              : t("withdraw")}
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : canApply ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowApply(true)}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
-                      >
-                        {t("apply")}
-                      </button>
-                    ) : (
-                      <Badge variant="outline" className="border-0 bg-muted text-muted-foreground gap-1">
-                        <XCircle className="w-3 h-3" />
-                        {t("notAcceptingApplications")}
-                      </Badge>
-                    )}
-                    {!viewer.isOwner ? (
+                    ) : null}
+                    {salary ? (
                       <>
-                        <button
-                          type="button"
-                          onClick={handleToggleSave}
-                          disabled={toggle.isPending}
-                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 h-8 rounded-lg transition-colors ${
-                            saved
-                              ? "text-primary hover:bg-primary/10"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                        <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                          <DollarSign className="w-4 h-4" /> {salary}
+                        </span>
+                      </>
+                    ) : null}
+                    <span className="w-1 h-1 rounded-full bg-border" />
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" /> {formatRel(job.createdAt)}
+                    </span>
+                    {job.expiresAt ? (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                        <span
+                          className={`flex items-center gap-1.5 ${
+                            new Date(job.expiresAt) < new Date()
+                              ? "text-destructive"
+                              : ""
                           }`}
                         >
-                          <Bookmark
-                            className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
-                          />
-                          {saved ? t("saved") : t("save")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowShare(true)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground px-3 h-8 rounded-lg transition-colors"
-                        >
-                          <Share2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Chia sẻ</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowSend(true)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground px-3 h-8 rounded-lg transition-colors"
-                        >
-                          <Send className="w-4 h-4" />
-                          <span className="hidden sm:inline">Gửi</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowReport(true)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive px-3 h-8 rounded-lg transition-colors"
-                          title={t("report")}
-                        >
-                          <Flag className="w-4 h-4" />
-                          <span className="hidden sm:inline">{t("report")}</span>
-                        </button>
+                          <CalendarClock className="w-4 h-4" />
+                          {t("deadlineLabel", {
+                            date: formatDate(job.expiresAt, locale),
+                          })}
+                        </span>
                       </>
                     ) : null}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-5 border-t border-border/30 pt-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  {viewer.isOwner ? (
+                    <Button asChild className="w-full sm:w-auto" size="lg">
+                      <Link href="/company/dashboard">
+                        <Pencil />
+                        {t("manageOnDashboard")}
+                      </Link>
+                    </Button>
+                  ) : viewer.viewerApplied ? (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Badge
+                        variant="outline"
+                        className="h-9 justify-center border-0 bg-emerald-50 px-3 text-emerald-600 dark:bg-emerald-500/10"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                        {viewer.applicationStatus
+                          ? tAppStatus(viewer.applicationStatus)
+                          : t("applied")}
+                      </Badge>
+                      {viewer.applicationId &&
+                      !["hired", "rejected", "withdrawn"].includes(
+                        viewer.applicationStatus ?? "",
+                      ) ? (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={withdraw.isPending}
+                          onClick={() =>
+                            withdraw.mutate(viewer.applicationId as number)
+                          }
+                        >
+                          {withdraw.isPending ? t("withdrawing") : t("withdraw")}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : canApply ? (
+                    <Button
+                      type="button"
+                      onClick={() => setShowApply(true)}
+                      className="w-full sm:w-auto"
+                      size="lg"
+                    >
+                      <Send />
+                      {t("apply")}
+                    </Button>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="h-9 justify-center border-0 bg-muted px-3 text-muted-foreground"
+                    >
+                      <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                      {t("notAcceptingApplications")}
+                    </Badge>
+                  )}
+                </div>
+
+                {!viewer.isOwner ? (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[360px]">
+                    <Button
+                      type="button"
+                      variant={saved ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={handleToggleSave}
+                      disabled={toggle.isPending}
+                      aria-label={saved ? t("unsave") : t("save")}
+                    >
+                      <Bookmark className={saved ? "fill-current" : ""} />
+                      <span className="truncate">
+                        {saved ? t("saved") : t("save")}
+                      </span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowShare(true)}
+                    >
+                      <Share2 />
+                      <span className="truncate">{t("share")}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSend(true)}
+                    >
+                      <Send />
+                      <span className="truncate">{t("send")}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowReport(true)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Flag />
+                      <span className="truncate">{t("report")}</span>
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
 

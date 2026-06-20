@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   MapPin,
   Send,
+  Share2,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,6 +20,7 @@ import { btnTap, fadeUp } from "@/lib/animations"
 import { useRelativeTime } from "@/lib/utils/use-relative-time"
 import { useToggleSavedJob } from "@/features/jobs/hooks"
 import { formatLocation, formatSalary } from "@/features/jobs/lib/format"
+import { JobShareModal } from "@/features/jobs/components/job-share-modal"
 
 import type { FeedJob } from "../types"
 
@@ -37,6 +39,7 @@ export function JobFeedCard({ job }: Props) {
   const createdRel = useRelativeTime(job.createdAt)
 
   const [saved, setSaved] = useState(job.viewerSaved)
+  const [showShare, setShowShare] = useState(false)
   const toggle = useToggleSavedJob({
     onRollback: () => setSaved((v) => !v),
   })
@@ -137,7 +140,7 @@ export function JobFeedCard({ job }: Props) {
           </div>
         </div>
 
-        <div className="px-1 sm:px-2 py-1 flex items-center justify-between border-t border-border/30">
+        <div className="px-1 sm:px-2 py-1 grid grid-cols-3 border-t border-border/30">
           <Link href={`/jobs/${job.id}`} className="flex-1">
             <motion.span
               {...btnTap}
@@ -147,6 +150,15 @@ export function JobFeedCard({ job }: Props) {
               {tFeed("viewJobDetail")}
             </motion.span>
           </Link>
+          <motion.button
+            {...btnTap}
+            type="button"
+            onClick={() => setShowShare(true)}
+            className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 rounded-lg transition-colors font-semibold text-[11px] sm:text-[13px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          >
+            <Share2 className="w-4 h-4" />
+            {tFeed("share")}
+          </motion.button>
           <Link href={`/jobs/${job.id}`} className="flex-1">
             <motion.span
               {...btnTap}
@@ -169,6 +181,14 @@ export function JobFeedCard({ job }: Props) {
           </Link>
         </div>
       </Card>
+
+      <JobShareModal
+        jobId={job.id}
+        jobTitle={job.title}
+        companyName={job.companyName}
+        open={showShare}
+        onClose={() => setShowShare(false)}
+      />
     </motion.div>
   )
 }
