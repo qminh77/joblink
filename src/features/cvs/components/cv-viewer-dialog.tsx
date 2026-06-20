@@ -126,7 +126,7 @@ export function CvViewerDialog(props: Props) {
     <Dialog open={props.open} onOpenChange={(o) => (o ? null : props.onClose())}>
       <DialogContent
         showCloseButton={false}
-        className="p-0 gap-0 max-w-[min(96vw,1100px)] w-[min(96vw,1100px)] h-[92vh] sm:h-[88vh] rounded-2xl overflow-hidden flex flex-col"
+        className="p-0 gap-0 max-w-[min(96vw,1100px)] sm:max-w-[min(96vw,1100px)] w-[min(96vw,1100px)] h-[92vh] sm:h-[88vh] rounded-2xl overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">{props.title}</DialogTitle>
         <DialogDescription className="sr-only">{t("description")}</DialogDescription>

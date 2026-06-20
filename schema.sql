@@ -773,13 +773,15 @@ CREATE TABLE IF NOT EXISTS messages (
     id              BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
     sender_id       BIGINT NOT NULL,
+    receiver_id     BIGINT NULL,
     content         TEXT NULL,
     media           JSONB NULL,
     read_at         TIMESTAMPTZ NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ NULL,
     CONSTRAINT fk_msg_conv   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_msg_sender FOREIGN KEY (sender_id)       REFERENCES users(id)         ON DELETE CASCADE
+    CONSTRAINT fk_msg_sender FOREIGN KEY (sender_id)       REFERENCES users(id)         ON DELETE CASCADE,
+    CONSTRAINT fk_msg_receiver FOREIGN KEY (receiver_id)   REFERENCES users(id)         ON DELETE CASCADE
 );
 
 ALTER TABLE ONLY public.conversations
@@ -1265,6 +1267,16 @@ $$;
 -- Fan-out
 CREATE OR REPLACE FUNCTION public.fanout_post_to_feed() RETURNS trigger AS $$
 BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.status <> 'active' OR NEW.deleted_at IS NOT NULL THEN
+      DELETE FROM public.user_feeds WHERE post_id = NEW.id;
+      RETURN NEW;
+    END IF;
+    IF NEW.visibility NOT IN ('public', 'connections') THEN
+      DELETE FROM public.user_feeds WHERE post_id = NEW.id AND user_id <> NEW.author_id;
+    END IF;
+  END IF;
+
   IF NEW.status = 'active' AND NEW.deleted_at IS NULL THEN
     INSERT INTO public.user_feeds (user_id, post_id, created_at)
     VALUES (NEW.author_id, NEW.id, NEW.created_at) ON CONFLICT DO NOTHING;
@@ -1278,7 +1290,68 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION public.sync_feeds_on_connection() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status = 'accepted' THEN
+      INSERT INTO public.user_feeds (user_id, post_id, created_at)
+      SELECT NEW.requester_id, id, created_at FROM public.posts
+       WHERE author_id = NEW.receiver_id AND status = 'active' AND deleted_at IS NULL
+         AND visibility IN ('public', 'connections') AND created_at > NOW() - INTERVAL '30 days'
+      ON CONFLICT DO NOTHING;
+
+      INSERT INTO public.user_feeds (user_id, post_id, created_at)
+      SELECT NEW.receiver_id, id, created_at FROM public.posts
+       WHERE author_id = NEW.requester_id AND status = 'active' AND deleted_at IS NULL
+         AND visibility IN ('public', 'connections') AND created_at > NOW() - INTERVAL '30 days'
+      ON CONFLICT DO NOTHING;
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF OLD.status IS DISTINCT FROM NEW.status THEN
+      IF NEW.status = 'accepted' THEN
+        INSERT INTO public.user_feeds (user_id, post_id, created_at)
+        SELECT NEW.requester_id, id, created_at FROM public.posts
+         WHERE author_id = NEW.receiver_id AND status = 'active' AND deleted_at IS NULL
+           AND visibility IN ('public', 'connections') AND created_at > NOW() - INTERVAL '30 days'
+        ON CONFLICT DO NOTHING;
+
+        INSERT INTO public.user_feeds (user_id, post_id, created_at)
+        SELECT NEW.receiver_id, id, created_at FROM public.posts
+         WHERE author_id = NEW.requester_id AND status = 'active' AND deleted_at IS NULL
+           AND visibility IN ('public', 'connections') AND created_at > NOW() - INTERVAL '30 days'
+        ON CONFLICT DO NOTHING;
+      ELSIF OLD.status = 'accepted' AND NEW.status <> 'accepted' THEN
+        DELETE FROM public.user_feeds
+         WHERE user_id = NEW.requester_id
+           AND post_id IN (SELECT id FROM public.posts WHERE author_id = NEW.receiver_id);
+        DELETE FROM public.user_feeds
+         WHERE user_id = NEW.receiver_id
+           AND post_id IN (SELECT id FROM public.posts WHERE author_id = NEW.requester_id);
+      END IF;
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.status = 'accepted' THEN
+      DELETE FROM public.user_feeds
+       WHERE user_id = OLD.requester_id
+         AND post_id IN (SELECT id FROM public.posts WHERE author_id = OLD.receiver_id);
+      DELETE FROM public.user_feeds
+       WHERE user_id = OLD.receiver_id
+         AND post_id IN (SELECT id FROM public.posts WHERE author_id = OLD.requester_id);
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- =============================================================================
 -- 15. TRIGGER APPLICATION
@@ -1331,6 +1404,9 @@ CREATE TRIGGER trg_post_share_counter
 CREATE TRIGGER trg_connections_counter
   AFTER INSERT OR UPDATE OR DELETE ON connections
   FOR EACH ROW EXECUTE FUNCTION public.connections_counter_trigger();
+CREATE TRIGGER trg_sync_feeds_on_connection
+  AFTER INSERT OR UPDATE OF status OR DELETE ON connections
+  FOR EACH ROW EXECUTE FUNCTION public.sync_feeds_on_connection();
 CREATE TRIGGER trg_profile_view_counter
   AFTER INSERT OR DELETE ON profile_view_logs
   FOR EACH ROW EXECUTE FUNCTION public.profile_view_counter_trigger();
@@ -2123,7 +2199,7 @@ CREATE POLICY conversation_participants_update_own ON public.conversation_partic
 CREATE POLICY messages_admin_all ON public.messages
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 CREATE POLICY messages_select_participant ON public.messages
-  FOR SELECT USING (public.is_my_conversation(conversation_id));
+  FOR SELECT USING (sender_id = public.auth_user_id() OR receiver_id = public.auth_user_id() OR public.is_my_conversation(conversation_id));
 CREATE POLICY messages_insert_own ON public.messages
   FOR INSERT WITH CHECK (sender_id = public.auth_user_id() AND public.is_active_user() AND public.is_my_conversation(conversation_id));
 CREATE POLICY messages_update_own ON public.messages
@@ -5189,8 +5265,8 @@ BEGIN
     SELECT COUNT(*)::INT INTO v_recent FROM public.messages m
      WHERE m.sender_id = v_me AND m.created_at >= NOW() - INTERVAL '1 minute';
     IF v_recent >= 60 THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'rateLimited'); END IF;
-    INSERT INTO public.messages(conversation_id, sender_id, content)
-    VALUES (p_conversation_id, v_me, v_trim) RETURNING id, created_at INTO v_new_id, v_created_at;
+    INSERT INTO public.messages(conversation_id, sender_id, receiver_id, content)
+    VALUES (p_conversation_id, v_me, v_other, v_trim) RETURNING id, created_at INTO v_new_id, v_created_at;
     RETURN jsonb_build_object('ok', TRUE, 'message', jsonb_build_object(
         'id', v_new_id, 'senderId', v_me, 'content', v_trim, 'media', NULL,
         'readAt', NULL, 'createdAt', v_created_at), 'recipientId', v_other);

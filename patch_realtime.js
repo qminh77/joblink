@@ -1,67 +1,28 @@
-"use client"
+const fs = require('fs');
+const file = 'src/features/posts/hooks/realtime.ts';
+let content = fs.readFileSync(file, 'utf8');
 
-import { useEffect, useMemo } from "react"
-import { useQueryClient, type InfiniteData } from "@tanstack/react-query"
-
-import type { FeedPage, FeedPost } from "../types"
-
-import { createClient as createBrowserClient } from "@/lib/supabase/client"
-
-import {
-  FEED_QUERY_KEY,
-  HOME_STATS_KEY,
-  POST_COMMENTS_KEY,
-} from "./keys"
-
-export function useRealtimeFeed(allowedAuthorIds: number[]) {
+const oldHook = `export function useRealtimeEngagement(visiblePostIds: number[]) {
   const qc = useQueryClient()
   const filterKey = useMemo(
-    () =>
-      Array.from(new Set(allowedAuthorIds))
-        .sort((a, b) => a - b)
-        .join(","),
-    [allowedAuthorIds],
+    () => Array.from(new Set(visiblePostIds)).sort((a, b) => a - b).join(","),
+    [visiblePostIds],
   )
+  const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!filterKey) return
 
-    const supabase = createBrowserClient()
-    const channel = supabase
-      .channel("home-feed-posts")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "posts",
-          filter: `author_id=in.(${filterKey})`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
-        },
-      )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
+    const scheduleInvalidate = () => {
+      if (pendingTimer.current != null) return
+      pendingTimer.current = setTimeout(() => {
+        pendingTimer.current = null
+        qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
+      }, 800)
     }
-  }, [filterKey, qc])
-}
-
-export function useRealtimeEngagement(visiblePostIds: number[]) {
-  const qc = useQueryClient()
-  // Cap the filter list to prevent string from exceeding Supabase's realtime filter length limit.
-  const cappedIds = useMemo(() => {
-    const sorted = Array.from(new Set(visiblePostIds)).sort((a, b) => b - a)
-    return sorted.slice(0, 50).join(",")
-  }, [visiblePostIds])
-
-  useEffect(() => {
-    if (!cappedIds) return
 
     const supabase = createBrowserClient()
-    const channel = supabase.channel(`home-feed-engagement`)
+    const channel = supabase.channel(\`home-feed-engagement-\${filterKey.length}\`)
     for (const table of [
       "post_reactions",
       "post_comments",
@@ -74,24 +35,78 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
           event: "*",
           schema: "public",
           table,
-          filter: `post_id=in.(${cappedIds})`,
+          filter: \`post_id=in.(\${filterKey})\`,
         },
         (payload) => {
-          const row = (payload.new as { post_id?: number, option_id?: number } | null) ?? (payload.old as { post_id?: number, option_id?: number } | null)
+          scheduleInvalidate()
+          if (table === "post_comments") {
+            const row =
+              (payload.new as { post_id?: number } | null) ??
+              (payload.old as { post_id?: number } | null)
+            if (row?.post_id) {
+              qc.invalidateQueries({
+                queryKey: POST_COMMENTS_KEY(row.post_id),
+              })
+            }
+          }
+        },
+      )
+    }
+    channel.subscribe()
+
+    return () => {
+      if (pendingTimer.current != null) {
+        clearTimeout(pendingTimer.current)
+        pendingTimer.current = null
+      }
+      void supabase.removeChannel(channel)
+    }
+  }, [filterKey, qc])
+}`;
+
+const newHook = `export function useRealtimeEngagement(visiblePostIds: number[]) {
+  const qc = useQueryClient()
+  // Cap the filter list to prevent string from exceeding Supabase's realtime filter length limit.
+  const cappedIds = useMemo(() => {
+    const sorted = Array.from(new Set(visiblePostIds)).sort((a, b) => b - a)
+    return sorted.slice(0, 50).join(",")
+  }, [visiblePostIds])
+
+  useEffect(() => {
+    if (!cappedIds) return
+
+    const supabase = createBrowserClient()
+    const channel = supabase.channel(\`home-feed-engagement\`)
+    for (const table of [
+      "post_reactions",
+      "post_comments",
+      "post_shares",
+      "poll_votes",
+    ]) {
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table,
+          filter: \`post_id=in.(\${cappedIds})\`,
+        },
+        (payload) => {
+          const row = (payload.new as any) || (payload.old as any)
           if (!row || !row.post_id) return
           const postId = row.post_id
 
           // O(1) Cache Updates for Feed
-          qc.setQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY, (oldData) => {
+          qc.setQueryData<any>(FEED_QUERY_KEY, (oldData: any) => {
             if (!oldData?.pages) return oldData
             return {
               ...oldData,
-              pages: oldData.pages.map((page) => ({
+              pages: oldData.pages.map((page: any) => ({
                 ...page,
-                posts: page.posts.map((post) => {
+                posts: page.posts.map((post: any) => {
                   if (post.id !== postId) return post
-
-                  const p: FeedPost = { ...post }
+                  
+                  const p = { ...post }
                   if (table === "post_reactions") {
                     if (payload.eventType === "INSERT") p.reactionCount++
                     else if (payload.eventType === "DELETE") p.reactionCount = Math.max(0, p.reactionCount - 1)
@@ -102,7 +117,7 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
                     if (payload.eventType === "INSERT") p.shareCount++
                   } else if (table === "poll_votes" && payload.eventType === "INSERT") {
                     if (p.pollOptions && row.option_id) {
-                      p.pollOptions = p.pollOptions.map((opt) =>
+                      p.pollOptions = p.pollOptions.map((opt: any) =>
                         opt.id === row.option_id
                           ? { ...opt, voteCount: opt.voteCount + 1 }
                           : opt
@@ -128,54 +143,8 @@ export function useRealtimeEngagement(visiblePostIds: number[]) {
       void supabase.removeChannel(channel)
     }
   }, [cappedIds, qc])
-}
+}`;
 
-export function useRealtimeHomeStats(currentUserId: number | null) {
-  const qc = useQueryClient()
-
-  useEffect(() => {
-    if (!currentUserId) return
-
-    const supabase = createBrowserClient()
-    const invalidate = () => {
-      qc.invalidateQueries({ queryKey: HOME_STATS_KEY })
-    }
-    const channel = supabase
-      .channel(`home-stats-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "connections",
-          filter: `requester_id=eq.${currentUserId}`,
-        },
-        invalidate,
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "connections",
-          filter: `receiver_id=eq.${currentUserId}`,
-        },
-        invalidate,
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "profile_view_logs",
-          filter: `target_user_id=eq.${currentUserId}`,
-        },
-        invalidate,
-      )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [currentUserId, qc])
-}
+content = content.replace(oldHook, newHook);
+fs.writeFileSync(file, content);
+console.log('Hook updated.');

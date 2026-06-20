@@ -50,94 +50,110 @@ export function CvBuilderPreview({
   return (
     <div
       id="cv-builder-preview"
-      className="w-[210mm] bg-white text-black p-8 font-sans leading-relaxed"
-      style={{ minHeight: "297mm" }}
+      className="w-[210mm] bg-white text-[#111827] px-14 py-16 font-sans leading-relaxed"
+      style={{ minHeight: "297mm", boxSizing: "border-box" }}
     >
       {/* Header */}
-      <div className="border-b border-[#d1d5db] pb-4 mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-extrabold tracking-tight uppercase text-[#111827] mb-2">
+          {fullName}
+        </h1>
         {headline ? (
-          <p className="text-sm text-[#4b5563] mt-0.5">{headline}</p>
+          <p className="text-lg text-[#4b5563] font-medium">{headline}</p>
         ) : null}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6b7280] mt-2">
+        <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 text-sm text-[#6b7280] mt-4">
           <span>{email}</span>
+          {phone ? <span className="text-[#d1d5db]">•</span> : null}
           {phone ? <span>{phone}</span> : null}
         </div>
       </div>
 
-      {/* Experiences */}
-      {experiences.length > 0 ? (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
-            Experience
-          </h2>
-          {experiences.map((exp) => (
-            <div key={exp.id} className="mb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold">{exp.position}</p>
-                  <p className="text-xs text-[#4b5563]">{exp.company_name}</p>
-                </div>
-                <p className="text-xs text-[#6b7280] whitespace-nowrap ml-2">
-                  {formatDate(exp.start_date)} – {formatDate(exp.end_date)}
-                </p>
-              </div>
-              {exp.description ? (
-                <p className="text-xs text-[#374151] mt-1 whitespace-pre-wrap break-words">
-                  {exp.description}
-                </p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Education */}
-      {educations.length > 0 ? (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
-            Education
-          </h2>
-          {educations.map((edu) => (
-            <div key={edu.id} className="mb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold">{edu.school_name}</p>
-                  {edu.degree || edu.field_of_study ? (
-                    <p className="text-xs text-[#4b5563]">
-                      {[edu.degree, edu.field_of_study].filter(Boolean).join(" in ")}
+      <div className="space-y-8">
+        {/* Experiences */}
+        {experiences.length > 0 ? (
+          <div>
+            <h2 className="text-lg font-bold uppercase tracking-widest text-[#111827] border-b-2 border-[#111827] pb-2 mb-5">
+              Experience
+            </h2>
+            <div className="space-y-6">
+              {experiences.map((exp) => (
+                <div key={exp.id}>
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="text-base font-bold text-[#111827]">
+                      {exp.position}
+                    </h3>
+                    <span className="text-sm font-semibold text-[#6b7280] ml-4 shrink-0">
+                      {formatDate(exp.start_date)} – {formatDate(exp.end_date)}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-[#4b5563] mt-0.5 mb-2">
+                    {exp.company_name}
+                  </div>
+                  {exp.description ? (
+                    <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap break-words">
+                      {exp.description}
                     </p>
                   ) : null}
                 </div>
-                <p className="text-xs text-[#6b7280] whitespace-nowrap ml-2">
-                  {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
-                </p>
-              </div>
-              {edu.description ? (
-                <p className="text-xs text-[#374151] mt-1 whitespace-pre-wrap break-words">
-                  {edu.description}
-                </p>
-              ) : null}
+              ))}
             </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Skills */}
-      {skills.length > 0 ? (
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
-            Skills
-          </h2>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {skills.map((s) => (
-              <span key={s.id} className="text-xs text-[#374151]">
-                {s.name}
-              </span>
-            ))}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+
+        {/* Education */}
+        {educations.length > 0 ? (
+          <div>
+            <h2 className="text-lg font-bold uppercase tracking-widest text-[#111827] border-b-2 border-[#111827] pb-2 mb-5">
+              Education
+            </h2>
+            <div className="space-y-6">
+              {educations.map((edu) => (
+                <div key={edu.id}>
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="text-base font-bold text-[#111827]">
+                      {edu.school_name}
+                    </h3>
+                    <span className="text-sm font-semibold text-[#6b7280] ml-4 shrink-0">
+                      {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
+                    </span>
+                  </div>
+                  {edu.degree || edu.field_of_study ? (
+                    <div className="text-sm font-semibold text-[#4b5563] mt-0.5 mb-2">
+                      {[edu.degree, edu.field_of_study]
+                        .filter(Boolean)
+                        .join(" in ")}
+                    </div>
+                  ) : null}
+                  {edu.description ? (
+                    <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap break-words">
+                      {edu.description}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Skills */}
+        {skills.length > 0 ? (
+          <div>
+            <h2 className="text-lg font-bold uppercase tracking-widest text-[#111827] border-b-2 border-[#111827] pb-2 mb-5">
+              Skills
+            </h2>
+            <div className="flex flex-wrap gap-2 text-sm text-[#374151] font-medium">
+              {skills.map((s, idx) => (
+                <span key={s.id} className="inline-flex items-center">
+                  {s.name}
+                  {idx < skills.length - 1 ? (
+                    <span className="mx-2 text-[#d1d5db]">|</span>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
