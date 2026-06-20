@@ -54,12 +54,12 @@ export function CvBuilderPreview({
       style={{ minHeight: "297mm" }}
     >
       {/* Header */}
-      <div className="border-b border-gray-300 pb-4 mb-4">
+      <div className="border-b border-[#d1d5db] pb-4 mb-4">
         <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
         {headline ? (
-          <p className="text-sm text-gray-600 mt-0.5">{headline}</p>
+          <p className="text-sm text-[#4b5563] mt-0.5">{headline}</p>
         ) : null}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6b7280] mt-2">
           <span>{email}</span>
           {phone ? <span>{phone}</span> : null}
         </div>
@@ -68,7 +68,7 @@ export function CvBuilderPreview({
       {/* Experiences */}
       {experiences.length > 0 ? (
         <div className="mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
             Experience
           </h2>
           {experiences.map((exp) => (
@@ -76,14 +76,14 @@ export function CvBuilderPreview({
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-semibold">{exp.position}</p>
-                  <p className="text-xs text-gray-600">{exp.company_name}</p>
+                  <p className="text-xs text-[#4b5563]">{exp.company_name}</p>
                 </div>
-                <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                <p className="text-xs text-[#6b7280] whitespace-nowrap ml-2">
                   {formatDate(exp.start_date)} – {formatDate(exp.end_date)}
                 </p>
               </div>
               {exp.description ? (
-                <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap break-words">
+                <p className="text-xs text-[#374151] mt-1 whitespace-pre-wrap break-words">
                   {exp.description}
                 </p>
               ) : null}
@@ -95,7 +95,7 @@ export function CvBuilderPreview({
       {/* Education */}
       {educations.length > 0 ? (
         <div className="mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
             Education
           </h2>
           {educations.map((edu) => (
@@ -104,17 +104,17 @@ export function CvBuilderPreview({
                 <div>
                   <p className="text-sm font-semibold">{edu.school_name}</p>
                   {edu.degree || edu.field_of_study ? (
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-[#4b5563]">
                       {[edu.degree, edu.field_of_study].filter(Boolean).join(" in ")}
                     </p>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                <p className="text-xs text-[#6b7280] whitespace-nowrap ml-2">
                   {formatDate(edu.start_date)} – {formatDate(edu.end_date)}
                 </p>
               </div>
               {edu.description ? (
-                <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap break-words">
+                <p className="text-xs text-[#374151] mt-1 whitespace-pre-wrap break-words">
                   {edu.description}
                 </p>
               ) : null}
@@ -126,12 +126,12 @@ export function CvBuilderPreview({
       {/* Skills */}
       {skills.length > 0 ? (
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-2">
             Skills
           </h2>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {skills.map((s) => (
-              <span key={s.id} className="text-xs text-gray-700">
+              <span key={s.id} className="text-xs text-[#374151]">
                 {s.name}
               </span>
             ))}
