@@ -1299,6 +1299,7 @@
       "reports": "Reports",
       "appeals": "Appeals",
       "auditLog": "Audit log",
+      "brand": "Branding",
       "settings": "Settings",
       "reportTypes": "Report types",
       "lookups": "Lookups",
@@ -1644,7 +1645,6 @@
         "failed": "Failed: {error}"
       },
       "groups": {
-        "site_identity": "Branding",
         "regional": "Regional",
         "smtp": "SMTP email",
         "recaptcha": "reCAPTCHA",
@@ -1653,10 +1653,6 @@
         "maintenance": "Maintenance"
       },
       "fields": {
-        "site_name": "Site name",
-        "site_description": "Short description",
-        "site_logo_url": "Logo URL",
-        "site_favicon_url": "Favicon URL",
         "default_locale": "Default locale",
         "default_timezone": "Timezone",
         "default_currency": "Currency",
@@ -1685,6 +1681,50 @@
         "require_email_verification": "Require email verification on signup",
         "passkey_enabled": "Enable passkey sign-in"
       }
+    },
+    "brand": {
+      "title": "Branding",
+      "subtitle": "Manage brand identity across the system",
+      "saveAll": "Save changes",
+      "saving": "Saving...",
+      "saved": "Brand saved",
+      "saveError": "Save failed",
+      "nameRequired": "Site name is required",
+      "identity": {
+        "title": "Brand identity",
+        "description": "Basic brand information"
+      },
+      "logo": {
+        "title": "Logo",
+        "description": "Logo displayed across the system",
+        "hint": "PNG, JPEG, WebP or SVG. Up to 2MB."
+      },
+      "favicon": {
+        "title": "Favicon",
+        "description": "Icon shown on the browser tab",
+        "hint": "PNG, ICO, WebP or SVG. Up to 1MB."
+      },
+      "fields": {
+        "siteName": "Site name",
+        "siteDescription": "Short description",
+        "descriptionPlaceholder": "Short description of the system...",
+        "logo": "Logo",
+        "favicon": "Favicon"
+      },
+      "preview": {
+        "title": "Preview",
+        "subtitle": "How the brand looks on different devices",
+        "desktop": "Desktop",
+        "mobile": "Mobile"
+      },
+      "actions": {
+        "title": "Actions",
+        "description": "Save changes to apply"
+      },
+      "fileTooLarge": "File too large. Max {max}MB",
+      "invalidType": "Unsupported file format",
+      "dropHint": "Click or drag & drop a file here",
+      "maxSize": "Max {max}MB"
     },
     "lookups": {
       "title": "Lookup data",

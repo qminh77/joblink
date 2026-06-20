@@ -13,6 +13,7 @@ import {
   Flag,
   Gavel,
   LayoutDashboard,
+  Palette,
   ScrollText,
   Settings,
   Tags,
@@ -52,6 +53,7 @@ const GROUPS = [
   {
     key: "system",
     items: [
+      { key: "brand", href: "/admin/brand", icon: Palette },
       { key: "reportTypes", href: "/admin/report-types", icon: Tags },
       { key: "lookups", href: "/admin/lookups", icon: Database },
       { key: "settings", href: "/admin/settings", icon: Settings },
@@ -121,7 +123,6 @@ function NavContent({
 }
 
 const SETTINGS_SUBITEMS = [
-  { key: "site_identity", tab: "site_identity" },
   { key: "regional", tab: "regional" },
   { key: "smtp", tab: "smtp" },
   { key: "recaptcha", tab: "recaptcha" },

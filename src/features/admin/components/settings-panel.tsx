@@ -12,7 +12,6 @@ import {
   Save,
   Send,
   Shield,
-  Sparkles,
   Wrench,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -43,7 +42,6 @@ import {
 import type { AdminSettingsMap, AdminSettingsValue } from "@/features/admin/types"
 
 const GROUP_ORDER = [
-  "site_identity",
   "regional",
   "smtp",
   "recaptcha",
@@ -53,7 +51,6 @@ const GROUP_ORDER = [
 ] as const
 
 const GROUP_ICONS = {
-  site_identity: Sparkles,
   regional: MapPin,
   smtp: Mail,
   recaptcha: Lock,

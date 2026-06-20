@@ -165,7 +165,7 @@
   "profileMenu": {
     "viewProfileShort": "Xem hồ sơ",
     "viewProfile": "Xem trang cá nhân",
-    "viewProfileHint": "Hồ sơ  của bạn",
+    "viewProfileHint": "Hồ sơ của bạn",
     "savedJobsHint": "Danh sách việc làm bạn theo dõi",
     "myApplications": "Đơn ứng tuyển",
     "myApplicationsHint": "Theo dõi đơn và lịch phỏng vấn",
@@ -1299,6 +1299,7 @@
       "reports": "Báo cáo",
       "appeals": "Khiếu nại",
       "auditLog": "Nhật ký",
+      "brand": "Thương hiệu",
       "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
       "lookups": "Danh mục",
@@ -1644,7 +1645,6 @@
         "failed": "Thao tác thất bại: {error}"
       },
       "groups": {
-        "site_identity": "Thương hiệu",
         "regional": "Khu vực",
         "smtp": "Email SMTP",
         "recaptcha": "reCAPTCHA",
@@ -1653,10 +1653,6 @@
         "maintenance": "Bảo trì"
       },
       "fields": {
-        "site_name": "Tên hệ thống",
-        "site_description": "Mô tả ngắn",
-        "site_logo_url": "Logo URL",
-        "site_favicon_url": "Favicon URL",
         "default_locale": "Ngôn ngữ mặc định",
         "default_timezone": "Múi giờ",
         "default_currency": "Đơn vị tiền tệ",
@@ -1685,6 +1681,50 @@
         "require_email_verification": "Bắt buộc xác minh email khi đăng ký",
         "passkey_enabled": "Cho phép đăng nhập bằng Passkey"
       }
+    },
+    "brand": {
+      "title": "Thương hiệu",
+      "subtitle": "Quản lý nhận diện thương hiệu toàn hệ thống",
+      "saveAll": "Lưu thay đổi",
+      "saving": "Đang lưu...",
+      "saved": "Đã lưu thương hiệu",
+      "saveError": "Lưu thất bại",
+      "nameRequired": "Tên hệ thống không được để trống",
+      "identity": {
+        "title": "Nhận diện thương hiệu",
+        "description": "Thông tin cơ bản về thương hiệu"
+      },
+      "logo": {
+        "title": "Logo",
+        "description": "Logo hiển thị trên toàn hệ thống",
+        "hint": "PNG, JPEG, WebP hoặc SVG. Tối đa 2MB."
+      },
+      "favicon": {
+        "title": "Favicon",
+        "description": "Biểu tượng hiển thị trên tab trình duyệt",
+        "hint": "PNG, ICO, WebP hoặc SVG. Tối đa 1MB."
+      },
+      "fields": {
+        "siteName": "Tên hệ thống",
+        "siteDescription": "Mô tả ngắn",
+        "descriptionPlaceholder": "Mô tả ngắn về hệ thống...",
+        "logo": "Logo",
+        "favicon": "Favicon"
+      },
+      "preview": {
+        "title": "Xem trước",
+        "subtitle": "Hình ảnh thương hiệu trên các thiết bị",
+        "desktop": "Máy tính",
+        "mobile": "Di động"
+      },
+      "actions": {
+        "title": "Thao tác",
+        "description": "Lưu thay đổi để áp dụng"
+      },
+      "fileTooLarge": "File quá lớn. Tối đa {max}MB",
+      "invalidType": "Định dạng file không hỗ trợ",
+      "dropHint": "Nhấp hoặc kéo thả file vào đây",
+      "maxSize": "Tối đa {max}MB"
     },
     "lookups": {
       "title": "Danh mục hệ thống",

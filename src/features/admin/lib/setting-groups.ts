@@ -1,10 +1,4 @@
 export const SETTING_GROUPS: Record<string, string[]> = {
-  site_identity: [
-    "site_name",
-    "site_description",
-    "site_logo_url",
-    "site_favicon_url",
-  ],
   regional: [
     "default_locale",
     "default_timezone",
