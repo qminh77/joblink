@@ -77,7 +77,6 @@ export function PostCard({ post, onShare, onSend }: Props) {
           onSend={sendPost}
           onShare={sharePost}
           post={post}
-          togglePending={toggleReaction.isPending}
         />
 
         <PostCommentsSection

@@ -67,7 +67,6 @@ export function PostDetailView({ post }: Props) {
           onSend={() => {}}
           onShare={() => {}}
           post={post}
-          togglePending={toggleReaction.isPending}
         />
 
         <PostCommentsSection

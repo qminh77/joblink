@@ -14,14 +14,12 @@ export function PostActionsBar({
   onSend,
   onShare,
   post,
-  togglePending,
 }: {
   onComment: () => void
   onLike: () => void
   onSend: () => void
   onShare: () => void
   post: FeedPost
-  togglePending: boolean
 }) {
   const tFeed = useTranslations("feed")
 
@@ -31,7 +29,6 @@ export function PostActionsBar({
         {...btnTap}
         type="button"
         onClick={onLike}
-        disabled={togglePending}
         className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 rounded-lg transition-colors font-semibold text-[11px] sm:text-[13px] ${
           post.viewerReacted
             ? "text-primary hover:bg-primary/10"
@@ -39,7 +36,7 @@ export function PostActionsBar({
         }`}
       >
         <ThumbsUp
-          className={`w-4 h-4 ${post.viewerReacted ? "fill-primary" : ""}`}
+          className={`w-4 h-4 ${post.viewerReacted ? "fill-primary" : ""} transition-transform active:scale-110`}
         />
         <span className="hidden sm:inline">{tFeed("like")}</span>
       </motion.button>
