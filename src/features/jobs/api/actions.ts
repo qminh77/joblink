@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
+import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
@@ -58,6 +59,13 @@ export async function createJobAction(
   const result = await createJob(supabase, parsed.data)
 
   if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "job.create",
+      entityType: "jobs",
+      entityId: result.jobId,
+      newData: { title: parsed.data.title },
+    })
     revalidatePath("/jobs")
     revalidatePath("/company/dashboard")
   }
@@ -81,6 +89,13 @@ export async function updateJobAction(
   const result = await updateJob(supabase, parsed.data)
 
   if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "job.update",
+      entityType: "jobs",
+      entityId: parsed.data.jobId,
+      newData: { title: parsed.data.title },
+    })
     revalidatePath("/jobs")
     revalidatePath(`/jobs/${parsed.data.jobId}`)
     revalidatePath("/company/dashboard")
@@ -109,7 +124,16 @@ export async function applyToJobAction(input: {
     te("resumeRequired"),
   )
 
-  if (result.ok) revalidatePath(`/jobs/${parsed.data.jobId}`)
+  if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "job.apply",
+      entityType: "job_applications",
+      entityId: parsed.data.jobId,
+      newData: { jobId: parsed.data.jobId },
+    })
+    revalidatePath(`/jobs/${parsed.data.jobId}`)
+  }
   return result
 }
 
@@ -124,7 +148,17 @@ export async function withdrawApplicationAction(
 
   const current = await requireCurrentUser()
   const supabase = await createClient()
-  return withdrawApplication(supabase, current, parsed.data)
+  const result = await withdrawApplication(supabase, current, parsed.data)
+
+  if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "job.withdraw_application",
+      entityType: "job_applications",
+      entityId: parsed.data,
+    })
+  }
+  return result
 }
 
 export async function toggleSavedJobAction(
@@ -136,11 +170,19 @@ export async function toggleSavedJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  await requireCurrentUser()
+  const current = await requireCurrentUser()
   const supabase = await createClient()
   const result = await toggleSavedJob(supabase, parsed.data)
 
-  if (result.ok) revalidatePath("/saved-jobs")
+  if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: result.saved ? "job.save" : "job.unsave",
+      entityType: "saved_jobs",
+      entityId: parsed.data,
+    })
+    revalidatePath("/saved-jobs")
+  }
   return result
 }
 
@@ -152,7 +194,15 @@ export async function respondInterviewAction(input: {
   const supabase = await createClient()
   const result = await respondInterview(supabase, current, input)
 
-  if (result.ok) revalidatePath("/jobs/applications")
+  if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: input.accept ? "job.interview_accept" : "job.interview_reject",
+      entityType: "interview_schedules",
+      entityId: input.interviewId,
+    })
+    revalidatePath("/jobs/applications")
+  }
   return result
 }
 

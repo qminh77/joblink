@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
@@ -55,6 +56,13 @@ export async function updateMemberProfileAction(
     const supabase = await createClient()
 
     await updateMemberProfile(supabase, current.appUser.id, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.update",
+      entityType: "member_profiles",
+      entityId: current.appUser.id,
+      newData: { fullName: data.fullName, headline: data.headline },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -69,6 +77,13 @@ export async function updateMemberMediaAction(input: {
     const supabase = await createClient()
 
     await updateMemberMedia(supabase, current.appUser.id, input)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.media_update",
+      entityType: "member_profiles",
+      entityId: current.appUser.id,
+      newData: input,
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -83,6 +98,13 @@ export async function updateCompanyMediaAction(input: {
     const supabase = await createClient()
 
     await updateCompanyMedia(supabase, current.appUser.id, input)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.media_update",
+      entityType: "company_profiles",
+      entityId: current.appUser.id,
+      newData: input,
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -102,6 +124,12 @@ export async function addExperienceAction(
       data,
       tv("startDateRequired"),
     )
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.experience_add",
+      entityType: "member_experiences",
+      newData: { companyName: data.companyName, position: data.position },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -121,6 +149,13 @@ export async function updateExperienceAction(
       data,
       tv("startDateRequired"),
     )
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.experience_update",
+      entityType: "member_experiences",
+      entityId: data.id ?? undefined,
+      newData: { companyName: data.companyName, position: data.position },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -133,6 +168,12 @@ export async function deleteExperienceAction(
     const supabase = await createClient()
 
     await deleteExperience(supabase, current.appUser.id, experienceId)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.experience_delete",
+      entityType: "member_experiences",
+      entityId: experienceId,
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -146,6 +187,12 @@ export async function addEducationAction(
     const supabase = await createClient()
 
     await addEducation(supabase, current.appUser.id, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.education_add",
+      entityType: "member_educations",
+      newData: { schoolName: data.schoolName, degree: data.degree },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -159,6 +206,13 @@ export async function updateEducationAction(
     const supabase = await createClient()
 
     await editEducation(supabase, current.appUser.id, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.education_update",
+      entityType: "member_educations",
+      entityId: data.id ?? undefined,
+      newData: { schoolName: data.schoolName, degree: data.degree },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -171,6 +225,12 @@ export async function deleteEducationAction(
     const supabase = await createClient()
 
     await deleteEducation(supabase, current.appUser.id, educationId)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.education_delete",
+      entityType: "member_educations",
+      entityId: educationId,
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -182,6 +242,12 @@ export async function addSkillAction(skillName: string): Promise<ActionResult> {
     const supabase = await createClient()
 
     await addSkill(supabase, current.appUser.id, name)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.skill_add",
+      entityType: "member_skills",
+      newData: { name },
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -194,6 +260,12 @@ export async function removeSkillAction(
     const supabase = await createClient()
 
     await removeSkill(supabase, current.appUser.id, skillId)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "profile.skill_remove",
+      entityType: "member_skills",
+      entityId: skillId,
+    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -217,6 +289,13 @@ export async function updateCompanyProfileAction(
     const supabase = await createClient()
 
     await updateCompanyProfile(supabase, current.appUser.id, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.profile_update",
+      entityType: "company_profiles",
+      entityId: current.appUser.id,
+      newData: { name: data.name, industry: data.industry },
+    })
     revalidateProfile(current.appUser.id)
   })
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { action, parse } from "@/lib/action/server"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
@@ -118,6 +119,13 @@ export async function createPostAction(
     if (hasPoll) {
       const data = parse(createPollInputSchema(t), input)
       const post = await createPollPost(supabase, current, data)
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "post.create_poll",
+        entityType: "posts",
+        entityId: post.id,
+        newData: { postType: "poll", visibility: data.visibility },
+      })
       revalidateHome()
       return post
     }
@@ -129,12 +137,26 @@ export async function createPostAction(
     if (videoUrl) {
       const data = parse(createPostInputSchema(t), { ...input, mediaItems: [] })
       const post = await createVideoPost(supabase, current, data, videoUrl)
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "post.create_video",
+        entityType: "posts",
+        entityId: post.id,
+        newData: { postType: "video", visibility: data.visibility },
+      })
       revalidateHome()
       return post
     }
 
     const data = parse(createPostInputSchema(t), input)
     const post = await createStandardPost(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.create",
+      entityType: "posts",
+      entityId: post.id,
+      newData: { visibility: data.visibility },
+    })
     revalidateHome()
     return post
   })
@@ -151,7 +173,14 @@ export async function toggleReactionAction(
     const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "reaction", 30, 60) // 30 reactions / 60s
     const supabase = await createClient()
-    return togglePostReaction(supabase, current, data)
+    const result = await togglePostReaction(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: result.reacted ? "post.reaction_add" : "post.reaction_remove",
+      entityType: "post_reactions",
+      entityId: postId,
+    })
+    return result
   })
 }
 
@@ -164,7 +193,15 @@ export async function voteAction(
     const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "vote", 10, 60) // 10 votes / 60s
     const supabase = await createClient()
-    return voteOnPoll(supabase, current, data)
+    const result = await voteOnPoll(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.poll_vote",
+      entityType: "poll_votes",
+      entityId: postId,
+      newData: { optionId },
+    })
+    return result
   })
 }
 
@@ -176,7 +213,15 @@ export async function createCommentAction(
     const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "comment", 15, 60) // 15 comments / 60s
     const supabase = await createClient()
-    return createPostComment(supabase, current, data)
+    const result = await createPostComment(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.comment_add",
+      entityType: "post_comments",
+      entityId: data.postId,
+      newData: { content: data.content.substring(0, 200) },
+    })
+    return result
   })
 }
 
@@ -187,7 +232,14 @@ export async function deleteCommentAction(
     const id = parse(createCommentIdSchema(t), commentId)
     const current = await requireCurrentUser()
     const supabase = await createClient()
-    return deletePostComment(supabase, current, id)
+    const result = await deletePostComment(supabase, current, id)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.comment_delete",
+      entityType: "post_comments",
+      entityId: id,
+    })
+    return result
   })
 }
 
@@ -200,6 +252,12 @@ export async function sharePostAction(
     await checkRateLimit(current.appUser.id, "share", 10, 60) // 10 shares / 60s
     const supabase = await createClient()
     const result = await shareFeedPost(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.share",
+      entityType: "post_shares",
+      entityId: data.postId,
+    })
     revalidateHome()
     return result
   })
@@ -216,12 +274,26 @@ export async function updatePostAction(
     if (input.options) {
       const data = parse(createUpdatePollSchema(t), input)
       const result = await updatePollPost(supabase, current, data)
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "post.update_poll",
+        entityType: "posts",
+        entityId: input.postId,
+        newData: { optionsCount: input.options.length },
+      })
       revalidateHome()
       return result
     }
 
     const data = parse(createPostUpdateSchema(t), input)
     const result = await updateStandardPost(supabase, current, data)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.update",
+      entityType: "posts",
+      entityId: input.postId,
+      newData: { visibility: data.visibility },
+    })
     revalidateHome()
     return result
   })
@@ -234,6 +306,12 @@ export async function deletePostAction(postId: number): Promise<ActionResult> {
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 deletes / 60s
     const supabase = await createClient()
     await deleteOwnPost(supabase, current, id)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "post.delete",
+      entityType: "posts",
+      entityId: id,
+    })
     revalidateHome()
   })
 }

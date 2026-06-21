@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
@@ -119,6 +120,16 @@ export async function updateNotificationPreferenceAction(
       ),
       "unexpected",
     )
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "notification.preference_update",
+      entityType: "notification_preferences",
+      newData: {
+        category: data.category,
+        inApp: data.inApp,
+        email: data.email,
+      },
+    })
     revalidatePath("/settings")
   })
 }

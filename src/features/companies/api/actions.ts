@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
@@ -56,6 +57,12 @@ export async function toggleFollowCompanyAction(
     if (result.isFollowing) {
       await notifyCompanyFollowed({ companyUserId: parsed.data, current })
     }
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: result.isFollowing ? "company.follow" : "company.unfollow",
+      entityType: "follows",
+      entityId: parsed.data,
+    })
   }
   return result
 }
@@ -95,6 +102,16 @@ export async function updateApplicationStatusAction(input: {
         newStatus: parsed.data.newStatus,
         current,
       })
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "company.application_status_update",
+        entityType: "job_applications",
+        entityId: parsed.data.applicationId,
+        newData: {
+          newStatus: parsed.data.newStatus,
+          oldStatus: result.oldStatus,
+        },
+      })
     }
   }
   return result
@@ -110,7 +127,7 @@ export async function updateJobStatusAction(input: {
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  await requireCurrentUser()
+  const current = await requireCurrentUser()
   const supabase = await createClient()
 
   const result = await rpcResult<StatusPayload>(
@@ -120,7 +137,19 @@ export async function updateJobStatusAction(input: {
     }),
   )
 
-  if (result.ok) revalidatePath("/company/dashboard")
+  if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.job_status_update",
+      entityType: "jobs",
+      entityId: parsed.data.jobId,
+      newData: {
+        newStatus: parsed.data.newStatus,
+        oldStatus: result.oldStatus,
+      },
+    })
+    revalidatePath("/company/dashboard")
+  }
   return result
 }
 
@@ -171,6 +200,16 @@ export async function scheduleInterviewAction(
       scheduledAt: result.scheduledAt,
       current,
     })
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.interview_schedule",
+      entityType: "interview_schedules",
+      entityId: result.interviewId,
+      newData: {
+        applicationId: result.applicationId,
+        scheduledAt: result.scheduledAt,
+      },
+    })
   }
   return result
 }
@@ -180,7 +219,7 @@ export async function scheduleInterviewAction(
  * (FR-M02-007). RPC tự check role + trạng thái hợp lệ.
  */
 export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerificationResult> {
-  await requireCurrentUser()
+  const current = await requireCurrentUser()
   const supabase = await createClient()
 
   const result = await rpcResult<{ status: "pending" }>(
@@ -188,6 +227,13 @@ export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerif
   )
 
   if (result.ok) {
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.verification_resubmit",
+      entityType: "company_profiles",
+      entityId: current.appUser.id,
+      newData: { status: "pending" },
+    })
     revalidatePath("/settings")
     revalidatePath("/company/dashboard")
   }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { getCurrentUser, requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { action, parse } from "@/lib/action/server"
@@ -79,6 +80,12 @@ export async function toggleFollowUserAction(
         current,
       })
     }
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: result.isFollowing ? "network.follow" : "network.unfollow",
+      entityType: "follows",
+      entityId: parsed.data,
+    })
   }
   return result
 }
@@ -93,6 +100,12 @@ export async function sendConnectionRequestAction(
     const supabase = await createClient()
 
     await sendConnectionRequest(supabase, current, target)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "network.connection_send",
+      entityType: "connections",
+      entityId: target,
+    })
     revalidateAfterConnectionChange()
   })
 }
@@ -106,6 +119,12 @@ export async function cancelConnectionRequestAction(
     const supabase = await createClient()
 
     await cancelConnectionRequest(supabase, current, id)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "network.connection_cancel",
+      entityType: "connections",
+      entityId: id,
+    })
     revalidateAfterConnectionChange()
   })
 }
@@ -120,6 +139,12 @@ export async function respondConnectionRequestAction(
     const supabase = await createClient()
 
     await respondConnectionRequest(supabase, current, id, accept)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: accept ? "network.connection_accept" : "network.connection_reject",
+      entityType: "connections",
+      entityId: id,
+    })
     revalidateAfterConnectionChange()
   })
 }
@@ -133,6 +158,12 @@ export async function removeConnectionAction(
     const supabase = await createClient()
 
     await removeConnection(supabase, current, id)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "network.connection_remove",
+      entityType: "connections",
+      entityId: id,
+    })
     revalidateAfterConnectionChange()
   })
 }
@@ -159,6 +190,12 @@ export async function blockUserAction(
     const supabase = await createClient()
 
     await blockUser(supabase, current, target)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "network.block",
+      entityType: "user_blocks",
+      entityId: target,
+    })
     revalidateAfterConnectionChange()
   })
 }
@@ -172,6 +209,12 @@ export async function unblockUserAction(
     const supabase = await createClient()
 
     await unblockUser(supabase, current, target)
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "network.unblock",
+      entityType: "user_blocks",
+      entityId: target,
+    })
     revalidateAfterConnectionChange()
   })
 }

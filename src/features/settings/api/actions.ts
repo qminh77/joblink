@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { sendEmailChangeVerification } from "@/features/auth/api/auth-mailer"
+import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
@@ -65,6 +66,13 @@ export async function changePasswordAction(
     return fail(tp("updateFailed"))
   }
 
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: "user.password_change",
+    entityType: "users",
+    entityId: current.appUser.id,
+  })
+
   return ok(undefined)
 }
 
@@ -85,6 +93,16 @@ export async function updatePrivacyAction(
       }),
       "unexpected",
     )
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "user.privacy_update",
+      entityType: "member_profiles",
+      entityId: current.appUser.id,
+      newData: {
+        profileVisibility: data.profileVisibility,
+        openToWork: data.openToWork,
+      },
+    })
     revalidateAll()
   })
 }
@@ -102,6 +120,13 @@ export async function updateCompanyOpenToHireAction(
       await updateCompanyOpenToHire(supabase, current.appUser.id, openToHire),
       "unexpected",
     )
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "company.open_to_hire_update",
+      entityType: "company_profiles",
+      entityId: current.appUser.id,
+      newData: { openToHire },
+    })
     revalidateAll()
   })
 }
@@ -132,6 +157,13 @@ export async function updateLocaleAction(
       // ignore
     }
 
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "user.locale_update",
+      entityType: "users",
+      entityId: current.appUser.id,
+      newData: { locale: data.locale },
+    })
     revalidateAll()
   })
 }
@@ -177,6 +209,14 @@ export async function updateAccountAction(
         await updateUserPhone(supabase, current.appUser.id, newPhone),
         "unexpected",
       )
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "user.phone_update",
+        entityType: "users",
+        entityId: current.appUser.id,
+        oldData: { phone: current.appUser.phone },
+        newData: { phone: newPhone },
+      })
     }
 
     revalidateAll()

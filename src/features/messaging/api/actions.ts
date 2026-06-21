@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
@@ -104,6 +105,13 @@ export async function sendMessageAction(
       senderName: current.profile.displayName,
       senderAvatarUrl: current.profile.avatarUrl,
       excerpt: excerpt(result.message.content),
+    })
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "messaging.send",
+      entityType: "messages",
+      entityId: parsed.data.conversationId,
+      newData: { recipientId: result.recipientId },
     })
   }
   return result
