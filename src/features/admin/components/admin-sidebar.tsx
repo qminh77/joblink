@@ -19,6 +19,7 @@ import {
   Settings,
   Tags,
   Users,
+  Shield,
   Menu,
 } from "lucide-react"
 
@@ -32,51 +33,52 @@ import {
 const GROUPS = [
   {
     key: "overview",
-    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
+    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, requiredPermission: null }],
   },
   {
     key: "management",
     items: [
-      { key: "users", href: "/admin/users", icon: Users },
-      { key: "companies", href: "/admin/companies", icon: Building2 },
-      { key: "jobs", href: "/admin/jobs", icon: Briefcase },
-      { key: "posts", href: "/admin/posts", icon: FileText },
+      { key: "users", href: "/admin/users", icon: Users, requiredPermission: "users.view" },
+      { key: "companies", href: "/admin/companies", icon: Building2, requiredPermission: "companies.view" },
+      { key: "jobs", href: "/admin/jobs", icon: Briefcase, requiredPermission: "jobs.view" },
+      { key: "posts", href: "/admin/posts", icon: FileText, requiredPermission: "posts.view" },
     ],
   },
   {
     key: "moderation",
     items: [
-      { key: "reports", href: "/admin/reports", icon: Flag },
-      { key: "appeals", href: "/admin/appeals", icon: Gavel },
-      { key: "auditLog", href: "/admin/audit-log", icon: ScrollText },
-      { key: "contactSubmissions", href: "/admin/contact-submissions", icon: HelpCircle },
+      { key: "reports", href: "/admin/reports", icon: Flag, requiredPermission: "reports.view" },
+      { key: "appeals", href: "/admin/appeals", icon: Gavel, requiredPermission: "appeals.view" },
+      { key: "auditLog", href: "/admin/audit-log", icon: ScrollText, requiredPermission: "audit.view" },
+      { key: "contactSubmissions", href: "/admin/contact-submissions", icon: HelpCircle, requiredPermission: "contacts.view" },
     ],
   },
   {
     key: "system",
     items: [
-      { key: "brand", href: "/admin/brand", icon: Palette },
-      { key: "reportTypes", href: "/admin/report-types", icon: Tags },
-      { key: "lookups", href: "/admin/lookups", icon: Database },
-      { key: "settings", href: "/admin/settings", icon: Settings },
+      { key: "roles", href: "/admin/roles", icon: Shield, requiredPermission: "roles.view" },
+      { key: "brand", href: "/admin/brand", icon: Palette, requiredPermission: "brand.view" },
+      { key: "reportTypes", href: "/admin/report-types", icon: Tags, requiredPermission: "report_types.view" },
+      { key: "lookups", href: "/admin/lookups", icon: Database, requiredPermission: "lookups.view" },
+      { key: "settings", href: "/admin/settings", icon: Settings, requiredPermission: "settings.view" },
     ],
   },
 ] as const
 
-export function AdminSidebar() {
+export function AdminSidebar({ permissions }: { permissions: string[] }) {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
 
   return (
     <aside className="hidden lg:flex flex-col w-56 shrink-0">
       <div className="sticky top-24 space-y-4">
-        <NavContent pathname={pathname} t={t} />
+        <NavContent pathname={pathname} t={t} permissions={permissions} />
       </div>
     </aside>
   )
 }
 
-export function AdminMobileNav() {
+export function AdminMobileNav({ permissions }: { permissions: string[] }) {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
   const [open, setOpen] = useState(false)
@@ -93,7 +95,7 @@ export function AdminMobileNav() {
           <SheetTitle className="text-lg font-bold">Admin Panel</SheetTitle>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <NavContent pathname={pathname} t={t} onNavigate={() => setOpen(false)} />
+          <NavContent pathname={pathname} t={t} onNavigate={() => setOpen(false)} permissions={permissions} />
         </div>
       </SheetContent>
     </Sheet>
@@ -104,10 +106,12 @@ function NavContent({
   pathname,
   t,
   onNavigate,
+  permissions,
 }: {
   pathname: string
   t: (key: string) => string
   onNavigate?: () => void
+  permissions: string[]
 }) {
   return (
     <>
@@ -118,6 +122,7 @@ function NavContent({
           pathname={pathname}
           t={t}
           onNavigate={onNavigate}
+          permissions={permissions}
         />
       ))}
     </>
@@ -281,24 +286,31 @@ function SidebarGroup({
   pathname,
   t,
   onNavigate,
+  permissions,
 }: {
   group: (typeof GROUPS)[number]
   pathname: string
   t: (key: string) => string
   onNavigate?: () => void
+  permissions: string[]
 }) {
-  // Always open if there's an active item inside, otherwise default open for overview, closed for others
-  const hasActive = group.items.some(
+  const visibleItems = group.items.filter(
+    (item) => !item.requiredPermission || permissions.includes(item.requiredPermission),
+  )
+
+  const hasActive = visibleItems.some(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   )
   const [isOpen, setIsOpen] = useState(hasActive || group.key === "overview")
 
-  const isSingleItem = group.items.length === 1 && group.key === "overview"
+  if (visibleItems.length === 0) return null
+
+  const isSingleItem = visibleItems.length === 1 && group.key === "overview"
 
   if (isSingleItem) {
     return (
       <SidebarItem
-        item={group.items[0]}
+        item={visibleItems[0]}
         pathname={pathname}
         t={t}
         onNavigate={onNavigate}
@@ -321,7 +333,7 @@ function SidebarGroup({
       </button>
       {isOpen && (
         <div className="space-y-0.5">
-          {group.items.map((item) => (
+          {visibleItems.map((item) => (
             <SidebarItem
               key={item.href}
               item={item}

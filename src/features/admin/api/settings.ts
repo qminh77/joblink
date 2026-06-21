@@ -8,7 +8,7 @@ import {
   verifySmtpTransport,
 } from "@/features/system-settings/api/smtp"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
 import {
   ALLOWED_SETTING_KEYS,
@@ -21,7 +21,7 @@ export async function loadSystemSettings(): Promise<{
   values: AdminSettingsMap
   groups: typeof SETTING_GROUPS
 }> {
-  await requireAdmin()
+  await requireAdminPermission("settings.view")
   const supabase = createAdminClient()
   const { data } = await supabase
     .from("system_settings")
@@ -42,7 +42,7 @@ export async function updateSystemSettings(
 ): Promise<{ ok: boolean; error?: string }> {
   const parsed = settingsUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("settings.edit")
   const supabase = createAdminClient()
 
   const changes: { key: string; value: AdminSettingsValue }[] = []
@@ -80,7 +80,7 @@ export type SmtpTestResult =
   | { ok: false; error: string }
 
 export async function testSmtpConnection(): Promise<SmtpTestResult> {
-  await requireAdmin()
+  await requireAdminPermission("settings.edit")
   const result = await verifySmtpTransport()
   if (!result.ok) return { ok: false, error: result.error }
   return { ok: true, messageId: result.messageId }
@@ -89,7 +89,7 @@ export async function testSmtpConnection(): Promise<SmtpTestResult> {
 export async function sendTestEmail(
   toEmail: string,
 ): Promise<SmtpTestResult> {
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("settings.edit")
   const target = (toEmail ?? "").trim() || current.appUser.email
   if (!target) return { ok: false, error: "missing_recipient" }
 

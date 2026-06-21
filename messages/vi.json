@@ -37,7 +37,8 @@
     "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
     "send": "Gửi",
     "viewAll": "Xem tất cả",
-    "justNow": "Vừa xong"
+    "justNow": "Vừa xong",
+    "actions": "Thao tác"
   },
   "nav": {
     "home": "Trang chủ",
@@ -1305,6 +1306,7 @@
       "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
       "lookups": "Danh mục",
+      "roles": "Quản lý quyền",
       "groups": {
         "overview": "Tổng quan",
         "management": "Quản lý",
@@ -1416,6 +1418,7 @@
     },
     "errors": {
       "forbidden": "Bạn không có quyền truy cập trang này",
+      "insufficientPermissions": "Bạn không có quyền thực hiện thao tác này",
       "loadFailed": "Không thể tải dữ liệu",
       "updateFailed": "Cập nhật thất bại",
       "actionFailed": "Hành động thất bại",
@@ -1630,6 +1633,37 @@
         "updated": "Đã cập nhật loại báo cáo",
         "deleted": "Đã xoá loại báo cáo"
       }
+    },
+    "roles": {
+      "title": "Quản lý quyền",
+      "subtitle": "Tạo và quản lý vai trò cùng quyền hạn trong hệ thống",
+      "searchPlaceholder": "Tìm vai trò...",
+      "name": "Tên",
+      "description": "Mô tả",
+      "permissions": "Quyền hạn",
+      "users": "Người dùng",
+      "add": "Thêm role",
+      "edit": "Chỉnh sửa",
+      "delete": "Xóa role",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "cancel": "Hủy",
+      "empty": "Chưa có role nào",
+      "confirmDelete": "Bạn có chắc muốn xóa role này?",
+      "searchEmpty": "Không tìm thấy vai trò",
+      "roleCount": "{count} vai trò",
+      "selectAll": "Chọn tất cả",
+      "deselectAll": "Bỏ chọn",
+      "selectedCount": "Đã chọn {selected}/{total} quyền",
+      "minOnePermission": "Phải chọn ít nhất 1 quyền",
+      "createSuccess": "Tạo role thành công",
+      "updateSuccess": "Cập nhật role thành công",
+      "deleteSuccess": "Xóa role thành công",
+      "confirmDeleteTitle": "Xác nhận xóa",
+      "permissionHint": "Chữ thường, underscore. VD: content_moderator",
+      "descriptionPlaceholder": "Mô tả ngắn về role này",
+      "permissionLabel": "Phân quyền",
+      "permissionRequired": "Bắt buộc"
     },
     "settings": {
       "title": "Cài đặt hệ thống",

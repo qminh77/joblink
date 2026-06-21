@@ -3,7 +3,7 @@
 -- PostgreSQL / Supabase
 -- Charset: UTF8
 -- 
--- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260620_056).
+-- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260621_071).
 -- ⮕ ĐÃ LOẠI các bảng legacy không dùng.
 -- ⮕ ĐÃ SỬA: create_job (FOREACH thiếu END LOOP), is_connected_with (thêm mới),
 --   interview_schedules (giữ lại vì schedule_interview dùng), storage uploads/cvs.
@@ -2414,8 +2414,21 @@ CREATE POLICY appeals_select_own ON public.appeals
 CREATE POLICY appeals_insert_own ON public.appeals
   FOR INSERT WITH CHECK (appellant_id = public.auth_user_id() AND public.is_active_user());
 
-CREATE POLICY audit_logs_admin_all ON public.audit_logs
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY audit_logs_admin_select ON public.audit_logs
+  FOR SELECT USING (public.is_admin());
+
+CREATE POLICY audit_logs_admin_insert ON public.audit_logs
+  FOR INSERT WITH CHECK (public.is_admin());
+
+CREATE POLICY audit_logs_authenticated_insert ON public.audit_logs
+  FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND actor_id = (
+      SELECT id FROM public.users
+      WHERE auth_id = auth.uid()
+      AND deleted_at IS NULL
+    )
+  );
 
 CREATE POLICY system_settings_admin_all ON public.system_settings
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
@@ -3795,6 +3808,40 @@ $$;
 GRANT EXECUTE ON FUNCTION public.set_default_member_cv(BIGINT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.count_applications_per_job(BIGINT[]) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_distinct_audit_actions() TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_audit_log_count(
+  p_search TEXT DEFAULT NULL,
+  p_action TEXT DEFAULT NULL,
+  p_entity_type TEXT DEFAULT NULL
+)
+RETURNS BIGINT
+LANGUAGE sql STABLE
+SET search_path = public
+AS $$
+  SELECT count(*)::bigint
+    FROM public.audit_logs a
+   WHERE (p_action IS NULL OR a.action = p_action)
+     AND (p_entity_type IS NULL OR a.entity_type = p_entity_type)
+     AND (p_search IS NULL OR p_search = ''
+          OR a.action ILIKE '%' || p_search || '%'
+          OR a.entity_type ILIKE '%' || p_search || '%'
+          OR a.reason ILIKE '%' || p_search || '%')
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_audit_log_count(TEXT, TEXT, TEXT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_distinct_audit_entity_types()
+RETURNS TABLE(entity_type TEXT)
+LANGUAGE sql STABLE
+SET search_path = public
+AS $$
+  SELECT DISTINCT a.entity_type
+    FROM public.audit_logs a
+   WHERE a.entity_type IS NOT NULL
+   ORDER BY a.entity_type
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_distinct_audit_entity_types() TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_post(
     p_content TEXT,
@@ -5834,6 +5881,74 @@ INSERT INTO public.job_positions (code, name, name_en, sort_order) VALUES
 ON CONFLICT (code) DO NOTHING;
 
 
+
+-- =============================================================================
+-- RBAC System — Role-Based Access Control
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS public.roles (
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(50) NOT NULL,
+    description TEXT NULL,
+    is_system   BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at  TIMESTAMPTZ NULL,
+    CONSTRAINT uk_roles_name UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS public.modules (
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(50) NOT NULL,
+    label       VARCHAR(100) NOT NULL,
+    sort_order  INT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_modules_name UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS public.actions (
+    id      SERIAL PRIMARY KEY,
+    name    VARCHAR(50) NOT NULL,
+    label   VARCHAR(100) NOT NULL,
+    CONSTRAINT uk_actions_name UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS public.permissions (
+    id        SERIAL PRIMARY KEY,
+    module_id INT NOT NULL REFERENCES public.modules(id) ON DELETE CASCADE,
+    action_id INT NOT NULL REFERENCES public.actions(id) ON DELETE CASCADE,
+    name      VARCHAR(100) NOT NULL,
+    label     VARCHAR(200) NOT NULL,
+    CONSTRAINT uk_permissions_name UNIQUE (name),
+    CONSTRAINT uk_permissions_module_action UNIQUE (module_id, action_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.role_permissions (
+    role_id       INT NOT NULL REFERENCES public.roles(id) ON DELETE CASCADE,
+    permission_id INT NOT NULL REFERENCES public.permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_roles_deleted    ON public.roles(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_roles_name       ON public.roles(name) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_rp_role          ON public.role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_rp_permission    ON public.role_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_mod  ON public.permissions(module_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_name ON public.permissions(name);
+
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role_id INT NULL REFERENCES public.roles(id);
+CREATE INDEX IF NOT EXISTS idx_users_role_id ON public.users(role_id) WHERE deleted_at IS NULL;
+
+ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.role_permissions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "roles_admin_all" ON public.roles FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "modules_authenticated_read" ON public.modules FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "actions_authenticated_read" ON public.actions FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "permissions_authenticated_read" ON public.permissions FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "role_permissions_admin_all" ON public.role_permissions FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- =============================================================================
 -- KẾT THÚC SCHEMA

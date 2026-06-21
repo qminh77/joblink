@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { AppealStatus } from "@/types/database"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
 import { appealActionSchema, type AppealActionInput } from "../schemas"
 
@@ -29,7 +29,7 @@ export type ListAppealsParams = {
 export async function listAdminAppeals(
   params: ListAppealsParams = {},
 ): Promise<AdminAppealRow[]> {
-  await requireAdmin()
+  await requireAdminPermission("appeals.view")
   const supabase = createAdminClient()
   const limit = Math.min(200, Math.max(10, params.limit ?? 100))
 
@@ -109,7 +109,7 @@ export async function applyAppealAction(
 ): Promise<{ ok: boolean; error?: string }> {
   const parsed = appealActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("appeals.moderate")
   const supabase = createAdminClient()
 
   const { data: target } = await supabase

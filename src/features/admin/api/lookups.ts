@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
 import {
   lookupCreateSchema,
@@ -74,7 +74,7 @@ type LooseListBuilder = Promise<{ data: RawLookupRow[] | null }> & {
 export async function listLookups(
   kind: AdminLookupKind,
 ): Promise<AdminLookupRow[]> {
-  await requireAdmin()
+  await requireAdminPermission("lookups.view")
   const supabase = createAdminClient() as unknown as LooseClient
   const table = KIND_TABLE[kind]
 
@@ -160,7 +160,7 @@ export async function createLookup(
     const issue = firstZodIssue(parsed)
     return { ok: false, error: issue?.message ?? "invalid_input", field: issue?.field }
   }
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("lookups.create")
   const supabase = createAdminClient() as unknown as LooseClient
   const table = KIND_TABLE[parsed.data.kind]
   const payload = buildPayload(parsed.data.kind, parsed.data)
@@ -191,7 +191,7 @@ export async function updateLookup(
     const issue = firstZodIssue(parsed)
     return { ok: false, error: issue?.message ?? "invalid_input", field: issue?.field }
   }
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("lookups.edit")
   const supabase = createAdminClient() as unknown as LooseClient
   const table = KIND_TABLE[parsed.data.kind]
   const payload = buildPayload(parsed.data.kind, parsed.data)
@@ -223,7 +223,7 @@ export async function deleteLookup(
 ): Promise<LookupActionResult> {
   const parsed = lookupDeleteSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("lookups.delete")
   const supabase = createAdminClient() as unknown as LooseClient
   const table = KIND_TABLE[parsed.data.kind]
 

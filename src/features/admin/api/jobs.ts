@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { JobStatus } from "@/lib/constants"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
 import { jobActionSchema, type JobActionInput } from "../schemas"
 
@@ -29,7 +29,7 @@ export type ListJobsParams = {
 export async function listAdminJobs(
   params: ListJobsParams = {},
 ): Promise<AdminJobRow[]> {
-  await requireAdmin()
+  await requireAdminPermission("jobs.view")
   const supabase = createAdminClient()
   const limit = Math.min(200, Math.max(10, params.limit ?? 100))
 
@@ -104,7 +104,7 @@ export async function applyJobAction(
   const parsed = jobActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("jobs.moderate")
   const supabase = createAdminClient()
 
   const { data: target } = await supabase

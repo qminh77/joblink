@@ -2,7 +2,7 @@ import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import type { AdminAuditLogEntry } from "../types"
 
 export type ListAuditParams = {
@@ -42,7 +42,7 @@ type RawRow = {
 export async function listAuditLogs(
   params: ListAuditParams = {},
 ): Promise<AuditLogPage> {
-  await requireAdmin()
+  await requireAdminPermission("audit.view")
   const supabase = createAdminClient()
   const limit = Math.min(100, Math.max(10, params.limit ?? 50))
 
@@ -104,7 +104,7 @@ export async function countAuditLogs(params: {
   action?: string
   entityType?: string
 }): Promise<number> {
-  await requireAdmin()
+  await requireAdminPermission("audit.view")
   const supabase = createAdminClient()
   const { data } = await supabase.rpc("get_audit_log_count", {
     p_search: params.search?.trim() || null,
@@ -118,7 +118,7 @@ export async function countAuditLogs(params: {
  * Get distinct action values for the filter dropdown. O(1) — cached RPC.
  */
 export async function listDistinctActions(): Promise<string[]> {
-  await requireAdmin()
+  await requireAdminPermission("audit.view")
   const supabase = createAdminClient()
   const { data } = await supabase.rpc("get_distinct_audit_actions")
   return ((data ?? []) as Array<{ action: string }>).map((r) => r.action)
@@ -128,7 +128,7 @@ export async function listDistinctActions(): Promise<string[]> {
  * Get distinct entity_type values for the filter dropdown. O(1).
  */
 export async function listDistinctEntityTypes(): Promise<string[]> {
-  await requireAdmin()
+  await requireAdminPermission("audit.view")
   const supabase = createAdminClient()
   const { data } = await supabase.rpc("get_distinct_audit_entity_types")
   return ((data ?? []) as Array<{ entity_type: string }>).map(

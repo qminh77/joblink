@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireAdmin } from "@/features/admin/api/admin-guard"
+import { requireAdminPermission } from "@/features/admin/api/admin-guard"
 import { writeAuditLog } from "@/features/admin/api/audit-log"
 
 import { contactReplySchema } from "../schemas"
@@ -13,14 +13,14 @@ import {
 import type { ContactSubmissionActionResult } from "../types"
 
 export async function loadContactSubmissions() {
-  await requireAdmin()
+  await requireAdminPermission("contacts.view")
   return listContactSubmissions()
 }
 
 export async function replyContactSubmission(
   input: { id: number; replyMessage: string },
 ): Promise<ContactSubmissionActionResult> {
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("contacts.reply")
   const parsed = contactReplySchema.safeParse(input)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
@@ -50,7 +50,7 @@ export async function replyContactSubmission(
 export async function closeContactSubmission(
   id: number,
 ): Promise<ContactSubmissionActionResult> {
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("contacts.reply")
   const result = await updateContactStatus(id, "closed")
   if (!result.ok) return result
 

@@ -48,6 +48,7 @@ export type AdminUserRow = {
   lastLoginAt: string | null
   displayName: string
   avatarUrl: string | null
+  roleId: number | null
 }
 
 export type AdminUserListResult = {

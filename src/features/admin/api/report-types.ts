@@ -5,7 +5,7 @@ import { z } from "zod"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
 
 const reportTypeSchema = z.object({
@@ -33,7 +33,7 @@ export type ReportTypeRow = {
 type ActionResult = { ok: true } | { ok: false; error: string }
 
 export async function listReportTypes(): Promise<ReportTypeRow[]> {
-  await requireAdmin()
+  await requireAdminPermission("report_types.view")
   const supabase = createAdminClient()
 
   const { data, error } = await (supabase
@@ -70,7 +70,7 @@ export async function createReportType(
     return { ok: false, error: issue?.message ?? "invalid_input" }
   }
 
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("report_types.create")
   const supabase = createAdminClient()
 
   const payload: Record<string, unknown> = {
@@ -114,7 +114,7 @@ export async function updateReportType(
     return { ok: false, error: issue?.message ?? "invalid_input" }
   }
 
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("report_types.edit")
   const supabase = createAdminClient()
 
   const prev = await (supabase
@@ -168,7 +168,7 @@ export async function deleteReportType(
   const parsed = z.coerce.number().int().positive().safeParse(id)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("report_types.delete")
   const supabase = createAdminClient()
 
   const target = await (supabase

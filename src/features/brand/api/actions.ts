@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireAdmin } from "@/features/admin/api/admin-guard"
+import { requireAdminPermission } from "@/features/admin/api/admin-guard"
 import { writeAuditLog } from "@/features/admin/api/audit-log"
 
 import { brandUpdateSchema } from "../schemas"
@@ -11,14 +11,14 @@ import { uploadBrandImage, deleteBrandImage } from "./storage"
 import type { BrandSettings } from "../types"
 
 export async function getBrandSettings(): Promise<BrandSettings> {
-  await requireAdmin()
+  await requireAdminPermission("brand.view")
   return loadBrandSettings()
 }
 
 export async function saveBrandSettings(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("brand.edit")
 
   const raw: Record<string, string | null> = {}
   for (const key of ["siteName", "siteDescription", "logoUrl", "faviconUrl"] as const) {

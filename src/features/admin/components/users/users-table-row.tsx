@@ -1,13 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { useTranslations, useFormatter } from "next-intl"
 import { RotateCcw, Shield, ShieldOff } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { AdminUserRow } from "@/features/admin/types"
+import type { AdminRoleRow } from "@/features/admin/api/roles"
+import { updateUserAdminRole, updateUserRbacRole } from "@/features/admin/api/users"
 import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 import type { UserActionType } from "./users-action-dialog"
@@ -25,10 +36,12 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function UsersTableRow({
   user,
+  roles,
   pending,
   onAction,
 }: {
   user: AdminUserRow
+  roles: AdminRoleRow[]
   pending: boolean
   onAction: (target: { user: AdminUserRow; action: UserActionType }) => void
 }) {
@@ -36,6 +49,39 @@ export function UsersTableRow({
   const tRoles = useTranslations("admin.users.roles")
   const tStatuses = useTranslations("admin.users.statuses")
   const format = useFormatter()
+  const [updatingRole, setUpdatingRole] = useState(false)
+  const [updatingRbac, setUpdatingRbac] = useState(false)
+
+  const handleRoleChange = async (newRole: string) => {
+    if (newRole === user.role) return
+    setUpdatingRole(true)
+    try {
+      const result = await updateUserAdminRole(user.id, newRole)
+      if (result.ok) {
+        toast.success("Đã cập nhật loại tài khoản")
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      setUpdatingRole(false)
+    }
+  }
+
+  const handleRbacRoleChange = async (newRoleIdStr: string) => {
+    const newRoleId = newRoleIdStr === "none" ? null : parseInt(newRoleIdStr, 10)
+    if (newRoleId === user.roleId) return
+    setUpdatingRbac(true)
+    try {
+      const result = await updateUserRbacRole(user.id, newRoleId)
+      if (result.ok) {
+        toast.success("Đã cập nhật quyền (RBAC)")
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      setUpdatingRbac(false)
+    }
+  }
 
   return (
     <tr className="hover:bg-muted/20">
@@ -63,9 +109,41 @@ export function UsersTableRow({
         </Link>
       </td>
       <td className="px-4 py-3">
-        <Badge variant="outline" className="text-xs">
-          {tRoles(user.role)}
-        </Badge>
+        <Select
+          value={user.role}
+          onValueChange={handleRoleChange}
+          disabled={pending || updatingRole || user.role === "admin"}
+        >
+          <SelectTrigger className="w-[110px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="member">{tRoles("member")}</SelectItem>
+            <SelectItem value="company">{tRoles("company")}</SelectItem>
+            <SelectItem value="admin">{tRoles("admin")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </td>
+      <td className="px-4 py-3">
+        <Select
+          value={user.roleId ? String(user.roleId) : "none"}
+          onValueChange={handleRbacRoleChange}
+          disabled={pending || updatingRbac || user.role === "admin"}
+        >
+          <SelectTrigger className="w-[140px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">
+              <span className="text-muted-foreground italic">Không gán</span>
+            </SelectItem>
+            {roles.map(r => (
+              <SelectItem key={r.id} value={String(r.id)}>
+                {r.name} {r.is_system && "(Hệ thống)"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </td>
       <td className="px-4 py-3">
         <Badge

@@ -21,6 +21,7 @@ export type AppUserRow = {
   auth_id: string
   email: string
   role: UserRole
+  role_id: number | null
   status: UserStatus
   email_verified_at: string | null
   phone: string | null
@@ -819,6 +820,11 @@ export type Database = {
           reviewed_at?: string | null
         }
       >
+      roles: TableDef<RoleRow>
+      modules: TableDef<ModuleRow>
+      actions: TableDef<ActionRow>
+      permissions: TableDef<PermissionRow>
+      role_permissions: TableDef<RolePermissionRow>
     }
     Views: Record<string, never>
     Functions: {
@@ -1108,4 +1114,64 @@ export type Database = {
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
+}
+
+// RBAC Table Types
+export type RoleRow = {
+  id: number
+  name: string
+  description: string | null
+  is_system: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type ModuleRow = {
+  id: number
+  name: string
+  label: string
+  sort_order: number
+}
+
+export type ActionRow = {
+  id: number
+  name: string
+  label: string
+}
+
+export type PermissionRow = {
+  id: number
+  module_id: number
+  action_id: number
+  name: string
+  label: string
+}
+
+export type RolePermissionRow = {
+  role_id: number
+  permission_id: number
+}
+
+// RBAC View Types
+export type AdminRoleView = {
+  id: number
+  name: string
+  description: string | null
+  is_system: boolean
+  created_at: string
+  updated_at: string
+  permission_count: number
+  user_count: number
+}
+
+export type AdminPermissionView = {
+  id: number
+  name: string
+  label: string
+  module_name: string
+  module_label: string
+  module_sort_order: number
+  action_name: string
+  action_label: string
 }

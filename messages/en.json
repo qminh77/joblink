@@ -37,7 +37,8 @@
     "unknownError": "An unknown error occurred. Please try again.",
     "send": "Send",
     "viewAll": "View all",
-    "justNow": "Just now"
+    "justNow": "Just now",
+    "actions": "Actions"
   },
   "nav": {
     "home": "Home",
@@ -1305,6 +1306,7 @@
       "settings": "Settings",
       "reportTypes": "Report types",
       "lookups": "Lookups",
+      "roles": "Roles",
       "groups": {
         "overview": "Overview",
         "management": "Management",
@@ -1416,6 +1418,7 @@
     },
     "errors": {
       "forbidden": "You do not have access to this page",
+      "insufficientPermissions": "You do not have permission to perform this action",
       "loadFailed": "Failed to load data",
       "updateFailed": "Update failed",
       "actionFailed": "Action failed",
@@ -1630,6 +1633,37 @@
         "updated": "Report type updated",
         "deleted": "Report type deleted"
       }
+    },
+    "roles": {
+      "title": "Roles",
+      "subtitle": "Create and manage roles with granular permissions",
+      "searchPlaceholder": "Search roles...",
+      "name": "Name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "users": "Users",
+      "add": "Add role",
+      "edit": "Edit",
+      "delete": "Delete role",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "empty": "No roles yet",
+      "confirmDelete": "Delete this role?",
+      "searchEmpty": "No roles found",
+      "roleCount": "{count} roles",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "selectedCount": "Selected {selected}/{total} permissions",
+      "minOnePermission": "Must select at least 1 permission",
+      "createSuccess": "Role created successfully",
+      "updateSuccess": "Role updated successfully",
+      "deleteSuccess": "Role deleted successfully",
+      "confirmDeleteTitle": "Confirm deletion",
+      "permissionHint": "Lowercase, underscore. e.g. content_moderator",
+      "descriptionPlaceholder": "Brief description of this role",
+      "permissionLabel": "Permissions",
+      "permissionRequired": "Required"
     },
     "settings": {
       "title": "System settings",

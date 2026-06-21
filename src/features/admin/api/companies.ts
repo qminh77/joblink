@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import { companyActionSchema, type CompanyActionInput } from "../schemas"
 import {
   applyCompanyVerificationAction,
@@ -25,7 +25,7 @@ export type {
 export async function listAdminCompanies(
   params: ListCompaniesParams = {},
 ): Promise<AdminCompanyListResult> {
-  await requireAdmin()
+  await requireAdminPermission("companies.view")
   const supabase = createAdminClient()
   return loadAdminCompanies(supabase, params)
 }
@@ -39,7 +39,7 @@ export async function applyCompanyAction(
     return { ok: false, error: "reason_required" }
   }
 
-  const current = await requireAdmin()
+  const current = await requireAdminPermission("companies.moderate")
   const supabase = createAdminClient()
   const result = await applyCompanyVerificationAction(
     supabase,

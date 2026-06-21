@@ -7,7 +7,7 @@ import {
   USER_STATUSES,
 } from "@/lib/constants"
 
-import { requireAdmin } from "./admin-guard"
+import { requireAdminPermission } from "./admin-guard"
 import type { AdminDashboardData, AdminRecentAction } from "../types"
 
 const EMPTY: AdminDashboardData = {
@@ -81,7 +81,7 @@ async function distOf<K extends string>(
 }
 
 export async function loadAdminDashboard(): Promise<AdminDashboardData> {
-  await requireAdmin()
+  await requireAdminPermission("dashboard.view")
   const supabase = createAdminClient() as unknown as LooseClient
   const sevenDaysAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
 

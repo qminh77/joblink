@@ -1,4 +1,5 @@
 import { listAdminUsers } from "@/features/admin/api/users"
+import { listAdminRoles } from "@/features/admin/api/roles"
 import { UsersPanel } from "@/features/admin/components/users-panel"
 import {
   USER_ROLES,
@@ -47,9 +48,12 @@ export default async function AdminUsersPage({
     pageSize: 20,
   })
 
+  const roles = await listAdminRoles()
+
   return (
     <UsersPanel
       initial={data}
+      roles={roles}
       query={{ search, role, status, page }}
     />
   )

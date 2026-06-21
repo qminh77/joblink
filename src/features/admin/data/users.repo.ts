@@ -14,6 +14,7 @@ export type AdminUserRecord = {
   status: UserStatus
   created_at: string
   last_login_at: string | null
+  role_id: number | null
 }
 
 export type UserProfileNameRow = {
@@ -41,7 +42,7 @@ export async function listAdminUserRows(
 
   let query = supabase
     .from("users")
-    .select("id, email, role, status, created_at, last_login_at", {
+    .select("id, email, role, status, created_at, last_login_at, role_id", {
       count: "exact",
     })
     .is("deleted_at", null)
@@ -78,7 +79,7 @@ export async function listAdminUserExportRows(
 ) {
   let query = supabase
     .from("users")
-    .select("id, email, role, status, created_at, last_login_at")
+    .select("id, email, role, status, created_at, last_login_at, role_id")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(10000)

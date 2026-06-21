@@ -56,6 +56,7 @@ export async function loadAdminUsers(
     lastLoginAt: row.last_login_at,
     displayName: profiles[row.id]?.displayName ?? row.email,
     avatarUrl: profiles[row.id]?.avatarUrl ?? null,
+    roleId: row.role_id,
   }))
 
   return { items, total: count, page, pageSize }

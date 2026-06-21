@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { applyUserAction, exportUsersCsvAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
+import type { AdminRoleRow } from "@/features/admin/api/roles"
 import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
 import { type UserActionType, UsersActionDialog } from "./users/users-action-dialog"
 import { UsersTableRow } from "./users/users-table-row"
@@ -27,9 +28,11 @@ import { UsersTableRow } from "./users/users-table-row"
 
 export function UsersPanel({
   initial,
+  roles,
   query,
 }: {
   initial: AdminUserListResult
+  roles: AdminRoleRow[]
   query: {
     search?: string
     role?: string
@@ -210,7 +213,10 @@ export function UsersPanel({
               <tr className="border-b border-border/30 bg-muted/20">
                 <th className="text-left px-4 py-3 font-semibold">User</th>
                 <th className="text-left px-4 py-3 font-semibold">
-                  {t("role")}
+                  Account Type
+                </th>
+                <th className="text-left px-4 py-3 font-semibold">
+                  RBAC Role
                 </th>
                 <th className="text-left px-4 py-3 font-semibold">
                   {t("status")}
@@ -238,6 +244,7 @@ export function UsersPanel({
                   <UsersTableRow
                     key={user.id}
                     user={user}
+                    roles={roles}
                     pending={pending}
                     onAction={setConfirmTarget}
                   />
