@@ -1601,7 +1601,11 @@
       "allEntities": "All entities",
       "searchPlaceholder": "Search by action, entity...",
       "empty": "No log entries yet",
-      "total": "{count} entries"
+      "total": "{count} entries",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "loadMore": "Load more",
+      "loading": "Loading..."
     },
     "reportTypes": {
       "title": "Report types",

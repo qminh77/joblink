@@ -1065,6 +1065,18 @@ export type Database = {
         Args: Record<string, never>
         Returns: { action: string }[]
       }
+      get_audit_log_count: {
+        Args: {
+          p_search?: string | null
+          p_action?: string | null
+          p_entity_type?: string | null
+        }
+        Returns: number
+      }
+      get_distinct_audit_entity_types: {
+        Args: Record<string, never>
+        Returns: { entity_type: string }[]
+      }
       share_post: {
         Args: {
           p_content: string

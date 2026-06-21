@@ -1601,7 +1601,11 @@
       "allEntities": "Tất cả đối tượng",
       "searchPlaceholder": "Tìm theo hành động, đối tượng...",
       "empty": "Chưa có nhật ký nào",
-      "total": "{count} bản ghi"
+      "total": "{count} bản ghi",
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "loadMore": "Xem thêm",
+      "loading": "Đang tải..."
     },
     "reportTypes": {
       "title": "Loại báo cáo",

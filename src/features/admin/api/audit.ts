@@ -10,11 +10,20 @@ export type ListAuditParams = {
   action?: string
   entityType?: string
   limit?: number
+  cursor?: number | null
+}
+
+export type AuditLogPage = {
+  items: AdminAuditLogEntry[]
+  nextCursor: number | null
+  total: number
 }
 
 type RawRow = {
   id: number
   actor_id: number | null
+  actor_email: string | null
+  actor_name: string | null
   action: string
   entity_type: string | null
   entity_id: number | null
@@ -25,21 +34,29 @@ type RawRow = {
   created_at: string
 }
 
+/**
+ * Load a page of audit log entries using the v_admin_audit_log view.
+ * Actor resolution is done by the DB view (single query, O(1) JOIN).
+ * Cursor-based pagination: pass the last item's id as `cursor` to get the next page.
+ */
 export async function listAuditLogs(
   params: ListAuditParams = {},
-): Promise<AdminAuditLogEntry[]> {
+): Promise<AuditLogPage> {
   await requireAdmin()
   const supabase = createAdminClient()
-  const limit = Math.min(500, Math.max(20, params.limit ?? 100))
+  const limit = Math.min(100, Math.max(10, params.limit ?? 50))
 
   let query = supabase
-    .from("audit_logs")
+    .from("v_admin_audit_log")
     .select(
-      "id, actor_id, action, entity_type, entity_id, old_data, new_data, reason, ip_address, created_at",
+      "id, actor_id, actor_email, actor_name, action, entity_type, entity_id, old_data, new_data, reason, ip_address, created_at",
     )
-    .order("created_at", { ascending: false })
-    .limit(limit)
+    .order("id", { ascending: false })
+    .limit(limit + 1) // fetch one extra to detect next page
 
+  if (params.cursor) {
+    query = query.lt("id", params.cursor)
+  }
   if (params.action?.trim()) query = query.eq("action", params.action.trim())
   if (params.entityType?.trim())
     query = query.eq("entity_type", params.entityType.trim())
@@ -47,69 +64,24 @@ export async function listAuditLogs(
   if (params.search?.trim()) {
     const q = params.search.trim()
     query = query.or(
-      `action.ilike.%${q}%,entity_type.ilike.%${q}%,reason.ilike.%${q}%`,
+      `action.ilike.%${q}%,entity_type.ilike.%${q}%,reason.ilike.%${q}%,actor_name.ilike.%${q}%,actor_email.ilike.%${q}%`,
     )
   }
 
   const { data, error } = await query
-  if (error || !data) return []
+  if (error || !data) return { items: [], nextCursor: null, total: 0 }
 
   const rows = data as unknown as RawRow[]
+  const hasMore = rows.length > limit
+  const items = hasMore ? rows.slice(0, limit) : rows
+  const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null
 
-  const actorIds = [
-    ...new Set(
-      rows
-        .map((r) => r.actor_id)
-        .filter((v): v is number => typeof v === "number"),
-    ),
-  ]
-  const actorMap: Record<
-    number,
-    { email: string | null; name: string | null }
-  > = {}
-  if (actorIds.length > 0) {
-    const [{ data: users }, { data: members }, { data: companies }] =
-      await Promise.all([
-        supabase.from("users").select("id, email").in("id", actorIds),
-        supabase
-          .from("member_profiles")
-          .select("user_id, full_name")
-          .in("user_id", actorIds)
-          .is("deleted_at", null),
-        supabase
-          .from("company_profiles")
-          .select("user_id, name")
-          .in("user_id", actorIds)
-          .is("deleted_at", null),
-      ])
-    for (const u of (users ?? []) as Array<{ id: number; email: string }>) {
-      actorMap[u.id] = { email: u.email, name: null }
-    }
-    for (const m of (members ?? []) as Array<{
-      user_id: number
-      full_name: string
-    }>) {
-      const entry = actorMap[m.user_id] ?? { email: null, name: null }
-      entry.name = m.full_name
-      actorMap[m.user_id] = entry
-    }
-    for (const c of (companies ?? []) as Array<{
-      user_id: number
-      name: string
-    }>) {
-      const entry = actorMap[c.user_id] ?? { email: null, name: null }
-      entry.name = c.name
-      actorMap[c.user_id] = entry
-    }
-  }
-
-  return rows.map((r) => {
-    const actor = r.actor_id != null ? actorMap[r.actor_id] : null
-    return {
+  return {
+    items: items.map((r) => ({
       id: r.id,
       actorId: r.actor_id,
-      actorName: actor?.name ?? null,
-      actorEmail: actor?.email ?? null,
+      actorName: r.actor_name ?? null,
+      actorEmail: r.actor_email ?? null,
       action: r.action,
       entityType: r.entity_type,
       entityId: r.entity_id,
@@ -118,13 +90,48 @@ export async function listAuditLogs(
       reason: r.reason,
       ipAddress: r.ip_address,
       createdAt: r.created_at,
-    }
-  })
+    })),
+    nextCursor,
+    total: 0, // populated separately by countAuditLogs
+  }
 }
 
+/**
+ * Count total entries matching filters. O(1) — single COUNT query.
+ */
+export async function countAuditLogs(params: {
+  search?: string
+  action?: string
+  entityType?: string
+}): Promise<number> {
+  await requireAdmin()
+  const supabase = createAdminClient()
+  const { data } = await supabase.rpc("get_audit_log_count", {
+    p_search: params.search?.trim() || null,
+    p_action: params.action?.trim() || null,
+    p_entity_type: params.entityType?.trim() || null,
+  })
+  return Number(data ?? 0)
+}
+
+/**
+ * Get distinct action values for the filter dropdown. O(1) — cached RPC.
+ */
 export async function listDistinctActions(): Promise<string[]> {
   await requireAdmin()
   const supabase = createAdminClient()
   const { data } = await supabase.rpc("get_distinct_audit_actions")
   return ((data ?? []) as Array<{ action: string }>).map((r) => r.action)
+}
+
+/**
+ * Get distinct entity_type values for the filter dropdown. O(1).
+ */
+export async function listDistinctEntityTypes(): Promise<string[]> {
+  await requireAdmin()
+  const supabase = createAdminClient()
+  const { data } = await supabase.rpc("get_distinct_audit_entity_types")
+  return ((data ?? []) as Array<{ entity_type: string }>).map(
+    (r) => r.entity_type,
+  )
 }

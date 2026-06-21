@@ -1,4 +1,9 @@
-import { listAuditLogs, listDistinctActions } from "@/features/admin/api/audit"
+import {
+  countAuditLogs,
+  listAuditLogs,
+  listDistinctActions,
+  listDistinctEntityTypes,
+} from "@/features/admin/api/audit"
 import { AuditPanel } from "@/features/admin/components/audit-panel"
 
 export const dynamic = "force-dynamic"
@@ -18,16 +23,23 @@ export default async function AdminAuditLogPage({
     typeof params.entity === "string" && params.entity !== "all"
       ? params.entity
       : undefined
+  const cursor =
+    typeof params.cursor === "string" ? Number(params.cursor) || null : null
 
-  const [entries, actions] = await Promise.all([
-    listAuditLogs({ search, action, entityType, limit: 200 }),
+  const [page, total, actions, entityTypes] = await Promise.all([
+    listAuditLogs({ search, action, entityType, cursor }),
+    countAuditLogs({ search, action, entityType }),
     listDistinctActions(),
+    listDistinctEntityTypes(),
   ])
 
   return (
     <AuditPanel
-      entries={entries}
+      entries={page.items}
+      nextCursor={page.nextCursor}
+      total={total}
       actions={actions}
+      entityTypes={entityTypes}
       query={{ search, action, entityType }}
     />
   )
