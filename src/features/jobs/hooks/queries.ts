@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import type { JobsListPage, SavedJobsPage } from "../types"
 import {
@@ -26,6 +26,7 @@ export function useJobsList(params: JobsQueryParams) {
       })
     },
     initialData: params.initialData,
+    placeholderData: keepPreviousData,
     staleTime: 15_000,
   })
 }

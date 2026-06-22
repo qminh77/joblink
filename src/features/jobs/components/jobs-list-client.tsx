@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Loader2, Search, SlidersHorizontal } from "lucide-react"
@@ -42,14 +42,22 @@ export function JobsListClient({
   const tAlerts = useTranslations("jobs.alerts")
 
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [provinceId, setProvinceId] = useState<number | null>(null)
   const [typeIds, setTypeIds] = useState<number[]>([])
   const [modeIds, setModeIds] = useState<number[]>([])
   const [page, setPage] = useState(0)
   const [showFiltersMobile, setShowFiltersMobile] = useState(false)
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [search])
+
   const query = useJobsList({
-    search,
+    search: debouncedSearch,
     provinceId,
     jobTypeIds: typeIds,
     workModeIds: modeIds,
@@ -85,17 +93,17 @@ export function JobsListClient({
   // UC-57: bộ lọc hiện tại + tên gợi ý để lưu thành cảnh báo việc làm.
   const alertFilters = useMemo<JobAlertFilters>(
     () => ({
-      search: search.trim() || null,
+      search: debouncedSearch.trim() || null,
       provinceId,
       jobTypeIds: typeIds,
       workModeIds: modeIds,
     }),
-    [search, provinceId, typeIds, modeIds],
+    [debouncedSearch, provinceId, typeIds, modeIds],
   )
 
   const alertName = useMemo(() => {
     const parts: string[] = []
-    if (search.trim()) parts.push(search.trim())
+    if (debouncedSearch.trim()) parts.push(debouncedSearch.trim())
     const province = provinces.find((p) => p.id === provinceId)
     if (province) parts.push(province.name)
     for (const id of typeIds) {
@@ -107,7 +115,7 @@ export function JobsListClient({
       if (wm) parts.push(wm.name)
     }
     return parts.join(" · ").slice(0, 160) || tAlerts("allJobs")
-  }, [search, provinceId, typeIds, modeIds, provinces, jobTypes, workModes, tAlerts])
+  }, [debouncedSearch, provinceId, typeIds, modeIds, provinces, jobTypes, workModes, tAlerts])
 
   return (
     <div className="space-y-6">

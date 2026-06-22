@@ -144,7 +144,7 @@ export async function loadPostComments(
 ): Promise<FeedComment[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc("get_post_comments", {
+  const { data, error } = await supabase.rpc("get_post_comments" as any, {
     p_post_id: postId,
     p_limit: limit,
   })

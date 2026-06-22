@@ -119,7 +119,7 @@ export async function togglePostReactionRpc(
   postId: number,
   reactionType: PostReactionType,
 ) {
-  const { data, error } = await supabase.rpc("toggle_post_reaction", {
+  const { data, error } = await supabase.rpc("toggle_post_reaction" as any, {
     p_post_id: postId,
     p_reaction_type: reactionType,
   })
