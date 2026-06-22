@@ -11,7 +11,7 @@ import { translateMessagingError } from "../lib/translate-error"
 import type { ConversationMessagesPage, MessageItem, MessagingOverview } from "../types"
 import { MESSAGING_MESSAGES_KEY, MESSAGING_OVERVIEW_KEY } from "./keys"
 import { invalidateMessaging } from "./shared"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 
 type SendMessageVars = { conversationId: number; content: string }
 
@@ -76,7 +76,7 @@ export function useSendMessage(currentUserId: number) {
       })
 
       // Send broadcast to recipient
-      const supabase = createBrowserClient()
+      const supabase = createClient()
       supabase.channel(`messaging-${recipientId}`).send({
         type: "broadcast",
         event: "new_message",
