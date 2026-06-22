@@ -235,21 +235,11 @@ FROM public.roles r, public.permissions p
 WHERE r.name = 'admin'
 ON CONFLICT DO NOTHING;
 
--- Member: dashboard.view only
+-- Member: no admin-panel permissions by default.
 DELETE FROM public.role_permissions WHERE role_id = (SELECT id FROM public.roles WHERE name = 'member');
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM public.roles r, public.permissions p
-WHERE r.name = 'member' AND p.name = 'dashboard.view'
-ON CONFLICT DO NOTHING;
 
--- Company: dashboard.view
+-- Company: no admin-panel permissions by default.
 DELETE FROM public.role_permissions WHERE role_id = (SELECT id FROM public.roles WHERE name = 'company');
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM public.roles r, public.permissions p
-WHERE r.name = 'company' AND p.name = 'dashboard.view'
-ON CONFLICT DO NOTHING;
 
 -- Content Moderator: posts, reports, appeals, audit
 DELETE FROM public.role_permissions WHERE role_id = (SELECT id FROM public.roles WHERE name = 'content_moderator');
@@ -299,6 +289,93 @@ FROM public.roles r
 WHERE u.role = r.name AND u.role_id IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON public.users(role_id) WHERE deleted_at IS NULL;
+
+-- Admin remains full access even when future permissions are added.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.users u
+      LEFT JOIN public.roles r
+        ON r.id = u.role_id
+       AND r.deleted_at IS NULL
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+       AND (u.role = 'admin' OR r.name = 'admin')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.has_permission(
+    p_user_id BIGINT,
+    p_permission_name TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.users u
+      LEFT JOIN public.roles r
+        ON r.id = u.role_id
+       AND r.deleted_at IS NULL
+     WHERE u.id = p_user_id
+       AND u.deleted_at IS NULL
+       AND (u.role = 'admin' OR r.name = 'admin')
+  )
+  OR EXISTS (
+    SELECT 1
+      FROM public.users u
+      JOIN public.role_permissions rp ON rp.role_id = u.role_id
+      JOIN public.permissions p ON p.id = rp.permission_id
+     WHERE u.id = p_user_id
+       AND u.deleted_at IS NULL
+       AND p.name = p_permission_name
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.user_has_permission(p_permission_name TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.has_permission(public.auth_user_id(), p_permission_name);
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_permissions(p_user_id BIGINT)
+RETURNS TABLE(permission_name TEXT, module_name TEXT, action_name TEXT)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.name::TEXT, m.name::TEXT, a.name::TEXT
+    FROM public.users u
+    JOIN public.role_permissions rp ON rp.role_id = u.role_id
+    JOIN public.permissions p ON p.id = rp.permission_id
+    JOIN public.modules m ON m.id = p.module_id
+    JOIN public.actions a ON a.id = p.action_id
+   WHERE u.id = p_user_id
+     AND u.deleted_at IS NULL
+  UNION
+  SELECT p.name::TEXT, m.name::TEXT, a.name::TEXT
+    FROM public.users u
+    CROSS JOIN public.permissions p
+    JOIN public.modules m ON m.id = p.module_id
+    JOIN public.actions a ON a.id = p.action_id
+    LEFT JOIN public.roles r
+      ON r.id = u.role_id
+     AND r.deleted_at IS NULL
+   WHERE u.id = p_user_id
+     AND u.deleted_at IS NULL
+     AND (u.role = 'admin' OR r.name = 'admin');
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.has_permission(BIGINT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.user_has_permission(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_permissions(BIGINT) TO anon, authenticated;
 
 -- =============================================================================
 -- 10. RLS POLICIES (drop + recreate = idempotent)

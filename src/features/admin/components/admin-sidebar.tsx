@@ -33,7 +33,7 @@ import {
 const GROUPS = [
   {
     key: "overview",
-    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, requiredPermission: null }],
+    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, requiredPermission: "dashboard.view" }],
   },
   {
     key: "management",

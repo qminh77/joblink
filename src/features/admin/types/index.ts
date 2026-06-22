@@ -60,7 +60,7 @@ export type AdminUserListResult = {
 
 export type ListUsersParams = {
   search?: string
-  role?: UserRole | "all"
+  roleId?: number | "all"
   status?: UserStatus | "all"
   page?: number
   pageSize?: number
@@ -68,7 +68,7 @@ export type ListUsersParams = {
 
 export type ExportUsersParams = {
   search?: string
-  role?: string
+  roleId?: string
   status?: string
 }
 

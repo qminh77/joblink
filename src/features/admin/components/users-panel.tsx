@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useFormatter, useTranslations } from "next-intl"
-import { Download, Filter, Search, Shield, ShieldOff, RotateCcw } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { Download, Filter, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,7 @@ import {
 import { applyUserAction, exportUsersCsvAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
 import type { AdminRoleRow } from "@/features/admin/api/roles"
-import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
+import { USER_STATUSES } from "@/lib/constants"
 import { type UserActionType, UsersActionDialog } from "./users/users-action-dialog"
 import { UsersTableRow } from "./users/users-table-row"
 
@@ -43,10 +42,8 @@ export function UsersPanel({
   const router = useRouter()
   const searchParams = useSearchParams()
   const t = useTranslations("admin.users")
-  const tRoles = useTranslations("admin.users.roles")
   const tStatuses = useTranslations("admin.users.statuses")
   const tCommon = useTranslations("common")
-  const format = useFormatter()
 
   const [search, setSearch] = useState(query.search ?? "")
   const [exporting, setExporting] = useState(false)
@@ -78,7 +75,7 @@ export function UsersPanel({
     try {
       const result = await exportUsersCsvAction({
         search: query.search,
-        role: query.role,
+        roleId: query.role,
         status: query.status,
       })
       if (!result.ok) {
@@ -167,9 +164,10 @@ export function UsersPanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allRoles")}</SelectItem>
-            {USER_ROLES.map((r) => (
-              <SelectItem key={r} value={r}>
-                {tRoles(r)}
+            {roles.map((role) => (
+              <SelectItem key={role.id} value={String(role.id)}>
+                {role.name}
+                {role.is_system ? " (Hệ thống)" : ""}
               </SelectItem>
             ))}
           </SelectContent>
@@ -213,10 +211,7 @@ export function UsersPanel({
               <tr className="border-b border-border/30 bg-muted/20">
                 <th className="text-left px-4 py-3 font-semibold">User</th>
                 <th className="text-left px-4 py-3 font-semibold">
-                  Account Type
-                </th>
-                <th className="text-left px-4 py-3 font-semibold">
-                  RBAC Role
+                  {t("rbacRole")}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold">
                   {t("status")}

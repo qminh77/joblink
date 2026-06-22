@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import type { AdminUserRow } from "@/features/admin/types"
 import type { AdminRoleRow } from "@/features/admin/api/roles"
-import { updateUserAdminRole, updateUserRbacRole } from "@/features/admin/api/users"
+import { updateUserRbacRole } from "@/features/admin/api/users"
 import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 import type { UserActionType } from "./users-action-dialog"
@@ -46,35 +46,22 @@ export function UsersTableRow({
   onAction: (target: { user: AdminUserRow; action: UserActionType }) => void
 }) {
   const t = useTranslations("admin.users")
-  const tRoles = useTranslations("admin.users.roles")
   const tStatuses = useTranslations("admin.users.statuses")
   const format = useFormatter()
-  const [updatingRole, setUpdatingRole] = useState(false)
   const [updatingRbac, setUpdatingRbac] = useState(false)
-
-  const handleRoleChange = async (newRole: string) => {
-    if (newRole === user.role) return
-    setUpdatingRole(true)
-    try {
-      const result = await updateUserAdminRole(user.id, newRole)
-      if (result.ok) {
-        toast.success("Đã cập nhật loại tài khoản")
-      } else {
-        toast.error(result.error)
-      }
-    } finally {
-      setUpdatingRole(false)
-    }
-  }
+  const assignedRole = roles.find((role) => role.id === user.roleId)
+  const isProtectedAdmin = user.role === "admin" || assignedRole?.name === "admin"
 
   const handleRbacRoleChange = async (newRoleIdStr: string) => {
-    const newRoleId = newRoleIdStr === "none" ? null : parseInt(newRoleIdStr, 10)
+    if (newRoleIdStr === "unassigned") return
+    const newRoleId = parseInt(newRoleIdStr, 10)
+    if (!Number.isInteger(newRoleId) || newRoleId <= 0) return
     if (newRoleId === user.roleId) return
     setUpdatingRbac(true)
     try {
       const result = await updateUserRbacRole(user.id, newRoleId)
       if (result.ok) {
-        toast.success("Đã cập nhật quyền (RBAC)")
+        toast.success(t("roleUpdateSuccess"))
       } else {
         toast.error(result.error)
       }
@@ -110,34 +97,20 @@ export function UsersTableRow({
       </td>
       <td className="px-4 py-3">
         <Select
-          value={user.role}
-          onValueChange={handleRoleChange}
-          disabled={pending || updatingRole || user.role === "admin"}
-        >
-          <SelectTrigger className="w-[110px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="member">{tRoles("member")}</SelectItem>
-            <SelectItem value="company">{tRoles("company")}</SelectItem>
-            <SelectItem value="admin">{tRoles("admin")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </td>
-      <td className="px-4 py-3">
-        <Select
-          value={user.roleId ? String(user.roleId) : "none"}
+          value={user.roleId ? String(user.roleId) : "unassigned"}
           onValueChange={handleRbacRoleChange}
-          disabled={pending || updatingRbac || user.role === "admin"}
+          disabled={pending || updatingRbac || isProtectedAdmin}
         >
-          <SelectTrigger className="w-[140px] h-8 text-xs">
+          <SelectTrigger className="w-[180px] h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">
-              <span className="text-muted-foreground italic">Không gán</span>
+            <SelectItem value="unassigned" disabled>
+              <span className="text-muted-foreground italic">
+                {t("unassignedRole")}
+              </span>
             </SelectItem>
-            {roles.map(r => (
+            {roles.map((r) => (
               <SelectItem key={r.id} value={String(r.id)}>
                 {r.name} {r.is_system && "(Hệ thống)"}
               </SelectItem>
@@ -161,7 +134,7 @@ export function UsersTableRow({
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">
           {user.status !== "banned" &&
-          user.role !== "admin" ? (
+          !isProtectedAdmin ? (
             <Button
               variant="ghost"
               size="sm"
@@ -176,7 +149,7 @@ export function UsersTableRow({
             </Button>
           ) : null}
           {user.status === "active" &&
-          user.role !== "admin" ? (
+          !isProtectedAdmin ? (
             <Button
               variant="ghost"
               size="sm"

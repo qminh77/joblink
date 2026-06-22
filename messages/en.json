@@ -1454,12 +1454,15 @@
       "subtitle": "Search, filter and moderate accounts",
       "searchPlaceholder": "Search by email, name...",
       "role": "Role",
+      "rbacRole": "Role",
       "status": "Status",
       "joined": "Joined",
       "actions": "Actions",
       "filterRole": "Role",
       "filterStatus": "Status",
       "allRoles": "All roles",
+      "unassignedRole": "No role assigned",
+      "roleUpdateSuccess": "Role updated",
       "allStatuses": "All statuses",
       "roles": {
         "member": "Member",
@@ -1962,4 +1965,3 @@
     }
   }
 }
-

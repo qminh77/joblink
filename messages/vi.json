@@ -1454,12 +1454,15 @@
       "subtitle": "Tìm kiếm, lọc và xử lý tài khoản",
       "searchPlaceholder": "Tìm theo email, tên...",
       "role": "Vai trò",
+      "rbacRole": "Vai trò",
       "status": "Trạng thái",
       "joined": "Tham gia",
       "actions": "Thao tác",
       "filterRole": "Vai trò",
       "filterStatus": "Trạng thái",
       "allRoles": "Tất cả vai trò",
+      "unassignedRole": "Chưa gán vai trò",
+      "roleUpdateSuccess": "Đã cập nhật vai trò",
       "allStatuses": "Tất cả trạng thái",
       "roles": {
         "member": "Member",
@@ -1962,4 +1965,3 @@
     }
   }
 }
-

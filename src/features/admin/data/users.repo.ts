@@ -1,6 +1,6 @@
 import "server-only"
 
-import { USER_ROLES, USER_STATUSES, type UserRole, type UserStatus } from "@/lib/constants"
+import { USER_STATUSES, type UserRole, type UserStatus } from "@/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 
 import type { ExportUsersParams, ListUsersParams } from "../types"
@@ -49,8 +49,8 @@ export async function listAdminUserRows(
     .order("created_at", { ascending: false })
     .range(from, to)
 
-  if (params.role && params.role !== "all" && USER_ROLES.includes(params.role)) {
-    query = query.eq("role", params.role)
+  if (typeof params.roleId === "number") {
+    query = query.eq("role_id", params.roleId)
   }
   if (
     params.status &&
@@ -85,11 +85,13 @@ export async function listAdminUserExportRows(
     .limit(10000)
 
   if (
-    params.role &&
-    params.role !== "all" &&
-    (USER_ROLES as readonly string[]).includes(params.role)
+    params.roleId &&
+    params.roleId !== "all"
   ) {
-    query = query.eq("role", params.role as UserRole)
+    const roleId = Number(params.roleId)
+    if (Number.isInteger(roleId) && roleId > 0) {
+      query = query.eq("role_id", roleId)
+    }
   }
   if (
     params.status &&

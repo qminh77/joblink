@@ -306,7 +306,7 @@ export function RolesPanel({ items, allPermissions }: Props) {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 rounded-lg"
-                          disabled={actingId === item.id}
+                          disabled={actingId === item.id || item.name === "admin"}
                           onClick={() => loadAndEdit(item)}
                         >
                           {actingId === item.id ? (

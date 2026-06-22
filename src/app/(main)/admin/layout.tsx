@@ -1,4 +1,7 @@
-import { requireAdmin, getAdminUserPermissions } from "@/features/admin/api/admin-guard"
+import {
+  requireAdminAccess,
+  getAdminUserPermissions,
+} from "@/features/admin/api/admin-guard"
 import {
   AdminSidebar,
   AdminMobileNav,
@@ -10,7 +13,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  await requireAdmin()
+  await requireAdminAccess()
   const permissions = await getAdminUserPermissions()
   return (
     <PermissionsProvider permissions={permissions}>

@@ -1,11 +1,9 @@
-import { requireAdmin } from "@/features/admin/api/admin-guard"
 import { loadContactSubmissions } from "@/features/contact/api/admin-actions"
 import { AdminContactList } from "@/features/contact/components/admin-contact-list"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminContactSubmissionsPage() {
-  await requireAdmin()
   const items = await loadContactSubmissions()
 
   return (

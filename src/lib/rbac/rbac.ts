@@ -11,6 +11,22 @@ import type { ActionName } from "./actions"
 import type { PermissionName } from "./permissions"
 import { getAllPermissionNames } from "./permissions"
 
+type UserRoleLookup = {
+  role_id: number | null
+  role: string
+  roles?: { name: string } | { name: string }[] | null
+}
+
+function joinedRoleName(user: UserRoleLookup): string | null {
+  const joined = user.roles
+  if (Array.isArray(joined)) return joined[0]?.name ?? null
+  return joined?.name ?? null
+}
+
+function hasAdminRole(user: UserRoleLookup): boolean {
+  return user.role === USER_ROLES[2] || joinedRoleName(user) === USER_ROLES[2]
+}
+
 export type RoleRow = {
   id: number
   name: string
@@ -163,11 +179,11 @@ export const getAllPermissions = cache(
  */
 export const getUserPermissionsByUserId = cache(
   async (userId: number): Promise<PermissionName[]> => {
-    const supabase = createAdminClient()
+    const supabase = createAdminClient() as unknown as LooseClient
 
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("role_id, role")
+      .select("role_id, role, roles(name)")
       .eq("id", userId)
       .is("deleted_at", null)
       .single()
@@ -177,7 +193,11 @@ export const getUserPermissionsByUserId = cache(
       return []
     }
 
-    const userData = user as { role_id: number | null; role: string }
+    const userData = user as UserRoleLookup
+
+    if (hasAdminRole(userData)) {
+      return getAllPermissionNames()
+    }
 
     // If role_id is set, batch query via role_permissions + permissions
     if (userData.role_id) {
@@ -188,7 +208,6 @@ export const getUserPermissionsByUserId = cache(
 
       if (rpError) {
         console.error("[rbac:getUserPermissions] query error:", rpError.message)
-        if (userData.role === USER_ROLES[2]) return getAllPermissionNames()
         return []
       }
 
@@ -205,11 +224,6 @@ export const getUserPermissionsByUserId = cache(
         .map((p) => p.name as PermissionName)
     }
 
-    // Fallback: admin gets all permissions via legacy role
-    if (userData.role === USER_ROLES[2]) {
-      return getAllPermissionNames()
-    }
-
     return []
   },
 )
@@ -222,17 +236,19 @@ export async function checkUserPermission(
   userId: number,
   permission: PermissionName,
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const supabase = createAdminClient() as unknown as LooseClient
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role")
+    .select("role_id, role, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
 
   if (!user) return false
-  const userData = user as { role_id: number | null; role: string }
+  const userData = user as UserRoleLookup
+
+  if (hasAdminRole(userData)) return true
 
   // role_id set → check via role_permissions
   if (userData.role_id) {
@@ -246,8 +262,6 @@ export async function checkUserPermission(
     return (data ?? []).length > 0
   }
 
-  // Fallback: admin has all permissions via legacy role
-  if (userData.role === USER_ROLES[2]) return true
   return false
 }
 
@@ -259,19 +273,19 @@ export async function checkUserAllPermissions(
   userId: number,
   permissions: PermissionName[],
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const supabase = createAdminClient() as unknown as LooseClient
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role")
+    .select("role_id, role, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
 
   if (!user) return false
-  const userData = user as { role_id: number | null; role: string }
+  const userData = user as UserRoleLookup
 
-  if (userData.role === USER_ROLES[2]) return true
+  if (hasAdminRole(userData)) return true
 
   if (!userData.role_id) return false
 
@@ -299,19 +313,19 @@ export async function checkUserAnyPermission(
   userId: number,
   permissions: PermissionName[],
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const supabase = createAdminClient() as unknown as LooseClient
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role")
+    .select("role_id, role, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
 
   if (!user) return false
-  const userData = user as { role_id: number | null; role: string }
+  const userData = user as UserRoleLookup
 
-  if (userData.role === USER_ROLES[2]) return true
+  if (hasAdminRole(userData)) return true
 
   if (!userData.role_id) return false
 

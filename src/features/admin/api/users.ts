@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminPermission } from "./admin-guard"
+import { writeAuditLog } from "./audit-log"
 import { userActionSchema, type UserActionInput } from "../schemas"
 import {
   applyUserModerationAction,
@@ -64,32 +65,53 @@ function revalidateAdminUserViews() {
   revalidatePath("/admin/dashboard")
 }
 
-export async function updateUserAdminRole(
-  userId: number,
-  role: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireAdminPermission("users.edit")
-  const supabase = createAdminClient()
-
-  const { error } = await supabase
-    .from("users")
-    .update({ role } as never)
-    .eq("id", userId)
-
-  if (error) {
-    return { ok: false, error: error.message }
-  }
-
-  revalidateAdminUserViews()
-  return { ok: true }
-}
-
 export async function updateUserRbacRole(
   userId: number,
-  roleId: number | null,
+  roleId: number,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireAdminPermission("users.edit")
+  const current = await requireAdminPermission("users.edit")
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return { ok: false, error: "invalid_user" }
+  }
+  if (!Number.isInteger(roleId) || roleId <= 0) {
+    return { ok: false, error: "invalid_role" }
+  }
+
   const supabase = createAdminClient()
+
+  const { data: target } = await supabase
+    .from("users")
+    .select("id, role, role_id")
+    .eq("id", userId)
+    .is("deleted_at", null)
+    .maybeSingle()
+
+  if (!target) return { ok: false, error: "not_found" }
+  if (target.id === current.appUser.id) return { ok: false, error: "self" }
+
+  const { data: currentTargetRole } = target.role_id
+    ? await supabase
+        .from("roles")
+        .select("id, name")
+        .eq("id", target.role_id)
+        .maybeSingle()
+    : { data: null }
+
+  if (target.role === "admin" || currentTargetRole?.name === "admin") {
+    return { ok: false, error: "cannot_modify_admin" }
+  }
+
+  const { data: role } = await supabase
+    .from("roles")
+    .select("id, name")
+    .eq("id", roleId)
+    .is("deleted_at", null)
+    .maybeSingle()
+
+  if (!role) return { ok: false, error: "role_not_found" }
+  if (role.name === "admin" && current.appUser.role !== "admin") {
+    return { ok: false, error: "cannot_assign_admin" }
+  }
 
   const { error } = await supabase
     .from("users")
@@ -99,6 +121,16 @@ export async function updateUserRbacRole(
   if (error) {
     return { ok: false, error: error.message }
   }
+
+  // Keep the profile/account type intact; only RBAC assignment changes here.
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: "user.rbac_role.update",
+    entityType: "users",
+    entityId: userId,
+    oldData: { role_id: target.role_id },
+    newData: { role_id: roleId, role_name: role.name },
+  })
 
   revalidateAdminUserViews()
   return { ok: true }

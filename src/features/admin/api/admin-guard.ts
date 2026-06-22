@@ -19,6 +19,19 @@ export async function requireAdmin(): Promise<CurrentUser> {
 }
 
 /**
+ * Yêu cầu user có ít nhất một quyền trong khu vực admin.
+ */
+export async function requireAdminAccess(): Promise<CurrentUser> {
+  const user = await getCurrentUser()
+  if (!user) redirect("/login")
+
+  const permissions = await getUserPermissionsByUserId(user.appUser.id)
+  if (permissions.length === 0) redirect("/home")
+
+  return user
+}
+
+/**
  * Kiểm tra user có role admin không (non-throwing)
  */
 export async function isAdmin(): Promise<boolean> {

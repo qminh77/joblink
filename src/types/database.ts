@@ -1109,6 +1109,29 @@ export type Database = {
         }
         Returns: Json
       }
+      has_permission: {
+        Args: {
+          p_user_id: number
+          p_permission_name: string
+        }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: {
+          p_permission_name: string
+        }
+        Returns: boolean
+      }
+      get_user_permissions: {
+        Args: {
+          p_user_id: number
+        }
+        Returns: {
+          permission_name: string
+          module_name: string
+          action_name: string
+        }[]
+      }
     }
 
     Enums: Record<string, never>

@@ -105,6 +105,15 @@ export async function listAdminRoles(): Promise<AdminRoleRow[]> {
 }
 
 /**
+ * Lấy danh sách role để lọc/gán trong màn người dùng.
+ */
+export async function listAssignableRoles(): Promise<AdminRoleRow[]> {
+  await requireAdminPermission("users.view")
+  const supabase = createAdminClient() as unknown as LooseClient
+  return fetchRolesWithCounts(supabase)
+}
+
+/**
  * Lấy chi tiết role với permissions
  */
 export async function getAdminRoleDetail(
@@ -254,8 +263,21 @@ export async function updateAdminRole(
 
   const existingData = existing as { id: number; name: string; is_system: boolean }
 
-  if (existingData.is_system) {
-    return { ok: false, error: "Cannot modify system role" }
+  if (existingData.name === "admin") {
+    return { ok: false, error: "Cannot modify admin role" }
+  }
+
+  if (existingData.is_system && parsed.data.name !== existingData.name) {
+    return { ok: false, error: "Cannot rename system role", field: "name" }
+  }
+
+  const { data: permRows } = await supabase
+    .from("permissions")
+    .select("id, name")
+    .in("name", parsed.data.permissions)
+
+  if (!permRows || permRows.length !== parsed.data.permissions.length) {
+    return { ok: false, error: "invalid_permissions", field: "permissions" }
   }
 
   const { data: dup } = await supabase
@@ -273,7 +295,7 @@ export async function updateAdminRole(
   const { error: updateError } = await supabase
     .from("roles")
     .update({
-      name: parsed.data.name,
+      name: existingData.is_system ? existingData.name : parsed.data.name,
       description: parsed.data.description ?? null,
       updated_at: new Date().toISOString(),
     })
@@ -289,23 +311,19 @@ export async function updateAdminRole(
     .delete()
     .eq("role_id", parsed.data.id)
 
-  const { data: permRows } = await supabase
-    .from("permissions")
-    .select("id, name")
-    .in("name", parsed.data.permissions)
-
-  if (!permRows || permRows.length !== parsed.data.permissions.length) {
-    return { ok: false, error: "invalid_permissions", field: "permissions" }
-  }
-
   const rolePerms = (permRows as Array<{ id: number; name: string }>).map((p) => ({
     role_id: parsed.data.id,
     permission_id: p.id,
   }))
 
-  await supabase
+  const { error: permError } = await supabase
     .from("role_permissions")
     .insert(rolePerms)
+
+  if (permError) {
+    console.error("[admin:roles.update:permissions]", permError)
+    return { ok: false, error: "update_failed" }
+  }
 
   await writeAuditLog({
     actorId: current.appUser.id,
@@ -313,7 +331,10 @@ export async function updateAdminRole(
     entityType: "roles",
     entityId: parsed.data.id,
     oldData: { name: existingData.name },
-    newData: { name: parsed.data.name, permissions: parsed.data.permissions },
+    newData: {
+      name: existingData.is_system ? existingData.name : parsed.data.name,
+      permissions: parsed.data.permissions,
+    },
   })
 
   revalidatePath("/admin/roles")
