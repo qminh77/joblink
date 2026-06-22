@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { getCurrentUser, requireCurrentUser } from "@/features/auth/api/auth-server"
+import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import { createConnectionIdSchema, createTargetUserIdSchema } from "../schemas"
@@ -37,12 +38,14 @@ function revalidateAfterConnectionChange() {
 }
 
 export async function getNetworkOverviewAction(): Promise<NetworkOverview> {
+  await requirePermission("network.view")
   return loadNetworkOverview()
 }
 
 export async function getConnectionRelationAction(
   targetUserId: number,
 ): Promise<ConnectionRelation> {
+  await requirePermission("network.view")
   return loadConnectionRelation(targetUserId)
 }
 
@@ -58,7 +61,7 @@ export async function toggleFollowUserAction(
     }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("network.follow")
   await checkRateLimit(current.appUser.id, "connection", 10, 60) // 10 connections / 60s
   const supabase = await createClient()
 
@@ -95,7 +98,7 @@ export async function sendConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.connect")
     await checkRateLimit(current.appUser.id, "connection", 10, 60)
     const supabase = await createClient()
 
@@ -115,7 +118,7 @@ export async function cancelConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.connect")
     const supabase = await createClient()
 
     await cancelConnectionRequest(supabase, current, id)
@@ -135,7 +138,7 @@ export async function respondConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.connect")
     const supabase = await createClient()
 
     await respondConnectionRequest(supabase, current, id, accept)
@@ -154,7 +157,7 @@ export async function removeConnectionAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.connect")
     const supabase = await createClient()
 
     await removeConnection(supabase, current, id)
@@ -177,7 +180,7 @@ export async function getBlockStatusAction(
 }
 
 export async function listBlockedUsersAction(): Promise<BlockedUserItem[]> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("network.block")
   return listBlockedUsersForUser(current)
 }
 
@@ -186,7 +189,7 @@ export async function blockUserAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.block")
     const supabase = await createClient()
 
     await blockUser(supabase, current, target)
@@ -205,7 +208,7 @@ export async function unblockUserAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("network.block")
     const supabase = await createClient()
 
     await unblockUser(supabase, current, target)

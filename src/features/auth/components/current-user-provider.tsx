@@ -29,3 +29,18 @@ export function useCurrentUser(): SessionUserSummary {
   }
   return value
 }
+
+export function useCurrentUserPermissions(): Set<string> {
+  const user = useCurrentUser()
+  return new Set(user.permissions)
+}
+
+export function useCurrentUserHasPermission(permission: string): boolean {
+  const user = useCurrentUser()
+  return user.permissions.includes(permission)
+}
+
+export function useCurrentUserHasAnyPermission(permissions: string[]): boolean {
+  const user = useCurrentUser()
+  return permissions.some((permission) => user.permissions.includes(permission))
+}

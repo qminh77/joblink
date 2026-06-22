@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { ActionError, action, parse, requireRole } from "@/lib/action/server"
+import { ActionError, action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { writeAuditLog } from "@/lib/audit"
+import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -50,7 +51,7 @@ export async function getProfileForCvBuilderAction(): Promise<
   ActionResult<CvBuilderProfile>
 > {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.create")
     const supabase = await createClient()
     return loadCvBuilderProfile(supabase, current)
   })
@@ -62,7 +63,7 @@ export async function registerCvAction(
   input: RegisterCvInput,
 ): Promise<ActionResult<MemberCv>> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.create")
     const data = parse(createRegisterCvSchema(await validation()), input)
     const supabase = await createClient()
     const cv = await registerMemberCv(supabase, current, data)
@@ -82,7 +83,7 @@ export async function renameCvAction(
   input: RenameCvInput,
 ): Promise<ActionResult> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.edit")
     const data = parse(createRenameCvSchema(await validation()), input)
     const supabase = await createClient()
     await renameOwnCv(supabase, current, data)
@@ -99,7 +100,7 @@ export async function renameCvAction(
 
 export async function deleteCvAction(cvId: number): Promise<ActionResult> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.delete")
     const id = requirePositiveId(cvId)
     const supabase = await createClient()
     await deleteOwnCv(supabase, current, id)
@@ -115,7 +116,7 @@ export async function deleteCvAction(cvId: number): Promise<ActionResult> {
 
 export async function setDefaultCvAction(cvId: number): Promise<ActionResult> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.edit")
     const id = requirePositiveId(cvId)
     const supabase = await createClient()
     await setDefaultCv(supabase, id)
@@ -135,7 +136,7 @@ export async function getCvViewUrlAction(input: {
   storagePath?: string
 }): Promise<ActionResult<{ url: string }>> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.view")
     const id = requirePositiveId(input.cvId)
     const supabase = await createClient()
     return getOwnCvViewUrl(supabase, current, id)
@@ -147,7 +148,7 @@ export async function loadOwnCvsAction(): Promise<
   ActionResult<OwnCvSummary[]>
 > {
   return action("cvs.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("cvs.view")
     const supabase = await createClient()
     return loadOwnCvSummaries(supabase, current)
   })
@@ -158,7 +159,7 @@ export async function getApplicantResumeUrlAction(input: {
   applicationId: number
 }): Promise<ActionResult<ApplicantResumeUrl>> {
   return action("cvs.errors", async () => {
-    const current = await requireRole("company")
+    const current = await requirePermission("cvs.view")
     const applicationId = requirePositiveId(input.applicationId)
     const supabase = await createClient()
     return getApplicantResumeUrl(supabase, current, applicationId)

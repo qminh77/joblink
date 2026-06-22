@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
 import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
+import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -51,7 +51,7 @@ export async function createJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.create")
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
   await checkRateLimit(current.appUser.id, "job", 5, 60) // 5 creates / 60s
@@ -81,7 +81,7 @@ export async function updateJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.edit")
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
   await checkRateLimit(current.appUser.id, "job", 10, 60) // 10 updates / 60s
@@ -114,7 +114,7 @@ export async function applyToJobAction(input: {
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.apply")
   await checkRateLimit(current.appUser.id, "application", 5, 60) // 5 applications / 60s
   const supabase = await createClient()
   const result = await applyToJob(
@@ -146,7 +146,7 @@ export async function withdrawApplicationAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.apply")
   const supabase = await createClient()
   const result = await withdrawApplication(supabase, current, parsed.data)
 
@@ -170,7 +170,7 @@ export async function toggleSavedJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.save")
   const supabase = await createClient()
   const result = await toggleSavedJob(supabase, parsed.data)
 
@@ -190,7 +190,7 @@ export async function respondInterviewAction(input: {
   interviewId: number
   accept: boolean
 }): Promise<RespondInterviewResult> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.apply")
   const supabase = await createClient()
   const result = await respondInterview(supabase, current, input)
 
@@ -216,7 +216,7 @@ function ensureCompanyCanManageJobs(
   current: CurrentUser,
   te: JobTranslator,
 ): { ok: false; error: string } | null {
-  if (current.appUser.role !== "company") {
+  if (current.appUser.account_type !== "company") {
     return { ok: false, error: te("notCompany") }
   }
   if (

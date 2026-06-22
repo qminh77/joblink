@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { checkUserPermission } from "@/lib/rbac"
 
 import { requireAdminPermission } from "./admin-guard"
 import { writeAuditLog } from "./audit-log"
@@ -81,7 +82,7 @@ export async function updateUserRbacRole(
 
   const { data: target } = await supabase
     .from("users")
-    .select("id, role, role_id")
+    .select("id, role_id")
     .eq("id", userId)
     .is("deleted_at", null)
     .maybeSingle()
@@ -97,7 +98,7 @@ export async function updateUserRbacRole(
         .maybeSingle()
     : { data: null }
 
-  if (target.role === "admin" || currentTargetRole?.name === "admin") {
+  if (currentTargetRole?.name === "admin") {
     return { ok: false, error: "cannot_modify_admin" }
   }
 
@@ -109,7 +110,10 @@ export async function updateUserRbacRole(
     .maybeSingle()
 
   if (!role) return { ok: false, error: "role_not_found" }
-  if (role.name === "admin" && current.appUser.role !== "admin") {
+  if (
+    role.name === "admin" &&
+    !(await checkUserPermission(current.appUser.id, "roles.edit"))
+  ) {
     return { ok: false, error: "cannot_assign_admin" }
   }
 

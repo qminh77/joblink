@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import { action, parse } from "@/lib/action/server"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import { searchMentionableProfiles } from "../data/posts.repo"
@@ -71,10 +71,12 @@ function revalidateHome() {
 export async function getFeedPageAction(
   cursor: string | null,
 ): Promise<FeedPage> {
+  await requirePermission("feed.view")
   return loadFeedPage(cursor)
 }
 
 export async function getHomeStatsAction(): Promise<HomeFeedStats> {
+  await requirePermission("feed.view")
   return loadHomeStats()
 }
 
@@ -82,6 +84,7 @@ export async function getUserPostsPageAction(
   targetUserId: number,
   cursor: string | null,
 ): Promise<UserPostsPage> {
+  await requirePermission("posts.view")
   return loadUserPosts(targetUserId, cursor)
 }
 
@@ -89,6 +92,7 @@ export async function getPostCommentsAction(
   postId: number,
 ): Promise<ActionResult<FeedComment[]>> {
   return action("posts.errors", async (t) => {
+    await requirePermission("posts.view")
     const id = parse(createPostIdSchema(t), postId)
     return loadPostComments(id)
   })
@@ -100,7 +104,7 @@ export async function searchMentionableUsersAction(
 ): Promise<MentionableUser[]> {
   const q = query.trim()
   if (q.length === 0) return []
-  await requireCurrentUser()
+  await requirePermission("search.view")
   const supabase = await createClient()
   return searchMentionableProfiles(supabase, q, limit)
 }
@@ -111,7 +115,7 @@ export async function createPostAction(
   input: CreatePostActionInput,
 ): Promise<ActionResult<FeedPost>> {
   return action("posts.errors", async (t) => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("posts.create")
     await checkRateLimit(current.appUser.id, "post", 5, 60) // 5 posts / 60s
     const supabase = await createClient()
 
@@ -166,11 +170,11 @@ export async function toggleReactionAction(
   postId: number,
 ): Promise<ActionResult<ToggleReactionResult>> {
   return action("posts.errors", async (t) => {
+    const current = await requirePermission("posts.react")
     const data = parse(createReactionInputSchema(t), {
       postId,
       reactionType: "like",
     })
-    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "reaction", 30, 60) // 30 reactions / 60s
     const supabase = await createClient()
     const result = await togglePostReaction(supabase, current, data)
@@ -189,8 +193,8 @@ export async function voteAction(
   optionId: number,
 ): Promise<ActionResult<VoteResult>> {
   return action("posts.errors", async (t) => {
+    const current = await requirePermission("posts.vote")
     const data = parse(createVoteInputSchema(t), { postId, optionId })
-    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "vote", 10, 60) // 10 votes / 60s
     const supabase = await createClient()
     const result = await voteOnPoll(supabase, current, data)
@@ -209,8 +213,8 @@ export async function createCommentAction(
   input: CreateCommentActionInput,
 ): Promise<ActionResult<CreateCommentResult>> {
   return action("posts.errors", async (t) => {
+    const current = await requirePermission("posts.comment")
     const data = parse(createCommentInputSchema(t), input)
-    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "comment", 15, 60) // 15 comments / 60s
     const supabase = await createClient()
     const result = await createPostComment(supabase, current, data)
@@ -230,7 +234,7 @@ export async function deleteCommentAction(
 ): Promise<ActionResult<DeleteCommentResult>> {
   return action("posts.errors", async (t) => {
     const id = parse(createCommentIdSchema(t), commentId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("posts.delete")
     const supabase = await createClient()
     const result = await deletePostComment(supabase, current, id)
     await writeAuditLog({
@@ -248,7 +252,7 @@ export async function sharePostAction(
 ): Promise<ActionResult<SharePostResult>> {
   return action("posts.errors", async (t) => {
     const data = parse(createShareInputSchema(t), input)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("posts.share")
     await checkRateLimit(current.appUser.id, "share", 10, 60) // 10 shares / 60s
     const supabase = await createClient()
     const result = await shareFeedPost(supabase, current, data)
@@ -267,7 +271,7 @@ export async function updatePostAction(
   input: UpdatePostActionInput,
 ): Promise<ActionResult<UpdatePostResult>> {
   return action("posts.errors", async (t) => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("posts.edit")
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 updates / 60s
     const supabase = await createClient()
 
@@ -302,7 +306,7 @@ export async function updatePostAction(
 export async function deletePostAction(postId: number): Promise<ActionResult> {
   return action("posts.errors", async (t) => {
     const id = parse(createPostIdSchema(t), postId)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("posts.delete")
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 deletes / 60s
     const supabase = await createClient()
     await deleteOwnPost(supabase, current, id)

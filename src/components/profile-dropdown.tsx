@@ -42,6 +42,15 @@ export function ProfileDropdown() {
   const initials = getInitials(user.displayName, "JL")
   const tNav = useTranslations("nav")
   const tMenu = useTranslations("profileMenu")
+  const canViewProfile = user.permissions.includes("profile.view")
+  const canViewNetwork = user.permissions.includes("network.view")
+  const canViewSavedJobs = user.permissions.includes("jobs.save")
+  const canViewApplications = user.permissions.includes("jobs.apply")
+  const canManageCompanyJobs =
+    user.permissions.includes("jobs.create") ||
+    user.permissions.includes("jobs.edit")
+  const canViewSettings = user.permissions.includes("settings.view")
+  const canContactSupport = user.permissions.includes("contacts.create")
 
   return (
     <DropdownMenu>
@@ -94,20 +103,24 @@ export function ProfileDropdown() {
             </div>
           </div>
           <div className="flex items-center gap-4 px-4 pb-3">
-            <Link
-              href={selfHref}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>{tMenu("viewProfileShort")}</span>
-            </Link>
-            <Link
-              href="/network"
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>{tNav("network")}</span>
-            </Link>
+            {canViewProfile ? (
+              <Link
+                href={selfHref}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>{tMenu("viewProfileShort")}</span>
+              </Link>
+            ) : null}
+            {canViewNetwork ? (
+              <Link
+                href="/network"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>{tNav("network")}</span>
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -115,6 +128,7 @@ export function ProfileDropdown() {
 
         <div className="p-1.5">
           <DropdownMenuGroup>
+            {canViewProfile ? (
             <motion.div
               variants={itemVariants}
               initial="hidden"
@@ -136,7 +150,8 @@ export function ProfileDropdown() {
                 </div>
               </DropdownMenuItem>
             </motion.div>
-            {user.role === "member" ? (
+            ) : null}
+            {canViewSavedJobs ? (
               <motion.div
                 variants={itemVariants}
                 initial="hidden"
@@ -159,7 +174,7 @@ export function ProfileDropdown() {
                 </DropdownMenuItem>
               </motion.div>
             ) : null}
-            {user.role === "member" ? (
+            {canViewApplications ? (
               <motion.div
                 variants={itemVariants}
                 initial="hidden"
@@ -186,7 +201,7 @@ export function ProfileDropdown() {
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />
 
-          {user.role === "company" ? (
+          {canManageCompanyJobs ? (
             <DropdownMenuGroup>
               <motion.div
                 variants={itemVariants}
@@ -238,6 +253,7 @@ export function ProfileDropdown() {
           ) : null}
 
           <DropdownMenuGroup>
+            {canViewSettings ? (
             <motion.div
               variants={itemVariants}
               initial="hidden"
@@ -259,6 +275,8 @@ export function ProfileDropdown() {
                 </div>
               </DropdownMenuItem>
             </motion.div>
+            ) : null}
+            {canContactSupport ? (
             <motion.div
               variants={itemVariants}
               initial="hidden"
@@ -279,6 +297,7 @@ export function ProfileDropdown() {
                 </DropdownMenuItem>
               </Link>
             </motion.div>
+            ) : null}
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />

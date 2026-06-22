@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
-import { action, parse, requireRole } from "@/lib/action/server"
+import { action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -51,7 +51,7 @@ export async function updateMemberProfileAction(
   input: MemberProfileInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const data = parse(createMemberProfileSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -72,7 +72,7 @@ export async function updateMemberMediaAction(input: {
   coverUrl?: string | null
 }): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     if (input.avatarUrl === undefined && input.coverUrl === undefined) return
     const supabase = await createClient()
 
@@ -93,7 +93,7 @@ export async function updateCompanyMediaAction(input: {
   coverUrl?: string | null
 }): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("company")
+    const current = await requirePermission("profile.edit")
     if (input.logoUrl === undefined && input.coverUrl === undefined) return
     const supabase = await createClient()
 
@@ -113,7 +113,7 @@ export async function addExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const tv = await validation()
     const data = parse(createMemberExperienceSchema(tv), input)
     const supabase = await createClient()
@@ -138,7 +138,7 @@ export async function updateExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const tv = await validation()
     const data = parse(createMemberExperienceSchema(tv), input)
     const supabase = await createClient()
@@ -164,7 +164,7 @@ export async function deleteExperienceAction(
   experienceId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("profile.edit")
     const supabase = await createClient()
 
     await deleteExperience(supabase, current.appUser.id, experienceId)
@@ -182,7 +182,7 @@ export async function addEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const data = parse(createMemberEducationSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -201,7 +201,7 @@ export async function updateEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const data = parse(createMemberEducationSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -221,7 +221,7 @@ export async function deleteEducationAction(
   educationId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("profile.edit")
     const supabase = await createClient()
 
     await deleteEducation(supabase, current.appUser.id, educationId)
@@ -237,7 +237,7 @@ export async function deleteEducationAction(
 
 export async function addSkillAction(skillName: string): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("member")
+    const current = await requirePermission("profile.edit")
     const name = parse(createSkillNameSchema(await validation()), skillName)
     const supabase = await createClient()
 
@@ -256,7 +256,7 @@ export async function removeSkillAction(
   skillId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("profile.edit")
     const supabase = await createClient()
 
     await removeSkill(supabase, current.appUser.id, skillId)
@@ -274,7 +274,7 @@ export async function logProfileViewAction(
   targetUserId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("profile.view")
     const supabase = await createClient()
     await logProfileView(supabase, current.appUser.id, targetUserId)
   })
@@ -284,7 +284,7 @@ export async function updateCompanyProfileAction(
   input: CompanyProfileInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requireRole("company")
+    const current = await requirePermission("profile.edit")
     const data = parse(createCompanyProfileSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -304,7 +304,7 @@ export async function getProfileStatsAction(): Promise<{
   profileViewCount: number
   connectionCount: number
 }> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("profile.view")
   const supabase = await createClient()
   return getProfileStats(supabase, current.appUser.id)
 }

@@ -2,7 +2,6 @@ import "server-only"
 
 import { cache } from "react"
 
-import { USER_ROLES } from "@/lib/constants"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { LooseClient } from "@/lib/supabase/loose-types"
 
@@ -13,9 +12,11 @@ import { getAllPermissionNames } from "./permissions"
 
 type UserRoleLookup = {
   role_id: number | null
-  role: string
+  account_type: string
   roles?: { name: string } | { name: string }[] | null
 }
+
+const ADMIN_ROLE_NAME = "admin"
 
 function joinedRoleName(user: UserRoleLookup): string | null {
   const joined = user.roles
@@ -24,7 +25,10 @@ function joinedRoleName(user: UserRoleLookup): string | null {
 }
 
 function hasAdminRole(user: UserRoleLookup): boolean {
-  return user.role === USER_ROLES[2] || joinedRoleName(user) === USER_ROLES[2]
+  return (
+    joinedRoleName(user) === ADMIN_ROLE_NAME ||
+    (!user.role_id && user.account_type === ADMIN_ROLE_NAME)
+  )
 }
 
 export type RoleRow = {
@@ -183,7 +187,7 @@ export const getUserPermissionsByUserId = cache(
 
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("role_id, role, roles(name)")
+      .select("role_id, account_type, roles(name)")
       .eq("id", userId)
       .is("deleted_at", null)
       .single()
@@ -240,7 +244,7 @@ export async function checkUserPermission(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role, roles(name)")
+    .select("role_id, account_type, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
@@ -277,7 +281,7 @@ export async function checkUserAllPermissions(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role, roles(name)")
+    .select("role_id, account_type, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
@@ -317,7 +321,7 @@ export async function checkUserAnyPermission(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, role, roles(name)")
+    .select("role_id, account_type, roles(name)")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()

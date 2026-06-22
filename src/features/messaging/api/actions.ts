@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 
 import {
   createConversationIdSchema,
@@ -40,10 +40,12 @@ function excerpt(text: string | null, max = 120): string {
 // ── Reads (RLS lo lọc participant) ───────────────────────────────────────────
 
 export async function getMessagingOverviewAction(): Promise<MessagingOverview> {
+  await requirePermission("messages.view")
   return loadMessagingOverview()
 }
 
 export async function getUnreadConversationsCountAction(): Promise<number> {
+  await requirePermission("messages.view")
   return loadUnreadConversationsCount()
 }
 
@@ -51,6 +53,7 @@ export async function getConversationMessagesAction(
   conversationId: number,
   cursor?: { beforeCreatedAt: string; beforeId: number },
 ): Promise<ConversationMessagesPage> {
+  await requirePermission("messages.view")
   return loadConversationMessages(conversationId, cursor)
 }
 
@@ -65,7 +68,7 @@ export async function ensureConversationWithAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("invalidUser") }
   }
 
-  await requireCurrentUser()
+  await requirePermission("messages.send")
   const supabase = await createClient()
 
   return rpcResult<{ conversationId: number }>(
@@ -85,7 +88,7 @@ export async function sendMessageAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("messages.send")
   await checkRateLimit(current.appUser.id, "message", 30, 60) // 30 messages / 60s
   const supabase = await createClient()
 
@@ -126,7 +129,7 @@ export async function markConversationReadAction(
     return fail(parsed.error.issues[0]?.message ?? te("invalidConversation"))
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("messages.view")
   const supabase = await createClient()
 
   const { error } = await supabase.rpc("mark_conversation_read", {

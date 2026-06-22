@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 
 import { loadNotifications, loadUnreadCount } from "./queries"
 import {
@@ -33,23 +33,26 @@ function revalidateNotifications() {
 }
 
 export async function getNotificationsAction(): Promise<NotificationItem[]> {
+  await requirePermission("notifications.view")
   return loadNotifications()
 }
 
 export async function loadMoreNotificationsAction(
   cursor: string,
 ): Promise<{ items: NotificationItem[]; hasMore: boolean }> {
+  await requirePermission("notifications.view")
   return loadMoreNotifications(cursor)
 }
 
 export async function getUnreadCountAction(): Promise<number> {
+  await requirePermission("notifications.view")
   return loadUnreadCount()
 }
 
 export async function verifyNotificationTargetAction(
   item: NotificationItem,
 ): Promise<boolean> {
-  await requireCurrentUser()
+  await requirePermission("notifications.view")
   const supabase = await createClient()
   return verifyNotificationTarget(supabase, item)
 }
@@ -61,7 +64,7 @@ export async function markNotificationReadAction(
     if (!Number.isInteger(notificationId) || notificationId <= 0) {
       throw ActionError.key("invalidId")
     }
-    const current = await requireCurrentUser()
+    const current = await requirePermission("notifications.edit")
     const supabase = await createClient()
     assertOk(
       await markNotificationRead(supabase, notificationId, current.appUser.id),
@@ -73,7 +76,7 @@ export async function markNotificationReadAction(
 
 export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   return action("notifications.errors", async () => {
-    const current = await requireCurrentUser()
+    const current = await requirePermission("notifications.edit")
     const supabase = await createClient()
     assertOk(
       await markAllNotificationsRead(supabase, current.appUser.id),
@@ -86,7 +89,7 @@ export async function markAllNotificationsReadAction(): Promise<ActionResult> {
 // ── Preferences (UC-65) ──────────────────────────────────────────────────────
 
 export async function getNotificationPreferencesAction(): Promise<NotificationPreferenceMap> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("notifications.view")
   const supabase = await createClient()
   const { data } = await listPreferences(supabase, current.appUser.id)
 
@@ -108,7 +111,7 @@ export async function updateNotificationPreferenceAction(
 ): Promise<ActionResult> {
   return action("notifications.errors", async () => {
     const data = parse(updateNotificationPreferenceSchema, input)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("notifications.edit")
     const supabase = await createClient()
     assertOk(
       await upsertPreference(

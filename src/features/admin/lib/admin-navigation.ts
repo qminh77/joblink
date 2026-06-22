@@ -24,6 +24,7 @@ export function getAdminEntryHref(
   permissions: readonly string[],
 ): string | null {
   const permissionSet = new Set(permissions)
+  if (!permissionSet.has("admin.access")) return null
   return (
     ADMIN_ENTRY_ITEMS.find((item) =>
       permissionSet.has(item.requiredPermission),

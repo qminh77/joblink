@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
+import { requirePermission } from "@/lib/rbac"
 
 import {
   createApplicationStatusUpdateSchema,
@@ -43,7 +43,7 @@ export async function toggleFollowCompanyAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("companies.follow")
   await checkRateLimit(current.appUser.id, "follow", 20, 60) // 20 follows / 60s
   const supabase = await createClient()
 
@@ -81,7 +81,7 @@ export async function updateApplicationStatusAction(input: {
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.edit")
   await checkRateLimit(current.appUser.id, "company_action", 10, 60) // 10 / 60s
   const supabase = await createClient()
 
@@ -127,7 +127,7 @@ export async function updateJobStatusAction(input: {
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.edit")
   const supabase = await createClient()
 
   const result = await rpcResult<StatusPayload>(
@@ -176,7 +176,7 @@ export async function scheduleInterviewAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.edit")
   await checkRateLimit(current.appUser.id, "company_action", 10, 60)
   const supabase = await createClient()
 
@@ -219,7 +219,7 @@ export async function scheduleInterviewAction(
  * (FR-M02-007). RPC tự check role + trạng thái hợp lệ.
  */
 export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerificationResult> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("companies.edit")
   const supabase = await createClient()
 
   const result = await rpcResult<{ status: "pending" }>(

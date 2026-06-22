@@ -186,7 +186,7 @@ export async function loadSinglePost(
     await Promise.all([
       admin
         .from("users")
-        .select("id, role")
+        .select("id, role:account_type")
         .eq("id", post.author_id)
         .single<{ id: number; role: UserRole }>(),
       supabase

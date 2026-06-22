@@ -78,7 +78,7 @@ export function parse<T>(schema: ZodType<T>, input: unknown): T {
 /** Yêu cầu đăng nhập + đúng role; ném `<role>Only` (vd "memberOnly") nếu sai. */
 export async function requireRole(role: UserRole): Promise<CurrentUser> {
   const user = await requireCurrentUser()
-  if (user.appUser.role !== role) throw ActionError.key(`${role}Only`)
+  if (user.appUser.account_type !== role) throw ActionError.key(`${role}Only`)
   return user
 }
 

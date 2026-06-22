@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { getAdminUserPermissions } from "@/features/admin/api/admin-guard"
+import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
+import { requirePermission } from "@/lib/rbac"
 import {
   loadOwnCompanyProfile,
   loadOwnMemberProfile,
@@ -11,27 +13,30 @@ import { loadPublicAuthSettings } from "@/features/system-settings/api/public-se
 import { SettingsTabs } from "@/features/settings/components/settings-tabs"
 
 export default async function SettingsPage() {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("settings.view")
   const t = await getTranslations("settings")
+  const permissions = await getAdminUserPermissions()
 
   const sessionUser: SessionUserSummary = {
     id: current.appUser.id,
     authId: current.appUser.auth_id,
     email: current.appUser.email,
-    role: current.appUser.role,
+    role: current.appUser.account_type,
     status: current.appUser.status,
     displayName: current.profile.displayName,
     avatarUrl: current.profile.avatarUrl,
     coverUrl: current.profile.coverUrl,
     headline: current.profile.headline,
+    permissions,
+    adminHref: getAdminEntryHref(permissions),
   }
 
   const member =
-    current.appUser.role === "member" ? await loadOwnMemberProfile() : null
+    current.appUser.account_type === "member" ? await loadOwnMemberProfile() : null
   const company =
-    current.appUser.role === "company" ? await loadOwnCompanyProfile() : null
+    current.appUser.account_type === "company" ? await loadOwnCompanyProfile() : null
   const provinces =
-    current.appUser.role === "company" ? await loadProvinces() : []
+    current.appUser.account_type === "company" ? await loadProvinces() : []
   const authSettings = await loadPublicAuthSettings()
 
   const profile =

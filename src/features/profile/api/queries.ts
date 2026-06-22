@@ -159,7 +159,7 @@ export async function loadProfileById(
 
 export async function loadOwnMemberProfile(): Promise<MemberProfileDetail | null> {
   const current = await getCurrentUser()
-  if (!current || current.appUser.role !== "member") return null
+  if (!current || current.appUser.account_type !== "member") return null
   const supabase = await createClient()
   return loadMemberProfileDetail(supabase, current.appUser, current.appUser.id)
 }
@@ -182,7 +182,7 @@ type ProfileEditOverviewRpc = {
 // Promise.all([loadOwnMemberProfile, loadProvinces, loadOwnCvs]).
 export async function loadProfileEditOverview(): Promise<ProfileEditOverview | null> {
   const current = await getCurrentUser()
-  if (!current || current.appUser.role !== "member") return null
+  if (!current || current.appUser.account_type !== "member") return null
   const supabase = await createClient()
   const { data, error } = await supabase.rpc("get_profile_edit_overview")
   if (error) {
@@ -216,7 +216,7 @@ export async function loadProfileEditOverview(): Promise<ProfileEditOverview | n
 
 export async function loadOwnCompanyProfile(): Promise<CompanyProfileDetail | null> {
   const current = await getCurrentUser()
-  if (!current || current.appUser.role !== "company") return null
+  if (!current || current.appUser.account_type !== "company") return null
   const supabase = await createClient()
   return loadCompanyProfileDetail(supabase, current.appUser, current.appUser.id)
 }

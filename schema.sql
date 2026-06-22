@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     id                BIGSERIAL PRIMARY KEY,
     auth_id           UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     email             VARCHAR(255) NOT NULL,
-    role              VARCHAR(20)  NOT NULL,
+    account_type      VARCHAR(20)  NOT NULL,
     status            VARCHAR(30)  NOT NULL DEFAULT 'pending_verification',
     email_verified_at TIMESTAMPTZ NULL,
     phone             VARCHAR(20)  NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at        TIMESTAMPTZ NULL,
     CONSTRAINT uk_users_email UNIQUE (email),
-    CONSTRAINT chk_users_role   CHECK (role   IN ('member','company','admin')),
+    CONSTRAINT chk_users_account_type CHECK (account_type IN ('member','company','admin')),
     CONSTRAINT chk_users_status CHECK (status IN
         ('pending_verification','active','suspended','banned','deleted'))
 );
@@ -71,7 +71,7 @@ BEGIN
     ELSE 'member'
   END;
 
-  INSERT INTO public.users (auth_id, email, role, status, email_verified_at)
+  INSERT INTO public.users (auth_id, email, account_type, status, email_verified_at)
   VALUES (
     NEW.id,
     NEW.email,
@@ -171,7 +171,7 @@ RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
   SELECT EXISTS (
     SELECT 1 FROM public.users u
      WHERE u.auth_id::text = auth.uid()::text
-       AND u.role = 'admin'
+       AND u.account_type = 'admin'
        AND u.status = 'active'
        AND u.deleted_at IS NULL
   );
@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS company_profiles (
     CONSTRAINT fk_company_profile_ward FOREIGN KEY (ward_id) REFERENCES wards(id) ON DELETE SET NULL
 );
 
-INSERT INTO public.users (auth_id, email, role, status, email_verified_at)
+INSERT INTO public.users (auth_id, email, account_type, status, email_verified_at)
 SELECT au.id,
        au.email,
        CASE
@@ -430,7 +430,7 @@ SELECT u.id,
        )
   FROM public.users u
   JOIN auth.users au ON au.id = u.auth_id
- WHERE u.role = 'member'
+ WHERE u.account_type = 'member'
    AND u.deleted_at IS NULL
 ON CONFLICT (user_id) DO NOTHING;
 
@@ -460,7 +460,7 @@ SELECT u.id,
        )
   FROM public.users u
   JOIN auth.users au ON au.id = u.auth_id
- WHERE u.role = 'company'
+ WHERE u.account_type = 'company'
    AND u.deleted_at IS NULL
 ON CONFLICT (user_id) DO NOTHING;
 
@@ -963,7 +963,7 @@ CREATE POLICY "contact_submissions_select_admin"
     ON contact_submissions FOR SELECT
     USING (auth.jwt() ->> 'role' = 'service_role' OR
            auth.jwt() ->> 'aud' IN (SELECT aud FROM auth.users WHERE id = auth.uid())
-           AND EXISTS (SELECT 1 FROM users WHERE id = (SELECT id FROM users WHERE auth_id = auth.uid()) AND role = 'admin'));
+           AND public.is_admin());
 
 CREATE POLICY "contact_submissions_update_admin"
     ON contact_submissions FOR UPDATE
@@ -1033,12 +1033,12 @@ CREATE POLICY "user_last_active_update_own"
 -- 13. INDEXES
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_users_email       ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role        ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_account_type ON users(account_type);
 CREATE INDEX IF NOT EXISTS idx_users_status      ON users(status);
-CREATE INDEX IF NOT EXISTS idx_users_role_status ON users(role, status);
-CREATE INDEX IF NOT EXISTS idx_users_active      ON users(role, status) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_users_active_recent ON users(status, role, deleted_at, created_at DESC)
-    WHERE deleted_at IS NULL AND status = 'active' AND role <> 'admin';
+CREATE INDEX IF NOT EXISTS idx_users_account_type_status ON users(account_type, status);
+CREATE INDEX IF NOT EXISTS idx_users_active      ON users(account_type, status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_users_active_recent ON users(status, account_type, deleted_at, created_at DESC)
+    WHERE deleted_at IS NULL AND status = 'active' AND account_type <> 'admin';
 
 CREATE INDEX IF NOT EXISTS idx_provinces_active     ON provinces(is_active, sort_order)     WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_wards_province   ON wards(province_id)               WHERE deleted_at IS NULL;
@@ -1178,7 +1178,7 @@ BEGIN
   IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
     INSERT INTO public.audit_logs(action, entity_type, entity_id, old_data)
     VALUES('soft_delete', 'users', NEW.id,
-           jsonb_build_object('email', OLD.email, 'role', OLD.role, 'status', OLD.status));
+           jsonb_build_object('email', OLD.email, 'role', OLD.account_type, 'status', OLD.status));
   END IF;
   RETURN NEW;
 END;
@@ -1554,7 +1554,7 @@ SELECT receiver_id AS from_user_id, requester_id AS to_user_id, status,
 
 CREATE OR REPLACE VIEW public.v_active_members
 WITH (security_invoker = true) AS
-SELECT u.id, u.auth_id, u.email, u.role, u.status,
+SELECT u.id, u.auth_id, u.email, u.account_type, u.status,
        mp.full_name, mp.avatar_url, mp.headline,
        mp.province_id, p.name AS province_name,
        mp.ward_id, w.name AS ward_name,
@@ -1563,7 +1563,7 @@ SELECT u.id, u.auth_id, u.email, u.role, u.status,
   JOIN public.member_profiles mp ON mp.user_id = u.id
   LEFT JOIN public.provinces p ON p.id = mp.province_id
   LEFT JOIN public.wards w ON w.id = mp.ward_id
- WHERE u.role = 'member'
+ WHERE u.account_type = 'member'
    AND u.status = 'active'
    AND u.deleted_at IS NULL
    AND mp.deleted_at IS NULL;
@@ -1579,7 +1579,7 @@ SELECT u.id, u.auth_id, u.email,
   JOIN public.company_profiles cp ON cp.user_id = u.id
   LEFT JOIN public.provinces p ON p.id = cp.province_id
   LEFT JOIN public.wards w ON w.id = cp.ward_id
- WHERE u.role = 'company'
+ WHERE u.account_type = 'company'
    AND u.status = 'active'
    AND cp.verification_status = 'verified'
    AND u.deleted_at IS NULL
@@ -1647,7 +1647,7 @@ DECLARE
   v_verif_dist JSONB;
   v_recent_acts JSONB;
 BEGIN
-  SELECT u.role, u.status
+  SELECT u.account_type, u.status
     INTO v_caller_role, v_caller_status
     FROM public.users u
    WHERE u.auth_id = auth.uid()
@@ -1661,7 +1661,7 @@ BEGIN
   SELECT jsonb_build_object(
       'totalUsers', (SELECT COUNT(*)::INT FROM public.users WHERE deleted_at IS NULL),
       'newUsers7d', (SELECT COUNT(*)::INT FROM public.users WHERE deleted_at IS NULL AND created_at >= v_seven_days),
-      'totalCompanies', (SELECT COUNT(*)::INT FROM public.users WHERE role = 'company' AND deleted_at IS NULL),
+      'totalCompanies', (SELECT COUNT(*)::INT FROM public.users WHERE account_type = 'company' AND deleted_at IS NULL),
       'pendingCompanies', (SELECT COUNT(*)::INT FROM public.company_profiles WHERE verification_status IN ('pending','pending_update') AND deleted_at IS NULL),
       'totalJobs', (SELECT COUNT(*)::INT FROM public.jobs WHERE deleted_at IS NULL),
       'activeJobs', (SELECT COUNT(*)::INT FROM public.jobs WHERE status = 'active' AND deleted_at IS NULL),
@@ -1671,13 +1671,13 @@ BEGIN
       'totalConnections', (SELECT COUNT(*)::INT FROM public.connections WHERE status = 'accepted')
   ) INTO v_stats;
 
-  SELECT COALESCE(jsonb_object_agg(role, cnt), '{}'::jsonb)
+  SELECT COALESCE(jsonb_object_agg(account_type, cnt), '{}'::jsonb)
     INTO v_role_dist
     FROM (
-      SELECT role, COUNT(*)::INT AS cnt
+      SELECT account_type, COUNT(*)::INT AS cnt
         FROM public.users
        WHERE deleted_at IS NULL
-       GROUP BY role
+       GROUP BY account_type
     ) r;
 
   SELECT COALESCE(jsonb_object_agg(status, cnt), '{}'::jsonb)
@@ -1741,7 +1741,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     SELECT 1
       FROM public.users u
      WHERE u.id = public.auth_user_id()
-       AND u.role = 'company'
+       AND u.account_type = 'company'
        AND u.status = 'active'
        AND u.deleted_at IS NULL
   );
@@ -1755,7 +1755,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
       FROM public.users u
       JOIN public.company_profiles cp ON cp.user_id = u.id
      WHERE u.id = p_user_id
-       AND u.role = 'company'
+       AND u.account_type = 'company'
        AND u.status = 'active'
        AND cp.verification_status = 'verified'
        AND cp.deleted_at IS NULL
@@ -1786,7 +1786,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users u
      WHERE u.id = public.auth_user_id()
-       AND u.role = 'member'
+       AND u.account_type = 'member'
        AND u.status = 'active'
        AND u.deleted_at IS NULL
   );
@@ -2161,7 +2161,7 @@ CREATE POLICY follows_insert_own ON public.follows
           SELECT 1
             FROM public.users u
            WHERE u.id = followable_id
-             AND u.role = 'member'
+             AND u.account_type = 'member'
              AND u.status = 'active'
              AND u.deleted_at IS NULL
         )
@@ -2176,7 +2176,7 @@ CREATE POLICY follows_insert_own ON public.follows
              AND cp.deleted_at IS NULL
              AND cp.verification_status = 'verified'
            WHERE u.id = followable_id
-             AND u.role = 'company'
+             AND u.account_type = 'company'
              AND u.status = 'active'
              AND u.deleted_at IS NULL
         )
@@ -3915,7 +3915,7 @@ BEGIN
       FROM public.users u
      WHERE u.deleted_at IS NULL
        AND u.status = 'active'
-       AND u.role <> 'admin'
+       AND u.account_type <> 'admin'
        AND u.id <> p_user_id
        AND NOT EXISTS (
          SELECT 1 FROM public.connections c
@@ -3928,14 +3928,14 @@ BEGIN
              OR (b.blocker_id = u.id AND b.blocked_id = p_user_id)
        )
        AND (
-         (u.role = 'member' AND EXISTS (
+         (u.account_type = 'member' AND EXISTS (
             SELECT 1 FROM public.member_profiles mp
              WHERE mp.user_id = u.id
                AND mp.deleted_at IS NULL
                AND mp.profile_visibility = 'public'
           ))
          OR
-         (u.role = 'company' AND EXISTS (
+         (u.account_type = 'company' AND EXISTS (
             SELECT 1 FROM public.company_profiles cp
              WHERE cp.user_id = u.id
                AND cp.deleted_at IS NULL
@@ -4002,7 +4002,7 @@ BEGIN
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_suggestions
       FROM (
-        SELECT u.id AS "userId", u.role,
+        SELECT u.id AS "userId", u.account_type AS role,
                COALESCE(mp.full_name, cp.name) AS "displayName",
                COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                COALESCE(mp.headline, cp.industry) AS "headline"
@@ -4011,7 +4011,7 @@ BEGIN
           LEFT JOIN public.company_profiles cp ON cp.user_id = u.id
          WHERE u.deleted_at IS NULL
            AND u.status = 'active'
-           AND u.role <> 'admin'
+           AND u.account_type <> 'admin'
            AND u.id <> v_me
            AND NOT EXISTS (
              SELECT 1 FROM public.connections c
@@ -4024,9 +4024,9 @@ BEGIN
                  OR (b.blocker_id = u.id AND b.blocked_id = v_me)
            )
            AND (
-             (u.role = 'member' AND mp.deleted_at IS NULL AND mp.profile_visibility = 'public')
+             (u.account_type = 'member' AND mp.deleted_at IS NULL AND mp.profile_visibility = 'public')
              OR
-             (u.role = 'company' AND cp.deleted_at IS NULL AND cp.verification_status = 'verified')
+             (u.account_type = 'company' AND cp.deleted_at IS NULL AND cp.verification_status = 'verified')
            )
          ORDER BY RANDOM() LIMIT p_suggestion_limit
       ) s;
@@ -4073,7 +4073,7 @@ BEGIN
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_posts
       FROM (SELECT p.id, p.author_id AS "authorId", p.content, p.post_type AS "postType",
                    p.media, p.visibility, p.created_at AS "createdAt",
-                   jsonb_build_object('userId', p.author_id, 'role', u.role,
+                   jsonb_build_object('userId', p.author_id, 'role', u.account_type,
                        'displayName', COALESCE(mp.full_name, cp.name),
                        'avatarUrl', COALESCE(mp.avatar_url, cp.logo_url),
                        'headline', COALESCE(mp.headline, cp.industry)) AS author,
@@ -4146,7 +4146,7 @@ BEGIN
     PERFORM public.generate_quick_suggestions(v_me, p_suggestion_limit);
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_suggestions
-      FROM (SELECT c.suggested_user_id AS "userId", u.role,
+      FROM (SELECT c.suggested_user_id AS "userId", u.account_type AS role,
                    COALESCE(mp.full_name, cp.name) AS "displayName",
                    COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                    COALESCE(mp.headline, cp.industry) AS "headline",
@@ -4164,7 +4164,7 @@ BEGIN
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_connections
       FROM (SELECT CASE WHEN c.requester_id = v_me THEN c.receiver_id ELSE c.requester_id END AS "userId",
-                   u.role, COALESCE(mp.full_name, cp.name) AS "displayName",
+                   u.account_type AS role, COALESCE(mp.full_name, cp.name) AS "displayName",
                    COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                    COALESCE(mp.headline, cp.industry) AS "headline",
                    NULLIF(concat_ws(', ', COALESCE(md.name, cd.name),
@@ -4183,7 +4183,7 @@ BEGIN
              ORDER BY c.responded_at DESC NULLS LAST, c.requested_at DESC LIMIT 50) s;
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_incoming
-      FROM (SELECT c.requester_id AS "userId", u.role,
+      FROM (SELECT c.requester_id AS "userId", u.account_type AS role,
                    COALESCE(mp.full_name, cp.name) AS "displayName",
                    COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                    COALESCE(mp.headline, cp.industry) AS "headline",
@@ -4201,7 +4201,7 @@ BEGIN
              ORDER BY c.requested_at DESC LIMIT 50) s;
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_outgoing
-      FROM (SELECT c.receiver_id AS "userId", u.role,
+      FROM (SELECT c.receiver_id AS "userId", u.account_type AS role,
                    COALESCE(mp.full_name, cp.name) AS "displayName",
                    COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                    COALESCE(mp.headline, cp.industry) AS "headline",
@@ -4263,7 +4263,7 @@ BEGIN
         ELSE v_relation := jsonb_build_object('kind', 'pending_incoming', 'connectionId', v_conn.id); END IF;
     END IF;
 
-    IF v_target.role = 'company' THEN
+    IF v_target.account_type = 'company' THEN
         SELECT to_jsonb(cp) INTO v_profile FROM public.company_profiles cp
          WHERE cp.user_id = v_target.id AND cp.deleted_at IS NULL;
         IF v_profile IS NULL THEN RETURN NULL; END IF;
@@ -4353,7 +4353,7 @@ DECLARE
     v_profile JSONB; v_province JSONB; v_ward JSONB;
     v_experiences JSONB; v_educations JSONB; v_skills JSONB; v_cvs JSONB; v_provinces JSONB;
 BEGIN
-    SELECT u.id, u.email, u.role INTO v_me, v_email, v_role
+    SELECT u.id, u.email, u.account_type INTO v_me, v_email, v_role
       FROM public.users u WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL OR v_role <> 'member' THEN RETURN NULL; END IF;
     SELECT to_jsonb(mp) INTO v_profile FROM public.member_profiles mp
@@ -4409,7 +4409,7 @@ BEGIN
       LEFT JOIN public.provinces pv ON pv.id = cp.province_id LEFT JOIN public.wards dt ON dt.id = cp.ward_id
      WHERE u.id = p_company_user_id
        AND u.deleted_at IS NULL
-       AND u.role = 'company'
+       AND u.account_type = 'company'
        AND u.status = 'active'
        AND (u.id = v_me OR cp.verification_status = 'verified');
     IF v_company IS NULL THEN RETURN NULL; END IF;
@@ -4453,7 +4453,7 @@ BEGIN
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_me = p_company_user_id THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'selfFollow'); END IF;
-    SELECT u.role, u.status, cp.verification_status
+    SELECT u.account_type, u.status, cp.verification_status
       INTO v_target_role, v_target_status, v_verification_status
       FROM public.users u
       LEFT JOIN public.company_profiles cp
@@ -4489,7 +4489,7 @@ BEGIN
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_me = p_target_user_id THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'selfFollow'); END IF;
 
-    SELECT u.role, u.status INTO v_target_role, v_target_status
+    SELECT u.account_type, u.status INTO v_target_role, v_target_status
       FROM public.users u
      WHERE u.id = p_target_user_id AND u.deleted_at IS NULL LIMIT 1;
     IF v_target_role IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'userNotFound'); END IF;
@@ -4561,7 +4561,7 @@ BEGIN
             'createdAt', c.created_at,
             'author', jsonb_build_object(
                 'userId', c.user_id,
-                'role', COALESCE(u.role, 'member'),
+                'role', COALESCE(u.account_type, 'member'),
                 'displayName', COALESCE(mp.full_name, cp.name, 'JobLink'),
                 'avatarUrl', COALESCE(mp.avatar_url, cp.logo_url),
                 'headline', COALESCE(mp.headline, cp.industry)
@@ -4598,7 +4598,7 @@ DECLARE
     v_apps_this_month INT; v_hires_total INT; v_job_views INT;
     v_recent_jobs JSONB; v_recent_apps JSONB;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL OR v_role <> 'company' THEN RETURN NULL; END IF;
     PERFORM public.expire_due_jobs();
@@ -4657,7 +4657,7 @@ RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE 
 DECLARE
     v_me BIGINT; v_role TEXT; v_items JSONB; v_total INT; v_lim INT; v_off INT; v_q TEXT;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL OR v_role <> 'company' THEN
         RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0); END IF;
@@ -4697,7 +4697,7 @@ RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE 
 DECLARE
     v_me BIGINT; v_role TEXT; v_items JSONB; v_total INT; v_lim INT; v_off INT; v_q TEXT;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL OR v_role <> 'company' THEN
         RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0); END IF;
@@ -4740,7 +4740,7 @@ RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATIL
 DECLARE
     v_me BIGINT; v_role TEXT; v_company_user_id BIGINT; v_old_status TEXT; v_now TIMESTAMPTZ;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF p_new_status NOT IN ('applied','reviewed','interview','offered','hired','rejected','withdrawn') THEN
@@ -4767,7 +4767,7 @@ RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATIL
 DECLARE
     v_me BIGINT; v_role TEXT; v_company_user_id BIGINT; v_old_status TEXT;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF p_new_status NOT IN ('draft','active','closed') THEN
@@ -4801,7 +4801,7 @@ DECLARE
     v_me BIGINT; v_role TEXT; v_status TEXT; v_job_id BIGINT;
     v_skill_name TEXT; v_skill_id BIGINT; v_pos_title TEXT;
 BEGIN
-    SELECT u.id, u.role, u.status INTO v_me, v_role, v_status FROM public.users u
+    SELECT u.id, u.account_type, u.status INTO v_me, v_role, v_status FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_role <> 'company' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany'); END IF;
@@ -4929,7 +4929,7 @@ DECLARE
     v_me BIGINT; v_role TEXT; v_status TEXT; v_company_user_id BIGINT;
     v_old_status TEXT; v_skill_name TEXT; v_skill_id BIGINT; v_position_title TEXT;
 BEGIN
-    SELECT u.id, u.role, u.status INTO v_me, v_role, v_status FROM public.users u
+    SELECT u.id, u.account_type, u.status INTO v_me, v_role, v_status FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_role <> 'company' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany'); END IF;
@@ -5051,7 +5051,7 @@ RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATIL
 DECLARE
     v_me BIGINT; v_role TEXT; v_job_status TEXT; v_job_expires TIMESTAMPTZ; v_application_id BIGINT;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_role <> 'member' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'memberOnly'); END IF;
@@ -5103,7 +5103,7 @@ CREATE OR REPLACE FUNCTION public.toggle_saved_job(p_job_id BIGINT)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_role TEXT; v_existing INT; v_saved BOOLEAN;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_role <> 'member' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'memberOnly'); END IF;
@@ -5285,7 +5285,7 @@ CREATE OR REPLACE FUNCTION public.resubmit_company_verification()
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
 DECLARE v_me BIGINT; v_role TEXT; v_status TEXT;
 BEGIN
-    SELECT u.id, u.role INTO v_me, v_role FROM public.users u
+    SELECT u.id, u.account_type INTO v_me, v_role FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'unauthorized'); END IF;
     IF v_role <> 'company' THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'notCompany'); END IF;
@@ -5339,7 +5339,7 @@ DECLARE
 BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
-    SELECT u.role INTO v_target_role FROM public.users u
+    SELECT u.account_type INTO v_target_role FROM public.users u
      WHERE u.id = p_target_user_id AND u.deleted_at IS NULL LIMIT 1;
     IF v_target_role IS NULL THEN
         RETURN jsonb_build_object('posts', '[]'::jsonb, 'next_cursor', NULL, 'can_view', FALSE); END IF;
@@ -5382,7 +5382,7 @@ BEGIN
       FROM (SELECT row_number() OVER (ORDER BY f.created_at DESC) AS ord,
                    f.id, f.author_id AS "authorId", f.content, f.post_type AS "postType",
                    f.media, f.visibility, f.created_at AS "createdAt",
-                   jsonb_build_object('userId', f.author_id, 'role', au.role,
+                   jsonb_build_object('userId', f.author_id, 'role', au.account_type,
                        'displayName', COALESCE(amp.full_name, acp.name),
                        'avatarUrl', COALESCE(amp.avatar_url, acp.logo_url),
                        'headline', COALESCE(amp.headline, acp.industry)) AS author,
@@ -5436,7 +5436,7 @@ BEGIN
                op.other_user_id AS "otherUserId",
                COALESCE(mp.full_name, cp.name) AS "displayName",
                COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
-               COALESCE(mp.headline, cp.industry) AS "headline", u.role AS role,
+               COALESCE(mp.headline, cp.industry) AS "headline", u.account_type AS role,
                c.last_message_id AS "lastMessageId", c.last_sender_id AS "lastSenderId",
                c.last_content AS "lastContent", NULL::JSONB AS "lastMedia",
                c.last_message_created_at AS "lastCreatedAt",
@@ -5468,7 +5468,7 @@ BEGIN
                cwc.other_id AS "otherUserId",
                COALESCE(mp.full_name, cp.name) AS "displayName",
                COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
-               COALESCE(mp.headline, cp.industry) AS "headline", u.role AS role,
+               COALESCE(mp.headline, cp.industry) AS "headline", u.account_type AS role,
                NULL::BIGINT AS "lastMessageId", NULL::BIGINT AS "lastSenderId",
                NULL::TEXT AS "lastContent", NULL::JSONB AS "lastMedia",
                NULL::TIMESTAMPTZ AS "lastCreatedAt", 0::INT AS "unreadCount",
@@ -5874,7 +5874,7 @@ BEGIN
 
   FOR v_user IN
     SELECT id FROM public.users
-     WHERE role = 'member' AND status = 'active' AND deleted_at IS NULL
+     WHERE account_type = 'member' AND status = 'active' AND deleted_at IS NULL
   LOOP
     INSERT INTO public.network_suggestions (user_id, suggested_user_id, score)
     SELECT
@@ -5899,7 +5899,7 @@ BEGIN
     AS score
     FROM public.users candidate
     WHERE candidate.id <> v_user.id
-      AND candidate.role = 'member'
+      AND candidate.account_type = 'member'
       AND candidate.status = 'active'
       AND candidate.deleted_at IS NULL
       AND candidate.id NOT IN (
@@ -6138,7 +6138,7 @@ ON CONFLICT DO NOTHING;
 UPDATE public.users u
 SET role_id = r.id
 FROM public.roles r
-WHERE u.role = r.name AND u.role_id IS NULL;
+WHERE u.account_type = r.name AND u.role_id IS NULL;
 
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
@@ -6153,7 +6153,7 @@ AS $$
        AND r.deleted_at IS NULL
      WHERE u.auth_id = auth.uid()
        AND u.deleted_at IS NULL
-       AND (u.role = 'admin' OR r.name = 'admin')
+       AND (u.account_type = 'admin' OR r.name = 'admin')
   );
 $$;
 
@@ -6173,7 +6173,7 @@ AS $$
        AND r.deleted_at IS NULL
      WHERE u.id = p_user_id
        AND u.deleted_at IS NULL
-       AND (u.role = 'admin' OR r.name = 'admin')
+       AND (u.account_type = 'admin' OR r.name = 'admin')
   )
   OR EXISTS (
     SELECT 1
@@ -6218,7 +6218,7 @@ AS $$
      AND r.deleted_at IS NULL
    WHERE u.id = p_user_id
      AND u.deleted_at IS NULL
-     AND (u.role = 'admin' OR r.name = 'admin');
+     AND (u.account_type = 'admin' OR r.name = 'admin');
 $$;
 
 GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
@@ -6248,6 +6248,312 @@ GRANT ALL ON public.modules TO service_role;
 GRANT ALL ON public.actions TO service_role;
 GRANT ALL ON public.permissions TO service_role;
 GRANT ALL ON public.role_permissions TO service_role;
+
+-- =============================================================================
+-- 42. DYNAMIC RBAC UNIFICATION — app + admin permissions
+-- =============================================================================
+
+INSERT INTO public.modules (name, label, sort_order) VALUES
+('admin', 'Khu quản trị', 0),
+('dashboard', 'Bảng điều khiển', 1),
+('feed', 'Bảng tin', 2),
+('network', 'Mạng lưới', 3),
+('messages', 'Tin nhắn', 4),
+('notifications', 'Thông báo', 5),
+('profile', 'Hồ sơ', 6),
+('cvs', 'CV', 7),
+('users', 'Quản lý người dùng', 8),
+('companies', 'Quản lý công ty', 9),
+('jobs', 'Quản lý việc làm', 10),
+('posts', 'Quản lý bài viết', 11),
+('reports', 'Quản lý báo cáo', 12),
+('appeals', 'Quản lý kháng nghị', 13),
+('audit', 'Nhật ký hoạt động', 14),
+('contacts', 'Liên hệ hỗ trợ', 15),
+('search', 'Tìm kiếm', 16),
+('brand', 'Thương hiệu', 17),
+('report_types', 'Loại báo cáo', 18),
+('lookups', 'Danh mục', 19),
+('settings', 'Cài đặt hệ thống', 20),
+('roles', 'Quản lý quyền', 21)
+ON CONFLICT (name) DO UPDATE
+SET label = EXCLUDED.label,
+    sort_order = EXCLUDED.sort_order;
+
+INSERT INTO public.actions (name, label) VALUES
+('access', 'Truy cập'),
+('view', 'Xem'),
+('create', 'Tạo mới'),
+('edit', 'Chỉnh sửa'),
+('delete', 'Xóa'),
+('export', 'Xuất dữ liệu'),
+('suspend', 'Khóa tài khoản'),
+('ban', 'Cấm'),
+('restore', 'Khôi phục'),
+('moderate', 'Duyệt / Kiểm duyệt'),
+('status', 'Đổi trạng thái'),
+('reply', 'Trả lời'),
+('maintenance', 'Bật/tắt bảo trì'),
+('apply', 'Ứng tuyển'),
+('save', 'Lưu'),
+('send', 'Gửi'),
+('follow', 'Theo dõi'),
+('connect', 'Kết nối'),
+('block', 'Chặn'),
+('react', 'Tương tác'),
+('comment', 'Bình luận'),
+('share', 'Chia sẻ'),
+('vote', 'Bình chọn')
+ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
+
+WITH permission_pairs(module_name, action_names) AS (
+  VALUES
+    ('admin', ARRAY['access']),
+    ('dashboard', ARRAY['view']),
+    ('feed', ARRAY['view']),
+    ('search', ARRAY['view']),
+    ('network', ARRAY['view','follow','connect','block']),
+    ('messages', ARRAY['view','send']),
+    ('notifications', ARRAY['view','edit']),
+    ('profile', ARRAY['view','edit']),
+    ('cvs', ARRAY['view','create','edit','delete']),
+    ('users', ARRAY['view','create','edit','delete','export','suspend','ban','restore']),
+    ('companies', ARRAY['view','follow','edit','suspend','moderate','restore']),
+    ('jobs', ARRAY['view','create','edit','apply','save','moderate','delete']),
+    ('posts', ARRAY['view','create','edit','comment','react','share','vote','moderate','delete']),
+    ('reports', ARRAY['create','view','moderate','status']),
+    ('appeals', ARRAY['view','create','moderate']),
+    ('audit', ARRAY['view']),
+    ('contacts', ARRAY['create','view','reply']),
+    ('brand', ARRAY['view','edit']),
+    ('report_types', ARRAY['view','create','edit','delete']),
+    ('lookups', ARRAY['view','create','edit','delete']),
+    ('settings', ARRAY['view','edit','maintenance']),
+    ('roles', ARRAY['view','create','edit','delete'])
+),
+expanded AS (
+  SELECT pp.module_name, unnest(pp.action_names) AS action_name
+  FROM permission_pairs pp
+)
+INSERT INTO public.permissions (module_id, action_id, name, label)
+SELECT m.id, a.id, m.name || '.' || a.name, m.label || ' - ' || a.label
+FROM expanded e
+JOIN public.modules m ON m.name = e.module_name
+JOIN public.actions a ON a.name = e.action_name
+ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
+
+DELETE FROM public.role_permissions WHERE role_id IN (
+  SELECT id FROM public.roles
+  WHERE name IN ('admin', 'member', 'company', 'content_moderator', 'user_manager', 'support_agent')
+);
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM public.roles r, public.permissions p
+WHERE r.name = 'admin'
+ON CONFLICT DO NOTHING;
+
+WITH role_permission_seed(role_name, permission_name) AS (
+  VALUES
+    ('member', 'feed.view'), ('member', 'search.view'),
+    ('member', 'network.view'), ('member', 'network.follow'), ('member', 'network.connect'), ('member', 'network.block'),
+    ('member', 'messages.view'), ('member', 'messages.send'),
+    ('member', 'notifications.view'), ('member', 'notifications.edit'),
+    ('member', 'profile.view'), ('member', 'profile.edit'),
+    ('member', 'cvs.view'), ('member', 'cvs.create'), ('member', 'cvs.edit'), ('member', 'cvs.delete'),
+    ('member', 'companies.view'), ('member', 'companies.follow'),
+    ('member', 'jobs.view'), ('member', 'jobs.apply'), ('member', 'jobs.save'),
+    ('member', 'posts.view'), ('member', 'posts.create'), ('member', 'posts.edit'), ('member', 'posts.comment'),
+    ('member', 'posts.react'), ('member', 'posts.share'), ('member', 'posts.vote'), ('member', 'posts.delete'),
+    ('member', 'reports.create'), ('member', 'appeals.view'), ('member', 'appeals.create'),
+    ('member', 'contacts.create'), ('member', 'settings.view'), ('member', 'settings.edit'),
+
+    ('company', 'feed.view'), ('company', 'search.view'),
+    ('company', 'network.view'), ('company', 'network.follow'), ('company', 'network.connect'), ('company', 'network.block'),
+    ('company', 'messages.view'), ('company', 'messages.send'),
+    ('company', 'notifications.view'), ('company', 'notifications.edit'),
+    ('company', 'profile.view'), ('company', 'profile.edit'),
+    ('company', 'companies.view'), ('company', 'companies.follow'), ('company', 'companies.edit'),
+    ('company', 'jobs.view'), ('company', 'jobs.create'), ('company', 'jobs.edit'),
+    ('company', 'posts.view'), ('company', 'posts.create'), ('company', 'posts.edit'), ('company', 'posts.comment'),
+    ('company', 'posts.react'), ('company', 'posts.share'), ('company', 'posts.vote'), ('company', 'posts.delete'),
+    ('company', 'reports.create'), ('company', 'appeals.view'), ('company', 'appeals.create'),
+    ('company', 'contacts.create'), ('company', 'settings.view'), ('company', 'settings.edit'),
+
+    ('content_moderator', 'admin.access'), ('content_moderator', 'dashboard.view'),
+    ('content_moderator', 'posts.view'), ('content_moderator', 'posts.moderate'), ('content_moderator', 'posts.delete'),
+    ('content_moderator', 'reports.view'), ('content_moderator', 'reports.moderate'), ('content_moderator', 'reports.status'),
+    ('content_moderator', 'appeals.view'), ('content_moderator', 'appeals.moderate'), ('content_moderator', 'audit.view'),
+
+    ('user_manager', 'admin.access'), ('user_manager', 'dashboard.view'),
+    ('user_manager', 'users.view'), ('user_manager', 'users.create'), ('user_manager', 'users.edit'),
+    ('user_manager', 'users.delete'), ('user_manager', 'users.export'), ('user_manager', 'users.suspend'),
+    ('user_manager', 'users.ban'), ('user_manager', 'users.restore'),
+    ('user_manager', 'companies.view'), ('user_manager', 'companies.edit'), ('user_manager', 'companies.suspend'),
+    ('user_manager', 'companies.moderate'), ('user_manager', 'companies.restore'),
+    ('user_manager', 'roles.view'), ('user_manager', 'audit.view'),
+
+    ('support_agent', 'admin.access'), ('support_agent', 'dashboard.view'),
+    ('support_agent', 'contacts.view'), ('support_agent', 'contacts.reply'),
+    ('support_agent', 'reports.view'), ('support_agent', 'audit.view')
+)
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM role_permission_seed s
+JOIN public.roles r ON r.name = s.role_name AND r.deleted_at IS NULL
+JOIN public.permissions p ON p.name = s.permission_name
+ON CONFLICT DO NOTHING;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.users u
+      JOIN public.roles r
+        ON r.id = u.role_id
+       AND r.deleted_at IS NULL
+     WHERE u.auth_id = auth.uid()
+       AND u.deleted_at IS NULL
+       AND r.name = 'admin'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.has_permission(
+  p_user_id BIGINT,
+  p_permission_name TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.users u
+      JOIN public.roles r
+        ON r.id = u.role_id
+       AND r.deleted_at IS NULL
+     WHERE u.id = p_user_id
+       AND u.deleted_at IS NULL
+       AND r.name = 'admin'
+  )
+  OR EXISTS (
+    SELECT 1
+      FROM public.users u
+      JOIN public.role_permissions rp ON rp.role_id = u.role_id
+      JOIN public.permissions p ON p.id = rp.permission_id
+     WHERE u.id = p_user_id
+       AND u.deleted_at IS NULL
+       AND p.name = p_permission_name
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_permissions(p_user_id BIGINT)
+RETURNS TABLE(permission_name TEXT, module_name TEXT, action_name TEXT)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.name::TEXT, m.name::TEXT, a.name::TEXT
+    FROM public.users u
+    JOIN public.role_permissions rp ON rp.role_id = u.role_id
+    JOIN public.permissions p ON p.id = rp.permission_id
+    JOIN public.modules m ON m.id = p.module_id
+    JOIN public.actions a ON a.id = p.action_id
+   WHERE u.id = p_user_id
+     AND u.deleted_at IS NULL
+  UNION
+  SELECT p.name::TEXT, m.name::TEXT, a.name::TEXT
+    FROM public.users u
+    CROSS JOIN public.permissions p
+    JOIN public.modules m ON m.id = p.module_id
+    JOIN public.actions a ON a.id = p.action_id
+    JOIN public.roles r ON r.id = u.role_id AND r.deleted_at IS NULL
+   WHERE u.id = p_user_id
+     AND u.deleted_at IS NULL
+     AND r.name = 'admin';
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_new_user_id BIGINT;
+  v_account_type TEXT;
+  v_role_id INT;
+  v_name TEXT;
+  v_avatar TEXT;
+  v_company_name TEXT;
+  v_slug_base TEXT;
+BEGIN
+  v_account_type := CASE
+    WHEN NEW.raw_user_meta_data->>'role' IN ('member', 'company', 'admin')
+      THEN NEW.raw_user_meta_data->>'role'
+    ELSE 'member'
+  END;
+
+  SELECT id INTO v_role_id
+    FROM public.roles
+   WHERE name = v_account_type
+     AND deleted_at IS NULL
+   LIMIT 1;
+
+  INSERT INTO public.users (auth_id, email, account_type, role_id, status, email_verified_at)
+  VALUES (NEW.id, NEW.email, v_account_type, v_role_id, 'active', COALESCE(NEW.email_confirmed_at, NOW()))
+  ON CONFLICT (auth_id) DO UPDATE
+     SET email = EXCLUDED.email,
+         account_type = COALESCE(public.users.account_type, EXCLUDED.account_type),
+         role_id = COALESCE(public.users.role_id, EXCLUDED.role_id),
+         email_verified_at = COALESCE(EXCLUDED.email_verified_at, public.users.email_verified_at, NOW()),
+         status = CASE
+           WHEN public.users.status = 'pending_verification' THEN 'active'
+           ELSE public.users.status
+         END,
+         updated_at = NOW()
+  RETURNING id INTO v_new_user_id;
+
+  v_name := COALESCE(
+    NULLIF(NEW.raw_user_meta_data->>'full_name', ''),
+    NULLIF(NEW.raw_user_meta_data->>'name', ''),
+    split_part(COALESCE(NEW.email, ''), '@', 1),
+    'Thành viên'
+  );
+
+  v_avatar := COALESCE(
+    NULLIF(NEW.raw_user_meta_data->>'avatar_url', ''),
+    NULLIF(NEW.raw_user_meta_data->>'picture', '')
+  );
+
+  IF v_account_type = 'company' THEN
+    v_company_name := COALESCE(NULLIF(NEW.raw_user_meta_data->>'company_name', ''), v_name, 'Company');
+    v_slug_base := COALESCE(
+      NULLIF(trim(both '-' FROM regexp_replace(lower(v_company_name), '[^a-z0-9]+', '-', 'g')), ''),
+      'company'
+    );
+
+    INSERT INTO public.company_profiles (user_id, name, slug, logo_url)
+    VALUES (v_new_user_id, v_company_name, v_slug_base || '-' || substring(NEW.id::text, 1, 8), v_avatar)
+    ON CONFLICT (user_id) DO NOTHING;
+  ELSIF v_account_type = 'member' THEN
+    INSERT INTO public.member_profiles (user_id, full_name, avatar_url)
+    VALUES (v_new_user_id, v_name, v_avatar)
+    ON CONFLICT (user_id) DO UPDATE
+       SET full_name = COALESCE(public.member_profiles.full_name, EXCLUDED.full_name),
+           avatar_url = COALESCE(public.member_profiles.avatar_url, EXCLUDED.avatar_url),
+           updated_at = NOW();
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.has_permission(BIGINT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_permissions(BIGINT) TO anon, authenticated;
 
 -- =============================================================================
 -- KẾT THÚC SCHEMA

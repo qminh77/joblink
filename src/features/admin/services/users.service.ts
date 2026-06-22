@@ -131,7 +131,15 @@ export async function applyUserModerationAction(
   const { data: target } = await getAdminUserTarget(supabase, input.userId)
   if (!target) return { ok: false, error: "not_found" }
   if (target.id === actor.appUser.id) return { ok: false, error: "self" }
-  if (target.role === "admin" && input.action !== "restore") {
+
+  const { data: targetRole } = target.role_id
+    ? await supabase
+        .from("roles")
+        .select("name")
+        .eq("id", target.role_id)
+        .maybeSingle<{ name: string }>()
+    : { data: null }
+  if (targetRole?.name === "admin" && input.action !== "restore") {
     return { ok: false, error: "cannot_modify_admin" }
   }
 

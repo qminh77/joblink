@@ -2,20 +2,18 @@ import "server-only"
 
 import { redirect } from "next/navigation"
 
-import { USER_ROLES } from "@/lib/constants"
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
 import { checkUserPermission, getUserPermissionsByUserId } from "@/lib/rbac"
 import type { PermissionName } from "@/lib/rbac"
 
+const ADMIN_ACCESS_PERMISSION = "admin.access" satisfies PermissionName
+
 /**
  * Yêu cầu user phải là admin (backward compat).
  */
 export async function requireAdmin(): Promise<CurrentUser> {
-  const user = await getCurrentUser()
-  if (!user) redirect("/login")
-  if (user.appUser.role !== USER_ROLES[2]) redirect("/home")
-  return user
+  return requireAdminAccess()
 }
 
 /**
@@ -25,8 +23,11 @@ export async function requireAdminAccess(): Promise<CurrentUser> {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const permissions = await getUserPermissionsByUserId(user.appUser.id)
-  if (permissions.length === 0) redirect("/home")
+  const allowed = await checkUserPermission(
+    user.appUser.id,
+    ADMIN_ACCESS_PERMISSION,
+  )
+  if (!allowed) redirect("/home")
 
   return user
 }
@@ -36,7 +37,8 @@ export async function requireAdminAccess(): Promise<CurrentUser> {
  */
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
-  return user?.appUser.role === USER_ROLES[2]
+  if (!user) return false
+  return checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION)
 }
 
 /**
@@ -46,7 +48,11 @@ export async function requireAdminPermission(permission: PermissionName): Promis
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const allowed = await checkUserPermission(user.appUser.id, permission)
+  const [canAccessAdmin, allowed] = await Promise.all([
+    checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION),
+    checkUserPermission(user.appUser.id, permission),
+  ])
+  if (!canAccessAdmin) redirect("/home")
   if (!allowed) redirect("/home")
 
   return user
@@ -58,7 +64,11 @@ export async function requireAdminPermission(permission: PermissionName): Promis
 export async function hasAdminPermission(permission: PermissionName): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
-  return checkUserPermission(user.appUser.id, permission)
+  const [canAccessAdmin, allowed] = await Promise.all([
+    checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION),
+    checkUserPermission(user.appUser.id, permission),
+  ])
+  return canAccessAdmin && allowed
 }
 
 /**

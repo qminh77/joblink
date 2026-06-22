@@ -29,6 +29,7 @@ export type AdminUserTargetRecord = {
   id: number
   status: UserStatus
   role: UserRole
+  role_id: number | null
 }
 
 export async function listAdminUserRows(
@@ -42,9 +43,10 @@ export async function listAdminUserRows(
 
   let query = supabase
     .from("users")
-    .select("id, email, role, status, created_at, last_login_at, role_id", {
-      count: "exact",
-    })
+    .select(
+      "id, email, role:account_type, status, created_at, last_login_at, role_id",
+      { count: "exact" },
+    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(from, to)
@@ -79,7 +81,9 @@ export async function listAdminUserExportRows(
 ) {
   let query = supabase
     .from("users")
-    .select("id, email, role, status, created_at, last_login_at, role_id")
+    .select(
+      "id, email, role:account_type, status, created_at, last_login_at, role_id",
+    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(10000)
@@ -152,7 +156,7 @@ export async function listUserDisplayProfileRows(
 export function getAdminUserTarget(supabase: AdminSupabase, userId: number) {
   return supabase
     .from("users")
-    .select("id, status, role")
+    .select("id, status, role:account_type, role_id")
     .eq("id", userId)
     .is("deleted_at", null)
     .maybeSingle<AdminUserTargetRecord>()

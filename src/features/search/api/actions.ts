@@ -1,7 +1,7 @@
 "use server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
+import { requirePermission } from "@/lib/rbac"
 import { loadJobsList } from "@/features/jobs/api/queries"
 
 import {
@@ -33,7 +33,7 @@ export async function globalSearchAction(
   if (q.length < MIN_QUERY) {
     return { people: [], companies: [], jobs: [] }
   }
-  await requireCurrentUser()
+  await requirePermission("search.view")
   const supabase = await createClient()
 
   const [people, companies, jobsPage] = await Promise.all([
@@ -75,7 +75,7 @@ export async function searchPageAction(
   if (q.length < MIN_QUERY) {
     return { items: [], total: 0 }
   }
-  const current = await requireCurrentUser()
+  const current = await requirePermission("search.view")
   const supabase = await createClient()
 
   const limit = PAGE_SIZE
@@ -146,7 +146,7 @@ export async function searchAllTabAction(
       posts: { items: [], total: 0 },
     }
   }
-  const current = await requireCurrentUser()
+  const current = await requirePermission("search.view")
   const supabase = await createClient()
 
   const previewLimit = 3

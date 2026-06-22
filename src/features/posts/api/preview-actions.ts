@@ -3,8 +3,6 @@
 import "server-only"
 
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-import type { UserRole } from "@/lib/constants"
 import type { Json } from "@/types/database"
 
 export type PostPreviewData = {
@@ -25,7 +23,6 @@ export async function getPostPreviewAction(
   postId: number,
 ): Promise<PostPreviewData> {
   const supabase = await createClient()
-  const admin = createAdminClient()
 
   const { data: post } = await supabase
     .from("posts")
@@ -43,12 +40,7 @@ export async function getPostPreviewAction(
 
   if (!post) return null
 
-  const [usersRes, memberRes, companyRes] = await Promise.all([
-    admin
-      .from("users")
-      .select("id, role")
-      .eq("id", post.author_id)
-      .single<{ id: number; role: UserRole }>(),
+  const [memberRes, companyRes] = await Promise.all([
     supabase
       .from("member_profiles")
       .select("user_id, full_name, avatar_url")

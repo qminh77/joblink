@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { sendEmailChangeVerification } from "@/features/auth/api/auth-mailer"
 import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse } from "@/lib/action/server"
 import { ok, fail, type ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 
 import {
   createAccountSchema,
@@ -49,7 +49,7 @@ export async function changePasswordAction(
     return fail(parsed.error.issues[0]?.message ?? tv("currentPasswordRequired"))
   }
 
-  const current = await requireCurrentUser()
+  const current = await requirePermission("settings.edit")
   const supabase = await createClient()
 
   const verify = await supabase.auth.signInWithPassword({
@@ -81,10 +81,7 @@ export async function updatePrivacyAction(
 ): Promise<ActionResult> {
   return action("settings.errors", async () => {
     const data = parse(createPrivacySchema(), input)
-    const current = await requireCurrentUser()
-    if (current.appUser.role !== "member") {
-      throw ActionError.key("privacyMemberOnly")
-    }
+    const current = await requirePermission("settings.edit")
     const supabase = await createClient()
     assertOk(
       await updateMemberPrivacy(supabase, current.appUser.id, {
@@ -111,10 +108,7 @@ export async function updateCompanyOpenToHireAction(
   openToHire: boolean,
 ): Promise<ActionResult> {
   return action("settings.errors", async () => {
-    const current = await requireCurrentUser()
-    if (current.appUser.role !== "company") {
-      throw ActionError.key("openToHireCompanyOnly")
-    }
+    const current = await requirePermission("settings.edit")
     const supabase = await createClient()
     assertOk(
       await updateCompanyOpenToHire(supabase, current.appUser.id, openToHire),
@@ -137,7 +131,7 @@ export async function updateLocaleAction(
   return action("settings.errors", async () => {
     const tv = await getTranslations("settings.validation")
     const data = parse(createLocaleSchema(tv), input)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("settings.edit")
     const supabase = await createClient()
     assertOk(
       await updateUserLocale(supabase, current.appUser.id, data.locale),
@@ -177,7 +171,7 @@ export async function updateAccountAction(
   return action("settings.errors", async () => {
     const tv = await getTranslations("settings.validation")
     const data = parse(createAccountSchema(tv), input)
-    const current = await requireCurrentUser()
+    const current = await requirePermission("settings.edit")
     const supabase = await createClient()
 
     let emailChangeRequested = false

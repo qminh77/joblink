@@ -1,6 +1,5 @@
 import "server-only"
 
-import { USER_ROLES } from "@/lib/constants"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
 import { ActionError } from "@/lib/action/server"
@@ -70,5 +69,5 @@ export async function hasPermission(
  */
 export async function isAdminUser(): Promise<boolean> {
   const user = await requireCurrentUser()
-  return user.appUser.role === USER_ROLES[2]
+  return checkUserPermission(user.appUser.id, "admin.access")
 }

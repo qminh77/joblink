@@ -1,9 +1,9 @@
 import { notFound, redirect } from "next/navigation"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { loadUserPosts } from "@/features/posts/api/queries"
 import { loadProfileById } from "@/features/profile/api/queries"
 import { MemberProfileView } from "@/features/profile/components/member-profile-view"
+import { requirePermission } from "@/lib/rbac"
 
 type ProfilePageProps = {
   params: Promise<{ id: string }>
@@ -11,7 +11,7 @@ type ProfilePageProps = {
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const rawId = (await params).id
-  const current = await requireCurrentUser()
+  const current = await requirePermission("profile.view")
 
   const id = rawId === "me" ? String(current.appUser.id) : rawId
   const targetId = Number.parseInt(id, 10)

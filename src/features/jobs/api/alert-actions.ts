@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import { ActionError, action, assertOk, parse, unwrap } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
+import { requirePermission } from "@/lib/rbac"
 
 import { createJobAlertSchema } from "../schemas"
 import type { JobAlert, JobAlertFilters } from "../types"
@@ -19,7 +19,7 @@ import {
 const MAX_ALERTS = 20
 
 export async function listJobAlertsAction(): Promise<JobAlert[]> {
-  const current = await requireCurrentUser()
+  const current = await requirePermission("jobs.view")
   const supabase = await createClient()
   const { data } = await listJobAlerts(supabase, current.appUser.id)
   return (data ?? []).map((r) => ({
@@ -37,8 +37,7 @@ export async function createJobAlertAction(input: {
 }): Promise<ActionResult<{ id: number }>> {
   return action("jobs.errors", async () => {
     const data = parse(createJobAlertSchema, input)
-    const current = await requireCurrentUser()
-    if (current.appUser.role !== "member") throw ActionError.key("memberOnly")
+    const current = await requirePermission("jobs.view")
     const supabase = await createClient()
 
     const { count } = await countJobAlerts(supabase, current.appUser.id)
@@ -58,7 +57,7 @@ export async function createJobAlertAction(input: {
 export async function deleteJobAlertAction(id: number): Promise<ActionResult> {
   return action("jobs.errors", async () => {
     if (!Number.isInteger(id) || id <= 0) throw ActionError.key("invalidAlert")
-    const current = await requireCurrentUser()
+    const current = await requirePermission("jobs.view")
     const supabase = await createClient()
     assertOk(
       await deleteJobAlert(supabase, current.appUser.id, id),

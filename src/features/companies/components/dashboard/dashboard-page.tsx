@@ -23,7 +23,7 @@ import { DashboardClient } from "./dashboard-client"
 export async function CompanyDashboardServer() {
   const current = await requireCurrentUser()
   if (
-    current.appUser.role !== "company" ||
+    current.appUser.account_type !== "company" ||
     current.appUser.status !== "active" ||
     current.profile.companyVerificationStatus !== "verified"
   ) {

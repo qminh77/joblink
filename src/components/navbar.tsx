@@ -4,12 +4,9 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { motion } from "framer-motion"
 import {
-  BarChart2,
   Bell,
   Briefcase,
-  Globe,
   Home,
   Image as ImageIcon,
   MessageSquare,
@@ -23,7 +20,6 @@ import { MessageDropdown } from "@/components/message-dropdown"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import { ProfileDropdown } from "@/components/profile-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { PostComposer } from "@/features/posts/components/post-composer"
 import {
@@ -36,29 +32,31 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { HeaderSearch } from "@/features/search/components/header-search"
-import { getInitials } from "@/lib/utils/format"
 
 const NAV_ITEMS = [
-  { key: "home", href: "/home", icon: Home },
-  { key: "network", href: "/network", icon: Users },
-  { key: "jobs", href: "/jobs", icon: Briefcase },
+  { key: "home", href: "/home", icon: Home, requiredPermission: "feed.view" },
+  { key: "network", href: "/network", icon: Users, requiredPermission: "network.view" },
+  { key: "jobs", href: "/jobs", icon: Briefcase, requiredPermission: "jobs.view" },
   {
     key: "messages",
     href: "/messages",
     icon: MessageSquare,
     hasDropdown: "messages" as const,
+    requiredPermission: "messages.view",
   },
   {
     key: "notifications",
     href: "/notifications",
     icon: Bell,
     hasDropdown: "notifications" as const,
+    requiredPermission: "notifications.view",
   },
 ] satisfies Array<{
   key: "home" | "network" | "jobs" | "messages" | "notifications"
   href: string
   icon: typeof Home
   hasDropdown?: "messages" | "notifications"
+  requiredPermission: string
 }>
 
 export function Navbar() {
@@ -66,9 +64,18 @@ export function Navbar() {
   const router = useRouter()
   const user = useCurrentUser()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
-  const initials = getInitials(user.displayName, "JL")
   const tNav = useTranslations("nav")
   const tPost = useTranslations("posts")
+  const permissionSet = new Set(user.permissions)
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    permissionSet.has(item.requiredPermission),
+  )
+  const canCreatePost = permissionSet.has("posts.create")
+  const canCreateJob =
+    permissionSet.has("jobs.create") &&
+    user.role === "company" &&
+    user.companyVerificationStatus === "verified"
+  const canCreateAny = canCreatePost || canCreateJob
 
   return (
     <>
@@ -85,7 +92,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-1 lg:gap-2">
           <div className="hidden md:flex items-center">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive =
                 pathname === item.href ||
                 (item.href === "/jobs" && pathname.startsWith("/jobs/"))
@@ -137,6 +144,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-3">
+            {canCreateAny ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -157,22 +165,23 @@ export function Navbar() {
                   {tPost("createMenuLabel")}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/20" />
-                <DropdownMenuItem
-                  onClick={() => setIsCreatePostOpen(true)}
-                  className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
-                >
-                  <ImageIcon className="w-4 h-4 text-blue-500 mr-3 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground">
-                      {tPost("createPost")}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground">
-                      {tPost("createPostHint")}
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-                {user.role === "company" &&
-                user.companyVerificationStatus === "verified" ? (
+                {canCreatePost ? (
+                  <DropdownMenuItem
+                    onClick={() => setIsCreatePostOpen(true)}
+                    className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
+                  >
+                    <ImageIcon className="w-4 h-4 text-blue-500 mr-3 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground">
+                        {tPost("createPost")}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground">
+                        {tPost("createPostHint")}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                ) : null}
+                {canCreateJob ? (
                   <DropdownMenuItem
                     onClick={() => router.push("/company/post-job")}
                     className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
@@ -190,6 +199,7 @@ export function Navbar() {
                 ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
+            ) : null}
 
             <div className="hidden sm:block h-6 w-px bg-border/40 mx-1" />
 
@@ -204,7 +214,7 @@ export function Navbar() {
       {!pathname.startsWith("/admin") && (
         <nav className="md:hidden fixed bottom-0 w-full bg-background/90 backdrop-blur-xl border-t border-border/40 z-50 pb-safe">
         <div className="flex justify-around items-center h-16">
-          {NAV_ITEMS.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href === "/jobs" && pathname.startsWith("/jobs/"))

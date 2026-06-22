@@ -17,8 +17,8 @@ export default async function MainLayout({
   children: React.ReactNode
 }) {
   const user = await requireCurrentUser()
-  const adminPermissions = await getAdminUserPermissions()
-  const adminHref = getAdminEntryHref(adminPermissions)
+  const permissions = await getAdminUserPermissions()
+  const adminHref = getAdminEntryHref(permissions)
 
   // UC-96: chế độ bảo trì tạm ngừng truy cập của người dùng thường; tài khoản
   // có quyền admin vẫn vào được khu quản trị để xử lý hệ thống.
@@ -33,13 +33,14 @@ export default async function MainLayout({
     id: user.appUser.id,
     authId: user.appUser.auth_id,
     email: user.appUser.email,
-    role: user.appUser.role,
+    role: user.appUser.account_type,
     status: user.appUser.status,
     displayName: user.profile.displayName,
     avatarUrl: user.profile.avatarUrl,
     coverUrl: user.profile.coverUrl,
     headline: user.profile.headline,
     companyVerificationStatus: user.profile.companyVerificationStatus,
+    permissions,
     adminHref,
   }
 

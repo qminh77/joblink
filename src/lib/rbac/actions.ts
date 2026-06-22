@@ -1,4 +1,5 @@
 export const ACTIONS = [
+  "access",
   "view",
   "create",
   "edit",
@@ -11,11 +12,22 @@ export const ACTIONS = [
   "status",
   "reply",
   "maintenance",
+  "apply",
+  "save",
+  "send",
+  "follow",
+  "connect",
+  "block",
+  "react",
+  "comment",
+  "share",
+  "vote",
 ] as const
 
 export type ActionName = (typeof ACTIONS)[number]
 
 export const ACTION_LABELS: Record<ActionName, string> = {
+  access: "Truy cập",
   view: "Xem",
   create: "Tạo mới",
   edit: "Chỉnh sửa",
@@ -28,4 +40,14 @@ export const ACTION_LABELS: Record<ActionName, string> = {
   status: "Đổi trạng thái",
   reply: "Trả lời",
   maintenance: "Bật/tắt bảo trì",
+  apply: "Ứng tuyển",
+  save: "Lưu",
+  send: "Gửi",
+  follow: "Theo dõi",
+  connect: "Kết nối",
+  block: "Chặn",
+  react: "Tương tác",
+  comment: "Bình luận",
+  share: "Chia sẻ",
+  vote: "Bình chọn",
 }

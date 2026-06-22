@@ -27,7 +27,7 @@ export function getConnectTarget(supabase: Supabase, userId: number) {
   const admin = createAdminClient()
   return admin
     .from("users")
-    .select("id, status, role")
+    .select("id, status, role:account_type")
     .eq("id", userId)
     .is("deleted_at", null)
     .maybeSingle<{ id: number; status: string; role: string }>()

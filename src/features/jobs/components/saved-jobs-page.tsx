@@ -8,7 +8,7 @@ import { SavedJobsClient } from "./saved-jobs-client"
 
 export async function SavedJobsServerPage() {
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "member") notFound()
+  if (current.appUser.account_type !== "member") notFound()
 
   const initial = await loadMySavedJobs({ limit: 20, offset: 0 })
   return <SavedJobsClient initialData={initial} />

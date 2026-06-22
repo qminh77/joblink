@@ -3,10 +3,12 @@ import { Mail, Phone, MapPin } from "lucide-react"
 
 import { loadPublicAuthSettings, loadPublicContactSettings } from "@/features/system-settings/api/public-settings"
 import { ContactForm } from "@/features/contact/components/contact-form"
+import { requirePermission } from "@/lib/rbac"
 
 export const dynamic = "force-dynamic"
 
 export default async function ContactPage() {
+  await requirePermission("contacts.create")
   const [t, recaptcha, contact] = await Promise.all([
     getTranslations("contact"),
     loadPublicAuthSettings(),

@@ -20,7 +20,7 @@ export type AppUserRow = {
   id: number
   auth_id: string
   email: string
-  role: UserRole
+  account_type: UserRole
   role_id: number | null
   status: UserStatus
   email_verified_at: string | null

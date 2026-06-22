@@ -1,5 +1,12 @@
 export const MODULES = [
+  "admin",
   "dashboard",
+  "feed",
+  "network",
+  "messages",
+  "notifications",
+  "profile",
+  "cvs",
   "users",
   "companies",
   "jobs",
@@ -8,6 +15,7 @@ export const MODULES = [
   "appeals",
   "audit",
   "contacts",
+  "search",
   "brand",
   "report_types",
   "lookups",
@@ -18,7 +26,14 @@ export const MODULES = [
 export type ModuleName = (typeof MODULES)[number]
 
 export const MODULE_LABELS: Record<ModuleName, string> = {
+  admin: "Khu quản trị",
   dashboard: "Bảng điều khiển",
+  feed: "Bảng tin",
+  network: "Mạng lưới",
+  messages: "Tin nhắn",
+  notifications: "Thông báo",
+  profile: "Hồ sơ",
+  cvs: "CV",
   users: "Quản lý người dùng",
   companies: "Quản lý công ty",
   jobs: "Quản lý việc làm",
@@ -27,6 +42,7 @@ export const MODULE_LABELS: Record<ModuleName, string> = {
   appeals: "Quản lý kháng nghị",
   audit: "Nhật ký hoạt động",
   contacts: "Liên hệ hỗ trợ",
+  search: "Tìm kiếm",
   brand: "Thương hiệu",
   report_types: "Loại báo cáo",
   lookups: "Danh mục",
