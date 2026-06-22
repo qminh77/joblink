@@ -16,7 +16,7 @@ type PostsQueryClient = ReturnType<typeof useQueryClient>
  * Thu thập tất cả query keys liên quan đến posts (feed + user-posts).
  */
 function collectPostCacheKeys(qc: PostsQueryClient): unknown[][] {
-  const keys: unknown[][] = [[FEED_QUERY_KEY]]
+  const keys: unknown[][] = [FEED_QUERY_KEY as unknown as unknown[]]
   const userPostsQueries = qc.getQueriesData<unknown[][]>({
     queryKey: ["user-posts"],
   })
