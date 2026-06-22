@@ -68,7 +68,7 @@ export async function loadOriginalSnapshot(
   const [userRes, memberRes, companyRes] = await Promise.all([
     admin
       .from("users")
-      .select("id, role:account_type")
+      .select("id, role")
       .eq("id", row.author_id)
       .maybeSingle<{ id: number; role: UserRole }>(),
     admin

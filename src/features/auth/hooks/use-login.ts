@@ -46,10 +46,10 @@ export function useLogin({
       const supabase = createClient()
       const { data: appUser, error: appUserError } = await supabase
         .from("users")
-        .select("account_type, status")
+        .select("role, status")
         .eq("auth_id", authId)
         .is("deleted_at", null)
-        .maybeSingle<{ account_type: string; status: string }>()
+        .maybeSingle<{ role: string; status: string }>()
 
       if (appUserError) {
         await signOutClient()
@@ -62,7 +62,7 @@ export function useLogin({
       }
 
       if (
-        appUser.account_type === "company" &&
+        appUser.role === "company" &&
         appUser.status === "pending_verification"
       ) {
         await signOutClient()

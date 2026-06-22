@@ -14,7 +14,6 @@ export type AdminUserRecord = {
   status: UserStatus
   created_at: string
   last_login_at: string | null
-  role_id: number | null
 }
 
 export type UserProfileNameRow = {
@@ -29,7 +28,6 @@ export type AdminUserTargetRecord = {
   id: number
   status: UserStatus
   role: UserRole
-  role_id: number | null
 }
 
 export async function listAdminUserRows(
@@ -44,15 +42,15 @@ export async function listAdminUserRows(
   let query = supabase
     .from("users")
     .select(
-      "id, email, role:account_type, status, created_at, last_login_at, role_id",
+      "id, email, role, status, created_at, last_login_at",
       { count: "exact" },
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(from, to)
 
-  if (typeof params.roleId === "number") {
-    query = query.eq("role_id", params.roleId)
+  if (params.role) {
+    query = query.eq("role", params.role as never)
   }
   if (
     params.status &&
@@ -82,20 +80,17 @@ export async function listAdminUserExportRows(
   let query = supabase
     .from("users")
     .select(
-      "id, email, role:account_type, status, created_at, last_login_at, role_id",
+      "id, email, role, status, created_at, last_login_at",
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(10000)
 
   if (
-    params.roleId &&
-    params.roleId !== "all"
+    params.role &&
+    params.role !== "all"
   ) {
-    const roleId = Number(params.roleId)
-    if (Number.isInteger(roleId) && roleId > 0) {
-      query = query.eq("role_id", roleId)
-    }
+    query = query.eq("role", params.role as never)
   }
   if (
     params.status &&
@@ -156,7 +151,7 @@ export async function listUserDisplayProfileRows(
 export function getAdminUserTarget(supabase: AdminSupabase, userId: number) {
   return supabase
     .from("users")
-    .select("id, status, role:account_type, role_id")
+    .select("id, status, role")
     .eq("id", userId)
     .is("deleted_at", null)
     .maybeSingle<AdminUserTargetRecord>()

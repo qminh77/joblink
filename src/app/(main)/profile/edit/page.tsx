@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/rbac/rbac-guard"
 
 export default async function EditProfilePage() {
   const current = await requirePermission("profile.edit")
-  if (current.appUser.account_type === "company") {
+  if (current.appUser.role === "company") {
     redirect("/settings")
   }
 

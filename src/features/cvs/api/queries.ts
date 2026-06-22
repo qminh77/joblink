@@ -9,7 +9,7 @@ import { mapMemberCv, type MemberCv, type MemberCvRow } from "../types"
 // Tải danh sách CV của member hiện tại.
 export async function loadOwnCvs(): Promise<MemberCv[]> {
   const current = await getCurrentUser()
-  if (!current || current.appUser.account_type !== "member") return []
+  if (!current || current.appUser.role !== "member") return []
   const supabase = await createClient()
   const { data } = await listMemberCvs(supabase, current.appUser.id)
   return ((data ?? []) as MemberCvRow[]).map(mapMemberCv)

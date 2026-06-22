@@ -11,7 +11,7 @@ import {
 
 export async function MyApplicationsServerPage() {
   const current = await requireCurrentUser()
-  if (current.appUser.account_type !== "member") notFound()
+  if (current.appUser.role !== "member") notFound()
 
   const page = await loadMyApplications({ limit: 30, offset: 0 })
 

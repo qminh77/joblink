@@ -21,7 +21,7 @@ export default async function SettingsPage() {
     id: current.appUser.id,
     authId: current.appUser.auth_id,
     email: current.appUser.email,
-    role: current.appUser.account_type,
+    role: current.appUser.role,
     status: current.appUser.status,
     displayName: current.profile.displayName,
     avatarUrl: current.profile.avatarUrl,
@@ -32,11 +32,11 @@ export default async function SettingsPage() {
   }
 
   const member =
-    current.appUser.account_type === "member" ? await loadOwnMemberProfile() : null
+    current.appUser.role === "member" ? await loadOwnMemberProfile() : null
   const company =
-    current.appUser.account_type === "company" ? await loadOwnCompanyProfile() : null
+    current.appUser.role === "company" ? await loadOwnCompanyProfile() : null
   const provinces =
-    current.appUser.account_type === "company" ? await loadProvinces() : []
+    current.appUser.role === "company" ? await loadProvinces() : []
   const authSettings = await loadPublicAuthSettings()
 
   const profile =

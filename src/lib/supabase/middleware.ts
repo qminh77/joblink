@@ -97,19 +97,19 @@ async function getBlockedSessionReason(
 ) {
   const { data } = await supabase
     .from("users")
-    .select("id, account_type, status")
+    .select("id, role, status")
     .eq("auth_id", authId)
     .is("deleted_at", null)
-    .maybeSingle<{ id: number; account_type: string; status: string }>()
+    .maybeSingle<{ id: number; role: string; status: string }>()
 
   if (!data) return "account_missing"
   if (
-    data.account_type === "company" &&
+    data.role === "company" &&
     data.status === "pending_verification"
   ) {
     return "company_pending"
   }
-  if (data.account_type === "company" && data.status === "active") {
+  if (data.role === "company" && data.status === "active") {
     const { data: company } = await supabase
       .from("company_profiles")
       .select("verification_status")

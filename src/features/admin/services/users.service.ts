@@ -56,7 +56,6 @@ export async function loadAdminUsers(
     lastLoginAt: row.last_login_at,
     displayName: profiles[row.id]?.displayName ?? row.email,
     avatarUrl: profiles[row.id]?.avatarUrl ?? null,
-    roleId: row.role_id,
   }))
 
   return { items, total: count, page, pageSize }
@@ -80,8 +79,7 @@ export async function exportUsersCsv(
     "id",
     "email",
     "display_name",
-    "account_type",
-    "rbac_role_id",
+    "role",
     "status",
     "created_at",
     "last_login_at",
@@ -94,7 +92,6 @@ export async function exportUsersCsv(
         row.email,
         profiles[row.id]?.displayName ?? "",
         row.role,
-        row.role_id ?? "",
         row.status,
         row.created_at,
         row.last_login_at ?? "",
@@ -113,7 +110,7 @@ export async function exportUsersCsv(
     entityType: "users",
     newData: {
       count: rows.length,
-      roleId: params.roleId ?? "all",
+      role: params.role ?? "all",
       status: params.status ?? "all",
       search: params.search?.trim() || null,
     },
@@ -132,14 +129,7 @@ export async function applyUserModerationAction(
   if (!target) return { ok: false, error: "not_found" }
   if (target.id === actor.appUser.id) return { ok: false, error: "self" }
 
-  const { data: targetRole } = target.role_id
-    ? await supabase
-        .from("roles")
-        .select("name")
-        .eq("id", target.role_id)
-        .maybeSingle<{ name: string }>()
-    : { data: null }
-  if (targetRole?.name === "admin" && input.action !== "restore") {
+  if (target.role === "admin" && input.action !== "restore") {
     return { ok: false, error: "cannot_modify_admin" }
   }
 

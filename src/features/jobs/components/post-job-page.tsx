@@ -10,7 +10,7 @@ import { PostJobForm } from "./post-job-form"
 export async function PostJobServerPage() {
   const current = await requireCurrentUser()
   if (
-    current.appUser.account_type !== "company" ||
+    current.appUser.role !== "company" ||
     current.appUser.status !== "active" ||
     current.profile.companyVerificationStatus !== "verified"
   ) {
@@ -35,7 +35,7 @@ export async function PostJobServerPage() {
 export async function EditJobServerPage({ jobId }: { jobId: number }) {
   const current = await requireCurrentUser()
   if (
-    current.appUser.account_type !== "company" ||
+    current.appUser.role !== "company" ||
     current.appUser.status !== "active" ||
     current.profile.companyVerificationStatus !== "verified"
   ) {

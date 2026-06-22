@@ -76,16 +76,19 @@ async function fetchRolesWithCounts(
     permCountMap.set(row.role_id, (permCountMap.get(row.role_id) ?? 0) + 1)
   }
 
-  // Aggregate user_count per role_id — single query
+  // Aggregate user_count per role name — single query
+  const roleNameToId = new Map(roleRows.map((r) => [r.name, r.id]))
   const { data: userRows } = await supabase
     .from("users")
-    .select("role_id")
-    .in("role_id", roleIds)
+    .select("role")
     .is("deleted_at", null)
 
   const userCountMap = new Map<number, number>()
-  for (const row of (userRows ?? []) as Array<{ role_id: number }>) {
-    userCountMap.set(row.role_id, (userCountMap.get(row.role_id) ?? 0) + 1)
+  for (const row of (userRows ?? []) as Array<{ role: string }>) {
+    const roleId = roleNameToId.get(row.role)
+    if (roleId !== undefined) {
+      userCountMap.set(roleId, (userCountMap.get(roleId) ?? 0) + 1)
+    }
   }
 
   return roleRows.map((r) => ({
@@ -368,11 +371,20 @@ export async function deleteAdminRole(
     return { ok: false, error: "Cannot delete system role" }
   }
 
-  const { count } = await supabase
-    .from("users")
-    .select("id", { count: "exact", head: true })
-    .eq("role_id", roleId)
+  const roleForDelete = (await supabase
+    .from("roles")
+    .select("name")
+    .eq("id", roleId)
     .is("deleted_at", null)
+    .single()) as unknown as { data: { name: string } | null }
+
+  const { count } = roleForDelete.data
+    ? await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("role", roleForDelete.data.name)
+        .is("deleted_at", null)
+    : { count: 0 }
 
   if (count && count > 0) {
     return { ok: false, error: "Role is still assigned to users" }

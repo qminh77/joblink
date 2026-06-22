@@ -33,7 +33,7 @@ export default async function MainLayout({
     id: user.appUser.id,
     authId: user.appUser.auth_id,
     email: user.appUser.email,
-    role: user.appUser.account_type,
+    role: user.appUser.role,
     status: user.appUser.status,
     displayName: user.profile.displayName,
     avatarUrl: user.profile.avatarUrl,

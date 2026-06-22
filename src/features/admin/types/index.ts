@@ -48,7 +48,6 @@ export type AdminUserRow = {
   lastLoginAt: string | null
   displayName: string
   avatarUrl: string | null
-  roleId: number | null
 }
 
 export type AdminUserListResult = {
@@ -60,7 +59,7 @@ export type AdminUserListResult = {
 
 export type ListUsersParams = {
   search?: string
-  roleId?: number | "all"
+  role?: string
   status?: UserStatus | "all"
   page?: number
   pageSize?: number
@@ -68,7 +67,7 @@ export type ListUsersParams = {
 
 export type ExportUsersParams = {
   search?: string
-  roleId?: string
+  role?: string
   status?: string
 }
 

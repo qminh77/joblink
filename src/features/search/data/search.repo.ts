@@ -97,7 +97,7 @@ export async function searchPagePeople(
 
   const { data: userRows } = await supabase
     .from("users")
-    .select("id, role:account_type")
+    .select("id, role")
     .in("id", userIds)
 
   const roleMap = new Map<number, string>()
@@ -206,7 +206,7 @@ export async function searchPosts(
   const [userRes, memberRes, companyRes] = await Promise.all([
     supabase
       .from("users")
-      .select("id, role:account_type")
+      .select("id, role")
       .in("id", authorIds),
     supabase
       .from("member_profiles")

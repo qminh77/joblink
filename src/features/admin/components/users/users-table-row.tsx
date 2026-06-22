@@ -51,17 +51,13 @@ export function UsersTableRow({
   const format = useFormatter()
   const router = useRouter()
   const [updatingRbac, setUpdatingRbac] = useState(false)
-  const assignedRole = roles.find((role) => role.id === user.roleId)
-  const isProtectedAdmin = user.role === "admin" || assignedRole?.name === "admin"
+  const isProtectedAdmin = user.role === "admin"
 
-  const handleRbacRoleChange = async (newRoleIdStr: string) => {
-    if (newRoleIdStr === "unassigned") return
-    const newRoleId = parseInt(newRoleIdStr, 10)
-    if (!Number.isInteger(newRoleId) || newRoleId <= 0) return
-    if (newRoleId === user.roleId) return
+  const handleRbacRoleChange = async (newRoleName: string) => {
+    if (newRoleName === "unassigned" || newRoleName === user.role) return
     setUpdatingRbac(true)
     try {
-      const result = await updateUserRbacRole(user.id, newRoleId)
+      const result = await updateUserRbacRole(user.id, newRoleName)
       if (result.ok) {
         toast.success(t("roleUpdateSuccess"))
         router.refresh()
@@ -100,7 +96,7 @@ export function UsersTableRow({
       </td>
       <td className="px-4 py-3">
         <Select
-          value={user.roleId ? String(user.roleId) : "unassigned"}
+          value={user.role}
           onValueChange={handleRbacRoleChange}
           disabled={pending || updatingRbac || isProtectedAdmin}
         >
@@ -108,13 +104,8 @@ export function UsersTableRow({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="unassigned" disabled>
-              <span className="text-muted-foreground italic">
-                {t("unassignedRole")}
-              </span>
-            </SelectItem>
             {roles.map((r) => (
-              <SelectItem key={r.id} value={String(r.id)}>
+              <SelectItem key={r.id} value={r.name}>
                 {r.name} {r.is_system && "(Hệ thống)"}
               </SelectItem>
             ))}

@@ -82,7 +82,7 @@ export async function listPostAuthorRows(
 
   const [{ data: roles }, { data: members }, { data: companies }] =
     await Promise.all([
-      supabase.from("users").select("id, role:account_type").in("id", authorIds),
+      supabase.from("users").select("id, role").in("id", authorIds),
       supabase
         .from("member_profiles")
         .select("user_id, full_name, avatar_url")

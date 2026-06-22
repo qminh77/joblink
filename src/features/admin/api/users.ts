@@ -68,13 +68,13 @@ function revalidateAdminUserViews() {
 
 export async function updateUserRbacRole(
   userId: number,
-  roleId: number,
+  roleName: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const current = await requireAdminPermission("users.edit")
   if (!Number.isInteger(userId) || userId <= 0) {
     return { ok: false, error: "invalid_user" }
   }
-  if (!Number.isInteger(roleId) || roleId <= 0) {
+  if (!roleName || typeof roleName !== "string") {
     return { ok: false, error: "invalid_role" }
   }
 
@@ -82,7 +82,7 @@ export async function updateUserRbacRole(
 
   const { data: target } = await supabase
     .from("users")
-    .select("id, role_id")
+    .select("id, role")
     .eq("id", userId)
     .is("deleted_at", null)
     .maybeSingle()
@@ -90,22 +90,14 @@ export async function updateUserRbacRole(
   if (!target) return { ok: false, error: "not_found" }
   if (target.id === current.appUser.id) return { ok: false, error: "self" }
 
-  const { data: currentTargetRole } = target.role_id
-    ? await supabase
-        .from("roles")
-        .select("id, name")
-        .eq("id", target.role_id)
-        .maybeSingle()
-    : { data: null }
-
-  if (currentTargetRole?.name === "admin") {
+  if (target.role === "admin") {
     return { ok: false, error: "cannot_modify_admin" }
   }
 
   const { data: role } = await supabase
     .from("roles")
     .select("id, name")
-    .eq("id", roleId)
+    .eq("name", roleName)
     .is("deleted_at", null)
     .maybeSingle()
 
@@ -119,21 +111,20 @@ export async function updateUserRbacRole(
 
   const { error } = await supabase
     .from("users")
-    .update({ role_id: roleId } as never)
+    .update({ role: role.name as never })
     .eq("id", userId)
 
   if (error) {
     return { ok: false, error: error.message }
   }
 
-  // Keep the profile/account type intact; only RBAC assignment changes here.
   await writeAuditLog({
     actorId: current.appUser.id,
     action: "user.rbac_role.update",
     entityType: "users",
     entityId: userId,
-    oldData: { role_id: target.role_id },
-    newData: { role_id: roleId, role_name: role.name },
+    oldData: { role: target.role },
+    newData: { role: role.name },
   })
 
   revalidateAdminUserViews()

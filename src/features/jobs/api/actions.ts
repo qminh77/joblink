@@ -216,7 +216,7 @@ function ensureCompanyCanManageJobs(
   current: CurrentUser,
   te: JobTranslator,
 ): { ok: false; error: string } | null {
-  if (current.appUser.account_type !== "company") {
+  if (current.appUser.role !== "company") {
     return { ok: false, error: te("notCompany") }
   }
   if (

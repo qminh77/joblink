@@ -11,24 +11,13 @@ import type { PermissionName } from "./permissions"
 import { getAllPermissionNames } from "./permissions"
 
 type UserRoleLookup = {
-  role_id: number | null
-  account_type: string
-  roles?: { name: string } | { name: string }[] | null
+  role: string
 }
 
 const ADMIN_ROLE_NAME = "admin"
 
-function joinedRoleName(user: UserRoleLookup): string | null {
-  const joined = user.roles
-  if (Array.isArray(joined)) return joined[0]?.name ?? null
-  return joined?.name ?? null
-}
-
 function hasAdminRole(user: UserRoleLookup): boolean {
-  return (
-    joinedRoleName(user) === ADMIN_ROLE_NAME ||
-    (!user.role_id && user.account_type === ADMIN_ROLE_NAME)
-  )
+  return user.role === ADMIN_ROLE_NAME
 }
 
 export type RoleRow = {
@@ -106,7 +95,7 @@ export const getRoleById = cache(
       supabase
         .from("users")
         .select("id", { count: "exact", head: true })
-        .eq("role_id", roleId)
+        .eq("role", roleData.name)
         .is("deleted_at", null),
     ])
 
@@ -187,7 +176,7 @@ export const getUserPermissionsByUserId = cache(
 
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("role_id, account_type, roles(name)")
+      .select("role")
       .eq("id", userId)
       .is("deleted_at", null)
       .single()
@@ -203,32 +192,37 @@ export const getUserPermissionsByUserId = cache(
       return getAllPermissionNames()
     }
 
-    // If role_id is set, batch query via role_permissions + permissions
-    if (userData.role_id) {
-      const { data: rpData, error: rpError } = await supabase
-        .from("role_permissions")
-        .select("permission_id")
-        .eq("role_id", userData.role_id)
+    // Get role_id from role name, then query permissions
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", userData.role)
+      .is("deleted_at", null)
+      .single()
 
-      if (rpError) {
-        console.error("[rbac:getUserPermissions] query error:", rpError.message)
-        return []
-      }
+    if (!roleData) return []
 
-      if (!rpData || rpData.length === 0) return []
+    const { data: rpData, error: rpError } = await supabase
+      .from("role_permissions")
+      .select("permission_id")
+      .eq("role_id", (roleData as { id: number }).id)
 
-      const permIds = (rpData as Array<{ permission_id: number }>).map((r) => r.permission_id)
-
-      const { data: permData } = await supabase
-        .from("permissions")
-        .select("name")
-        .in("id", permIds)
-
-      return ((permData ?? []) as Array<{ name: string }>)
-        .map((p) => p.name as PermissionName)
+    if (rpError) {
+      console.error("[rbac:getUserPermissions] query error:", rpError.message)
+      return []
     }
 
-    return []
+    if (!rpData || rpData.length === 0) return []
+
+    const permIds = (rpData as Array<{ permission_id: number }>).map((r) => r.permission_id)
+
+    const { data: permData } = await supabase
+      .from("permissions")
+      .select("name")
+      .in("id", permIds)
+
+    return ((permData ?? []) as Array<{ name: string }>)
+      .map((p) => p.name as PermissionName)
   },
 )
 
@@ -244,7 +238,7 @@ export async function checkUserPermission(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, account_type, roles(name)")
+    .select("role")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
@@ -254,19 +248,23 @@ export async function checkUserPermission(
 
   if (hasAdminRole(userData)) return true
 
-  // role_id set → check via role_permissions
-  if (userData.role_id) {
-    const { data } = await supabase
-      .from("role_permissions")
-      .select("permission_id, permissions!inner(name)")
-      .eq("role_id", userData.role_id)
-      .eq("permissions.name", permission)
-      .limit(1)
+  const { data: roleData } = await supabase
+    .from("roles")
+    .select("id")
+    .eq("name", userData.role)
+    .is("deleted_at", null)
+    .single()
 
-    return (data ?? []).length > 0
-  }
+  if (!roleData) return false
 
-  return false
+  const { data } = await supabase
+    .from("role_permissions")
+    .select("permission_id, permissions!inner(name)")
+    .eq("role_id", (roleData as { id: number }).id)
+    .eq("permissions.name", permission)
+    .limit(1)
+
+  return (data ?? []).length > 0
 }
 
 /**
@@ -281,7 +279,7 @@ export async function checkUserAllPermissions(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, account_type, roles(name)")
+    .select("role")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
@@ -291,12 +289,19 @@ export async function checkUserAllPermissions(
 
   if (hasAdminRole(userData)) return true
 
-  if (!userData.role_id) return false
+  const { data: roleData } = await supabase
+    .from("roles")
+    .select("id")
+    .eq("name", userData.role)
+    .is("deleted_at", null)
+    .single()
+
+  if (!roleData) return false
 
   const { data: rpData } = await supabase
     .from("role_permissions")
     .select("permissions!inner(name)")
-    .eq("role_id", userData.role_id)
+    .eq("role_id", (roleData as { id: number }).id)
     .in("permissions.name", permissions)
 
   if (!rpData) return false
@@ -321,7 +326,7 @@ export async function checkUserAnyPermission(
 
   const { data: user } = await supabase
     .from("users")
-    .select("role_id, account_type, roles(name)")
+    .select("role")
     .eq("id", userId)
     .is("deleted_at", null)
     .single()
@@ -331,12 +336,19 @@ export async function checkUserAnyPermission(
 
   if (hasAdminRole(userData)) return true
 
-  if (!userData.role_id) return false
+  const { data: roleData } = await supabase
+    .from("roles")
+    .select("id")
+    .eq("name", userData.role)
+    .is("deleted_at", null)
+    .single()
+
+  if (!roleData) return false
 
   const { data: rpData } = await supabase
     .from("role_permissions")
     .select("permissions!inner(name)")
-    .eq("role_id", userData.role_id)
+    .eq("role_id", (roleData as { id: number }).id)
     .in("permissions.name", permissions)
     .limit(1)
 

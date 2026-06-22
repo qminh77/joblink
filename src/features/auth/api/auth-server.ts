@@ -33,7 +33,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!appUser) return null
 
   const profile =
-    appUser.account_type === "company"
+    appUser.role === "company"
       ? await loadCompanyProfile(supabase, appUser.id)
       : await loadMemberProfile(supabase, appUser.id)
 

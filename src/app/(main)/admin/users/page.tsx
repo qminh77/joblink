@@ -41,7 +41,7 @@ export default async function AdminUsersPage({
 
   const data = await listAdminUsers({
     search,
-    roleId,
+    role: typeof roleId === "number" ? String(roleId) : roleId,
     status,
     page,
     pageSize: 20,

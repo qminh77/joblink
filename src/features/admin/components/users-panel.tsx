@@ -75,7 +75,7 @@ export function UsersPanel({
     try {
       const result = await exportUsersCsvAction({
         search: query.search,
-        roleId: query.role,
+        role: query.role,
         status: query.status,
       })
       if (!result.ok) {

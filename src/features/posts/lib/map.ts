@@ -9,7 +9,7 @@ import type { FeedAuthor, FeedComment, FeedPost, PollOption } from "../types"
 export function authorRefFrom(current: CurrentUser): FeedAuthor {
   return {
     userId: current.appUser.id,
-    role: current.appUser.account_type,
+    role: current.appUser.role,
     displayName: current.profile.displayName,
     avatarUrl: current.profile.avatarUrl,
     headline: current.profile.headline,

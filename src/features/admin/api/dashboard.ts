@@ -107,7 +107,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
         q.is("deleted_at", null).gte("created_at", sevenDaysAgo),
       ),
       countOf(supabase, "users", (q) =>
-        q.eq("account_type", "company").is("deleted_at", null),
+        q.eq("role", "company").is("deleted_at", null),
       ),
       countOf(supabase, "company_profiles", (q) =>
         q
@@ -126,7 +126,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
         q.is("deleted_at", null).eq("status", "active"),
       ),
       countOf(supabase, "connections", (q) => q.eq("status", "accepted")),
-      distOf(supabase, "users", "account_type", USER_ROLES, (q) =>
+      distOf(supabase, "users", "role", USER_ROLES, (q) =>
         q.is("deleted_at", null),
       ),
       distOf(supabase, "users", "status", USER_STATUSES, (q) =>

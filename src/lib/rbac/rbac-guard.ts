@@ -69,5 +69,5 @@ export async function hasPermission(
  */
 export async function isAdminUser(): Promise<boolean> {
   const user = await requireCurrentUser()
-  return checkUserPermission(user.appUser.id, "admin.access")
+  return user.appUser.role === "admin"
 }
