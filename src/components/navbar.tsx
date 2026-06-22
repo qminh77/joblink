@@ -25,12 +25,7 @@ import { ProfileDropdown } from "@/components/profile-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { PostComposer } from "@/features/posts/components/post-composer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,57 +69,10 @@ export function Navbar() {
   const initials = getInitials(user.displayName, "JL")
   const tNav = useTranslations("nav")
   const tPost = useTranslations("posts")
-  const tProfile = useTranslations("profile.visibility")
 
   return (
     <>
-      <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl gap-0 p-0">
-          <DialogHeader className="p-4 border-b border-border/40">
-            <DialogTitle className="font-headline font-bold text-lg text-center">
-              {tPost("createTitle")}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Avatar className="w-10 h-10">
-                {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold text-sm">{user.displayName}</h3>
-                <span className="text-[11px] bg-muted px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1 font-medium text-muted-foreground">
-                  <Globe className="w-3 h-3" /> {tProfile("public")}
-                </span>
-              </div>
-            </div>
-            <motion.textarea
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              placeholder={tPost("whatsOnYourMind")}
-              className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70"
-              autoFocus
-            />
-          </div>
-          <div className="p-4 border-t border-border/40 flex items-center justify-between">
-            <div className="flex gap-2">
-              <button className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-colors">
-                <ImageIcon className="size-5" />
-              </button>
-              <button className="p-2 text-orange-500 hover:bg-orange-500/10 rounded-xl transition-colors">
-                <BarChart2 className="size-5" />
-              </button>
-            </div>
-            <Button
-              onClick={() => setIsCreatePostOpen(false)}
-              className="px-6 rounded-xl font-semibold"
-            >
-              {tPost("publish")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PostComposer open={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
 
       <nav className="bg-background/80 backdrop-blur-xl border-b border-border/40 fixed top-0 w-full flex justify-between items-center px-4 md:px-8 h-16 z-50 transition-colors">
         <div className="flex items-center gap-4 lg:gap-6">
