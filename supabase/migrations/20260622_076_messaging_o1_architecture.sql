@@ -229,7 +229,7 @@ BEGIN
             c.last_message_id                 AS "lastMessageId",
             c.last_sender_id                  AS "lastSenderId",
             c.last_content                    AS "lastContent",
-            NULL                              AS "lastMedia",
+            NULL::JSONB                       AS "lastMedia",
             c.last_message_created_at         AS "lastCreatedAt",
             COALESCE(unr.unread_count, 0)     AS "unreadCount",
             TRUE                              AS "isConnected",
