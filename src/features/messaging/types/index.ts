@@ -5,6 +5,7 @@ export type ConversationItem = {
   /** null = chưa có conversation, là entry placeholder cho 1 connection. */
   conversationId: number | null
   updatedAt: string
+  seq: number | null
   otherUserId: number
   displayName: string | null
   avatarUrl: string | null

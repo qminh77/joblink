@@ -94,6 +94,7 @@ function applyMessageInsert(
         lastCreatedAt: message.createdAt,
         updatedAt: message.createdAt,
         unreadCount: nextUnread,
+        seq: (current.seq ?? 0) + 1,
       }
       const rest = overview.items.filter((_, itemIndex) => itemIndex !== idx)
       const becameUnread = prevUnread === 0 && nextUnread > 0

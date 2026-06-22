@@ -750,6 +750,7 @@ CREATE TABLE IF NOT EXISTS job_view_logs (
 CREATE TABLE IF NOT EXISTS conversations (
     id         BIGSERIAL PRIMARY KEY,
     type       VARCHAR(20) NOT NULL DEFAULT 'direct',
+    seq        INT NOT NULL DEFAULT 0,
     last_message_id       BIGINT,
     last_content          TEXT,
     last_sender_id        BIGINT,
@@ -5430,14 +5431,6 @@ BEGIN
           FROM my_conv mc JOIN public.conversation_participants cp
             ON cp.conversation_id = mc.conversation_id AND cp.user_id <> v_me
     ),
-    last_msg AS (
-        SELECT DISTINCT ON (m.conversation_id) m.conversation_id,
-               m.id AS last_message_id, m.sender_id AS last_sender_id,
-               m.content AS last_content, m.media AS last_media, m.created_at AS last_created_at
-          FROM public.messages m WHERE m.deleted_at IS NULL
-           AND m.conversation_id IN (SELECT conversation_id FROM my_conv)
-         ORDER BY m.conversation_id, m.created_at DESC, m.id DESC
-    ),
     unread AS (
         SELECT m.conversation_id, COUNT(*)::INT AS unread_count
           FROM public.messages m JOIN my_conv mc ON mc.conversation_id = m.conversation_id
@@ -5446,27 +5439,26 @@ BEGIN
          GROUP BY m.conversation_id
     ),
     convo_rows AS (
-        SELECT c.id AS "conversationId", c.updated_at AS "updatedAt",
+        SELECT c.id AS "conversationId", c.updated_at AS "updatedAt", c.seq AS "seq",
                op.other_user_id AS "otherUserId",
                COALESCE(mp.full_name, cp.name) AS "displayName",
                COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
                COALESCE(mp.headline, cp.industry) AS "headline", u.role AS role,
-               lm.last_message_id AS "lastMessageId", lm.last_sender_id AS "lastSenderId",
-               lm.last_content AS "lastContent", lm.last_media AS "lastMedia",
-               lm.last_created_at AS "lastCreatedAt",
+               c.last_message_id AS "lastMessageId", c.last_sender_id AS "lastSenderId",
+               c.last_content AS "lastContent", NULL::JSONB AS "lastMedia",
+               c.last_message_created_at AS "lastCreatedAt",
                COALESCE(unr.unread_count, 0) AS "unreadCount",
                TRUE AS "isConnected",
                EXISTS(SELECT 1 FROM public.user_blocks ub
                       WHERE ub.blocker_id = v_me AND ub.blocked_id = op.other_user_id) AS "blockedByMe",
                EXISTS(SELECT 1 FROM public.user_blocks ub
                       WHERE ub.blocker_id = op.other_user_id AND ub.blocked_id = v_me) AS "blockedMe",
-               COALESCE(lm.last_created_at, c.updated_at) AS sort_key
+               COALESCE(c.last_message_created_at, c.updated_at) AS sort_key
           FROM other_part op
           JOIN public.conversations c ON c.id = op.conversation_id
           JOIN public.users u ON u.id = op.other_user_id
           LEFT JOIN public.member_profiles mp ON mp.user_id = op.other_user_id AND mp.deleted_at IS NULL
           LEFT JOIN public.company_profiles cp ON cp.user_id = op.other_user_id AND cp.deleted_at IS NULL
-          LEFT JOIN last_msg lm ON lm.conversation_id = op.conversation_id
           LEFT JOIN unread unr ON unr.conversation_id = op.conversation_id
     ),
     my_connections AS (
@@ -5480,7 +5472,7 @@ BEGIN
          WHERE mc.other_id NOT IN (SELECT "otherUserId" FROM convo_rows)
     ),
     placeholder_rows AS (
-        SELECT NULL::BIGINT AS "conversationId", cwc.connected_at AS "updatedAt",
+        SELECT NULL::BIGINT AS "conversationId", cwc.connected_at AS "updatedAt", NULL::INT AS "seq",
                cwc.other_id AS "otherUserId",
                COALESCE(mp.full_name, cp.name) AS "displayName",
                COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
@@ -5501,7 +5493,7 @@ BEGIN
          WHERE u.deleted_at IS NULL
     )
     SELECT COALESCE(jsonb_agg(jsonb_build_object(
-        'conversationId', ar."conversationId", 'updatedAt', ar."updatedAt",
+        'conversationId', ar."conversationId", 'updatedAt', ar."updatedAt", 'seq', ar."seq",
         'otherUserId', ar."otherUserId", 'displayName', ar."displayName",
         'avatarUrl', ar."avatarUrl", 'headline', ar."headline", 'role', ar.role,
         'lastMessageId', ar."lastMessageId", 'lastSenderId', ar."lastSenderId",
@@ -5644,6 +5636,20 @@ BEGIN
     IF v_recent >= 60 THEN RETURN jsonb_build_object('ok', FALSE, 'error', 'rateLimited'); END IF;
     INSERT INTO public.messages(conversation_id, sender_id, receiver_id, content)
     VALUES (p_conversation_id, v_me, v_other, v_trim) RETURNING id, created_at INTO v_new_id, v_created_at;
+    
+    UPDATE public.conversations
+       SET updated_at = v_created_at,
+           last_message_id = v_new_id,
+           last_sender_id = v_me,
+           last_content = v_trim,
+           last_message_created_at = v_created_at,
+           seq = seq + 1
+     WHERE id = p_conversation_id;
+
+    UPDATE public.conversation_participants
+       SET last_read_at = v_created_at
+     WHERE conversation_id = p_conversation_id AND user_id = v_me;
+
     RETURN jsonb_build_object('ok', TRUE, 'message', jsonb_build_object(
         'id', v_new_id, 'senderId', v_me, 'content', v_trim, 'media', NULL,
         'readAt', NULL, 'createdAt', v_created_at), 'recipientId', v_other);
