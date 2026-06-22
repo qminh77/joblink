@@ -114,34 +114,26 @@ export function softDeletePost(
     .eq("author_id", authorId)
 }
 
-export function findReaction(
+export async function togglePostReactionRpc(
   supabase: Supabase,
   postId: number,
-  userId: number,
   reactionType: PostReactionType,
 ) {
-  return supabase
-    .from("post_reactions")
-    .select("id")
-    .eq("post_id", postId)
-    .eq("user_id", userId)
-    .eq("reaction_type", reactionType)
-    .maybeSingle<{ id: number }>()
-}
+  const { data, error } = await supabase.rpc("toggle_post_reaction", {
+    p_post_id: postId,
+    p_reaction_type: reactionType,
+  })
 
-export function deleteReaction(supabase: Supabase, reactionId: number) {
-  return supabase.from("post_reactions").delete().eq("id", reactionId)
-}
+  if (error) return { data: null, error }
 
-export function insertReaction(
-  supabase: Supabase,
-  postId: number,
-  userId: number,
-  reactionType: PostReactionType,
-) {
-  return supabase
-    .from("post_reactions")
-    .insert({ post_id: postId, user_id: userId, reaction_type: reactionType })
+  const payload = data as unknown as { ok: boolean; error?: string; reacted?: boolean } | null
+  if (!payload) return { data: null, error: { message: "unknown" } }
+  if (!payload.ok) return { data: null, error: { message: payload.error ?? "unknown error" } }
+
+  return {
+    data: { reacted: payload.reacted ?? false },
+    error: null,
+  }
 }
 
 export type InsertedCommentRow = {

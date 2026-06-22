@@ -4,14 +4,11 @@ import type { CurrentUser } from "@/features/auth/types"
 import { ActionError, assertOk, unwrap } from "@/lib/action/server"
 import type { createClient } from "@/lib/supabase/server"
 
-import {
-  deleteReaction,
   findPollOptionById,
-  findReaction,
   findViewerPollVotes,
   insertComment,
   insertPollVote,
-  insertReaction,
+  togglePostReactionRpc,
   sharePost as sharePostRpc,
   softDeleteComment,
 } from "../data/posts.repo"
@@ -45,29 +42,20 @@ export async function togglePostReaction(
   current: CurrentUser,
   data: ReactionInput,
 ): Promise<ToggleReactionResult> {
-  const me = current.appUser.id
-  const { data: existing } = await findReaction(
-    supabase,
-    data.postId,
-    me,
-    data.reactionType,
-  )
-
-  if (existing) {
-    assertOk(await deleteReaction(supabase, existing.id), "unexpected")
-    return { reacted: false }
-  }
-
-  assertOk(
-    await insertReaction(supabase, data.postId, me, data.reactionType),
+  const result = unwrap(
+    await togglePostReactionRpc(supabase, data.postId, data.reactionType),
     "unexpected",
   )
-  await notifyReaction({
-    postId: data.postId,
-    reactionType: data.reactionType,
-    current,
-  })
-  return { reacted: true }
+  
+  if (result.reacted) {
+    await notifyReaction({
+      postId: data.postId,
+      reactionType: data.reactionType,
+      current,
+    })
+  }
+
+  return { reacted: result.reacted }
 }
 
 export async function voteOnPoll(

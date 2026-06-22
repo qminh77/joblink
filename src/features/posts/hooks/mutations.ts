@@ -129,10 +129,6 @@ export function useToggleReaction() {
       }
       toast.error(error.message)
     },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
-      qc.invalidateQueries({ queryKey: ["user-posts"] })
-    },
   })
 }
 
@@ -229,10 +225,6 @@ export function useVote() {
     },
     onSuccess: () => {
       toast.success(t("voteSuccess"))
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
-      qc.invalidateQueries({ queryKey: ["user-posts"] })
     },
   })
 }
