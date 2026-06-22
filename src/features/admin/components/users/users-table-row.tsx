@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useTranslations, useFormatter } from "next-intl"
 import { RotateCcw, Shield, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
@@ -48,6 +49,7 @@ export function UsersTableRow({
   const t = useTranslations("admin.users")
   const tStatuses = useTranslations("admin.users.statuses")
   const format = useFormatter()
+  const router = useRouter()
   const [updatingRbac, setUpdatingRbac] = useState(false)
   const assignedRole = roles.find((role) => role.id === user.roleId)
   const isProtectedAdmin = user.role === "admin" || assignedRole?.name === "admin"
@@ -62,6 +64,7 @@ export function UsersTableRow({
       const result = await updateUserRbacRole(user.id, newRoleId)
       if (result.ok) {
         toast.success(t("roleUpdateSuccess"))
+        router.refresh()
       } else {
         toast.error(result.error)
       }

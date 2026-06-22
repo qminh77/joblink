@@ -1,6 +1,8 @@
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { CurrentUserProvider } from "@/features/auth/components/current-user-provider"
 import type { SessionUserSummary } from "@/features/auth/types"
+import { getAdminUserPermissions } from "@/features/admin/api/admin-guard"
+import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
 import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
 import { MessagingDock } from "@/features/messaging/components/messaging-dock"
@@ -15,10 +17,12 @@ export default async function MainLayout({
   children: React.ReactNode
 }) {
   const user = await requireCurrentUser()
+  const adminPermissions = await getAdminUserPermissions()
+  const adminHref = getAdminEntryHref(adminPermissions)
 
-  // UC-96: chế độ bảo trì tạm ngừng truy cập của người dùng thường; quản trị
-  // viên vẫn vào được (để tắt bảo trì). Chỉ đọc setting cho non-admin.
-  if (user.appUser.role !== "admin") {
+  // UC-96: chế độ bảo trì tạm ngừng truy cập của người dùng thường; tài khoản
+  // có quyền admin vẫn vào được khu quản trị để xử lý hệ thống.
+  if (!adminHref) {
     const maintenance = await loadMaintenanceState()
     if (maintenance.enabled) {
       return <MaintenanceScreen message={maintenance.message} />
@@ -36,6 +40,7 @@ export default async function MainLayout({
     coverUrl: user.profile.coverUrl,
     headline: user.profile.headline,
     companyVerificationStatus: user.profile.companyVerificationStatus,
+    adminHref,
   }
 
   return (

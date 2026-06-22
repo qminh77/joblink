@@ -213,7 +213,7 @@ export function ProfileDropdown() {
             </DropdownMenuGroup>
           ) : null}
 
-          {user.role === "admin" ? (
+          {user.adminHref ? (
             <DropdownMenuGroup>
               <motion.div
                 variants={itemVariants}
@@ -222,7 +222,7 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.1 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push("/admin/dashboard")}
+                  onClick={() => router.push(user.adminHref ?? "/admin")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <Shield className="w-4 h-4 text-primary mr-3 shrink-0" />
