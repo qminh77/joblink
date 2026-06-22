@@ -144,98 +144,17 @@ export async function loadPostComments(
 ): Promise<FeedComment[]> {
   const supabase = await createClient()
 
-  const { data: rows, error } = await supabase
-    .from("post_comments")
-    .select("id, post_id, user_id, parent_id, content, created_at")
-    .eq("post_id", postId)
-    .is("deleted_at", null)
-    .eq("status", "active")
-    .order("created_at", { ascending: true })
-    .limit(limit)
-    .returns<CommentRow[]>()
+  const { data, error } = await supabase.rpc("get_post_comments", {
+    p_post_id: postId,
+    p_limit: limit,
+  })
 
   if (error) {
-    console.error("[loadPostComments] error", error)
+    console.error("[loadPostComments] RPC error", error)
     return []
   }
 
-  const comments = rows ?? []
-  if (comments.length === 0) return []
-
-  const userIds = Array.from(new Set(comments.map((c) => c.user_id)))
-
-  const admin = createAdminClient()
-  const [usersRes, memberRes, companyRes] = await Promise.all([
-    admin.from("users").select("id, role").in("id", userIds),
-    supabase
-      .from("member_profiles")
-      .select("user_id, full_name, avatar_url, headline")
-      .in("user_id", userIds)
-      .is("deleted_at", null),
-    supabase
-      .from("company_profiles")
-      .select("user_id, name, logo_url, industry")
-      .in("user_id", userIds)
-      .is("deleted_at", null),
-  ])
-
-  const roleById = new Map<number, UserRole>()
-  for (const u of (usersRes.data ?? []) as { id: number; role: UserRole }[]) {
-    roleById.set(u.id, u.role)
-  }
-
-  const authorById = new Map<number, AuthorMeta>()
-  for (const m of (memberRes.data ?? []) as {
-    user_id: number
-    full_name: string | null
-    avatar_url: string | null
-    headline: string | null
-  }[]) {
-    authorById.set(m.user_id, {
-      role: roleById.get(m.user_id) ?? "member",
-      displayName: m.full_name ?? "JobLink",
-      avatarUrl: m.avatar_url,
-      headline: m.headline,
-    })
-  }
-  for (const c of (companyRes.data ?? []) as {
-    user_id: number
-    name: string | null
-    logo_url: string | null
-    industry: string | null
-  }[]) {
-    if (authorById.has(c.user_id)) continue
-    authorById.set(c.user_id, {
-      role: roleById.get(c.user_id) ?? "company",
-      displayName: c.name ?? "JobLink",
-      avatarUrl: c.logo_url,
-      headline: c.industry,
-    })
-  }
-
-  return comments.map((row) => {
-    const meta = authorById.get(row.user_id) ?? {
-      role: roleById.get(row.user_id) ?? "member",
-      displayName: "JobLink",
-      avatarUrl: null,
-      headline: null,
-    }
-    return {
-      id: row.id,
-      postId: row.post_id,
-      userId: row.user_id,
-      parentId: row.parent_id,
-      content: row.content,
-      createdAt: row.created_at,
-      author: {
-        userId: row.user_id,
-        role: meta.role,
-        displayName: meta.displayName,
-        avatarUrl: meta.avatarUrl,
-        headline: meta.headline,
-      },
-    }
-  })
+  return (data as unknown as FeedComment[]) ?? []
 }
 
 export async function loadSinglePost(

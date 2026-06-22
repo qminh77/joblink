@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+
 import {
   createCommentAction,
   createPostAction,
@@ -134,6 +136,7 @@ export function useToggleReaction() {
 
 export function useCreateComment() {
   const qc = useQueryClient()
+  const user = useCurrentUser()
   return useMutation({
     mutationFn: async (input: {
       postId: number
@@ -144,17 +147,58 @@ export function useCreateComment() {
       if (!result.ok) throw new Error(result.error)
       return result.data.comment
     },
-    onSuccess: (comment) => {
-      applyToAllPostCaches(qc, comment.postId, (post) => ({
+    onMutate: async (input) => {
+      await qc.cancelQueries({ queryKey: POST_COMMENTS_KEY(input.postId) })
+      const previousComments = qc.getQueryData<FeedComment[]>(POST_COMMENTS_KEY(input.postId))
+
+      const tempId = -Date.now()
+      const tempComment: FeedComment = {
+        id: tempId,
+        postId: input.postId,
+        userId: user.id,
+        parentId: input.parentId ?? null,
+        content: input.content,
+        createdAt: new Date().toISOString(),
+        author: {
+          userId: user.id,
+          role: user.role,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          headline: user.headline,
+        },
+      }
+
+      applyToAllPostCaches(qc, input.postId, (post) => ({
         ...post,
         commentCount: post.commentCount + 1,
       }))
+
       qc.setQueryData<FeedComment[]>(
-        POST_COMMENTS_KEY(comment.postId),
-        (prev) => (prev ? [...prev, comment] : [comment]),
+        POST_COMMENTS_KEY(input.postId),
+        (prev) => (prev ? [...prev, tempComment] : [tempComment]),
+      )
+
+      return { previousComments, tempId }
+    },
+    onSuccess: (realComment, input, context) => {
+      qc.setQueryData<FeedComment[]>(
+        POST_COMMENTS_KEY(realComment.postId),
+        (prev) => {
+          if (!prev) return [realComment]
+          return prev.map(c => c.id === context?.tempId ? realComment : c)
+        }
       )
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error, input, context) => {
+      if (context?.previousComments) {
+        qc.setQueryData(POST_COMMENTS_KEY(input.postId), context.previousComments)
+      }
+      applyToAllPostCaches(qc, input.postId, (post) => ({
+        ...post,
+        commentCount: Math.max(0, post.commentCount - 1),
+      }))
+      toast.error(error.message)
+    },
   })
 }
 
