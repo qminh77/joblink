@@ -55,31 +55,61 @@ export function useLoadMoreNotifications() {
   })
 }
 
-function useNotificationMutation<TArgs>(
-  mutationFn: (args: TArgs) => Promise<void>,
-) {
+export function useMarkNotificationRead() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
-      queryClient.invalidateQueries({ queryKey: UNREAD_KEY })
+    mutationFn: async (notificationId: number) => {
+      const result = await markNotificationReadAction(notificationId)
+      if (!result.ok) throw new Error(result.error)
     },
-    onError: (error: Error) => toast.error(error.message),
-  })
-}
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY })
+      await queryClient.cancelQueries({ queryKey: UNREAD_KEY })
+      const prevList = queryClient.getQueryData<NotificationItem[]>(NOTIFICATIONS_KEY)
+      const prevUnread = queryClient.getQueryData<number>(UNREAD_KEY)
 
-export function useMarkNotificationRead() {
-  return useNotificationMutation<number>(async (notificationId) => {
-    const result = await markNotificationReadAction(notificationId)
-    if (!result.ok) throw new Error(result.error)
+      queryClient.setQueryData<NotificationItem[]>(NOTIFICATIONS_KEY, (old) =>
+        old?.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+      )
+      
+      const wasUnread = prevList?.find((n) => n.id === notificationId && !n.isRead)
+      if (wasUnread && prevUnread != null) {
+        queryClient.setQueryData<number>(UNREAD_KEY, (old) => Math.max(0, (old ?? 1) - 1))
+      }
+      return { prevList, prevUnread }
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.prevList) queryClient.setQueryData(NOTIFICATIONS_KEY, context.prevList)
+      if (context?.prevUnread != null) queryClient.setQueryData(UNREAD_KEY, context.prevUnread)
+      toast.error(error.message)
+    },
   })
 }
 
 export function useMarkAllNotificationsRead() {
-  return useNotificationMutation<void>(async () => {
-    const result = await markAllNotificationsReadAction()
-    if (!result.ok) throw new Error(result.error)
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const result = await markAllNotificationsReadAction()
+      if (!result.ok) throw new Error(result.error)
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY })
+      await queryClient.cancelQueries({ queryKey: UNREAD_KEY })
+      const prevList = queryClient.getQueryData<NotificationItem[]>(NOTIFICATIONS_KEY)
+      const prevUnread = queryClient.getQueryData<number>(UNREAD_KEY)
+
+      queryClient.setQueryData<NotificationItem[]>(NOTIFICATIONS_KEY, (old) =>
+        old?.map((n) => ({ ...n, isRead: true })),
+      )
+      queryClient.setQueryData<number>(UNREAD_KEY, 0)
+      return { prevList, prevUnread }
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.prevList) queryClient.setQueryData(NOTIFICATIONS_KEY, context.prevList)
+      if (context?.prevUnread != null) queryClient.setQueryData(UNREAD_KEY, context.prevUnread)
+      toast.error(error.message)
+    },
   })
 }
 

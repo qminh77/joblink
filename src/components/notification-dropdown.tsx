@@ -113,15 +113,9 @@ export function NotificationDropdown({
                   <motion.div key={item.id} variants={fadeIn}>
                     <button
                       type="button"
-                      onClick={async () => {
+                      onClick={() => {
                         if (!item.isRead) markRead.mutate(item.id)
-                        const exists =
-                          await verifyNotificationTargetAction(item)
-                        if (exists) {
-                          router.push(visual.href)
-                        } else {
-                          toast(t("gone"))
-                        }
+                        router.push(visual.href)
                       }}
                       className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors w-full text-left ${
                         index < visible.length - 1

@@ -252,14 +252,10 @@ export async function loadHomeStats(): Promise<HomeFeedStats> {
   const current = await getCurrentUser()
   if (!current) return EMPTY_STATS
 
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("users")
-    .select("connection_count, profile_view_count")
-    .eq("id", current.appUser.id)
-    .maybeSingle<HomeFeedStats>()
-
-  return data ?? EMPTY_STATS
+  return {
+    connection_count: current.appUser.connection_count,
+    profile_view_count: current.appUser.profile_view_count,
+  }
 }
 
 export type { FeedPost }

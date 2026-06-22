@@ -3999,16 +3999,36 @@ BEGIN
     SELECT COALESCE(array_agg(to_user_id), '{}') INTO v_connection_ids
       FROM public.user_connections_view WHERE from_user_id = v_me AND status = 'accepted';
 
-    PERFORM public.generate_quick_suggestions(v_me, p_suggestion_limit);
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_suggestions
-      FROM (SELECT c.suggested_user_id AS "userId", u.role,
-                   COALESCE(mp.full_name, cp.name) AS "displayName",
-                   COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
-                   COALESCE(mp.headline, cp.industry) AS "headline"
-              FROM public.network_suggestions c JOIN public.users u ON u.id = c.suggested_user_id
-              LEFT JOIN public.member_profiles mp ON mp.user_id = u.id
-              LEFT JOIN public.company_profiles cp ON cp.user_id = u.id
-             WHERE c.user_id = v_me ORDER BY RANDOM() LIMIT p_suggestion_limit) s;
+      FROM (
+        SELECT u.id AS "userId", u.role,
+               COALESCE(mp.full_name, cp.name) AS "displayName",
+               COALESCE(mp.avatar_url, cp.logo_url) AS "avatarUrl",
+               COALESCE(mp.headline, cp.industry) AS "headline"
+          FROM public.users u
+          LEFT JOIN public.member_profiles mp ON mp.user_id = u.id
+          LEFT JOIN public.company_profiles cp ON cp.user_id = u.id
+         WHERE u.deleted_at IS NULL
+           AND u.status = 'active'
+           AND u.role <> 'admin'
+           AND u.id <> v_me
+           AND NOT EXISTS (
+             SELECT 1 FROM public.connections c
+              WHERE (c.requester_id = v_me AND c.receiver_id = u.id)
+                 OR (c.requester_id = u.id AND c.receiver_id = v_me)
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM public.user_blocks b
+              WHERE (b.blocker_id = v_me AND b.blocked_id = u.id)
+                 OR (b.blocker_id = u.id AND b.blocked_id = v_me)
+           )
+           AND (
+             (u.role = 'member' AND mp.deleted_at IS NULL AND mp.profile_visibility = 'public')
+             OR
+             (u.role = 'company' AND cp.deleted_at IS NULL AND cp.verification_status = 'verified')
+           )
+         ORDER BY RANDOM() LIMIT p_suggestion_limit
+      ) s;
 
     SELECT COALESCE(jsonb_agg(row_to_jsonb(s)), '[]'::jsonb) INTO v_suggested_jobs
       FROM (SELECT j.id, j.title, j.company_user_id AS "companyUserId",
@@ -4084,7 +4104,11 @@ BEGIN
                    jt.name AS "jobTypeName", wm.name AS "workModeName",
                    j.salary_min AS "salaryMin", j.salary_max AS "salaryMax",
                    j.salary_visible AS "salaryVisible", j.created_at AS "createdAt",
-                   FALSE AS "viewerSaved", FALSE AS "viewerApplied"
+                   EXISTS(SELECT 1 FROM public.saved_jobs sj
+                           WHERE sj.job_id = j.id AND sj.user_id = v_me) AS "viewerSaved",
+                   EXISTS(SELECT 1 FROM public.job_applications ja
+                           WHERE ja.job_id = j.id AND ja.applicant_id = v_me
+                             AND ja.status <> 'withdrawn') AS "viewerApplied"
               FROM unnest(v_job_ids) f(id) JOIN public.jobs j ON j.id = f.id
               JOIN public.users u ON u.id = j.company_user_id
               LEFT JOIN public.company_profiles cp ON cp.user_id = j.company_user_id

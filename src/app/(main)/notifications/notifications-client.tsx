@@ -200,15 +200,9 @@ export default function NotificationsClient({
                       <motion.li key={item.id} variants={slideLeft}>
                         <button
                           type="button"
-                          onClick={async () => {
+                          onClick={() => {
                             if (!item.isRead) markRead.mutate(item.id)
-                            const exists =
-                              await verifyNotificationTargetAction(item)
-                            if (exists) {
-                              router.push(visual.href)
-                            } else {
-                              toast(t("gone"))
-                            }
+                            router.push(visual.href)
                           }}
                           className={`flex items-start gap-3 p-4 transition-colors hover:bg-muted/30 w-full text-left ${
                             !item.isRead ? "bg-primary/[0.03]" : ""
