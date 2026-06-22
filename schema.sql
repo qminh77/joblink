@@ -5423,20 +5423,13 @@ BEGIN
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN jsonb_build_object('items', '[]'::jsonb, 'unreadConversations', 0); END IF;
     WITH my_conv AS (
-        SELECT cp.conversation_id, cp.last_read_at
+        SELECT cp.conversation_id, cp.last_read_at, cp.unread_count
           FROM public.conversation_participants cp WHERE cp.user_id = v_me
     ),
     other_part AS (
-        SELECT mc.conversation_id, cp.user_id AS other_user_id, mc.last_read_at
+        SELECT mc.conversation_id, cp.user_id AS other_user_id, mc.unread_count
           FROM my_conv mc JOIN public.conversation_participants cp
             ON cp.conversation_id = mc.conversation_id AND cp.user_id <> v_me
-    ),
-    unread AS (
-        SELECT m.conversation_id, COUNT(*)::INT AS unread_count
-          FROM public.messages m JOIN my_conv mc ON mc.conversation_id = m.conversation_id
-         WHERE m.deleted_at IS NULL AND m.sender_id <> v_me
-           AND (mc.last_read_at IS NULL OR m.created_at > mc.last_read_at)
-         GROUP BY m.conversation_id
     ),
     convo_rows AS (
         SELECT c.id AS "conversationId", c.updated_at AS "updatedAt", c.seq AS "seq",
@@ -5447,7 +5440,7 @@ BEGIN
                c.last_message_id AS "lastMessageId", c.last_sender_id AS "lastSenderId",
                c.last_content AS "lastContent", NULL::JSONB AS "lastMedia",
                c.last_message_created_at AS "lastCreatedAt",
-               COALESCE(unr.unread_count, 0) AS "unreadCount",
+               op.unread_count AS "unreadCount",
                TRUE AS "isConnected",
                EXISTS(SELECT 1 FROM public.user_blocks ub
                       WHERE ub.blocker_id = v_me AND ub.blocked_id = op.other_user_id) AS "blockedByMe",
@@ -5459,7 +5452,6 @@ BEGIN
           JOIN public.users u ON u.id = op.other_user_id
           LEFT JOIN public.member_profiles mp ON mp.user_id = op.other_user_id AND mp.deleted_at IS NULL
           LEFT JOIN public.company_profiles cp ON cp.user_id = op.other_user_id AND cp.deleted_at IS NULL
-          LEFT JOIN unread unr ON unr.conversation_id = op.conversation_id
     ),
     my_connections AS (
         SELECT CASE WHEN cn.requester_id = v_me THEN cn.receiver_id ELSE cn.requester_id END AS other_id,
@@ -5506,9 +5498,10 @@ BEGIN
           SELECT * FROM convo_rows UNION ALL SELECT * FROM placeholder_rows
           ORDER BY sort_key DESC NULLS LAST LIMIT p_limit
       ) ar;
-    RETURN jsonb_build_object('items', v_items, 'unreadConversations',
-        COALESCE((SELECT COUNT(*)::INT FROM jsonb_array_elements(v_items) e
-                   WHERE (e->>'unreadCount')::INT > 0), 0));
+    SELECT COUNT(*)::INT INTO v_unread_total
+      FROM public.conversation_participants cp
+     WHERE cp.user_id = v_me AND cp.unread_count > 0;
+    RETURN jsonb_build_object('items', v_items, 'unreadConversations', v_unread_total);
 END;
 $$;
 
@@ -5521,11 +5514,9 @@ BEGIN
     SELECT u.id INTO v_me FROM public.users u
      WHERE u.auth_id = auth.uid() AND u.deleted_at IS NULL LIMIT 1;
     IF v_me IS NULL THEN RETURN 0; END IF;
-    SELECT COUNT(DISTINCT m.conversation_id)::INT INTO v_count
+    SELECT COUNT(*)::INT INTO v_count
       FROM public.conversation_participants cp
-      JOIN public.messages m ON m.conversation_id = cp.conversation_id
-     WHERE cp.user_id = v_me AND m.deleted_at IS NULL AND m.sender_id <> v_me
-       AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at);
+     WHERE cp.user_id = v_me AND cp.unread_count > 0;
     RETURN COALESCE(v_count, 0);
 END;
 $$;
@@ -5649,6 +5640,10 @@ BEGIN
     UPDATE public.conversation_participants
        SET last_read_at = v_created_at
      WHERE conversation_id = p_conversation_id AND user_id = v_me;
+
+    UPDATE public.conversation_participants
+       SET unread_count = unread_count + 1
+     WHERE conversation_id = p_conversation_id AND user_id = v_other;
 
     RETURN jsonb_build_object('ok', TRUE, 'message', jsonb_build_object(
         'id', v_new_id, 'senderId', v_me, 'content', v_trim, 'media', NULL,

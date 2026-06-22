@@ -6,15 +6,12 @@ import { toast } from "sonner"
 
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from "@/features/notifications/hooks"
 
-import {
-  ensureConversationWithAction,
-  markConversationReadAction,
-  sendMessageAction,
-} from "../api/actions"
+import { ensureConversationWithAction, markConversationReadAction, sendMessageAction } from "../api/actions"
 import { translateMessagingError } from "../lib/translate-error"
-import type { ConversationMessagesPage, MessageItem } from "../types"
+import type { ConversationMessagesPage, MessageItem, MessagingOverview } from "../types"
 import { MESSAGING_MESSAGES_KEY, MESSAGING_OVERVIEW_KEY } from "./keys"
 import { invalidateMessaging } from "./shared"
+import { createBrowserClient } from "@/lib/supabase/client"
 
 type SendMessageVars = { conversationId: number; content: string }
 
@@ -23,7 +20,7 @@ export function useSendMessage(currentUserId: number) {
   const te = useTranslations("messages.errors")
 
   return useMutation<
-    MessageItem,
+    { message: MessageItem; recipientId: number },
     Error,
     SendMessageVars,
     { snapshot?: ConversationMessagesPage; tempId: number }
@@ -31,7 +28,7 @@ export function useSendMessage(currentUserId: number) {
     mutationFn: async ({ conversationId, content }) => {
       const result = await sendMessageAction(conversationId, content)
       if (!result.ok) throw new Error(result.error)
-      return result.message
+      return { message: result.message, recipientId: result.recipientId }
     },
     onMutate: async ({ conversationId, content }) => {
       const key = MESSAGING_MESSAGES_KEY(conversationId)
@@ -60,24 +57,54 @@ export function useSendMessage(currentUserId: number) {
       }
       toast.error(translateMessagingError(te, error.message))
     },
-    onSuccess: (message, { conversationId }, context) => {
+    onSuccess: (data, { conversationId }, context) => {
+      const { message, recipientId } = data
       const key = MESSAGING_MESSAGES_KEY(conversationId)
       qc.setQueryData<ConversationMessagesPage>(key, (prev) => {
         if (!prev) return { items: [message], hasMore: false, otherUserId: null }
-        
-        // If realtime hook already added the real message, just remove the optimistic one
-        const alreadyHasReal = prev.items.some(item => item.id === message.id)
+        const alreadyHasReal = prev.items.some((item) => item.id === message.id)
         if (alreadyHasReal) {
           return {
             ...prev,
-            items: prev.items.filter((item) => item.id !== context?.tempId)
+            items: prev.items.filter((item) => item.id !== context?.tempId),
           }
         }
-        
         const replaced = prev.items.map((item) =>
           item.id === context?.tempId ? message : item,
         )
         return { ...prev, items: replaced }
+      })
+
+      // Send broadcast to recipient
+      const supabase = createBrowserClient()
+      supabase.channel(`messaging-${recipientId}`).send({
+        type: "broadcast",
+        event: "new_message",
+        payload: {
+          id: message.id,
+          conversation_id: conversationId,
+          sender_id: currentUserId,
+          content: message.content,
+          media: message.media,
+          read_at: message.readAt,
+          created_at: message.createdAt,
+        },
+      }).catch(console.error)
+
+      // Optimistically update overview for sender
+      qc.setQueryData<MessagingOverview>(MESSAGING_OVERVIEW_KEY, (prev) => {
+        if (!prev) return prev
+        const existingConvo = prev.items.find(i => i.conversationId === conversationId)
+        if (!existingConvo) return prev
+        const updatedItems = prev.items.map(i => i.conversationId === conversationId ? {
+          ...i,
+          lastMessageId: message.id,
+          lastSenderId: currentUserId,
+          lastContent: message.content || "",
+          lastCreatedAt: message.createdAt,
+        } : i)
+        updatedItems.sort((a, b) => new Date(b.lastCreatedAt || b.updatedAt).getTime() - new Date(a.lastCreatedAt || a.updatedAt).getTime())
+        return { ...prev, items: updatedItems }
       })
     },
     onSettled: () => invalidateMessaging(qc),

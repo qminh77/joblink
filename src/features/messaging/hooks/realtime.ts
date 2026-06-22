@@ -202,6 +202,11 @@ export function useRealtimeMessaging({
         },
         () => invalidateMessaging(qc),
       )
+      .on(
+        "broadcast",
+        { event: "new_message" },
+        (payload) => handleInsert(payload.payload as RealtimeMessageRow),
+      )
       .subscribe()
 
     return () => {
