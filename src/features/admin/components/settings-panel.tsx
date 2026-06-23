@@ -7,7 +7,6 @@ import {
   Lock,
   Mail,
   MapPin,
-  Phone,
   PlugZap,
   Save,
   Send,
@@ -47,7 +46,6 @@ const GROUP_ORDER = [
   "smtp",
   "recaptcha",
   "security",
-  "contact",
 ] as const
 
 const GROUP_ICONS = {
@@ -55,7 +53,6 @@ const GROUP_ICONS = {
   smtp: Mail,
   recaptcha: Lock,
   security: Shield,
-  contact: Phone,
 } as const
 
 const BOOLEAN_KEYS = new Set([
@@ -77,8 +74,6 @@ const SECRET_KEYS = new Set([
 ])
 const TEXTAREA_KEYS = new Set([
   "site_description",
-  "contact_address",
-  "contact_content",
 ])
 
 const SELECT_KEYS = new Set(["default_locale", "default_timezone", "default_currency"])

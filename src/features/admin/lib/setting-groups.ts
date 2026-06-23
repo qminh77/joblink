@@ -23,13 +23,6 @@ export const SETTING_GROUPS: Record<string, string[]> = {
     "require_email_verification",
     "passkey_enabled",
   ],
-  contact: [
-    "contact_address",
-    "contact_email",
-    "contact_phone",
-    "contact_content",
-    "contact_map_url",
-  ],
 }
 
 export const ALLOWED_SETTING_KEYS = new Set<string>(

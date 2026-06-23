@@ -516,8 +516,7 @@
       "notifications": "Notifications",
       "language": "Language",
       "company": "Company profile",
-      "blocked": "Blocked",
-      "appeals": "Appeals"
+      "blocked": "Blocked"
     },
     "account": {
       "title": "Account information",
@@ -624,29 +623,6 @@
       "loading": "Loading...",
       "empty": "You haven't blocked anyone yet.",
       "unblock": "Unblock"
-    },
-    "appeals": {
-      "title": "Moderation appeals",
-      "subtitle": "Review moderation actions applied to your account and appeal if you believe there's been a mistake.",
-      "loading": "Loading...",
-      "empty": "Your account has no moderation actions.",
-      "appealAction": "Appeal",
-      "dialogTitle": "Submit an appeal",
-      "dialogHint": "Explain why you think this decision should be reconsidered. An administrator will respond.",
-      "reasonPlaceholder": "Write your appeal...",
-      "cancel": "Cancel",
-      "submit": "Submit appeal",
-      "submitting": "Submitting...",
-      "actions": {
-        "warn": "Warning",
-        "suspend": "Suspension",
-        "ban": "Ban"
-      },
-      "statuses": {
-        "pending": "Pending",
-        "accepted": "Accepted",
-        "rejected": "Rejected"
-      }
     },
     "twoFactor": {
       "title": "Two-factor authentication (2FA)",
@@ -1132,16 +1108,7 @@
       "descriptionMax": "Description up to 500 characters",
       "invalidData": "Invalid data",
       "createFailed": "Could not submit report",
-      "unexpected": "Something went wrong, please try again",
-      "invalidAction": "Invalid moderation action",
-      "appealReasonRequired": "Please enter a reason for your appeal",
-      "appealReasonMax": "Reason must be at most 500 characters",
-      "actionNotFound": "No matching moderation action found",
-      "alreadyAppealed": "You've already appealed this action",
-      "appealFailed": "Couldn't submit appeal, please try again"
-    },
-    "appeal": {
-      "submitted": "Appeal submitted"
+      "unexpected": "Something went wrong, please try again"
     }
   },
   "messages": {
@@ -1199,13 +1166,9 @@
       "jobs": "Jobs",
       "posts": "Posts",
       "reports": "Reports",
-      "appeals": "Appeals",
       "auditLog": "Audit log",
-      "contactSubmissions": "Contact submissions",
-      "brand": "Branding",
       "settings": "Settings",
       "reportTypes": "Report types",
-      "lookups": "Lookups",
       "roles": "Roles",
       "groups": {
         "overview": "Overview",
@@ -1288,32 +1251,6 @@
         "active": "Active",
         "hidden": "Hidden",
         "deleted": "Deleted"
-      }
-    },
-    "appeals": {
-      "title": "User appeals",
-      "subtitle": "Review moderation decisions",
-      "filterStatus": "Status",
-      "allStatuses": "All",
-      "statuses": {
-        "pending": "Pending",
-        "accepted": "Accepted",
-        "rejected": "Rejected"
-      },
-      "appellant": "Appellant",
-      "reason": "Reason",
-      "reviewed": "Reviewed at",
-      "accept": "Accept",
-      "reject": "Reject",
-      "note": "Note",
-      "confirmTitle": "Respond to appeal",
-      "submit": "Confirm",
-      "submitting": "Processing...",
-      "empty": "No appeals",
-      "total": "{count} appeals",
-      "success": {
-        "accepted": "Appeal accepted",
-        "rejected": "Appeal rejected"
       }
     },
     "errors": {
@@ -1621,109 +1558,6 @@
         "require_email_verification": "Require email verification on signup",
         "passkey_enabled": "Enable passkey sign-in"
       }
-    },
-    "brand": {
-      "title": "Branding",
-      "subtitle": "Manage brand identity across the system",
-      "saveAll": "Save changes",
-      "saving": "Saving...",
-      "saved": "Brand saved",
-      "saveError": "Save failed",
-      "nameRequired": "Site name is required",
-      "identity": {
-        "title": "Brand identity",
-        "description": "Basic brand information"
-      },
-      "logo": {
-        "title": "Logo",
-        "description": "Logo displayed across the system",
-        "hint": "PNG, JPEG, WebP or SVG. Up to 2MB."
-      },
-      "favicon": {
-        "title": "Favicon",
-        "description": "Icon shown on the browser tab",
-        "hint": "PNG, ICO, WebP or SVG. Up to 1MB."
-      },
-      "fields": {
-        "siteName": "Site name",
-        "siteDescription": "Short description",
-        "descriptionPlaceholder": "Short description of the system...",
-        "logo": "Logo",
-        "favicon": "Favicon"
-      },
-      "preview": {
-        "title": "Preview",
-        "subtitle": "How the brand looks on different devices",
-        "desktop": "Desktop",
-        "mobile": "Mobile"
-      },
-      "actions": {
-        "title": "Actions",
-        "description": "Save changes to apply"
-      },
-      "fileTooLarge": "File too large. Max {max}MB",
-      "invalidType": "Unsupported file format",
-      "dropHint": "Click or drag & drop a file here",
-      "maxSize": "Max {max}MB"
-    },
-    "lookups": {
-      "title": "Lookup data",
-      "subtitle": "Manage shared dropdown data",
-      "tabs": {
-        "provinces": "Provinces",
-        "wards": "Wards/Communes",
-        "job_types": "Job types",
-        "work_modes": "Work modes",
-        "job_positions": "Job positions",
-        "report_types": "Report types",
-        "skills": "Skills"
-      },
-      "code": "Code",
-      "name": "Name",
-      "nameEn": "Name (EN)",
-      "parent": "Parent",
-      "province": "Province",
-      "sortOrder": "Order",
-      "isActive": "Active",
-      "isSystem": "System",
-      "add": "Add",
-      "edit": "Edit",
-      "delete": "Delete",
-      "confirmDelete": "Delete this entry?",
-      "save": "Save",
-      "saving": "Saving...",
-      "cancel": "Cancel",
-      "noneParent": "(No parent)",
-      "empty": "No entries yet",
-      "success": {
-        "created": "Created",
-        "updated": "Updated",
-        "deleted": "Deleted"
-      },
-      "errors": {
-        "code_required": "Code is required",
-        "province_required": "Please select a province"
-      }
-    },
-    "contactSubmissions": {
-      "title": "Contact submissions",
-      "subtitle": "Manage user support requests",
-      "empty": "No submissions yet",
-      "reply": "Reply",
-      "replyTitle": "Reply to request",
-      "replyPlaceholder": "Enter your reply...",
-      "replyLabel": "Reply:",
-      "sendReply": "Send reply",
-      "sending": "Sending...",
-      "cancel": "Cancel",
-      "replied": "Reply sent",
-      "closed": "Request closed",
-      "status": {
-        "pending": "Pending",
-        "read": "Read",
-        "replied": "Replied",
-        "closed": "Closed"
-      }
     }
   },
   "cvs": {
@@ -1829,30 +1663,5 @@
     "noResultsTab": "No {tab} found",
     "typeToSearch": "Type at least 2 characters to start searching",
     "viewAllResults": "View all results"
-  },
-  "contact": {
-    "page": {
-      "title": "Contact us",
-      "subtitle": "Send us your questions, feedback or support requests."
-    },
-    "info": {
-      "email": "Email",
-      "phone": "Phone",
-      "address": "Address"
-    },
-    "form": {
-      "name": "Full name",
-      "namePlaceholder": "Enter your full name",
-      "email": "Email",
-      "emailPlaceholder": "your@email.com",
-      "subject": "Subject",
-      "subjectPlaceholder": "Support request subject",
-      "message": "Message",
-      "messagePlaceholder": "Describe your issue in detail...",
-      "submit": "Send request",
-      "success": "Request sent successfully!",
-      "thankYou": "Thank you!",
-      "thankYouDesc": "We have received your request and will get back to you shortly."
-    }
   }
 }

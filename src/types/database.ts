@@ -421,22 +421,6 @@ export type SystemSettingsRow = {
   updated_at: string
 }
 
-export type ContactSubmissionRow = {
-  id: number
-  name: string
-  email: string
-  subject: string
-  message: string
-  status: string
-  user_id: number | null
-  replied_at: string | null
-  reply_message: string | null
-  replied_by: number | null
-  created_at: string
-  updated_at: string
-  deleted_at: string | null
-}
-
 export type ModerationActionType =
   | "hide"
   | "delete"
@@ -454,20 +438,6 @@ export type ModerationActionRow = {
   target_id: number
   action_type: ModerationActionType
   reason: string
-  created_at: string
-}
-
-export type AppealStatus = "pending" | "accepted" | "rejected"
-
-export type AppealRow = {
-  id: number
-  appellant_id: number
-  report_id: number | null
-  moderation_action_id: number | null
-  reason: string
-  status: AppealStatus
-  reviewed_by: number | null
-  reviewed_at: string | null
   created_at: string
 }
 
@@ -737,28 +707,9 @@ export type Database = {
         ModerationActionRow,
         Omit<ModerationActionRow, "id" | "created_at">
       >
-      contact_submissions: TableDef<
-        ContactSubmissionRow,
-        Omit<ContactSubmissionRow, "id" | "created_at" | "updated_at" | "deleted_at">
-      >
       system_settings: TableDef<
         SystemSettingsRow,
         Omit<SystemSettingsRow, "id" | "created_at" | "updated_at">
-      >
-      appeals: TableDef<
-        AppealRow,
-        Omit<
-          AppealRow,
-          | "id"
-          | "created_at"
-          | "status"
-          | "reviewed_by"
-          | "reviewed_at"
-        > & {
-          status?: AppealStatus
-          reviewed_by?: number | null
-          reviewed_at?: string | null
-        }
       >
       roles: TableDef<RoleRow>
       modules: TableDef<ModuleRow>

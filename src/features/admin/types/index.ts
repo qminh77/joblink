@@ -174,27 +174,6 @@ export type AdminAuditLogEntry = {
   createdAt: string
 }
 
-export type AdminLookupKind =
-  | "provinces"
-  | "wards"
-  | "job_types"
-  | "work_modes"
-  | "job_positions"
-  | "report_types"
-  | "skills"
-
-export type AdminLookupRow = {
-  id: number
-  code: string
-  name: string
-  nameEn: string | null
-  sortOrder: number
-  isActive: boolean
-  isSystem?: boolean
-  provinceId?: number | null
-  parentId?: number | null
-}
-
 export type AdminSettingsValue =
   | string
   | number

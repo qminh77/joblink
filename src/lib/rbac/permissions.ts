@@ -80,34 +80,14 @@ export const PERMISSIONS = {
   "reports.moderate": "Quản lý báo cáo - Duyệt / Kiểm duyệt",
   "reports.status": "Quản lý báo cáo - Đổi trạng thái",
 
-  // Appeals
-  "appeals.view": "Quản lý kháng nghị - Xem",
-  "appeals.create": "Quản lý kháng nghị - Tạo mới",
-  "appeals.moderate": "Quản lý kháng nghị - Duyệt / Kiểm duyệt",
-
   // Audit
   "audit.view": "Nhật ký hoạt động - Xem",
-
-  // Contacts
-  "contacts.create": "Liên hệ hỗ trợ - Tạo mới",
-  "contacts.view": "Liên hệ hỗ trợ - Xem",
-  "contacts.reply": "Liên hệ hỗ trợ - Trả lời",
-
-  // Brand
-  "brand.view": "Thương hiệu - Xem",
-  "brand.edit": "Thương hiệu - Chỉnh sửa",
 
   // Report Types
   "report_types.view": "Loại báo cáo - Xem",
   "report_types.create": "Loại báo cáo - Tạo mới",
   "report_types.edit": "Loại báo cáo - Chỉnh sửa",
   "report_types.delete": "Loại báo cáo - Xóa",
-
-  // Lookups
-  "lookups.view": "Danh mục - Xem",
-  "lookups.create": "Danh mục - Tạo mới",
-  "lookups.edit": "Danh mục - Chỉnh sửa",
-  "lookups.delete": "Danh mục - Xóa",
 
   // Settings
   "settings.view": "Cài đặt hệ thống - Xem",

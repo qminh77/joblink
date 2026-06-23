@@ -9,7 +9,6 @@ import {
   KeyRound,
   Menu,
   Shield,
-  ShieldAlert,
   User,
 } from "lucide-react"
 
@@ -28,7 +27,6 @@ import type { ProvinceRow } from "@/types/database"
 
 import { AccountInfoCard } from "./account-info-card"
 import { CompanyInfoCard } from "./company-info-card"
-import { AppealsCard } from "./appeals-card"
 import { BlockedAccountsCard } from "./blocked-accounts-card"
 import { ChangePasswordCard } from "./change-password-card"
 import { NotificationPreferencesCard } from "./notification-preferences-card"
@@ -84,7 +82,6 @@ export function SettingsTabs({
     { value: "security", icon: KeyRound, label: "Bảo mật & Đăng nhập" },
     { value: "privacy", icon: Shield, label: t("tabs.privacy") },
     { value: "blocked", icon: Ban, label: t("tabs.blocked") },
-    { value: "appeals", icon: ShieldAlert, label: t("tabs.appeals") },
     { value: "notifications", icon: Bell, label: t("tabs.notifications") },
   )
 
@@ -201,7 +198,6 @@ export function SettingsTabs({
         ) : null}
 
         {activeTab === "blocked" ? <BlockedAccountsCard /> : null}
-        {activeTab === "appeals" ? <AppealsCard /> : null}
         {activeTab === "notifications" ? <NotificationPreferencesCard /> : null}
       </div>
     </div>

@@ -7,13 +7,9 @@ const ADMIN_ENTRY_ITEMS = [
   { href: "/admin/jobs", requiredPermission: "jobs.view" },
   { href: "/admin/posts", requiredPermission: "posts.view" },
   { href: "/admin/reports", requiredPermission: "reports.view" },
-  { href: "/admin/appeals", requiredPermission: "appeals.view" },
   { href: "/admin/audit-log", requiredPermission: "audit.view" },
-  { href: "/admin/contact-submissions", requiredPermission: "contacts.view" },
   { href: "/admin/roles", requiredPermission: "roles.view" },
-  { href: "/admin/brand", requiredPermission: "brand.view" },
   { href: "/admin/report-types", requiredPermission: "report_types.view" },
-  { href: "/admin/lookups", requiredPermission: "lookups.view" },
   { href: "/admin/settings", requiredPermission: "settings.view" },
 ] as const satisfies Array<{
   href: string

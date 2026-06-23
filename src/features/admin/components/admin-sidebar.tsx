@@ -8,13 +8,9 @@ import {
   Briefcase,
   Building2,
   ChevronDown,
-  Database,
   FileText,
   Flag,
-  Gavel,
-  HelpCircle,
   LayoutDashboard,
-  Palette,
   ScrollText,
   Settings,
   Tags,
@@ -48,18 +44,14 @@ const GROUPS = [
     key: "moderation",
     items: [
       { key: "reports", href: "/admin/reports", icon: Flag, requiredPermission: "reports.view" },
-      { key: "appeals", href: "/admin/appeals", icon: Gavel, requiredPermission: "appeals.view" },
       { key: "auditLog", href: "/admin/audit-log", icon: ScrollText, requiredPermission: "audit.view" },
-      { key: "contactSubmissions", href: "/admin/contact-submissions", icon: HelpCircle, requiredPermission: "contacts.view" },
     ],
   },
   {
     key: "system",
     items: [
       { key: "roles", href: "/admin/roles", icon: Shield, requiredPermission: "roles.view" },
-      { key: "brand", href: "/admin/brand", icon: Palette, requiredPermission: "brand.view" },
       { key: "reportTypes", href: "/admin/report-types", icon: Tags, requiredPermission: "report_types.view" },
-      { key: "lookups", href: "/admin/lookups", icon: Database, requiredPermission: "lookups.view" },
       { key: "settings", href: "/admin/settings", icon: Settings, requiredPermission: "settings.view" },
     ],
   },
@@ -137,16 +129,6 @@ const SETTINGS_SUBITEMS = [
   { key: "contact", tab: "contact" },
 ] as const
 
-const LOOKUPS_SUBITEMS = [
-  { key: "provinces", kind: "provinces" },
-  { key: "wards", kind: "wards" },
-  { key: "job_types", kind: "job_types" },
-  { key: "work_modes", kind: "work_modes" },
-  { key: "job_positions", kind: "job_positions" },
-  { key: "report_types", kind: "report_types" },
-  { key: "skills", kind: "skills" },
-] as const
-
 function SidebarItem({
   item,
   pathname,
@@ -159,14 +141,10 @@ function SidebarItem({
   onNavigate?: () => void
 }) {
   const tSettings = useTranslations("admin.settings.groups")
-  const tLookups = useTranslations("admin.lookups.tabs")
   const searchParams = useSearchParams()
   const isSettingsActive = pathname === "/admin/settings"
-  const isLookupsActive = pathname === "/admin/lookups"
   const currentTab = searchParams.get("tab") || "site_identity"
-  const currentKind = searchParams.get("kind") || "provinces"
   const [settingsSubOpen, setSettingsSubOpen] = useState(isSettingsActive)
-  const [lookupsSubOpen, setLookupsSubOpen] = useState(isLookupsActive)
 
   if (item.key === "settings") {
     const Icon = item.icon
@@ -206,53 +184,6 @@ function SidebarItem({
                   }`}
                 >
                   {tSettings(sub.key)}
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  if (item.key === "lookups") {
-    const Icon = item.icon
-    return (
-      <div className="space-y-1">
-        <button
-          onClick={() => setLookupsSubOpen(!lookupsSubOpen)}
-          className={`flex w-full items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
-            isLookupsActive
-              ? "bg-primary/10 text-primary font-semibold"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <Icon className="w-5 h-5" />
-            <span>{t(item.key)}</span>
-          </div>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform duration-200 ${
-              lookupsSubOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-        {lookupsSubOpen && (
-          <div className="pl-6 space-y-0.5 border-l border-border/30 ml-5">
-            {LOOKUPS_SUBITEMS.map((sub) => {
-              const isActive = isLookupsActive && currentKind === sub.kind
-              return (
-                <Link
-                  key={sub.kind}
-                  href={`/admin/lookups?kind=${sub.kind}`}
-                  onClick={onNavigate}
-                  className={`flex items-center px-3 py-1.5 rounded-lg text-xs transition-colors ${
-                    isActive
-                      ? "text-primary font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
-                  }`}
-                >
-                  {tLookups(sub.key)}
                 </Link>
               )
             })}

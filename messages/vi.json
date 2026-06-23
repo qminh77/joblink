@@ -516,8 +516,7 @@
       "notifications": "Thông báo",
       "language": "Ngôn ngữ",
       "company": "Hồ sơ công ty",
-      "blocked": "Đã chặn",
-      "appeals": "Khiếu nại"
+      "blocked": "Đã chặn"
     },
     "account": {
       "title": "Thông tin tài khoản",
@@ -624,29 +623,6 @@
       "loading": "Đang tải...",
       "empty": "Bạn chưa chặn tài khoản nào.",
       "unblock": "Bỏ chặn"
-    },
-    "appeals": {
-      "title": "Khiếu nại kiểm duyệt",
-      "subtitle": "Xem các hành động kiểm duyệt áp dụng cho tài khoản của bạn và gửi khiếu nại nếu cho rằng có nhầm lẫn.",
-      "loading": "Đang tải...",
-      "empty": "Tài khoản của bạn không có hành động kiểm duyệt nào.",
-      "appealAction": "Gửi khiếu nại",
-      "dialogTitle": "Gửi khiếu nại",
-      "dialogHint": "Mô tả lý do bạn cho rằng quyết định này cần được xem xét lại. Quản trị viên sẽ phản hồi.",
-      "reasonPlaceholder": "Nhập nội dung khiếu nại của bạn...",
-      "cancel": "Hủy",
-      "submit": "Gửi khiếu nại",
-      "submitting": "Đang gửi...",
-      "actions": {
-        "warn": "Cảnh báo",
-        "suspend": "Tạm khóa",
-        "ban": "Cấm vĩnh viễn"
-      },
-      "statuses": {
-        "pending": "Đang chờ xử lý",
-        "accepted": "Đã chấp nhận",
-        "rejected": "Đã từ chối"
-      }
     },
     "twoFactor": {
       "title": "Xác thực hai lớp (2FA)",
@@ -1132,16 +1108,7 @@
       "descriptionMax": "Mô tả tối đa 500 ký tự",
       "invalidData": "Dữ liệu không hợp lệ",
       "createFailed": "Không thể gửi báo cáo",
-      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
-      "invalidAction": "Hành động kiểm duyệt không hợp lệ",
-      "appealReasonRequired": "Vui lòng nhập lý do khiếu nại",
-      "appealReasonMax": "Lý do tối đa 500 ký tự",
-      "actionNotFound": "Không tìm thấy hành động kiểm duyệt phù hợp",
-      "alreadyAppealed": "Bạn đã gửi khiếu nại cho hành động này rồi",
-      "appealFailed": "Không thể gửi khiếu nại, vui lòng thử lại"
-    },
-    "appeal": {
-      "submitted": "Đã gửi khiếu nại"
+      "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
     }
   },
   "messages": {
@@ -1199,13 +1166,9 @@
       "jobs": "Tin tuyển dụng",
       "posts": "Bài viết",
       "reports": "Báo cáo",
-      "appeals": "Khiếu nại",
       "auditLog": "Nhật ký",
-      "contactSubmissions": "Yêu cầu liên hệ",
-      "brand": "Thương hiệu",
       "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
-      "lookups": "Danh mục",
       "roles": "Quản lý quyền",
       "groups": {
         "overview": "Tổng quan",
@@ -1288,32 +1251,6 @@
         "active": "Hoạt động",
         "hidden": "Đã ẩn",
         "deleted": "Đã xoá"
-      }
-    },
-    "appeals": {
-      "title": "Khiếu nại của người dùng",
-      "subtitle": "Xét lại các quyết định kiểm duyệt",
-      "filterStatus": "Trạng thái",
-      "allStatuses": "Tất cả",
-      "statuses": {
-        "pending": "Chờ xử lý",
-        "accepted": "Đã chấp nhận",
-        "rejected": "Đã từ chối"
-      },
-      "appellant": "Người khiếu nại",
-      "reason": "Lý do",
-      "reviewed": "Xét lúc",
-      "accept": "Chấp nhận",
-      "reject": "Từ chối",
-      "note": "Ghi chú",
-      "confirmTitle": "Phản hồi khiếu nại",
-      "submit": "Xác nhận",
-      "submitting": "Đang xử lý...",
-      "empty": "Không có khiếu nại nào",
-      "total": "{count} khiếu nại",
-      "success": {
-        "accepted": "Đã chấp nhận khiếu nại",
-        "rejected": "Đã từ chối khiếu nại"
       }
     },
     "errors": {
@@ -1621,109 +1558,6 @@
         "require_email_verification": "Bắt buộc xác minh email khi đăng ký",
         "passkey_enabled": "Cho phép đăng nhập bằng Passkey"
       }
-    },
-    "brand": {
-      "title": "Thương hiệu",
-      "subtitle": "Quản lý nhận diện thương hiệu toàn hệ thống",
-      "saveAll": "Lưu thay đổi",
-      "saving": "Đang lưu...",
-      "saved": "Đã lưu thương hiệu",
-      "saveError": "Lưu thất bại",
-      "nameRequired": "Tên hệ thống không được để trống",
-      "identity": {
-        "title": "Nhận diện thương hiệu",
-        "description": "Thông tin cơ bản về thương hiệu"
-      },
-      "logo": {
-        "title": "Logo",
-        "description": "Logo hiển thị trên toàn hệ thống",
-        "hint": "PNG, JPEG, WebP hoặc SVG. Tối đa 2MB."
-      },
-      "favicon": {
-        "title": "Favicon",
-        "description": "Biểu tượng hiển thị trên tab trình duyệt",
-        "hint": "PNG, ICO, WebP hoặc SVG. Tối đa 1MB."
-      },
-      "fields": {
-        "siteName": "Tên hệ thống",
-        "siteDescription": "Mô tả ngắn",
-        "descriptionPlaceholder": "Mô tả ngắn về hệ thống...",
-        "logo": "Logo",
-        "favicon": "Favicon"
-      },
-      "preview": {
-        "title": "Xem trước",
-        "subtitle": "Hình ảnh thương hiệu trên các thiết bị",
-        "desktop": "Máy tính",
-        "mobile": "Di động"
-      },
-      "actions": {
-        "title": "Thao tác",
-        "description": "Lưu thay đổi để áp dụng"
-      },
-      "fileTooLarge": "File quá lớn. Tối đa {max}MB",
-      "invalidType": "Định dạng file không hỗ trợ",
-      "dropHint": "Nhấp hoặc kéo thả file vào đây",
-      "maxSize": "Tối đa {max}MB"
-    },
-    "lookups": {
-      "title": "Danh mục hệ thống",
-      "subtitle": "Quản lý dữ liệu dùng chung",
-      "tabs": {
-        "provinces": "Tỉnh/Thành",
-        "wards": "Phường/Xã/Đặc khu",
-        "job_types": "Loại công việc",
-        "work_modes": "Hình thức",
-        "job_positions": "Vị trí",
-        "report_types": "Loại báo cáo",
-        "skills": "Kỹ năng"
-      },
-      "code": "Mã",
-      "name": "Tên",
-      "nameEn": "Tên (EN)",
-      "parent": "Cha",
-      "province": "Tỉnh/Thành",
-      "sortOrder": "Thứ tự",
-      "isActive": "Hoạt động",
-      "isSystem": "Hệ thống",
-      "add": "Thêm mới",
-      "edit": "Chỉnh sửa",
-      "delete": "Xoá",
-      "confirmDelete": "Bạn có chắc muốn xoá mục này?",
-      "save": "Lưu",
-      "saving": "Đang lưu...",
-      "cancel": "Huỷ",
-      "noneParent": "(Không có cha)",
-      "empty": "Chưa có mục nào",
-      "success": {
-        "created": "Đã tạo mới",
-        "updated": "Đã cập nhật",
-        "deleted": "Đã xoá"
-      },
-      "errors": {
-        "code_required": "Trường mã không được để trống",
-        "province_required": "Vui lòng chọn tỉnh/thành"
-      }
-    },
-    "contactSubmissions": {
-      "title": "Yêu cầu liên hệ",
-      "subtitle": "Quản lý các yêu cầu hỗ trợ từ người dùng",
-      "empty": "Chưa có yêu cầu nào",
-      "reply": "Trả lời",
-      "replyTitle": "Trả lời yêu cầu",
-      "replyPlaceholder": "Nhập nội dung trả lời...",
-      "replyLabel": "Phản hồi:",
-      "sendReply": "Gửi trả lời",
-      "sending": "Đang gửi...",
-      "cancel": "Huỷ",
-      "replied": "Đã gửi trả lời",
-      "closed": "Đã đóng yêu cầu",
-      "status": {
-        "pending": "Chờ xử lý",
-        "read": "Đã xem",
-        "replied": "Đã trả lời",
-        "closed": "Đã đóng"
-      }
     }
   },
   "cvs": {
@@ -1829,30 +1663,5 @@
     "noResultsTab": "Không tìm thấy {tab} nào",
     "typeToSearch": "Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm",
     "viewAllResults": "Xem tất cả kết quả"
-  },
-  "contact": {
-    "page": {
-      "title": "Liên hệ hỗ trợ",
-      "subtitle": "Gửi câu hỏi, góp ý hoặc yêu cầu hỗ trợ cho chúng tôi."
-    },
-    "info": {
-      "email": "Email",
-      "phone": "Điện thoại",
-      "address": "Địa chỉ"
-    },
-    "form": {
-      "name": "Họ và tên",
-      "namePlaceholder": "Nhập họ tên của bạn",
-      "email": "Email",
-      "emailPlaceholder": "your@email.com",
-      "subject": "Tiêu đề",
-      "subjectPlaceholder": "Tiêu đề yêu cầu hỗ trợ",
-      "message": "Nội dung",
-      "messagePlaceholder": "Mô tả chi tiết vấn đề của bạn...",
-      "submit": "Gửi yêu cầu",
-      "success": "Đã gửi yêu cầu thành công!",
-      "thankYou": "Cảm ơn bạn!",
-      "thankYouDesc": "Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi trong thời gian sớm nhất."
-    }
   }
 }
