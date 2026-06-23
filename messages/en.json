@@ -905,15 +905,6 @@
       "appliedOn": "Applied on {date}",
       "durationMinutes": "{count} min",
       "withdraw": "Withdraw"
-    },
-    "alerts": {
-      "title": "Job alerts",
-      "create": "Create alert from filters",
-      "created": "Job alert created",
-      "deleted": "Alert deleted",
-      "delete": "Delete",
-      "empty": "No alerts yet",
-      "allJobs": "All jobs"
     }
   },
   "network": {

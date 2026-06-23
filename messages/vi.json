@@ -905,15 +905,6 @@
       "appliedOn": "Đã nộp {date}",
       "durationMinutes": "{count} phút",
       "withdraw": "Rút đơn"
-    },
-    "alerts": {
-      "title": "Cảnh báo việc làm",
-      "create": "Tạo cảnh báo từ bộ lọc",
-      "created": "Đã tạo cảnh báo việc làm",
-      "deleted": "Đã xóa cảnh báo",
-      "delete": "Xóa",
-      "empty": "Chưa có cảnh báo nào",
-      "allJobs": "Tất cả việc làm"
     }
   },
   "network": {

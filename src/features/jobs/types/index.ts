@@ -146,22 +146,6 @@ export type WithdrawResult =
   | { ok: true; status: string }
   | { ok: false; error: string }
 
-export type JobAlertFilters = {
-  search?: string | null
-  provinceId?: number | null
-  jobTypeIds?: number[] | null
-  workModeIds?: number[] | null
-  salaryMin?: number | null
-}
-
-export type JobAlert = {
-  id: number
-  name: string
-  filters: JobAlertFilters
-  alertEnabled: boolean
-  createdAt: string
-}
-
 export type ApplicationStatusValue =
   | "submitted"
   | "withdrawn"

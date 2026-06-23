@@ -391,17 +391,6 @@ export type SavedJobRow = {
   created_at: string
 }
 
-export type JobAlertRow = {
-  id: number
-  user_id: number
-  name: string | null
-  filters: Json
-  alert_enabled: boolean
-  last_notified_at: string | null
-  created_at: string
-  updated_at: string
-}
-
 export type AuditLogRow = {
   id: number
   actor_id: number | null
@@ -739,17 +728,6 @@ export type Database = {
       job_positions: TableDef<JobPositionRow>
       jobs: TableDef<JobRow>
       saved_jobs: TableDef<SavedJobRow, Omit<SavedJobRow, "created_at">>
-      job_alerts: TableDef<
-        JobAlertRow,
-        Omit<
-          JobAlertRow,
-          | "id"
-          | "created_at"
-          | "updated_at"
-          | "alert_enabled"
-          | "last_notified_at"
-        > & { alert_enabled?: boolean; last_notified_at?: string | null }
-      >
       job_applications: TableDef<JobApplicationRow>
       audit_logs: TableDef<
         AuditLogRow,

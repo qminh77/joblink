@@ -14,13 +14,11 @@ import type { ProvinceRow } from "@/types/database"
 
 import { useJobsList } from "../hooks"
 import type {
-  JobAlertFilters,
   JobTypeRef,
   JobsListPage,
   WorkModeRef,
 } from "../types"
 
-import { JobAlertsPanel } from "./job-alerts-panel"
 import { JobCard } from "./job-card"
 
 type Props = {
@@ -39,7 +37,6 @@ export function JobsListClient({
   initialPage,
 }: Props) {
   const t = useTranslations("jobs.public")
-  const tAlerts = useTranslations("jobs.alerts")
 
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -90,32 +87,7 @@ export function JobsListClient({
     [search, provinceId, typeIds, modeIds],
   )
 
-  // UC-57: bộ lọc hiện tại + tên gợi ý để lưu thành cảnh báo việc làm.
-  const alertFilters = useMemo<JobAlertFilters>(
-    () => ({
-      search: debouncedSearch.trim() || null,
-      provinceId,
-      jobTypeIds: typeIds,
-      workModeIds: modeIds,
-    }),
-    [debouncedSearch, provinceId, typeIds, modeIds],
-  )
-
-  const alertName = useMemo(() => {
-    const parts: string[] = []
-    if (debouncedSearch.trim()) parts.push(debouncedSearch.trim())
-    const province = provinces.find((p) => p.id === provinceId)
-    if (province) parts.push(province.name)
-    for (const id of typeIds) {
-      const jt = jobTypes.find((x) => x.id === id)
-      if (jt) parts.push(jt.name)
-    }
-    for (const id of modeIds) {
-      const wm = workModes.find((x) => x.id === id)
-      if (wm) parts.push(wm.name)
-    }
-    return parts.join(" · ").slice(0, 160) || tAlerts("allJobs")
-  }, [debouncedSearch, provinceId, typeIds, modeIds, provinces, jobTypes, workModes, tAlerts])
+  // (alertFilters removed — job alerts feature removed)
 
   return (
     <div className="space-y-6">
@@ -230,11 +202,6 @@ export function JobsListClient({
                 ))}
               </div>
             </div>
-
-            <JobAlertsPanel
-              currentFilters={alertFilters}
-              currentName={alertName}
-            />
           </Card>
         </aside>
 

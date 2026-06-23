@@ -696,17 +696,6 @@ CREATE TABLE IF NOT EXISTS saved_jobs (
     CONSTRAINT fk_saved_job_job  FOREIGN KEY (job_id)  REFERENCES jobs(id)  ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS job_alerts (
-    id               BIGSERIAL PRIMARY KEY,
-    user_id          BIGINT NOT NULL,
-    name             VARCHAR(160) NULL,
-    filters          JSONB NOT NULL,
-    alert_enabled    BOOLEAN NOT NULL DEFAULT TRUE,
-    last_notified_at TIMESTAMPTZ NULL,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_job_alert_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
 
 CREATE TABLE IF NOT EXISTS job_view_logs (
     id             BIGSERIAL PRIMARY KEY,
@@ -1084,7 +1073,6 @@ CREATE INDEX IF NOT EXISTS idx_job_apps_applicant ON job_applications(applicant_
 CREATE INDEX IF NOT EXISTS idx_job_apps_status    ON job_applications(status);
 CREATE INDEX IF NOT EXISTS idx_job_apps_job_status_applied ON job_applications(job_id, status, applied_at DESC);
 CREATE INDEX IF NOT EXISTS idx_saved_jobs_user    ON saved_jobs(user_id);
-CREATE INDEX IF NOT EXISTS idx_job_alerts_user    ON job_alerts(user_id, alert_enabled);
 CREATE INDEX IF NOT EXISTS idx_job_view_logs_job  ON job_view_logs(job_id, viewed_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_conv_participants_user ON conversation_participants(user_id);
@@ -1855,7 +1843,7 @@ DECLARE
     'posts','poll_options','poll_votes','post_reactions','post_comments',
     'post_shares','connections','follows','jobs','job_skills',
     'job_applications',
-    'saved_jobs','job_alerts','job_view_logs','conversations',
+    'saved_jobs','job_view_logs','conversations',
     'conversation_participants','messages','user_blocks','notifications',
     'notification_preferences','report_types','reports','moderation_actions',
     'appeals','audit_logs','system_settings','network_suggestions','user_feeds'
@@ -1899,7 +1887,6 @@ ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.job_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_view_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
@@ -2226,18 +2213,6 @@ CREATE POLICY saved_jobs_select_own ON public.saved_jobs
 CREATE POLICY saved_jobs_insert_own ON public.saved_jobs
   FOR INSERT WITH CHECK (user_id = public.auth_user_id() AND public.is_member());
 CREATE POLICY saved_jobs_delete_own ON public.saved_jobs
-  FOR DELETE USING (user_id = public.auth_user_id() AND public.is_member());
-
-CREATE POLICY job_alerts_admin_all ON public.job_alerts
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-CREATE POLICY job_alerts_select_own ON public.job_alerts
-  FOR SELECT USING (user_id = public.auth_user_id());
-CREATE POLICY job_alerts_insert_own ON public.job_alerts
-  FOR INSERT WITH CHECK (user_id = public.auth_user_id() AND public.is_member());
-CREATE POLICY job_alerts_update_own ON public.job_alerts
-  FOR UPDATE USING (user_id = public.auth_user_id() AND public.is_member())
-  WITH CHECK (user_id = public.auth_user_id() AND public.is_member());
-CREATE POLICY job_alerts_delete_own ON public.job_alerts
   FOR DELETE USING (user_id = public.auth_user_id() AND public.is_member());
 
 CREATE POLICY job_view_logs_admin_all ON public.job_view_logs

@@ -27,5 +27,3 @@ export const JOBS_LIST_KEY = (params: JobsQueryParams) =>
 
 export const SAVED_JOBS_KEY = (offset: number) =>
   ["jobs", "saved", offset] as const
-
-export const JOB_ALERTS_KEY = ["jobs", "alerts"] as const

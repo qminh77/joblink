@@ -1,39 +1,54 @@
--- Migration 083: Xoá hoàn toàn tính năng pipeline tuyển dụng (hoàn chỉnh)
+-- Migration 083: Xoá pipeline tuyển dụng + job_alerts (hoàn chỉnh)
 --
 -- Migration 073 đã loại bỏ pipeline nhưng migration 082 (RBAC simplify)
 -- đã vô tình tạo lại các function pipeline với code cũ. Migration này
--- dọn dẹp triệt để: xoá bảng, function, policies, index, và cập nhật
--- các function còn lại dùng status mới (submitted/withdrawn/closed).
+-- dọn dẹp triệt để: xoá bảng, function, policies, index, job_alerts,
+-- và cập nhật các function còn lại dùng status mới (submitted/withdrawn/closed).
 
 BEGIN;
 
 -- =============================================================================
--- 1. Xoá RLS policies (nếu còn sót)
+-- 1. Xoá RLS policies + index + bảng pipeline (nếu còn tồn tại)
+--    Dùng DO block để tránh lỗi khi bảng đã bị xoá trước đó.
 -- =============================================================================
-DROP POLICY IF EXISTS application_status_history_admin_all          ON public.application_status_history;
-DROP POLICY IF EXISTS application_status_history_select_visible     ON public.application_status_history;
-DROP POLICY IF EXISTS application_status_history_insert_company     ON public.application_status_history;
-DROP POLICY IF EXISTS interview_schedules_admin_all                 ON public.interview_schedules;
-DROP POLICY IF EXISTS interview_schedules_select_visible            ON public.interview_schedules;
-DROP POLICY IF EXISTS interview_schedules_insert_company            ON public.interview_schedules;
-DROP POLICY IF EXISTS interview_schedules_update_company            ON public.interview_schedules;
-DROP POLICY IF EXISTS interview_schedules_update_applicant_response ON public.interview_schedules;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'application_status_history' AND relnamespace = 'public'::regnamespace) THEN
+    DROP POLICY IF EXISTS application_status_history_admin_all          ON public.application_status_history;
+    DROP POLICY IF EXISTS application_status_history_select_visible     ON public.application_status_history;
+    DROP POLICY IF EXISTS application_status_history_insert_company     ON public.application_status_history;
+    DROP INDEX IF EXISTS idx_app_history_app;
+    DROP TABLE IF EXISTS public.application_status_history CASCADE;
+  END IF;
+END $$;
 
--- =============================================================================
--- 2. Xoá index (nếu còn sót)
--- =============================================================================
-DROP INDEX IF EXISTS idx_app_history_app;
-DROP INDEX IF EXISTS idx_interview_schedules_application;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'interview_schedules' AND relnamespace = 'public'::regnamespace) THEN
+    DROP POLICY IF EXISTS interview_schedules_admin_all                 ON public.interview_schedules;
+    DROP POLICY IF EXISTS interview_schedules_select_visible            ON public.interview_schedules;
+    DROP POLICY IF EXISTS interview_schedules_insert_company            ON public.interview_schedules;
+    DROP POLICY IF EXISTS interview_schedules_update_company            ON public.interview_schedules;
+    DROP POLICY IF EXISTS interview_schedules_update_applicant_response ON public.interview_schedules;
+    DROP INDEX IF EXISTS idx_interview_schedules_application;
+    DROP TABLE IF EXISTS public.interview_schedules CASCADE;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'job_alerts' AND relnamespace = 'public'::regnamespace) THEN
+    DROP POLICY IF EXISTS job_alerts_admin_all     ON public.job_alerts;
+    DROP POLICY IF EXISTS job_alerts_select_own    ON public.job_alerts;
+    DROP POLICY IF EXISTS job_alerts_insert_own    ON public.job_alerts;
+    DROP POLICY IF EXISTS job_alerts_update_own    ON public.job_alerts;
+    DROP POLICY IF EXISTS job_alerts_delete_own    ON public.job_alerts;
+    DROP INDEX IF EXISTS idx_job_alerts_user;
+    DROP TABLE IF EXISTS public.job_alerts CASCADE;
+  END IF;
+END $$;
+
 DROP INDEX IF EXISTS idx_job_apps_job_status_applied;
 
 -- =============================================================================
--- 3. Xoá bảng pipeline (nếu migration 082 tạo lại)
--- =============================================================================
-DROP TABLE IF EXISTS public.application_status_history CASCADE;
-DROP TABLE IF EXISTS public.interview_schedules CASCADE;
-
--- =============================================================================
--- 4. Xoá function pipeline (nếu migration 082 tạo lại)
+-- 2. Xoá function pipeline (nếu migration 082 tạo lại)
 -- =============================================================================
 DROP FUNCTION IF EXISTS public.update_application_status(BIGINT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.schedule_interview(BIGINT, TIMESTAMPTZ, INT, TEXT, TEXT);
@@ -44,14 +59,14 @@ DROP FUNCTION IF EXISTS public.get_company_jobs(TEXT, TEXT, INT, INT);
 DROP FUNCTION IF EXISTS public.get_company_applicants(BIGINT, TEXT, TEXT, INT, INT);
 
 -- =============================================================================
--- 5. Cập nhật dữ liệu job_applications: chuyển status cũ -> submitted
+-- 3. Cập nhật dữ liệu job_applications: chuyển status cũ -> submitted
 -- =============================================================================
 UPDATE public.job_applications
    SET status = 'submitted'
  WHERE status IN ('applied', 'reviewed', 'interview', 'offered', 'hired', 'rejected');
 
 -- =============================================================================
--- 6. Cập nhật constraint job_applications
+-- 4. Cập nhật constraint job_applications
 -- =============================================================================
 ALTER TABLE public.job_applications
   DROP CONSTRAINT IF EXISTS chk_app_status;
@@ -63,7 +78,7 @@ ALTER TABLE public.job_applications
   ALTER COLUMN status SET DEFAULT 'submitted';
 
 -- =============================================================================
--- 7. apply_to_job: dùng 'submitted', không ghi application_status_history
+-- 5. apply_to_job: dùng 'submitted', không ghi application_status_history
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.apply_to_job(
     p_job_id BIGINT, p_cover_letter TEXT, p_resume_url TEXT
@@ -95,7 +110,7 @@ END;
 $$;
 
 -- =============================================================================
--- 8. withdraw_application: dùng status mới
+-- 6. withdraw_application: dùng status mới
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.withdraw_application(p_application_id BIGINT)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public VOLATILE AS $$
@@ -116,7 +131,7 @@ END;
 $$;
 
 -- =============================================================================
--- 9. get_my_applications: không có interview/history subqueries
+-- 7. get_my_applications: không có interview/history subqueries
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.get_my_applications(p_limit INT DEFAULT 30, p_offset INT DEFAULT 0)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public STABLE AS $$
@@ -149,7 +164,7 @@ END;
 $$;
 
 -- =============================================================================
--- 10. Cập nhật GRANT cho các function còn dùng
+-- 8. Cập nhật GRANT cho các function còn dùng
 -- =============================================================================
 GRANT EXECUTE ON FUNCTION public.apply_to_job(BIGINT, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.withdraw_application(BIGINT) TO authenticated;
