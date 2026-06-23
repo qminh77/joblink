@@ -42,13 +42,9 @@ export const JOB_STATUSES = [
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
 export const APPLICATION_STATUSES = [
-  "applied",
-  "reviewed",
-  "interview",
-  "offered",
-  "hired",
-  "rejected",
+  "submitted",
   "withdrawn",
+  "closed",
 ] as const
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number]
 

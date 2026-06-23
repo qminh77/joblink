@@ -20,7 +20,6 @@ import {
   applyToJob,
   createJob,
   logJobView,
-  respondInterview,
   toggleSavedJob,
   updateJob,
   withdrawApplication,
@@ -29,7 +28,6 @@ import type {
   ApplyResult,
   CreateJobInput,
   CreateJobResult,
-  RespondInterviewResult,
   ToggleSavedResult,
   UpdateJobInput,
   UpdateJobResult,
@@ -67,7 +65,6 @@ export async function createJobAction(
       newData: { title: parsed.data.title },
     })
     revalidatePath("/jobs")
-    revalidatePath("/company/dashboard")
   }
   return result
 }
@@ -98,7 +95,6 @@ export async function updateJobAction(
     })
     revalidatePath("/jobs")
     revalidatePath(`/jobs/${parsed.data.jobId}`)
-    revalidatePath("/company/dashboard")
   }
   return result
 }
@@ -182,26 +178,6 @@ export async function toggleSavedJobAction(
       entityId: parsed.data,
     })
     revalidatePath("/saved-jobs")
-  }
-  return result
-}
-
-export async function respondInterviewAction(input: {
-  interviewId: number
-  accept: boolean
-}): Promise<RespondInterviewResult> {
-  const current = await requirePermission("jobs.apply")
-  const supabase = await createClient()
-  const result = await respondInterview(supabase, current, input)
-
-  if (result.ok) {
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: input.accept ? "job.interview_accept" : "job.interview_reject",
-      entityType: "interview_schedules",
-      entityId: input.interviewId,
-    })
-    revalidatePath("/jobs/applications")
   }
   return result
 }

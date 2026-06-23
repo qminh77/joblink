@@ -3,8 +3,6 @@ import {
   BarChart2,
   Bell,
   Briefcase,
-  CalendarCheck,
-  CalendarClock,
   MessageCircle,
   MessageSquare,
   Send,
@@ -27,11 +25,6 @@ export type NotificationVisual = {
   actorUserId: number | null
 }
 
-/**
- * Trả về tham số dùng cho ICU message của `notifications.types.{type}`. Một số
- * type cần `{jobTitle}` / `{status}` để tạo câu hoàn chỉnh. Trả empty object
- * cho type không cần param — next-intl `t()` chấp nhận tham số dư.
- */
 export function getNotificationLabelParams(
   item: NotificationItem,
   translateAppStatus: (status: string) => string,
@@ -41,8 +34,6 @@ export function getNotificationLabelParams(
   switch (item.type) {
     case "job_application_received":
     case "application_withdrawn":
-    case "interview_scheduled":
-    case "interview_response":
       return payload.type === item.type ? { jobTitle: payload.jobTitle } : {}
     case "application_status_changed":
       if (payload.type !== item.type) return {}
@@ -111,14 +102,6 @@ const VISUALS: Record<
     icon: BarChart2,
     iconClassName: "text-orange-500 bg-orange-500/10",
   },
-  interview_scheduled: {
-    icon: CalendarClock,
-    iconClassName: "text-purple-500 bg-purple-500/10",
-  },
-  interview_response: {
-    icon: CalendarCheck,
-    iconClassName: "text-emerald-500 bg-emerald-500/10",
-  },
 }
 
 
@@ -179,7 +162,6 @@ export function getNotificationVisual(
       }
     case "company_followed":
     case "user_followed":
-      // Recipient = target user/company owner; click -> xem profile follower.
       return {
         ...base,
         href:
@@ -192,17 +174,6 @@ export function getNotificationVisual(
       }
     case "job_application_received":
     case "application_withdrawn":
-      // Recruiter → dashboard tab applicants. Pipeline link kèm jobId để filter
-      // sau (chưa hỗ trợ, fallback dashboard).
-      return {
-        ...base,
-        href: "/company/dashboard",
-        actorName: payload?.type === item.type ? payload.displayName : null,
-        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
-        actorUserId: payload?.type === item.type ? payload.userId : null,
-      }
-    case "application_status_changed":
-      // Applicant → trang job để xem trạng thái mới (badge hiển thị).
       return {
         ...base,
         href:
@@ -211,20 +182,11 @@ export function getNotificationVisual(
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,
       }
-    case "interview_scheduled":
-      // Ứng viên → trang đơn ứng tuyển để xem/ xác nhận lịch.
+    case "application_status_changed":
       return {
         ...base,
-        href: "/jobs/applications",
-        actorName: payload?.type === item.type ? payload.displayName : null,
-        actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
-        actorUserId: payload?.type === item.type ? payload.userId : null,
-      }
-    case "interview_response":
-      // Recruiter → dashboard để xem phản hồi lịch của ứng viên.
-      return {
-        ...base,
-        href: "/company/dashboard",
+        href:
+          payload?.type === item.type ? `/jobs/${payload.jobId}` : "/jobs",
         actorName: payload?.type === item.type ? payload.displayName : null,
         actorAvatarUrl: payload?.type === item.type ? payload.avatarUrl : null,
         actorUserId: payload?.type === item.type ? payload.userId : null,

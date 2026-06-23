@@ -170,9 +170,9 @@
     "viewProfileHint": "Hồ sơ của bạn",
     "savedJobsHint": "Danh sách việc làm bạn theo dõi",
     "myApplications": "Đơn ứng tuyển",
-    "myApplicationsHint": "Theo dõi đơn và lịch phỏng vấn",
-    "companyDashboard": "Bảng điều khiển",
-    "companyDashboardHint": "Quản lý tin tuyển dụng và ứng viên",
+    "myApplicationsHint": "Theo dõi đơn ứng tuyển",
+    "manageJobs": "Quản lý tin tuyển dụng",
+    "manageJobsHint": "Đăng và quản lý việc làm",
     "settings": "Cài đặt tài khoản",
     "settingsHint": "Bảo mật, thông báo, quyền riêng tư",
     "help": "Trợ giúp & Hỗ trợ",
@@ -695,7 +695,6 @@
       "openToHire": "Đang tuyển dụng",
       "website": "Website",
       "editProfile": "Chỉnh sửa",
-      "dashboard": "Bảng điều khiển",
       "statJobs": "Việc làm",
       "statFollowers": "Người theo dõi",
       "statEmployees": "Quy mô",
@@ -719,68 +718,6 @@
       "companyInactive": "Công ty đang bị tạm khoá",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
-    "dashboard": {
-      "heading": "Trang quản trị",
-      "subheading": "Quản lý tuyển dụng và ứng viên",
-      "fallbackCompanyName": "Công ty của bạn",
-      "postJob": "Đăng tin tuyển dụng",
-      "statActiveJobs": "Việc làm đang tuyển",
-      "statApplications": "Đơn ứng tuyển",
-      "statApplicationsThisMonth": "+{count} trong tháng này",
-      "statViews": "Lượt xem job",
-      "statViewsComingSoon": "Sắp có",
-      "statHireRate": "Tỉ lệ tuyển dụng",
-      "tabOverview": "Tổng quan",
-      "tabJobs": "Việc làm",
-      "tabApplicants": "Ứng viên",
-      "tabPipeline": "Pipeline",
-      "overviewJobsHeading": "Việc làm gần đây",
-      "overviewApplicantsHeading": "Ứng viên mới nhất",
-      "emptyJobs": "Chưa có việc làm nào",
-      "emptyApplicants": "Chưa có ứng viên",
-      "searchJobsPlaceholder": "Tìm việc làm...",
-      "searchApplicantsPlaceholder": "Tìm theo tên ứng viên hoặc job...",
-      "jobMeta": "{applicants} ứng viên • {views} lượt xem • {time}",
-      "appliedAt": "Nộp {time}",
-      "edit": "Sửa",
-      "publish": "Đăng",
-      "close": "Đóng tin",
-      "changeStatus": "Đổi",
-      "contact": "Liên hệ",
-      "viewDetail": "Chi tiết",
-      "scheduleInterview": "Lịch PV",
-      "statusUpdated": "Đã cập nhật trạng thái",
-      "jobStatusUpdated": "Đã cập nhật trạng thái việc làm",
-      "interviewScheduled": "Đã gửi lịch phỏng vấn cho ứng viên",
-      "moveTo": "Chuyển sang {stage}",
-      "pipelineEmpty": "Trống",
-      "jobsFilter": {
-        "all": "Tất cả",
-        "active": "Đang tuyển",
-        "draft": "Bản nháp",
-        "closed": "Đã đóng",
-        "expired": "Hết hạn"
-      },
-      "appsFilter": {
-        "all": "Tất cả"
-      },
-      "jobStatus": {
-        "draft": "Bản nháp",
-        "active": "Đang tuyển",
-        "closed": "Đã đóng",
-        "expired": "Hết hạn",
-        "removed": "Đã xoá"
-      },
-      "appStatus": {
-        "applied": "Đã nộp",
-        "reviewed": "Đã xem",
-        "interview": "Phỏng vấn",
-        "offered": "Đã mời",
-        "hired": "Đã tuyển",
-        "rejected": "Từ chối",
-        "withdrawn": "Đã rút"
-      }
-    },
     "dashboardErrors": {
       "unauthorized": "Vui lòng đăng nhập lại",
       "invalidStatus": "Trạng thái không hợp lệ",
@@ -801,19 +738,6 @@
       "companyNotFound": "Không tìm thấy công ty",
       "notCompany": "Tài khoản không phải công ty",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
-    },
-    "interview": {
-      "title": "Lên lịch phỏng vấn",
-      "close": "Đóng",
-      "scheduledAtLabel": "Thời gian",
-      "durationLabel": "Thời lượng",
-      "durationMinutes": "{count} phút",
-      "locationLabel": "Địa điểm / Link",
-      "locationPlaceholder": "Văn phòng hoặc link Google Meet/Zoom...",
-      "noteLabel": "Ghi chú",
-      "notePlaceholder": "Lưu ý cho ứng viên (vòng phỏng vấn, người phỏng vấn...)",
-      "cancel": "Huỷ",
-      "submit": "Gửi lịch"
     },
     "applicantDetail": {
       "title": "Hồ sơ ứng viên",
@@ -968,7 +892,6 @@
       "requirementsTooLong": "Yêu cầu quá dài",
       "jobTypeRequired": "Vui lòng chọn loại hình",
       "workModeRequired": "Vui lòng chọn hình thức",
-      "interviewNotFound": "Không tìm thấy lịch phỏng vấn",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại",
       "alertLimit": "Bạn đã đạt giới hạn số cảnh báo (tối đa 20)",
       "invalidAlert": "Cảnh báo không hợp lệ",
@@ -980,16 +903,7 @@
       "empty": "Bạn chưa nộp đơn ứng tuyển nào.",
       "browseJobs": "Tìm việc làm",
       "appliedOn": "Đã nộp {date}",
-      "interviewHeading": "Lịch phỏng vấn",
       "durationMinutes": "{count} phút",
-      "confirmInterview": "Xác nhận",
-      "declineInterview": "Từ chối",
-      "interviewConfirmedToast": "Đã xác nhận lịch phỏng vấn",
-      "interviewDeclinedToast": "Đã từ chối lịch phỏng vấn",
-      "interviewStatus": {
-        "confirmed": "Bạn đã xác nhận",
-        "declined": "Bạn đã từ chối"
-      },
       "withdraw": "Rút đơn"
     },
     "alerts": {
@@ -1193,17 +1107,12 @@
       "application_status_changed": "đã cập nhật đơn của bạn tại {jobTitle} thành {status}",
       "application_withdrawn": "đã rút đơn ứng tuyển vào {jobTitle}",
       "poll_vote": "đã bình chọn trong cuộc thăm dò của bạn",
-      "interview_scheduled": "đã gửi lịch phỏng vấn cho vị trí {jobTitle}",
-      "interview_response": "đã phản hồi lịch phỏng vấn cho vị trí {jobTitle}",
       "unknown": "có hoạt động mới"
     },
     "appStatus": {
-      "applied": "Đã nộp",
-      "reviewed": "Đã xem",
-      "interview": "Phỏng vấn",
-      "offered": "Đã mời",
-      "hired": "Đã tuyển",
-      "rejected": "Từ chối"
+      "submitted": "Đã nộp",
+      "withdrawn": "Đã rút",
+      "closed": "Đã đóng"
     },
     "filters": {
       "all": "Tất cả",
@@ -1692,8 +1601,7 @@
         "smtp": "Email SMTP",
         "recaptcha": "reCAPTCHA",
         "security": "Bảo mật",
-        "contact": "Liên hệ",
-        "maintenance": "Bảo trì"
+        "contact": "Liên hệ"
       },
       "fields": {
         "default_locale": "Ngôn ngữ mặc định",
@@ -1718,8 +1626,6 @@
         "contact_phone": "Số điện thoại",
         "contact_content": "Nội dung liên hệ",
         "contact_map_url": "Liên kết bản đồ",
-        "maintenance_mode": "Bật chế độ bảo trì",
-        "maintenance_message": "Thông báo bảo trì",
         "google_auth_enabled": "Cho phép đăng nhập Google",
         "require_email_verification": "Bắt buộc xác minh email khi đăng ký",
         "passkey_enabled": "Cho phép đăng nhập bằng Passkey"
@@ -1919,12 +1825,6 @@
       "openInTab": "Mở tab mới",
       "mobileHint": "Trình duyệt di động không xem được PDF tại đây. Nhấn nút bên dưới để mở trong tab mới."
     }
-  },
-  "maintenance": {
-    "title": "Đang bảo trì",
-    "defaultMessage": "Hệ thống đang được bảo trì. Vui lòng quay lại sau ít phút.",
-    "logout": "Đăng xuất",
-    "loggingOut": "Đang đăng xuất..."
   },
   "search": {
     "pageTitle": "Tìm kiếm",

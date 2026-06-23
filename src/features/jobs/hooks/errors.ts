@@ -29,7 +29,6 @@ const KNOWN_ERRORS = new Set([
   "requirementsTooLong",
   "jobTypeRequired",
   "workModeRequired",
-  "interviewNotFound",
   "unknown",
 ])
 

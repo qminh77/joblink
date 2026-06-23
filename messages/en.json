@@ -170,9 +170,9 @@
     "viewProfileHint": "Your professional profile",
     "savedJobsHint": "Jobs you've bookmarked",
     "myApplications": "My applications",
-    "myApplicationsHint": "Track applications and interviews",
-    "companyDashboard": "Dashboard",
-    "companyDashboardHint": "Manage job posts and applicants",
+    "myApplicationsHint": "Track your applications",
+    "manageJobs": "Manage jobs",
+    "manageJobsHint": "Post and manage job listings",
     "settings": "Account settings",
     "settingsHint": "Security, notifications, privacy",
     "help": "Help & Support",
@@ -695,7 +695,6 @@
       "openToHire": "Open to hire",
       "website": "Website",
       "editProfile": "Edit",
-      "dashboard": "Dashboard",
       "statJobs": "Jobs",
       "statFollowers": "Followers",
       "statEmployees": "Size",
@@ -719,68 +718,6 @@
       "companyInactive": "Company is currently suspended",
       "unknown": "Something went wrong, please try again"
     },
-    "dashboard": {
-      "heading": "Company Dashboard",
-      "subheading": "Manage hiring and applicants",
-      "fallbackCompanyName": "Your company",
-      "postJob": "Post a job",
-      "statActiveJobs": "Active jobs",
-      "statApplications": "Applications",
-      "statApplicationsThisMonth": "+{count} this month",
-      "statViews": "Job views",
-      "statViewsComingSoon": "Coming soon",
-      "statHireRate": "Hire rate",
-      "tabOverview": "Overview",
-      "tabJobs": "Jobs",
-      "tabApplicants": "Applicants",
-      "tabPipeline": "Pipeline",
-      "overviewJobsHeading": "Recent jobs",
-      "overviewApplicantsHeading": "Latest applicants",
-      "emptyJobs": "No jobs yet",
-      "emptyApplicants": "No applicants yet",
-      "searchJobsPlaceholder": "Search jobs...",
-      "searchApplicantsPlaceholder": "Search by name or job title...",
-      "jobMeta": "{applicants} applicants • {views} views • {time}",
-      "appliedAt": "Applied {time}",
-      "edit": "Edit",
-      "publish": "Publish",
-      "close": "Close",
-      "changeStatus": "Change",
-      "contact": "Contact",
-      "viewDetail": "Details",
-      "scheduleInterview": "Interview",
-      "statusUpdated": "Status updated",
-      "jobStatusUpdated": "Job status updated",
-      "interviewScheduled": "Interview invite sent to the applicant",
-      "moveTo": "Move to {stage}",
-      "pipelineEmpty": "Empty",
-      "jobsFilter": {
-        "all": "All",
-        "active": "Active",
-        "draft": "Draft",
-        "closed": "Closed",
-        "expired": "Expired"
-      },
-      "appsFilter": {
-        "all": "All"
-      },
-      "jobStatus": {
-        "draft": "Draft",
-        "active": "Active",
-        "closed": "Closed",
-        "expired": "Expired",
-        "removed": "Removed"
-      },
-      "appStatus": {
-        "applied": "Applied",
-        "reviewed": "Reviewed",
-        "interview": "Interview",
-        "offered": "Offered",
-        "hired": "Hired",
-        "rejected": "Rejected",
-        "withdrawn": "Withdrawn"
-      }
-    },
     "dashboardErrors": {
       "unauthorized": "Please sign in again",
       "invalidStatus": "Invalid status",
@@ -801,19 +738,6 @@
       "companyNotFound": "Company not found",
       "notCompany": "Account is not a company",
       "unknown": "Something went wrong, please try again"
-    },
-    "interview": {
-      "title": "Schedule interview",
-      "close": "Close",
-      "scheduledAtLabel": "Date & time",
-      "durationLabel": "Duration",
-      "durationMinutes": "{count} min",
-      "locationLabel": "Location / Link",
-      "locationPlaceholder": "Office address or Google Meet/Zoom link...",
-      "noteLabel": "Note",
-      "notePlaceholder": "Notes for the candidate (round, interviewer...)",
-      "cancel": "Cancel",
-      "submit": "Send invite"
     },
     "applicantDetail": {
       "title": "Applicant profile",
@@ -968,7 +892,6 @@
       "requirementsTooLong": "Requirements is too long",
       "jobTypeRequired": "Please select a job type",
       "workModeRequired": "Please select a work mode",
-      "interviewNotFound": "Interview not found",
       "unknown": "Something went wrong, please try again",
       "alertLimit": "You've reached the maximum number of alerts (20)",
       "invalidAlert": "Invalid alert",
@@ -980,16 +903,7 @@
       "empty": "You haven't applied to any jobs yet.",
       "browseJobs": "Browse jobs",
       "appliedOn": "Applied on {date}",
-      "interviewHeading": "Interview schedule",
       "durationMinutes": "{count} min",
-      "confirmInterview": "Confirm",
-      "declineInterview": "Decline",
-      "interviewConfirmedToast": "Interview confirmed",
-      "interviewDeclinedToast": "Interview declined",
-      "interviewStatus": {
-        "confirmed": "You confirmed",
-        "declined": "You declined"
-      },
       "withdraw": "Withdraw"
     },
     "alerts": {
@@ -1193,17 +1107,12 @@
       "application_status_changed": "updated your application for {jobTitle} to {status}",
       "application_withdrawn": "withdrew their application for {jobTitle}",
       "poll_vote": "voted on your poll",
-      "interview_scheduled": "sent you an interview invite for {jobTitle}",
-      "interview_response": "responded to the interview invite for {jobTitle}",
       "unknown": "has new activity"
     },
     "appStatus": {
-      "applied": "Applied",
-      "reviewed": "Reviewed",
-      "interview": "Interview",
-      "offered": "Offered",
-      "hired": "Hired",
-      "rejected": "Rejected"
+      "submitted": "Submitted",
+      "withdrawn": "Withdrawn",
+      "closed": "Closed"
     },
     "filters": {
       "all": "All",
@@ -1692,8 +1601,7 @@
         "smtp": "SMTP email",
         "recaptcha": "reCAPTCHA",
         "security": "Security",
-        "contact": "Contact",
-        "maintenance": "Maintenance"
+        "contact": "Contact"
       },
       "fields": {
         "default_locale": "Default locale",
@@ -1718,8 +1626,6 @@
         "contact_phone": "Phone number",
         "contact_content": "Contact content",
         "contact_map_url": "Map link",
-        "maintenance_mode": "Enable maintenance mode",
-        "maintenance_message": "Maintenance message",
         "google_auth_enabled": "Enable Google sign-in",
         "require_email_verification": "Require email verification on signup",
         "passkey_enabled": "Enable passkey sign-in"
@@ -1919,12 +1825,6 @@
       "openInTab": "Open in new tab",
       "mobileHint": "Mobile browsers can't display PDFs here. Tap below to open it in a new tab."
     }
-  },
-  "maintenance": {
-    "title": "Under maintenance",
-    "defaultMessage": "The system is under maintenance. Please check back in a few minutes.",
-    "logout": "Log out",
-    "loggingOut": "Logging out..."
   },
   "search": {
     "pageTitle": "Search",

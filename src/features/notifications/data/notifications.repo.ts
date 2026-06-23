@@ -94,9 +94,7 @@ export async function verifyNotificationTarget(
     }
     case "job_application_received":
     case "application_withdrawn":
-    case "application_status_changed":
-    case "interview_scheduled":
-    case "interview_response": {
+    case "application_status_changed": {
       if (!payload || payload.type !== item.type) return false
       const { data } = await supabase
         .from("jobs")

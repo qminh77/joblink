@@ -165,7 +165,7 @@ export function JobDetailClient({ detail }: Props) {
                 <div className="min-w-0">
                   {viewer.isOwner ? (
                     <Button asChild className="w-full sm:w-auto" size="lg">
-                      <Link href="/company/dashboard">
+                      <Link href="/company/post-job">
                         <Pencil />
                         {t("manageOnDashboard")}
                       </Link>

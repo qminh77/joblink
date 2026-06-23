@@ -10,22 +10,16 @@ import { checkRateLimit } from "@/lib/action/rate-limit"
 import { requirePermission } from "@/lib/rbac"
 
 import {
-  createApplicationStatusUpdateSchema,
   createCompanyUserIdSchema,
   createJobStatusUpdateSchema,
-  createScheduleInterviewSchema,
-  type ScheduleInterviewInput,
 } from "../schemas"
 import type {
   ResubmitVerificationResult,
-  ScheduleInterviewResult,
   ToggleFollowResult,
   UpdateStatusResult,
 } from "../types"
 import {
-  notifyApplicationStatusChanged,
   notifyCompanyFollowed,
-  notifyInterviewScheduled,
 } from "../services/company-notifications"
 
 type StatusPayload = { noop: boolean; status: string; oldStatus?: string }
@@ -67,56 +61,6 @@ export async function toggleFollowCompanyAction(
   return result
 }
 
-// ---------------------------------------------------------------------------
-// Dashboard actions (owner-only). RPC tự check role + ownership.
-// ---------------------------------------------------------------------------
-export async function updateApplicationStatusAction(input: {
-  applicationId: number
-  newStatus: string
-  note?: string | null
-}): Promise<UpdateStatusResult> {
-  const te = await getTranslations("companies.dashboardErrors")
-  const parsed = createApplicationStatusUpdateSchema(te).safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
-  }
-
-  const current = await requirePermission("jobs.edit")
-  await checkRateLimit(current.appUser.id, "company_action", 10, 60) // 10 / 60s
-  const supabase = await createClient()
-
-  const result = await rpcResult<StatusPayload>(
-    supabase.rpc("update_application_status", {
-      p_application_id: parsed.data.applicationId,
-      p_new_status: parsed.data.newStatus,
-      p_note: parsed.data.note ?? null,
-    }),
-  )
-
-  if (result.ok) {
-    revalidatePath("/company/dashboard")
-    if (!result.noop) {
-      await notifyApplicationStatusChanged({
-        supabase,
-        applicationId: parsed.data.applicationId,
-        newStatus: parsed.data.newStatus,
-        current,
-      })
-      await writeAuditLog({
-        actorId: current.appUser.id,
-        action: "company.application_status_update",
-        entityType: "job_applications",
-        entityId: parsed.data.applicationId,
-        newData: {
-          newStatus: parsed.data.newStatus,
-          oldStatus: result.oldStatus,
-        },
-      })
-    }
-  }
-  return result
-}
-
 export async function updateJobStatusAction(input: {
   jobId: number
   newStatus: string
@@ -148,68 +92,6 @@ export async function updateJobStatusAction(input: {
         oldStatus: result.oldStatus,
       },
     })
-    revalidatePath("/company/dashboard")
-  }
-  return result
-}
-
-type ScheduleInterviewPayload = {
-  interviewId: number
-  applicationId: number
-  applicantId: number
-  jobId: number
-  jobTitle: string
-  scheduledAt: string
-  statusChanged: boolean
-}
-
-/**
- * Recruiter tạo / dời lịch phỏng vấn. RPC tự check ownership + chuyển đơn sang
- * 'interview'. Notify ứng viên kèm chi tiết lịch.
- */
-export async function scheduleInterviewAction(
-  input: ScheduleInterviewInput,
-): Promise<ScheduleInterviewResult> {
-  const te = await getTranslations("companies.dashboardErrors")
-  const parsed = createScheduleInterviewSchema(te).safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
-  }
-
-  const current = await requirePermission("jobs.edit")
-  await checkRateLimit(current.appUser.id, "company_action", 10, 60)
-  const supabase = await createClient()
-
-  const result = await rpcResult<ScheduleInterviewPayload>(
-    supabase.rpc("schedule_interview", {
-      p_application_id: parsed.data.applicationId,
-      p_scheduled_at: parsed.data.scheduledAt,
-      p_duration_minutes: parsed.data.durationMinutes,
-      p_location_or_link: parsed.data.locationOrLink ?? null,
-      p_note: parsed.data.note ?? null,
-    }),
-  )
-
-  if (result.ok) {
-    revalidatePath("/company/dashboard")
-    await notifyInterviewScheduled({
-      applicantId: result.applicantId,
-      jobId: result.jobId,
-      jobTitle: result.jobTitle,
-      applicationId: result.applicationId,
-      scheduledAt: result.scheduledAt,
-      current,
-    })
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "company.interview_schedule",
-      entityType: "interview_schedules",
-      entityId: result.interviewId,
-      newData: {
-        applicationId: result.applicationId,
-        scheduledAt: result.scheduledAt,
-      },
-    })
   }
   return result
 }
@@ -235,7 +117,6 @@ export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerif
       newData: { status: "pending" },
     })
     revalidatePath("/settings")
-    revalidatePath("/company/dashboard")
   }
   return result
 }

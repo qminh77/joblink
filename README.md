@@ -205,7 +205,7 @@ TanStack Query invalidation → Feed refresh
 | **Appeals** | Xử lý khiếu nại |
 | **Audit Log** | Nhật ký hành động admin |
 | **Lookups** | Quản lý danh mục |
-| **Settings** | System settings, maintenance mode |
+| **Settings** | System settings (regional, email, security) |
 
 ---
 
@@ -375,7 +375,7 @@ Client Input
 | `audit_logs` | Nhật ký admin |
 | `administrative_units` | Đơn vị hành chính (tỉnh/huyện) |
 | `member_cvs` | CV của member |
-| `system_settings` | Cài đặt hệ thống (maintenance) |
+| `system_settings` | Cài đặt hệ thống (regional, email, security) |
 | `member_skills` | Kỹ năng |
 | `saved_jobs` | Việc làm đã lưu |
 
@@ -427,7 +427,7 @@ joblink/
 │   │   ├── settings/         # User settings
 │   │   ├── reports/          # Report & appeal system
 │   │   ├── admin/            # Admin panel services
-│   │   └── system-settings/  # System settings (maintenance)
+│   │   └── system-settings/  # System settings
 │   │
 │   ├── components/           # Shared components
 │   │   ├── ui/               # shadcn/ui components (Radix-based)

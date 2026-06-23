@@ -6,13 +6,11 @@ import { toast } from "sonner"
 
 import {
   applyToJobAction,
-  respondInterviewAction,
   toggleSavedJobAction,
   withdrawApplicationAction,
 } from "../api/actions"
 import type {
   ApplyResult,
-  RespondInterviewResult,
   ToggleSavedResult,
   WithdrawResult,
 } from "../types"
@@ -57,36 +55,6 @@ export function useWithdrawApplication() {
     onSuccess: () => {
       toast.success(tu("withdrawSuccess"))
       qc.invalidateQueries({ queryKey: ["jobs"] })
-    },
-    onError: (error) => {
-      toast.error(translateJobsError(te, error.message))
-    },
-  })
-}
-
-export function useRespondInterview() {
-  const qc = useQueryClient()
-  const tu = useTranslations("jobs.applications")
-  const te = useTranslations("jobs.errors")
-
-  return useMutation<
-    RespondInterviewResult,
-    Error,
-    { interviewId: number; accept: boolean }
-  >({
-    mutationFn: async (input) => {
-      const result = await respondInterviewAction(input)
-      if (!result.ok) throw new Error(result.error)
-      return result
-    },
-    onSuccess: (result) => {
-      if (!result.ok) return
-      toast.success(
-        result.status === "confirmed"
-          ? tu("interviewConfirmedToast")
-          : tu("interviewDeclinedToast"),
-      )
-      qc.invalidateQueries({ queryKey: ["jobs", "applications"] })
     },
     onError: (error) => {
       toast.error(translateJobsError(te, error.message))

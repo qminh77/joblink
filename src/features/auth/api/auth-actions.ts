@@ -64,7 +64,7 @@ export async function registerCompanyAction(
     }
   }
 
-  // Tạo user + gửi email xác minh qua SMTP của Admin (không dùng email Supabase).
+  // Tạo user + gửi email xác minh qua SMTP.
   const created = await createUserAndSendVerification({
     email: data.email,
     password: data.password,

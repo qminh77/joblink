@@ -210,16 +210,16 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.1 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push("/company/dashboard")}
+                  onClick={() => router.push("/company/post-job")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <LayoutDashboard className="w-4 h-4 text-primary mr-3 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
-                      {tMenu("companyDashboard")}
+                      {tMenu("manageJobs")}
                     </span>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {tMenu("companyDashboardHint")}
+                      {tMenu("manageJobsHint")}
                     </p>
                   </div>
                 </DropdownMenuItem>

@@ -45,8 +45,6 @@ export type NewMessagePayload = ActorRef & {
 }
 
 export type CompanyFollowedPayload = ActorRef & {
-  // companyUserId trùng với recipient (notification.user_id) — không cần lưu
-  // riêng, nhưng giữ field actor để render avatar + link tới /profile/{actor}.
 }
 
 export type UserFollowedPayload = ActorRef
@@ -61,13 +59,7 @@ export type ApplicationStatusChangedPayload = ActorRef & {
   jobId: number
   jobTitle: string
   applicationId: number
-  newStatus:
-    | "applied"
-    | "reviewed"
-    | "interview"
-    | "offered"
-    | "hired"
-    | "rejected"
+  newStatus: "submitted" | "withdrawn" | "closed"
 }
 
 export type ApplicationWithdrawnPayload = ActorRef & {
@@ -79,20 +71,6 @@ export type ApplicationWithdrawnPayload = ActorRef & {
 export type PollVotePayload = ActorRef & {
   postId: number
   optionText: string
-}
-
-export type InterviewScheduledPayload = ActorRef & {
-  jobId: number
-  jobTitle: string
-  applicationId: number
-  scheduledAt: string
-}
-
-export type InterviewResponsePayload = ActorRef & {
-  jobId: number
-  jobTitle: string
-  applicationId: number
-  accepted: boolean
 }
 
 export type NotificationPayload =
@@ -109,8 +87,6 @@ export type NotificationPayload =
   | ({ type: "application_status_changed" } & ApplicationStatusChangedPayload)
   | ({ type: "application_withdrawn" } & ApplicationWithdrawnPayload)
   | ({ type: "poll_vote" } & PollVotePayload)
-  | ({ type: "interview_scheduled" } & InterviewScheduledPayload)
-  | ({ type: "interview_response" } & InterviewResponsePayload)
 
 export type NotificationItem = {
   id: number

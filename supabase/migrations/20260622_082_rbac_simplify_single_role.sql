@@ -1133,11 +1133,9 @@ BEGIN
         RETURN jsonb_build_object('ok', FALSE, 'error', 'coverLetterTooLong'); END IF;
     INSERT INTO public.job_applications(job_id, applicant_id, resume_url, cover_letter, status)
     VALUES (p_job_id, v_me, NULLIF(btrim(COALESCE(p_resume_url, '')), ''),
-            NULLIF(btrim(COALESCE(p_cover_letter, '')), ''), 'applied')
+            NULLIF(btrim(COALESCE(p_cover_letter, '')), ''), 'submitted')
     RETURNING id INTO v_application_id;
-    INSERT INTO public.application_status_history(application_id, old_status, new_status, changed_by, note)
-    VALUES (v_application_id, NULL, 'applied', v_me, NULL);
-    RETURN jsonb_build_object('ok', TRUE, 'applicationId', v_application_id, 'status', 'applied');
+    RETURN jsonb_build_object('ok', TRUE, 'applicationId', v_application_id, 'status', 'submitted');
 END;
 $$;
 

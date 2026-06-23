@@ -264,8 +264,6 @@ export type NotificationType =
   | "application_status_changed"
   | "application_withdrawn"
   | "poll_vote"
-  | "interview_scheduled"
-  | "interview_response"
 
 export type ConversationRow = {
   id: number
@@ -546,30 +544,6 @@ export type JobSkillRow = {
   is_required: boolean
 }
 
-export type ApplicationStatusHistoryRow = {
-  id: number
-  application_id: number
-  old_status: string
-  new_status: string
-  changed_by: number
-  note: string | null
-  changed_at: string
-}
-
-export type InterviewScheduleRow = {
-  id: number
-  application_id: number
-  scheduled_at: string
-  duration_minutes: number
-  location_or_link: string | null
-  note: string | null
-  created_by: number
-  status: "pending" | "accepted" | "rejected" | "cancelled"
-  responded_at: string | null
-  created_at: string
-  updated_at: string
-}
-
 export type JobViewLogRow = {
   id: number
   job_id: number
@@ -641,17 +615,6 @@ export type Database = {
         Omit<FollowRow, "id" | "created_at">
       >
       job_skills: TableDef<JobSkillRow>
-      application_status_history: TableDef<
-        ApplicationStatusHistoryRow,
-        Omit<ApplicationStatusHistoryRow, "id" | "changed_at">
-      >
-      interview_schedules: TableDef<
-        InterviewScheduleRow,
-        Omit<InterviewScheduleRow, "id" | "created_at" | "updated_at" | "status" | "responded_at"> & {
-          status?: InterviewScheduleRow["status"]
-          responded_at?: string | null
-        }
-      >
       job_view_logs: TableDef<
         JobViewLogRow,
         Omit<JobViewLogRow, "id" | "viewed_at">
@@ -1039,20 +1002,6 @@ export type Database = {
       expire_due_jobs: {
         Args: Record<string, never>
         Returns: number
-      }
-      schedule_interview: {
-        Args: {
-          p_application_id: number
-          p_scheduled_at: string
-          p_duration_minutes: number
-          p_location_or_link: string | null
-          p_note: string | null
-        }
-        Returns: Json
-      }
-      respond_interview: {
-        Args: { p_interview_id: number; p_accept: boolean }
-        Returns: Json
       }
       get_my_applications: {
         Args: { p_limit?: number; p_offset?: number }

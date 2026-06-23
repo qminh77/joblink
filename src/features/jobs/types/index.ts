@@ -1,5 +1,3 @@
-// Shapes khớp với RPCs migration 018. Camel-case vì RPC trả jsonb camelCase.
-
 export type JobListItem = {
   id: number
   title: string
@@ -110,12 +108,10 @@ export type CreateJobResult =
   | { ok: true; jobId: number }
   | { ok: false; error: string }
 
-// Sửa tin không đổi trạng thái → bỏ `status` (do update_job_status quản lý).
 export type UpdateJobInput = Omit<CreateJobInput, "status"> & { jobId: number }
 
 export type UpdateJobResult = CreateJobResult
 
-// Field dạng ID để prefill form sửa (RPC get_job_for_edit, owner-only).
 export type JobEditCore = {
   id: number
   title: string
@@ -150,8 +146,6 @@ export type WithdrawResult =
   | { ok: true; status: string }
   | { ok: false; error: string }
 
-// ── Cảnh báo việc làm (UC-57/58) ─────────────────────────────────────────────
-// Bộ lọc tìm việc được lưu thành cảnh báo (tập con của JobsListFilters).
 export type JobAlertFilters = {
   search?: string | null
   provinceId?: number | null
@@ -169,29 +163,9 @@ export type JobAlert = {
 }
 
 export type ApplicationStatusValue =
-  | "applied"
-  | "reviewed"
-  | "interview"
-  | "offered"
-  | "hired"
-  | "rejected"
+  | "submitted"
   | "withdrawn"
-
-export type ApplicationInterview = {
-  id: number
-  scheduledAt: string
-  durationMinutes: number
-  locationOrLink: string | null
-  note: string | null
-  status: "scheduled" | "confirmed" | "declined"
-}
-
-export type ApplicationHistoryEntry = {
-  oldStatus: string | null
-  newStatus: string
-  changedAt: string
-  note: string | null
-}
+  | "closed"
 
 export type MyApplicationItem = {
   applicationId: number
@@ -204,8 +178,6 @@ export type MyApplicationItem = {
   companyUserId: number
   companyName: string
   companyLogoUrl: string | null
-  interview: ApplicationInterview | null
-  history: ApplicationHistoryEntry[]
 }
 
 export type MyApplicationsPage = {
@@ -213,10 +185,5 @@ export type MyApplicationsPage = {
   total: number
 }
 
-export type RespondInterviewResult =
-  | { ok: true; status: "confirmed" | "declined" }
-  | { ok: false; error: string }
-
-// Reference data tables (loaded for filters/form)
 export type JobTypeRef = { id: number; code: string; name: string }
 export type WorkModeRef = { id: number; code: string; name: string }

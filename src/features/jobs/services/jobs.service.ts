@@ -9,7 +9,6 @@ import type {
   ApplyResult,
   CreateJobInput,
   CreateJobResult,
-  RespondInterviewResult,
   ToggleSavedResult,
   UpdateJobInput,
   UpdateJobResult,
@@ -18,7 +17,6 @@ import type {
 import {
   notifyApplicationReceived,
   notifyApplicationWithdrawn,
-  notifyInterviewResponse,
 } from "./application-notifications"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
@@ -27,11 +25,6 @@ export type ApplyToJobInput = {
   jobId: number
   coverLetter?: string | null
   resumeCvId: number
-}
-
-export type RespondInterviewInput = {
-  interviewId: number
-  accept: boolean
 }
 
 export function createJob(
@@ -145,38 +138,6 @@ export function toggleSavedJob(
   return rpcResult<{ saved: boolean }>(
     supabase.rpc("toggle_saved_job", { p_job_id: jobId }),
   )
-}
-
-export async function respondInterview(
-  supabase: Supabase,
-  current: CurrentUser,
-  input: RespondInterviewInput,
-): Promise<RespondInterviewResult> {
-  const result = await rpcResult<{
-    status: "confirmed" | "declined"
-    companyUserId: number
-    jobId: number
-    jobTitle: string
-    applicationId: number
-  }>(
-    supabase.rpc("respond_interview", {
-      p_interview_id: input.interviewId,
-      p_accept: input.accept,
-    }),
-  )
-
-  if (!result.ok) return { ok: false, error: result.error }
-
-  await notifyInterviewResponse({
-    companyUserId: result.companyUserId,
-    jobId: result.jobId,
-    jobTitle: result.jobTitle,
-    applicationId: result.applicationId,
-    accepted: input.accept,
-    current,
-  })
-
-  return { ok: true, status: result.status }
 }
 
 export async function logJobView(supabase: Supabase, jobId: number) {
