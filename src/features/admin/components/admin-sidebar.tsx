@@ -135,7 +135,6 @@ const SETTINGS_SUBITEMS = [
   { key: "recaptcha", tab: "recaptcha" },
   { key: "security", tab: "security" },
   { key: "contact", tab: "contact" },
-  { key: "maintenance", tab: "maintenance" },
 ] as const
 
 const LOOKUPS_SUBITEMS = [

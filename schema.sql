@@ -2657,10 +2657,7 @@ INSERT INTO system_settings (setting_key, setting_group, value, encrypted) VALUE
     ('contact_email',       'contact',     'null'::jsonb,  FALSE),
     ('contact_phone',       'contact',     'null'::jsonb,  FALSE),
     ('contact_content',     'contact',     'null'::jsonb,  FALSE),
-    ('contact_map_url',     'contact',     'null'::jsonb,  FALSE),
-    ('maintenance_mode',    'maintenance', 'false'::jsonb, FALSE),
-    ('maintenance_message', 'maintenance',
-        '"Hệ thống đang được bảo trì. Vui lòng quay lại sau ít phút."'::jsonb, FALSE)
+    ('contact_map_url',     'contact',     'null'::jsonb,  FALSE)
 ON CONFLICT (setting_key) DO NOTHING;
 
 INSERT INTO job_types (code, name, name_en, sort_order, is_system) VALUES
@@ -6059,8 +6056,7 @@ INSERT INTO public.actions (name, label) VALUES
 ('restore', 'Khôi phục'),
 ('moderate', 'Duyệt / Kiểm duyệt'),
 ('status', 'Đổi trạng thái'),
-('reply', 'Trả lời'),
-('maintenance', 'Bật/tắt bảo trì')
+('reply', 'Trả lời')
 ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
 
 WITH permission_pairs(module_name, action_names) AS (
@@ -6077,7 +6073,7 @@ WITH permission_pairs(module_name, action_names) AS (
     ('brand', ARRAY['view','edit']),
     ('report_types', ARRAY['view','create','edit','delete']),
     ('lookups', ARRAY['view','create','edit','delete']),
-    ('settings', ARRAY['view','edit','maintenance']),
+    ('settings', ARRAY['view','edit']),
     ('roles', ARRAY['view','create','edit','delete'])
 ),
 expanded AS (
@@ -6280,7 +6276,6 @@ INSERT INTO public.actions (name, label) VALUES
 ('moderate', 'Duyệt / Kiểm duyệt'),
 ('status', 'Đổi trạng thái'),
 ('reply', 'Trả lời'),
-('maintenance', 'Bật/tắt bảo trì'),
 ('apply', 'Ứng tuyển'),
 ('save', 'Lưu'),
 ('send', 'Gửi'),
@@ -6315,7 +6310,7 @@ WITH permission_pairs(module_name, action_names) AS (
     ('brand', ARRAY['view','edit']),
     ('report_types', ARRAY['view','create','edit','delete']),
     ('lookups', ARRAY['view','create','edit','delete']),
-    ('settings', ARRAY['view','edit','maintenance']),
+    ('settings', ARRAY['view','edit']),
     ('roles', ARRAY['view','create','edit','delete'])
 ),
 expanded AS (

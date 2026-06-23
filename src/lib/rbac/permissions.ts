@@ -112,7 +112,6 @@ export const PERMISSIONS = {
   // Settings
   "settings.view": "Cài đặt hệ thống - Xem",
   "settings.edit": "Cài đặt hệ thống - Chỉnh sửa",
-  "settings.maintenance": "Cài đặt hệ thống - Bật/tắt bảo trì",
 
   // Roles
   "roles.view": "Quản lý quyền - Xem",

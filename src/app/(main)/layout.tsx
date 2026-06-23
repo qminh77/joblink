@@ -6,8 +6,7 @@ import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
 import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
 import { MessagingDock } from "@/features/messaging/components/messaging-dock"
-import { loadMaintenanceState } from "@/features/system-settings/api/public-settings"
-import { MaintenanceScreen } from "@/features/system-settings/components/maintenance-screen"
+
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
@@ -20,14 +19,7 @@ export default async function MainLayout({
   const permissions = await getAdminUserPermissions()
   const adminHref = getAdminEntryHref(permissions)
 
-  // UC-96: chế độ bảo trì tạm ngừng truy cập của người dùng thường; tài khoản
-  // có quyền admin vẫn vào được khu quản trị để xử lý hệ thống.
-  if (!adminHref) {
-    const maintenance = await loadMaintenanceState()
-    if (maintenance.enabled) {
-      return <MaintenanceScreen message={maintenance.message} />
-    }
-  }
+
 
   const sessionUser: SessionUserSummary = {
     id: user.appUser.id,

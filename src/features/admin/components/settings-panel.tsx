@@ -48,7 +48,6 @@ const GROUP_ORDER = [
   "recaptcha",
   "security",
   "contact",
-  "maintenance",
 ] as const
 
 const GROUP_ICONS = {
@@ -57,13 +56,11 @@ const GROUP_ICONS = {
   recaptcha: Lock,
   security: Shield,
   contact: Phone,
-  maintenance: Wrench,
 } as const
 
 const BOOLEAN_KEYS = new Set([
   "recaptcha_enabled",
   "require_2fa_admin",
-  "maintenance_mode",
   "google_auth_enabled",
   "require_email_verification",
   "passkey_enabled",
@@ -82,7 +79,6 @@ const TEXTAREA_KEYS = new Set([
   "site_description",
   "contact_address",
   "contact_content",
-  "maintenance_message",
 ])
 
 const SELECT_KEYS = new Set(["default_locale", "default_timezone", "default_currency"])

@@ -30,7 +30,6 @@ export const SETTING_GROUPS: Record<string, string[]> = {
     "contact_content",
     "contact_map_url",
   ],
-  maintenance: ["maintenance_mode", "maintenance_message"],
 }
 
 export const ALLOWED_SETTING_KEYS = new Set<string>(
