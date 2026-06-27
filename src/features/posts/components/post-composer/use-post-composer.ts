@@ -18,7 +18,6 @@ import {
 } from "../../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../../hooks"
 import { readMediaItems, readSharedOriginal } from "../../lib/media"
-import { readPollData } from "../../lib/poll"
 import type { FeedPost } from "../../types"
 import type { Visibility } from "./visibility-menu"
 
@@ -58,8 +57,6 @@ export function usePostComposer({
   )
   const [images, setImages] = useState<PendingImage[]>([])
   const [keptImages, setKeptImages] = useState<KeptImage[]>([])
-  const [pollMode, setPollMode] = useState(false)
-  const [pollOptions, setPollOptions] = useState<string[]>(["", ""])
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
   const [video, setVideo] = useState<{ file: File; previewUrl: string } | null>(
@@ -97,18 +94,6 @@ export function usePostComposer({
       if (prev) URL.revokeObjectURL(prev.previewUrl)
       return null
     })
-
-    if (post?.postType === "poll" && !readSharedOriginal(post.media)) {
-      const pollData = readPollData(post.media)
-      setPollMode(true)
-      setPollOptions(pollData?.options.map((option) => option.optionText) ?? [
-        "",
-        "",
-      ])
-    } else {
-      setPollMode(false)
-      setPollOptions(["", ""])
-    }
   }, [open, post])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -119,12 +104,6 @@ export function usePostComposer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const hasExistingPoll =
-    isEdit && post?.postType === "poll" && !isSharedPost
-  const activePollOptions = pollOptions
-    .map((option) => option.trim())
-    .filter((option) => option.length > 0)
-  const hasValidPoll = pollMode && activePollOptions.length >= 2
   const totalImages = keptImages.length + images.length
 
   const createPost = useCreatePost()
@@ -264,12 +243,7 @@ export function usePostComposer({
     const hasNewImages = images.length > 0
     const hasAnyImage = totalImages > 0
 
-    if ((!text && !hasAnyImage && !hasValidPoll && !video) || isPending) return
-
-    if (hasValidPoll && hasAnyImage) {
-      toast.error(tPosts("errors.pollAndMedia"))
-      return
-    }
+    if ((!text && !hasAnyImage && !video) || isPending) return
 
     setUploading(true)
     setImageError(null)
@@ -295,33 +269,7 @@ export function usePostComposer({
       }
 
       if (isEdit && post) {
-        if (post.postType === "poll") {
-          const pollData = readPollData(post.media)
-          const originalOptions = pollData?.options ?? []
-          const optionsChanged =
-            activePollOptions.length !== originalOptions.length ||
-            activePollOptions.some(
-              (option, index) =>
-                option !== (originalOptions[index]?.optionText ?? ""),
-            )
-          const unchanged =
-            text === post.content &&
-            visibility === post.visibility &&
-            !optionsChanged
-          if (unchanged) {
-            onClose()
-            return
-          }
-          await updatePost.mutateAsync({
-            postId: post.id,
-            content: text,
-            visibility,
-            options: activePollOptions.map((option, index) => ({
-              id: pollData?.options[index]?.id,
-              optionText: option,
-            })),
-          })
-        } else if (isSharedPost || isVideoPost) {
+        if (isSharedPost || isVideoPost) {
           const unchanged =
             text === post.content && visibility === post.visibility
           if (unchanged) {
@@ -357,12 +305,6 @@ export function usePostComposer({
             mediaItems: [...keptItems, ...uploadedItems],
           })
         }
-      } else if (hasValidPoll) {
-        await createPost.mutateAsync({
-          content: text,
-          visibility,
-          options: activePollOptions,
-        })
       } else if (video) {
         let videoUrl: string
         try {
@@ -395,28 +337,21 @@ export function usePostComposer({
   }
 
   return {
-    activePollOptions,
     content,
     fileRef,
     handleFileSelect,
     handleVideoSelect,
-    hasExistingPoll,
-    hasValidPoll,
     imageError,
     images,
     isEdit,
     isPending,
     isSharedPost,
     keptImages,
-    pollMode,
-    pollOptions,
     removeAllImages,
     removeImageAt,
     removeVideo,
     setContent,
     setImageError,
-    setPollMode,
-    setPollOptions,
     setVisibility,
     submit,
     totalImages,

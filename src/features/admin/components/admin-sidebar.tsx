@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   Briefcase,
@@ -12,7 +12,6 @@ import {
   Flag,
   LayoutDashboard,
   ScrollText,
-  Settings,
   Tags,
   Users,
   Shield,
@@ -52,7 +51,6 @@ const GROUPS = [
     items: [
       { key: "roles", href: "/admin/roles", icon: Shield, requiredPermission: "roles.view" },
       { key: "reportTypes", href: "/admin/report-types", icon: Tags, requiredPermission: "report_types.view" },
-      { key: "settings", href: "/admin/settings", icon: Settings, requiredPermission: "settings.view" },
     ],
   },
 ] as const
@@ -121,14 +119,6 @@ function NavContent({
   )
 }
 
-const SETTINGS_SUBITEMS = [
-  { key: "regional", tab: "regional" },
-  { key: "smtp", tab: "smtp" },
-  { key: "recaptcha", tab: "recaptcha" },
-  { key: "security", tab: "security" },
-  { key: "contact", tab: "contact" },
-] as const
-
 function SidebarItem({
   item,
   pathname,
@@ -140,59 +130,6 @@ function SidebarItem({
   t: (key: string) => string
   onNavigate?: () => void
 }) {
-  const tSettings = useTranslations("admin.settings.groups")
-  const searchParams = useSearchParams()
-  const isSettingsActive = pathname === "/admin/settings"
-  const currentTab = searchParams.get("tab") || "site_identity"
-  const [settingsSubOpen, setSettingsSubOpen] = useState(isSettingsActive)
-
-  if (item.key === "settings") {
-    const Icon = item.icon
-    return (
-      <div className="space-y-1">
-        <button
-          onClick={() => setSettingsSubOpen(!settingsSubOpen)}
-          className={`flex w-full items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
-            isSettingsActive
-              ? "bg-primary/10 text-primary font-semibold"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <Icon className="w-5 h-5" />
-            <span>{t(item.key)}</span>
-          </div>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform duration-200 ${
-              settingsSubOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-        {settingsSubOpen && (
-          <div className="pl-6 space-y-0.5 border-l border-border/30 ml-5">
-            {SETTINGS_SUBITEMS.map((sub) => {
-              const isActive = isSettingsActive && currentTab === sub.tab
-              return (
-                <Link
-                  key={sub.tab}
-                  href={`/admin/settings?tab=${sub.tab}`}
-                  onClick={onNavigate}
-                  className={`flex items-center px-3 py-1.5 rounded-lg text-xs transition-colors ${
-                    isActive
-                      ? "text-primary font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
-                  }`}
-                >
-                  {tSettings(sub.key)}
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    )
-  }
-
   const Icon = item.icon
   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
   return (

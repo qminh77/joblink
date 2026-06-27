@@ -36,7 +36,7 @@ export type AppUserRow = {
   deleted_at: string | null
 }
 
-export type PostType = "text" | "image" | "video" | "article" | "poll"
+export type PostType = "text" | "image" | "video" | "article"
 export type PostVisibility = "public" | "connections" | "private"
 export type PostStatus = "active" | "hidden" | "deleted"
 
@@ -54,21 +54,6 @@ export type PostRow = {
   created_at: string
   updated_at: string
   deleted_at: string | null
-}
-
-export type PollOptionRow = {
-  id: number
-  post_id: number
-  option_text: string
-  vote_count: number
-}
-
-export type PollVoteRow = {
-  id: number
-  post_id: number
-  option_id: number
-  user_id: number
-  voted_at: string
 }
 
 export type PostReactionType =
@@ -263,7 +248,6 @@ export type NotificationType =
   | "job_application_received"
   | "application_status_changed"
   | "application_withdrawn"
-  | "poll_vote"
 
 export type ConversationRow = {
   id: number
@@ -638,16 +622,6 @@ export type Database = {
         },
         Partial<PostCommentRow> & { deleted_at?: string | null }
       >
-      poll_options: TableDef<
-        PollOptionRow,
-        Omit<PollOptionRow, "id" | "vote_count"> & {
-          vote_count?: number
-        }
-      >
-      poll_votes: TableDef<
-        PollVoteRow,
-        Omit<PollVoteRow, "id" | "voted_at">
-      >
       post_shares: TableDef<
         PostShareRow,
         Omit<PostShareRow, "id" | "created_at"> & {
@@ -920,10 +894,6 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
-      increment_poll_vote_count: {
-        Args: { p_option_id: number }
-        Returns: undefined
-      }
       log_job_view: {
         Args: { p_job_id: number }
         Returns: Json
@@ -969,6 +939,20 @@ export type Database = {
         }
         Returns: Json
       }
+      toggle_post_reaction: {
+        Args: {
+          p_post_id: number
+          p_reaction_type: PostReactionType
+        }
+        Returns: Json
+      }
+      get_post_comments: {
+        Args: {
+          p_post_id: number
+          p_limit?: number
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_user_id: number
@@ -977,14 +961,6 @@ export type Database = {
           p_window_seconds?: number
         }
         Returns: boolean
-      }
-      create_poll_post: {
-        Args: {
-          p_content: string
-          p_visibility?: string
-          p_options?: Json
-        }
-        Returns: Json
       }
       has_permission: {
         Args: {

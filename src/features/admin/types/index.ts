@@ -65,12 +65,6 @@ export type ListUsersParams = {
   pageSize?: number
 }
 
-export type ExportUsersParams = {
-  search?: string
-  role?: string
-  status?: string
-}
-
 export type UserActionResult =
   | { ok: true; newStatus: UserStatus }
   | { ok: false; error: string }
@@ -173,14 +167,5 @@ export type AdminAuditLogEntry = {
   ipAddress: string | null
   createdAt: string
 }
-
-export type AdminSettingsValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | null
-
-export type AdminSettingsMap = Record<string, AdminSettingsValue>
 
 export type AdminModerationActionType = ModerationActionType

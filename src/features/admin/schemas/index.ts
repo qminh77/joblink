@@ -53,13 +53,6 @@ export const reportStatusSchema = z.object({
   status: z.enum(["pending", "in_review", "resolved", "dismissed"]),
 })
 
-export const settingsUpdateSchema = z.record(
-  z.string().min(1),
-  z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
-)
-
-export type SettingsUpdateInput = z.infer<typeof settingsUpdateSchema>
-
 export const LOOKUP_KINDS = [
   "provinces",
   "wards",

@@ -1,7 +1,7 @@
 import type { CurrentUser } from "@/features/auth/types"
 import type { Json, PostType, PostVisibility } from "@/types/database"
 
-import type { FeedAuthor, FeedComment, FeedPost, PollOption } from "../types"
+import type { FeedAuthor, FeedComment, FeedPost } from "../types"
 
 // Map row/ngữ cảnh → domain. Gom ở đây để khối `author { userId, role,
 // displayName, avatarUrl, headline }` không bị dựng lại rải rác trong action.
@@ -26,11 +26,9 @@ export function newFeedPost(input: {
   visibility: PostVisibility
   createdAt: string
   author: FeedAuthor
-  pollOptions?: PollOption[]
 }): FeedPost {
   return {
     ...input,
-    pollOptions: input.pollOptions,
     reactionCount: 0,
     commentCount: 0,
     shareCount: 0,

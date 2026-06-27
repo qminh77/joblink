@@ -3,7 +3,7 @@ import "server-only"
 import { USER_STATUSES, type UserRole, type UserStatus } from "@/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 
-import type { ExportUsersParams, ListUsersParams } from "../types"
+import type { ListUsersParams } from "../types"
 
 type AdminSupabase = ReturnType<typeof createAdminClient>
 
@@ -71,40 +71,6 @@ export async function listAdminUserRows(
     page,
     pageSize,
   }
-}
-
-export async function listAdminUserExportRows(
-  supabase: AdminSupabase,
-  params: ExportUsersParams,
-) {
-  let query = supabase
-    .from("users")
-    .select(
-      "id, email, role, status, created_at, last_login_at",
-    )
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(10000)
-
-  if (
-    params.role &&
-    params.role !== "all"
-  ) {
-    query = query.eq("role", params.role as never)
-  }
-  if (
-    params.status &&
-    params.status !== "all" &&
-    (USER_STATUSES as readonly string[]).includes(params.status)
-  ) {
-    query = query.eq("status", params.status as UserStatus)
-  }
-  if (params.search?.trim()) {
-    query = query.ilike("email", `%${params.search.trim()}%`)
-  }
-
-  const { data, error } = await query
-  return { rows: (data ?? []) as AdminUserRecord[], error }
 }
 
 export async function listUserDisplayProfileRows(

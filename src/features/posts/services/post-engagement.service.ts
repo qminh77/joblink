@@ -1,14 +1,11 @@
 import "server-only"
 
 import type { CurrentUser } from "@/features/auth/types"
-import { ActionError, assertOk, unwrap } from "@/lib/action/server"
+import { ActionError, unwrap } from "@/lib/action/server"
 import type { createClient } from "@/lib/supabase/server"
 
 import {
-  findPollOptionById,
-  findViewerPollVotes,
   insertComment,
-  insertPollVote,
   togglePostReactionRpc,
   sharePost as sharePostRpc,
   softDeleteComment,
@@ -16,20 +13,14 @@ import {
 import { loadOriginalSnapshot } from "../data/posts.privileged"
 import { authorRefFrom, newFeedComment, newFeedPost } from "../lib/map"
 import { buildSharedMedia } from "../lib/media"
-import type { CommentInput, ShareInput, VoteInput } from "../schemas"
+import type { CommentInput, ShareInput } from "../schemas"
 import type {
   CreateCommentResult,
   DeleteCommentResult,
   SharePostResult,
   ToggleReactionResult,
-  VoteResult,
 } from "../types"
-import {
-  notifyComment,
-  notifyPollVote,
-  notifyReaction,
-  notifyShare,
-} from "./post-notifications"
+import { notifyComment, notifyReaction, notifyShare } from "./post-notifications"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
@@ -57,34 +48,6 @@ export async function togglePostReaction(
   }
 
   return { reacted: result.reacted }
-}
-
-export async function voteOnPoll(
-  supabase: Supabase,
-  current: CurrentUser,
-  data: VoteInput,
-): Promise<VoteResult> {
-  const me = current.appUser.id
-  const existingVotes = await findViewerPollVotes(supabase, data.postId, me)
-  if (existingVotes.length > 0) {
-    throw ActionError.key("alreadyVoted")
-  }
-
-  assertOk(
-    await insertPollVote(supabase, data.postId, data.optionId, me),
-    "voteFailed",
-  )
-
-  const option = await findPollOptionById(supabase, data.optionId)
-  if (option) {
-    await notifyPollVote({
-      postId: data.postId,
-      optionText: option.option_text,
-      current,
-    })
-  }
-
-  return { optionId: data.optionId, postId: data.postId }
 }
 
 export async function createPostComment(

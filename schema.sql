@@ -481,30 +481,10 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL,
-    CONSTRAINT chk_post_type       CHECK (post_type  IN ('text','image','video','article','poll')),
+    CONSTRAINT chk_post_type       CHECK (post_type  IN ('text','image','video','article')),
     CONSTRAINT chk_post_visibility CHECK (visibility IN ('public','connections','private')),
     CONSTRAINT chk_post_status     CHECK (status     IN ('active','hidden','deleted')),
     CONSTRAINT fk_post_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS poll_options (
-    id          BIGSERIAL PRIMARY KEY,
-    post_id     BIGINT NOT NULL,
-    option_text VARCHAR(255) NOT NULL,
-    vote_count  INT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_poll_option_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS poll_votes (
-    id        BIGSERIAL PRIMARY KEY,
-    post_id   BIGINT NOT NULL,
-    option_id BIGINT NOT NULL,
-    user_id   BIGINT NOT NULL,
-    voted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_poll_vote UNIQUE (post_id, user_id),
-    CONSTRAINT fk_poll_vote_post   FOREIGN KEY (post_id)   REFERENCES posts(id)        ON DELETE CASCADE,
-    CONSTRAINT fk_poll_vote_option FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
-    CONSTRAINT fk_poll_vote_user   FOREIGN KEY (user_id)   REFERENCES users(id)        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_reactions (
@@ -1038,8 +1018,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_counts         ON posts(reaction_count DESC
 CREATE INDEX IF NOT EXISTS idx_post_reactions_post  ON post_reactions(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_comments_post   ON post_comments(post_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_post_comments_parent ON post_comments(parent_id);
-CREATE INDEX IF NOT EXISTS idx_poll_votes_post      ON poll_votes(post_id);
-CREATE INDEX IF NOT EXISTS idx_poll_votes_option    ON poll_votes(option_id);
 
 CREATE INDEX IF NOT EXISTS idx_connections_requester ON connections(requester_id);
 CREATE INDEX IF NOT EXISTS idx_connections_receiver  ON connections(receiver_id);
@@ -1484,9 +1462,6 @@ CREATE TRIGGER trg_connections_counter
 CREATE TRIGGER trg_sync_feeds_on_connection
   AFTER INSERT OR UPDATE OF status OR DELETE ON connections
   FOR EACH ROW EXECUTE FUNCTION public.sync_feeds_on_connection();
-CREATE TRIGGER trg_poll_votes_counter
-  AFTER INSERT OR DELETE ON poll_votes
-  FOR EACH ROW EXECUTE FUNCTION public.poll_votes_counter_trigger();
 CREATE TRIGGER trg_profile_view_counter
   AFTER INSERT OR DELETE ON profile_view_logs
   FOR EACH ROW EXECUTE FUNCTION public.profile_view_counter_trigger();
@@ -1840,7 +1815,7 @@ DECLARE
     'users','provinces','wards','job_types','work_modes','job_positions',
     'member_profiles','member_experiences','member_educations','skills',
     'member_skills','profile_view_logs','member_cvs','company_profiles',
-    'posts','poll_options','poll_votes','post_reactions','post_comments',
+    'posts','post_reactions','post_comments',
     'post_shares','connections','follows','jobs','job_skills',
     'job_applications',
     'saved_jobs','job_view_logs','conversations',
@@ -1876,8 +1851,6 @@ ALTER TABLE public.profile_view_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.member_cvs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.company_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.poll_options ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.poll_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.post_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.post_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.post_shares ENABLE ROW LEVEL SECURITY;
@@ -2023,40 +1996,6 @@ CREATE POLICY posts_update_own ON public.posts
   WITH CHECK (author_id = public.auth_user_id() AND public.is_active_user());
 CREATE POLICY posts_delete_own ON public.posts
   FOR DELETE USING (author_id = public.auth_user_id() AND public.is_active_user());
-
-CREATE POLICY poll_options_admin_all ON public.poll_options
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-CREATE POLICY poll_options_select_visible ON public.poll_options
-  FOR SELECT USING (public.can_view_post(post_id));
-CREATE POLICY poll_options_insert_own ON public.poll_options
-  FOR INSERT WITH CHECK (
-    public.is_active_user()
-    AND
-    EXISTS (SELECT 1 FROM public.posts p WHERE p.id = post_id AND p.author_id = public.auth_user_id())
-  );
-CREATE POLICY poll_options_update_own ON public.poll_options
-  FOR UPDATE USING (
-    public.is_active_user()
-    AND EXISTS (SELECT 1 FROM public.posts p WHERE p.id = post_id AND p.author_id = public.auth_user_id())
-  )
-  WITH CHECK (
-    public.is_active_user()
-    AND EXISTS (SELECT 1 FROM public.posts p WHERE p.id = post_id AND p.author_id = public.auth_user_id())
-  );
-CREATE POLICY poll_options_delete_own ON public.poll_options
-  FOR DELETE USING (
-    public.is_active_user()
-    AND EXISTS (SELECT 1 FROM public.posts p WHERE p.id = post_id AND p.author_id = public.auth_user_id())
-  );
-
-CREATE POLICY poll_votes_admin_all ON public.poll_votes
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-CREATE POLICY poll_votes_select_visible ON public.poll_votes
-  FOR SELECT USING (public.can_view_post(post_id));
-CREATE POLICY poll_votes_insert_own ON public.poll_votes
-  FOR INSERT WITH CHECK (user_id = public.auth_user_id() AND public.is_active_user() AND public.can_view_post(post_id));
-CREATE POLICY poll_votes_delete_own ON public.poll_votes
-  FOR DELETE USING (user_id = public.auth_user_id() AND public.is_active_user());
 
 CREATE POLICY post_reactions_admin_all ON public.post_reactions
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
@@ -2373,8 +2312,6 @@ ALTER TABLE public.posts              REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.post_reactions     REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.post_comments      REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.post_shares        REPLICA IDENTITY DEFAULT;
-ALTER TABLE public.poll_options       REPLICA IDENTITY DEFAULT;
-ALTER TABLE public.poll_votes         REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.messages           REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.conversations      REPLICA IDENTITY DEFAULT;
 ALTER TABLE public.conversation_participants REPLICA IDENTITY DEFAULT;
@@ -2401,12 +2338,6 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'post_shares') THEN
     EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.post_shares';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'poll_options') THEN
-    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.poll_options';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'poll_votes') THEN
-    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.poll_votes';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'messages') THEN
     EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.messages';
@@ -3656,20 +3587,6 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.poll_votes_counter_trigger()
-RETURNS trigger AS $$
-BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE public.poll_options SET vote_count = vote_count + 1 WHERE id = NEW.option_id;
-    RETURN NEW;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE public.poll_options SET vote_count = GREATEST(0, vote_count - 1) WHERE id = OLD.option_id;
-    RETURN OLD;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
-
 CREATE OR REPLACE FUNCTION public.count_applications_per_job(p_job_ids BIGINT[])
 RETURNS TABLE(job_id BIGINT, count BIGINT)
 LANGUAGE sql
@@ -3758,7 +3675,7 @@ BEGIN
         RETURN jsonb_build_object('ok', FALSE, 'error', 'accountInactive');
     END IF;
 
-    IF p_post_type NOT IN ('text','image','video','article','poll') THEN
+    IF p_post_type NOT IN ('text','image','video','article') THEN
         RETURN jsonb_build_object('ok', FALSE, 'error', 'invalidPostType');
     END IF;
 
@@ -3969,14 +3886,7 @@ BEGIN
                    p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
                    p.share_count AS "shareCount",
                    EXISTS(SELECT 1 FROM public.post_reactions pr
-                           WHERE pr.post_id = p.id AND pr.user_id = v_me) AS "viewerReacted",
-                   CASE WHEN p.post_type = 'poll' THEN (
-                       SELECT COALESCE(jsonb_agg(jsonb_build_object('id', po.id, 'optionText', po.option_text,
-                           'voteCount', po.vote_count, 'viewerVoted', CASE WHEN v_me IS NULL THEN FALSE
-                               ELSE EXISTS(SELECT 1 FROM public.poll_votes pv WHERE pv.option_id = po.id AND pv.user_id = v_me)
-                           END) ORDER BY po.id), '[]'::jsonb)
-                       FROM public.poll_options po WHERE po.post_id = p.id)
-                   ELSE NULL END AS "pollOptions"
+                           WHERE pr.post_id = p.id AND pr.user_id = v_me) AS "viewerReacted"
               FROM unnest(v_post_ids) f(id) JOIN public.posts p ON p.id = f.id
               JOIN public.users u ON u.id = p.author_id
               LEFT JOIN public.member_profiles mp ON mp.user_id = p.author_id
@@ -5019,14 +4929,7 @@ BEGIN
                    f.share_count AS "shareCount",
                    CASE WHEN v_me IS NULL THEN FALSE
                         ELSE EXISTS(SELECT 1 FROM public.post_reactions r WHERE r.post_id = f.id AND r.user_id = v_me)
-                   END AS "viewerReacted",
-                   CASE WHEN f.post_type = 'poll' THEN (
-                       SELECT COALESCE(jsonb_agg(jsonb_build_object('id', po.id, 'optionText', po.option_text,
-                           'voteCount', po.vote_count, 'viewerVoted', CASE WHEN v_me IS NULL THEN FALSE
-                               ELSE EXISTS(SELECT 1 FROM public.poll_votes pv WHERE pv.option_id = po.id AND pv.user_id = v_me)
-                           END) ORDER BY po.id), '[]'::jsonb)
-                       FROM public.poll_options po WHERE po.post_id = f.id)
-                   ELSE NULL END AS "pollOptions"
+                   END AS "viewerReacted"
               FROM feed f
               JOIN public.users au ON au.id = f.author_id
               LEFT JOIN public.member_profiles amp ON amp.user_id = f.author_id AND amp.deleted_at IS NULL
@@ -5417,75 +5320,6 @@ $$;
 GRANT EXECUTE ON FUNCTION public.cleanup_rate_limits(INT) TO service_role;
 
 -- =============================================================================
--- #9: create_poll_post RPC — Transaction atomic
--- =============================================================================
-
-CREATE OR REPLACE FUNCTION public.create_poll_post(
-  p_content TEXT,
-  p_visibility TEXT DEFAULT 'public',
-  p_options JSONB DEFAULT '[]'::JSONB
-)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_author_id BIGINT;
-  v_post_id BIGINT;
-  v_option RECORD;
-  v_options JSONB := '[]'::JSONB;
-  v_total_votes INT := 0;
-BEGIN
-  SELECT id INTO v_author_id FROM public.users
-   WHERE auth_id = auth.uid() AND deleted_at IS NULL;
-
-  IF v_author_id IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'unauthorized');
-  END IF;
-
-  IF jsonb_array_length(p_options) < 2 THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'invalidOptions');
-  END IF;
-
-  INSERT INTO public.posts (author_id, content, post_type, visibility)
-  VALUES (v_author_id, COALESCE(p_content, ''), 'poll', p_visibility)
-  RETURNING id INTO v_post_id;
-
-  FOR v_option IN SELECT value->>0 AS option_text FROM jsonb_array_elements(p_options) AS value
-  LOOP
-    INSERT INTO public.poll_options (post_id, option_text, vote_count)
-    VALUES (v_post_id, v_option.option_text, 0)
-    RETURNING id, option_text, vote_count INTO STRICT v_option;
-
-    v_options := v_options || jsonb_build_object(
-      'id', v_option.id,
-      'optionText', v_option.option_text,
-      'voteCount', 0
-    );
-  END LOOP;
-
-  UPDATE public.posts
-  SET media = jsonb_build_object(
-    'type', 'poll',
-    'options', v_options,
-    'totalVotes', v_total_votes
-  )
-  WHERE id = v_post_id;
-
-  RETURN jsonb_build_object(
-    'ok', true,
-    'postId', v_post_id,
-    'authorId', v_author_id,
-    'options', v_options,
-    'totalVotes', v_total_votes
-  );
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.create_poll_post(TEXT, TEXT, JSONB) TO authenticated;
-
--- =============================================================================
 -- #11: Network Suggestions Refresh RPC
 -- =============================================================================
 
@@ -5671,7 +5505,7 @@ INSERT INTO public.modules (name, label, sort_order) VALUES
 ('brand', 'Thương hiệu', 10),
 ('report_types', 'Loại báo cáo', 11),
 ('lookups', 'Danh mục', 12),
-('settings', 'Cài đặt hệ thống', 13),
+('settings', 'Cài đặt cá nhân', 13),
 ('roles', 'Quản lý quyền', 14)
 ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order;
 
@@ -5680,7 +5514,6 @@ INSERT INTO public.actions (name, label) VALUES
 ('create', 'Tạo mới'),
 ('edit', 'Chỉnh sửa'),
 ('delete', 'Xóa'),
-('export', 'Xuất dữ liệu'),
 ('suspend', 'Khóa tài khoản'),
 ('ban', 'Cấm'),
 ('restore', 'Khôi phục'),
@@ -5692,7 +5525,7 @@ ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
 WITH permission_pairs(module_name, action_names) AS (
   VALUES
     ('dashboard', ARRAY['view']),
-    ('users', ARRAY['view','create','edit','delete','export','suspend','ban','restore']),
+    ('users', ARRAY['view','create','edit','delete','suspend','ban','restore']),
     ('companies', ARRAY['view','edit','suspend','moderate','restore']),
     ('jobs', ARRAY['view','moderate','delete']),
     ('posts', ARRAY['view','moderate','delete']),
@@ -5887,7 +5720,7 @@ INSERT INTO public.modules (name, label, sort_order) VALUES
 ('brand', 'Thương hiệu', 17),
 ('report_types', 'Loại báo cáo', 18),
 ('lookups', 'Danh mục', 19),
-('settings', 'Cài đặt hệ thống', 20),
+('settings', 'Cài đặt cá nhân', 20),
 ('roles', 'Quản lý quyền', 21)
 ON CONFLICT (name) DO UPDATE
 SET label = EXCLUDED.label,
@@ -5899,7 +5732,6 @@ INSERT INTO public.actions (name, label) VALUES
 ('create', 'Tạo mới'),
 ('edit', 'Chỉnh sửa'),
 ('delete', 'Xóa'),
-('export', 'Xuất dữ liệu'),
 ('suspend', 'Khóa tài khoản'),
 ('ban', 'Cấm'),
 ('restore', 'Khôi phục'),
@@ -5914,8 +5746,7 @@ INSERT INTO public.actions (name, label) VALUES
 ('block', 'Chặn'),
 ('react', 'Tương tác'),
 ('comment', 'Bình luận'),
-('share', 'Chia sẻ'),
-('vote', 'Bình chọn')
+('share', 'Chia sẻ')
 ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
 
 WITH permission_pairs(module_name, action_names) AS (
@@ -5929,10 +5760,10 @@ WITH permission_pairs(module_name, action_names) AS (
     ('notifications', ARRAY['view','edit']),
     ('profile', ARRAY['view','edit']),
     ('cvs', ARRAY['view','create','edit','delete']),
-    ('users', ARRAY['view','create','edit','delete','export','suspend','ban','restore']),
+    ('users', ARRAY['view','create','edit','delete','suspend','ban','restore']),
     ('companies', ARRAY['view','follow','edit','suspend','moderate','restore']),
     ('jobs', ARRAY['view','create','edit','apply','save','moderate','delete']),
-    ('posts', ARRAY['view','create','edit','comment','react','share','vote','moderate','delete']),
+    ('posts', ARRAY['view','create','edit','comment','react','share','moderate','delete']),
     ('reports', ARRAY['create','view','moderate','status']),
     ('appeals', ARRAY['view','create','moderate']),
     ('audit', ARRAY['view']),
@@ -5976,7 +5807,7 @@ WITH role_permission_seed(role_name, permission_name) AS (
     ('member', 'companies.view'), ('member', 'companies.follow'),
     ('member', 'jobs.view'), ('member', 'jobs.apply'), ('member', 'jobs.save'),
     ('member', 'posts.view'), ('member', 'posts.create'), ('member', 'posts.edit'), ('member', 'posts.comment'),
-    ('member', 'posts.react'), ('member', 'posts.share'), ('member', 'posts.vote'), ('member', 'posts.delete'),
+    ('member', 'posts.react'), ('member', 'posts.share'), ('member', 'posts.delete'),
     ('member', 'reports.create'), ('member', 'appeals.view'), ('member', 'appeals.create'),
     ('member', 'contacts.create'), ('member', 'settings.view'), ('member', 'settings.edit'),
 
@@ -5988,7 +5819,7 @@ WITH role_permission_seed(role_name, permission_name) AS (
     ('company', 'companies.view'), ('company', 'companies.follow'), ('company', 'companies.edit'),
     ('company', 'jobs.view'), ('company', 'jobs.create'), ('company', 'jobs.edit'),
     ('company', 'posts.view'), ('company', 'posts.create'), ('company', 'posts.edit'), ('company', 'posts.comment'),
-    ('company', 'posts.react'), ('company', 'posts.share'), ('company', 'posts.vote'), ('company', 'posts.delete'),
+    ('company', 'posts.react'), ('company', 'posts.share'), ('company', 'posts.delete'),
     ('company', 'reports.create'), ('company', 'appeals.view'), ('company', 'appeals.create'),
     ('company', 'contacts.create'), ('company', 'settings.view'), ('company', 'settings.edit'),
 
@@ -5999,7 +5830,7 @@ WITH role_permission_seed(role_name, permission_name) AS (
 
     ('user_manager', 'admin.access'), ('user_manager', 'dashboard.view'),
     ('user_manager', 'users.view'), ('user_manager', 'users.create'), ('user_manager', 'users.edit'),
-    ('user_manager', 'users.delete'), ('user_manager', 'users.export'), ('user_manager', 'users.suspend'),
+    ('user_manager', 'users.delete'), ('user_manager', 'users.suspend'),
     ('user_manager', 'users.ban'), ('user_manager', 'users.restore'),
     ('user_manager', 'companies.view'), ('user_manager', 'companies.edit'), ('user_manager', 'companies.suspend'),
     ('user_manager', 'companies.moderate'), ('user_manager', 'companies.restore'),

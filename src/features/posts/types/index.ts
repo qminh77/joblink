@@ -15,13 +15,6 @@ export type FeedAuthor = {
   headline: string | null
 }
 
-export type PollOption = {
-  id: number
-  optionText: string
-  voteCount: number
-  viewerVoted: boolean
-}
-
 export type FeedPost = {
   id: number
   authorId: number
@@ -35,7 +28,6 @@ export type FeedPost = {
   commentCount: number
   shareCount: number
   viewerReacted: boolean
-  pollOptions?: PollOption[]
 }
 
 export type HomeFeedStats = {
@@ -113,13 +105,10 @@ export type CreatePostActionInput = {
   content: string
   visibility?: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
-  options?: string[]
   videoUrl?: string
 }
 
 export type ToggleReactionResult = { reacted: boolean }
-
-export type VoteResult = { optionId: number; postId: number }
 
 export type CreateCommentActionInput = {
   postId: number
@@ -143,7 +132,6 @@ export type UpdatePostActionInput = {
   content: string
   visibility: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
-  options?: { id?: number; optionText: string }[]
 }
 
 export type UpdatePostResult = {
@@ -153,7 +141,6 @@ export type UpdatePostResult = {
   media: Json | null
   postType: PostType
   updatedAt: string
-  pollOptions?: { id: number; optionText: string; voteCount: number }[]
 }
 
 export type { PostReactionType }

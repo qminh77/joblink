@@ -68,11 +68,6 @@ export type ApplicationWithdrawnPayload = ActorRef & {
   applicationId: number
 }
 
-export type PollVotePayload = ActorRef & {
-  postId: number
-  optionText: string
-}
-
 export type NotificationPayload =
   | ({ type: "connection_request" } & ConnectionRequestPayload)
   | ({ type: "connection_accepted" } & ConnectionAcceptedPayload)
@@ -86,7 +81,6 @@ export type NotificationPayload =
   | ({ type: "job_application_received" } & JobApplicationReceivedPayload)
   | ({ type: "application_status_changed" } & ApplicationStatusChangedPayload)
   | ({ type: "application_withdrawn" } & ApplicationWithdrawnPayload)
-  | ({ type: "poll_vote" } & PollVotePayload)
 
 export type NotificationItem = {
   id: number

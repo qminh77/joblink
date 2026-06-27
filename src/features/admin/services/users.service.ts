@@ -7,7 +7,6 @@ import { writeAuditLog } from "../api/audit-log"
 import type { UserActionInput } from "../schemas"
 import {
   getAdminUserTarget,
-  listAdminUserExportRows,
   listAdminUserRows,
   listUserDisplayProfileRows,
   updateAdminUserStatus,
@@ -15,7 +14,6 @@ import {
 import type {
   AdminUserListResult,
   AdminUserRow,
-  ExportUsersParams,
   ListUsersParams,
   UserActionResult,
 } from "../types"
@@ -59,65 +57,6 @@ export async function loadAdminUsers(
   }))
 
   return { items, total: count, page, pageSize }
-}
-
-export async function exportUsersCsv(
-  supabase: AdminSupabase,
-  actor: AdminActor,
-  params: ExportUsersParams = {},
-): Promise<{ ok: true; filename: string; csv: string } | { ok: false }> {
-  const { rows, error } = await listAdminUserExportRows(supabase, params)
-  if (error) return { ok: false }
-
-  const profiles = await buildDisplayProfiles(
-    supabase,
-    rows.map((row) => row.id),
-    false,
-  )
-
-  const header = [
-    "id",
-    "email",
-    "display_name",
-    "role",
-    "status",
-    "created_at",
-    "last_login_at",
-  ]
-  const lines = [header.join(",")]
-  for (const row of rows) {
-    lines.push(
-      [
-        row.id,
-        row.email,
-        profiles[row.id]?.displayName ?? "",
-        row.role,
-        row.status,
-        row.created_at,
-        row.last_login_at ?? "",
-      ]
-        .map(csvCell)
-        .join(","),
-    )
-  }
-
-  const bom = String.fromCharCode(0xfeff)
-  const csv = bom + lines.join("\r\n")
-
-  await writeAuditLog({
-    actorId: actor.appUser.id,
-    action: "users.export_csv",
-    entityType: "users",
-    newData: {
-      count: rows.length,
-      role: params.role ?? "all",
-      status: params.status ?? "all",
-      search: params.search?.trim() || null,
-    },
-  })
-
-  const date = new Date().toISOString().slice(0, 10)
-  return { ok: true, filename: `joblink-users-${date}.csv`, csv }
 }
 
 export async function applyUserModerationAction(
@@ -182,11 +121,6 @@ async function buildDisplayProfiles(
   }
 
   return profiles
-}
-
-function csvCell(value: unknown): string {
-  const text = value == null ? "" : String(value)
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
 function userActionStatus(action: UserActionInput["action"]): UserStatus {

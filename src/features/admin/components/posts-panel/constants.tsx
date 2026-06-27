@@ -9,7 +9,6 @@ export const TYPE_STYLE: Record<string, string> = {
   image: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   video: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   article: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  poll: "bg-amber-500/10 text-amber-600 border-amber-500/20",
 }
 
 export const VISIBILITY_STYLE: Record<string, string> = {

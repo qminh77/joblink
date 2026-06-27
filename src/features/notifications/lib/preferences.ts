@@ -12,7 +12,6 @@ export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number]
 
 export const CATEGORY_BY_TYPE: Record<NotificationType, NotificationCategory> = {
   post_reaction: "like",
-  poll_vote: "like",
   post_comment: "comment",
   comment_mention: "comment",
   post_share: "comment",

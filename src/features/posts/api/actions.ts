@@ -13,17 +13,13 @@ import { searchMentionableProfiles } from "../data/posts.repo"
 import {
   createCommentIdSchema,
   createCommentInputSchema,
-  createPollInputSchema,
   createPostIdSchema,
   createPostInputSchema,
   createPostUpdateSchema,
   createReactionInputSchema,
   createShareInputSchema,
-  createUpdatePollSchema,
-  createVoteInputSchema,
 } from "../schemas"
 import {
-  createPollPost,
   createPostComment,
   createStandardPost,
   createVideoPost,
@@ -31,9 +27,7 @@ import {
   deletePostComment,
   shareFeedPost,
   togglePostReaction,
-  updatePollPost,
   updateStandardPost,
-  voteOnPoll,
 } from "../services/post-actions.service"
 import {
   loadFeedPage,
@@ -57,7 +51,6 @@ import type {
   UpdatePostActionInput,
   UpdatePostResult,
   UserPostsPage,
-  VoteResult,
 } from "../types"
 
 export type { MentionableUser } from "../types"
@@ -119,21 +112,6 @@ export async function createPostAction(
     await checkRateLimit(current.appUser.id, "post", 5, 60) // 5 posts / 60s
     const supabase = await createClient()
 
-    const hasPoll = Array.isArray(input.options) && input.options.length >= 2
-    if (hasPoll) {
-      const data = parse(createPollInputSchema(t), input)
-      const post = await createPollPost(supabase, current, data)
-      await writeAuditLog({
-        actorId: current.appUser.id,
-        action: "post.create_poll",
-        entityType: "posts",
-        entityId: post.id,
-        newData: { postType: "poll", visibility: data.visibility },
-      })
-      revalidateHome()
-      return post
-    }
-
     const videoUrl =
       typeof input.videoUrl === "string" && input.videoUrl.startsWith("http")
         ? input.videoUrl
@@ -183,27 +161,6 @@ export async function toggleReactionAction(
       action: result.reacted ? "post.reaction_add" : "post.reaction_remove",
       entityType: "post_reactions",
       entityId: postId,
-    })
-    return result
-  })
-}
-
-export async function voteAction(
-  postId: number,
-  optionId: number,
-): Promise<ActionResult<VoteResult>> {
-  return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.vote")
-    const data = parse(createVoteInputSchema(t), { postId, optionId })
-    await checkRateLimit(current.appUser.id, "vote", 10, 60) // 10 votes / 60s
-    const supabase = await createClient()
-    const result = await voteOnPoll(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.poll_vote",
-      entityType: "poll_votes",
-      entityId: postId,
-      newData: { optionId },
     })
     return result
   })
@@ -274,20 +231,6 @@ export async function updatePostAction(
     const current = await requirePermission("posts.edit")
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 updates / 60s
     const supabase = await createClient()
-
-    if (input.options) {
-      const data = parse(createUpdatePollSchema(t), input)
-      const result = await updatePollPost(supabase, current, data)
-      await writeAuditLog({
-        actorId: current.appUser.id,
-        action: "post.update_poll",
-        entityType: "posts",
-        entityId: input.postId,
-        newData: { optionsCount: input.options.length },
-      })
-      revalidateHome()
-      return result
-    }
 
     const data = parse(createPostUpdateSchema(t), input)
     const result = await updateStandardPost(supabase, current, data)

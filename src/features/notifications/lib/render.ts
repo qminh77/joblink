@@ -1,6 +1,5 @@
 import {
   AtSign,
-  BarChart2,
   Bell,
   Briefcase,
   MessageCircle,
@@ -98,10 +97,6 @@ const VISUALS: Record<
     icon: XCircle,
     iconClassName: "text-rose-500 bg-rose-500/10",
   },
-  poll_vote: {
-    icon: BarChart2,
-    iconClassName: "text-orange-500 bg-orange-500/10",
-  },
 }
 
 
@@ -138,7 +133,6 @@ export function getNotificationVisual(
     case "post_comment":
     case "post_share":
     case "comment_mention":
-    case "poll_vote":
       return {
         ...base,
         href:

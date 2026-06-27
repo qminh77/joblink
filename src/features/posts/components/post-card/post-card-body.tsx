@@ -3,7 +3,6 @@
 import type { MediaItem } from "../../lib/media"
 import { readSharedOriginal, readVideoUrl } from "../../lib/media"
 import type { FeedPost } from "../../types"
-import { PollView } from "../poll-view"
 import { PostMediaView } from "../post-media-view"
 import { SharedPostQuote } from "../shared-post-quote"
 
@@ -26,9 +25,7 @@ export function PostCardBody({
         </div>
       ) : null}
 
-      {post.postType === "poll" ? (
-        <PollView post={post} />
-      ) : isSharedPost ? (
+      {isSharedPost ? (
         <SharedPostQuote media={post.media} onOpenLightbox={onOpenLightbox} />
       ) : videoUrl ? (
         <div className="mt-4 rounded-xl overflow-hidden bg-black">

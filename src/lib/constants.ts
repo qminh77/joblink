@@ -48,7 +48,7 @@ export const APPLICATION_STATUSES = [
 ] as const
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number]
 
-export const POST_TYPES = ["text", "image", "video", "article", "poll"] as const
+export const POST_TYPES = ["text", "image", "video", "article"] as const
 export type PostType = (typeof POST_TYPES)[number]
 
 export const POST_VISIBILITIES = ["public", "connections", "private"] as const

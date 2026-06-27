@@ -115,15 +115,6 @@
     "originalDeleted": "The original post has been deleted",
     "copyLinkSuccess": "Link copied",
     "copyLinkError": "Could not copy link",
-    "poll": "Poll",
-    "vote": "Vote",
-    "voteSuccess": "Vote recorded",
-    "totalVotes": "{count} votes",
-    "addOption": "Add option",
-    "removeOption": "Remove option",
-    "pollOption": "Option {n}",
-    "minOptions": "At least 2 options required",
-    "maxOptions": "Maximum 10 options allowed",
     "errors": {
       "contentRequired": "Please enter some content",
       "contentOrMediaRequired": "Please enter content or attach an image",
@@ -146,10 +137,6 @@
       "commentFailed": "Could not post comment",
       "loadCommentsFailed": "Could not load comments",
       "deleteCommentFailed": "Could not delete comment",
-      "voteFailed": "Could not record vote",
-      "alreadyVoted": "You already voted on this poll",
-      "votedOptionRemoveBlocked": "Cannot remove an option that has votes",
-      "pollAndMedia": "Cannot add images to a poll post",
       "unexpected": "Something went wrong, please try again",
       "videoTooLarge": "Video must be at most {max}MB",
       "videoInvalidType": "Unsupported video format ({types})"
@@ -1003,7 +990,6 @@
     "noSuggestions": "No suggestions yet",
     "composerPlaceholder": "What's on your mind, {name}?",
     "photoVideo": "Photo/Video",
-    "poll": "Poll",
     "postJob": "Post a job",
     "latest": "Latest",
     "jobSuggestions": "Job suggestions",
@@ -1073,7 +1059,6 @@
       "job_application_received": "applied to {jobTitle}",
       "application_status_changed": "updated your application for {jobTitle} to {status}",
       "application_withdrawn": "withdrew their application for {jobTitle}",
-      "poll_vote": "voted on your poll",
       "unknown": "has new activity"
     },
     "appStatus": {
@@ -1167,7 +1152,6 @@
       "posts": "Posts",
       "reports": "Reports",
       "auditLog": "Audit log",
-      "settings": "Settings",
       "reportTypes": "Report types",
       "roles": "Roles",
       "groups": {
@@ -1218,8 +1202,7 @@
         "text": "Text",
         "image": "Image",
         "video": "Video",
-        "article": "Article",
-        "poll": "Poll"
+        "article": "Article"
       },
       "author": "Author",
       "createdAt": "Created",
@@ -1330,11 +1313,7 @@
         "suspended": "User suspended",
         "banned": "User banned",
         "restored": "User restored"
-      },
-      "exportCsv": "Export CSV",
-      "exporting": "Exporting...",
-      "exportDone": "Users exported",
-      "exportFailed": "Export failed, please try again"
+      }
     },
     "companies": {
       "title": "Company verification",
@@ -1504,60 +1483,6 @@
       "descriptionPlaceholder": "Brief description of this role",
       "permissionLabel": "Permissions",
       "permissionRequired": "Required"
-    },
-    "settings": {
-      "title": "System settings",
-      "subtitle": "Global configuration",
-      "saveAll": "Save changes",
-      "saving": "Saving...",
-      "saved": "Settings saved",
-      "smtpTest": {
-        "title": "SMTP test",
-        "description": "After saving, send a test email to verify SMTP is working.",
-        "recipient": "Test recipient",
-        "recipientPlaceholder": "Default: your email",
-        "verify": "Verify connection",
-        "send": "Send test email",
-        "sending": "Sending...",
-        "verifying": "Verifying...",
-        "connectionOk": "SMTP connection OK",
-        "sendOk": "Test email sent",
-        "failed": "Failed: {error}"
-      },
-      "groups": {
-        "regional": "Regional",
-        "smtp": "SMTP email",
-        "recaptcha": "reCAPTCHA",
-        "security": "Security",
-        "contact": "Contact"
-      },
-      "fields": {
-        "default_locale": "Default locale",
-        "default_timezone": "Timezone",
-        "default_currency": "Currency",
-        "available_locales": "Available locales",
-        "smtp_host": "SMTP host",
-        "smtp_port": "SMTP port",
-        "smtp_username": "Username",
-        "smtp_password": "Password",
-        "smtp_encryption": "Encryption",
-        "smtp_from_email": "From email",
-        "smtp_from_name": "From name",
-        "recaptcha_enabled": "Enable reCAPTCHA",
-        "recaptcha_site_key": "Site key",
-        "recaptcha_secret": "Secret",
-        "login_rate_limit": "Login rate limit / min",
-        "upload_max_mb": "Max upload size (MB)",
-        "require_2fa_admin": "Require 2FA for admin",
-        "contact_address": "Address",
-        "contact_email": "Contact email",
-        "contact_phone": "Phone number",
-        "contact_content": "Contact content",
-        "contact_map_url": "Map link",
-        "google_auth_enabled": "Enable Google sign-in",
-        "require_email_verification": "Require email verification on signup",
-        "passkey_enabled": "Enable passkey sign-in"
-      }
     }
   },
   "cvs": {

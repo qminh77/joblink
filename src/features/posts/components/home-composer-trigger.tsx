@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { BarChart2, Briefcase, Image as ImageIcon } from "lucide-react"
+import { Briefcase, Image as ImageIcon } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
@@ -45,16 +45,6 @@ export function HomeComposerTrigger() {
             <ImageIcon className="text-blue-500 w-4 h-4" />
             <span className="text-[11px] sm:text-xs font-semibold">
               {tHome("photoVideo")}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <BarChart2 className="text-orange-500 w-4 h-4" />
-            <span className="text-[11px] sm:text-xs font-semibold">
-              {tHome("poll")}
             </span>
           </button>
           {user.role === "company" ? (

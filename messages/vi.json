@@ -115,15 +115,6 @@
     "originalDeleted": "Bài viết gốc đã bị xoá",
     "copyLinkSuccess": "Đã sao chép liên kết",
     "copyLinkError": "Không thể sao chép liên kết",
-    "poll": "Bình chọn",
-    "vote": "Bỏ phiếu",
-    "voteSuccess": "Đã ghi nhận phiếu bầu",
-    "totalVotes": "{count} lượt bình chọn",
-    "addOption": "Thêm lựa chọn",
-    "removeOption": "Xoá lựa chọn",
-    "pollOption": "Lựa chọn {n}",
-    "minOptions": "Cần ít nhất 2 lựa chọn",
-    "maxOptions": "Tối đa 10 lựa chọn",
     "errors": {
       "contentRequired": "Vui lòng nhập nội dung",
       "contentOrMediaRequired": "Vui lòng nhập nội dung hoặc đính kèm ảnh",
@@ -146,10 +137,6 @@
       "commentFailed": "Không thể đăng bình luận",
       "loadCommentsFailed": "Không thể tải bình luận",
       "deleteCommentFailed": "Không thể xoá bình luận",
-      "voteFailed": "Không thể ghi nhận phiếu bầu",
-      "alreadyVoted": "Bạn đã bình chọn trong cuộc thăm dò này",
-      "votedOptionRemoveBlocked": "Không thể xoá lựa chọn đã có phiếu bầu",
-      "pollAndMedia": "Không thể thêm ảnh vào bài bình chọn",
       "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại",
       "videoTooLarge": "Video tối đa {max}MB",
       "videoInvalidType": "Định dạng video không hỗ trợ ({types})"
@@ -1003,7 +990,6 @@
     "noSuggestions": "Chưa có gợi ý nào",
     "composerPlaceholder": "Bạn đang nghĩ gì, {name}?",
     "photoVideo": "Ảnh/Video",
-    "poll": "Bình chọn",
     "postJob": "Đăng tin",
     "latest": "Mới nhất",
     "jobSuggestions": "Việc làm gợi ý",
@@ -1073,7 +1059,6 @@
       "job_application_received": "đã ứng tuyển vào {jobTitle}",
       "application_status_changed": "đã cập nhật đơn của bạn tại {jobTitle} thành {status}",
       "application_withdrawn": "đã rút đơn ứng tuyển vào {jobTitle}",
-      "poll_vote": "đã bình chọn trong cuộc thăm dò của bạn",
       "unknown": "có hoạt động mới"
     },
     "appStatus": {
@@ -1167,7 +1152,6 @@
       "posts": "Bài viết",
       "reports": "Báo cáo",
       "auditLog": "Nhật ký",
-      "settings": "Cài đặt",
       "reportTypes": "Loại báo cáo",
       "roles": "Quản lý quyền",
       "groups": {
@@ -1218,8 +1202,7 @@
         "text": "Văn bản",
         "image": "Hình ảnh",
         "video": "Video",
-        "article": "Bài viết",
-        "poll": "Bình chọn"
+        "article": "Bài viết"
       },
       "author": "Tác giả",
       "createdAt": "Tạo lúc",
@@ -1330,11 +1313,7 @@
         "suspended": "Đã tạm khóa người dùng",
         "banned": "Đã cấm người dùng",
         "restored": "Đã khôi phục người dùng"
-      },
-      "exportCsv": "Xuất CSV",
-      "exporting": "Đang xuất...",
-      "exportDone": "Đã xuất danh sách người dùng",
-      "exportFailed": "Không thể xuất, vui lòng thử lại"
+      }
     },
     "companies": {
       "title": "Xác minh doanh nghiệp",
@@ -1504,60 +1483,6 @@
       "descriptionPlaceholder": "Mô tả ngắn về role này",
       "permissionLabel": "Phân quyền",
       "permissionRequired": "Bắt buộc"
-    },
-    "settings": {
-      "title": "Cài đặt hệ thống",
-      "subtitle": "Cấu hình toàn cục cho ứng dụng",
-      "saveAll": "Lưu thay đổi",
-      "saving": "Đang lưu...",
-      "saved": "Đã lưu cài đặt",
-      "smtpTest": {
-        "title": "Kiểm tra SMTP",
-        "description": "Sau khi lưu cấu hình, gửi email kiểm tra để xác nhận SMTP hoạt động.",
-        "recipient": "Email nhận thử",
-        "recipientPlaceholder": "Mặc định: email của bạn",
-        "verify": "Kiểm tra kết nối",
-        "send": "Gửi email thử",
-        "sending": "Đang gửi...",
-        "verifying": "Đang kiểm tra...",
-        "connectionOk": "Kết nối SMTP thành công",
-        "sendOk": "Đã gửi email thử thành công",
-        "failed": "Thao tác thất bại: {error}"
-      },
-      "groups": {
-        "regional": "Khu vực",
-        "smtp": "Email SMTP",
-        "recaptcha": "reCAPTCHA",
-        "security": "Bảo mật",
-        "contact": "Liên hệ"
-      },
-      "fields": {
-        "default_locale": "Ngôn ngữ mặc định",
-        "default_timezone": "Múi giờ",
-        "default_currency": "Đơn vị tiền tệ",
-        "available_locales": "Ngôn ngữ khả dụng",
-        "smtp_host": "SMTP Host",
-        "smtp_port": "SMTP Port",
-        "smtp_username": "Username",
-        "smtp_password": "Password",
-        "smtp_encryption": "Mã hóa",
-        "smtp_from_email": "Email gửi",
-        "smtp_from_name": "Tên gửi",
-        "recaptcha_enabled": "Bật reCAPTCHA",
-        "recaptcha_site_key": "Site key",
-        "recaptcha_secret": "Secret",
-        "login_rate_limit": "Giới hạn đăng nhập / phút",
-        "upload_max_mb": "Dung lượng upload tối đa (MB)",
-        "require_2fa_admin": "Yêu cầu 2FA cho admin",
-        "contact_address": "Địa chỉ",
-        "contact_email": "Email liên hệ",
-        "contact_phone": "Số điện thoại",
-        "contact_content": "Nội dung liên hệ",
-        "contact_map_url": "Liên kết bản đồ",
-        "google_auth_enabled": "Cho phép đăng nhập Google",
-        "require_email_verification": "Bắt buộc xác minh email khi đăng ký",
-        "passkey_enabled": "Cho phép đăng nhập bằng Passkey"
-      }
     }
   },
   "cvs": {

@@ -10,18 +10,15 @@ import { writeAuditLog } from "./audit-log"
 import { userActionSchema, type UserActionInput } from "../schemas"
 import {
   applyUserModerationAction,
-  exportUsersCsv,
   loadAdminUsers,
 } from "../services/users.service"
 import type {
   AdminUserListResult,
-  ExportUsersParams,
   ListUsersParams,
   UserActionResult,
 } from "../types"
 
 export type {
-  ExportUsersParams,
   ListUsersParams,
   UserActionResult,
 } from "../types"
@@ -32,14 +29,6 @@ export async function listAdminUsers(
   await requireAdminPermission("users.view")
   const supabase = createAdminClient()
   return loadAdminUsers(supabase, params)
-}
-
-export async function exportUsersCsvAction(
-  params: ExportUsersParams = {},
-): Promise<{ ok: true; filename: string; csv: string } | { ok: false }> {
-  const current = await requireAdminPermission("users.export")
-  const supabase = createAdminClient()
-  return exportUsersCsv(supabase, current, params)
 }
 
 export async function applyUserAction(

@@ -41,7 +41,6 @@ export const PERMISSIONS = {
   "users.create": "Quản lý người dùng - Tạo mới",
   "users.edit": "Quản lý người dùng - Chỉnh sửa",
   "users.delete": "Quản lý người dùng - Xóa",
-  "users.export": "Quản lý người dùng - Xuất dữ liệu",
   "users.suspend": "Quản lý người dùng - Khóa tài khoản",
   "users.ban": "Quản lý người dùng - Cấm",
   "users.restore": "Quản lý người dùng - Khôi phục",
@@ -70,7 +69,6 @@ export const PERMISSIONS = {
   "posts.comment": "Quản lý bài viết - Bình luận",
   "posts.react": "Quản lý bài viết - Tương tác",
   "posts.share": "Quản lý bài viết - Chia sẻ",
-  "posts.vote": "Quản lý bài viết - Bình chọn",
   "posts.moderate": "Quản lý bài viết - Duyệt / Kiểm duyệt",
   "posts.delete": "Quản lý bài viết - Xóa",
 
@@ -90,8 +88,8 @@ export const PERMISSIONS = {
   "report_types.delete": "Loại báo cáo - Xóa",
 
   // Settings
-  "settings.view": "Cài đặt hệ thống - Xem",
-  "settings.edit": "Cài đặt hệ thống - Chỉnh sửa",
+  "settings.view": "Cài đặt cá nhân - Xem",
+  "settings.edit": "Cài đặt cá nhân - Chỉnh sửa",
 
   // Roles
   "roles.view": "Quản lý quyền - Xem",

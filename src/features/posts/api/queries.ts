@@ -113,22 +113,6 @@ export async function loadUserPosts(
   }
 }
 
-type CommentRow = {
-  id: number
-  post_id: number
-  user_id: number
-  parent_id: number | null
-  content: string
-  created_at: string
-}
-
-type AuthorMeta = {
-  role: UserRole
-  displayName: string
-  avatarUrl: string | null
-  headline: string | null
-}
-
 /**
  * Lấy danh sách comment của 1 post + author (role/displayName/avatar/headline).
  *
@@ -144,7 +128,7 @@ export async function loadPostComments(
 ): Promise<FeedComment[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc("get_post_comments" as any, {
+  const { data, error } = await supabase.rpc("get_post_comments", {
     p_post_id: postId,
     p_limit: limit,
   })

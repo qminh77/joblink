@@ -14,9 +14,7 @@ import {
   sharePostAction,
   toggleReactionAction,
   updatePostAction,
-  voteAction,
 } from "../api/actions"
-import { buildPollMedia } from "../lib/poll"
 import type { FeedComment } from "../types"
 import {
   applyToAllPostCaches,
@@ -38,7 +36,6 @@ export function useCreatePost() {
       content: string
       visibility?: "public" | "connections" | "private"
       mediaItems?: { url: string; width?: number; height?: number }[]
-      options?: string[]
       videoUrl?: string
     }) => {
       const result = await createPostAction(input)
@@ -62,7 +59,6 @@ export function useUpdatePost() {
       content: string
       visibility: "public" | "connections" | "private"
       mediaItems?: { url: string; width?: number; height?: number }[]
-      options?: { id?: number; optionText: string }[]
     }) => {
       const result = await updatePostAction(input)
       if (!result.ok) throw new Error(result.error)
@@ -70,24 +66,12 @@ export function useUpdatePost() {
     },
     onSuccess: (updated) => {
       applyToAllPostCaches(qc, updated.postId, (post) => {
-        const upd = updated as Record<string, unknown>
-        const newOptions = upd.pollOptions as
-          | { id: number; optionText: string; voteCount: number }[]
-          | undefined
         return {
           ...post,
           content: updated.content,
           visibility: updated.visibility,
           media: updated.media,
           postType: updated.postType,
-          pollOptions: newOptions
-            ? newOptions.map((option) => ({
-                id: option.id,
-                optionText: option.optionText,
-                voteCount: option.voteCount,
-                viewerVoted: false,
-              }))
-            : post.pollOptions,
         }
       })
       toast.success(t("updateSuccess"))
@@ -198,77 +182,6 @@ export function useCreateComment() {
         commentCount: Math.max(0, post.commentCount - 1),
       }))
       toast.error(error.message)
-    },
-  })
-}
-
-export function useVote() {
-  const qc = useQueryClient()
-  const t = useTranslations("posts")
-  return useMutation({
-    mutationFn: async ({
-      postId,
-      optionId,
-    }: {
-      postId: number
-      optionId: number
-    }) => {
-      const result = await voteAction(postId, optionId)
-      if (!result.ok) throw new Error(result.error)
-      return result.data
-    },
-    onMutate: async ({ postId, optionId }) => {
-      await qc.cancelQueries({ queryKey: FEED_QUERY_KEY })
-      await qc.cancelQueries({ queryKey: ["user-posts"] })
-      const previousFeed = qc.getQueryData<FeedCache>(FEED_QUERY_KEY)
-      const previousUserPosts = qc.getQueriesData<UserPostsCache>({
-        queryKey: ["user-posts"],
-      })
-
-      applyToAllPostCaches(qc, postId, (post) => {
-        if (post.postType !== "poll" || !post.pollOptions) return post
-
-        const updatedPollOptions = post.pollOptions.map((option) => ({
-          ...option,
-          voteCount:
-            option.id === optionId ? option.voteCount + 1 : option.voteCount,
-          viewerVoted: option.id === optionId,
-        }))
-
-        const updatedTotalVotes = updatedPollOptions.reduce(
-          (sum, option) => sum + option.voteCount,
-          0,
-        )
-
-        return {
-          ...post,
-          pollOptions: updatedPollOptions,
-          media: buildPollMedia(
-            updatedPollOptions.map(({ id, optionText, voteCount }) => ({
-              id,
-              optionText,
-              voteCount,
-            })),
-            updatedTotalVotes,
-          ),
-        }
-      })
-
-      return { previousFeed, previousUserPosts }
-    },
-    onError: (error: Error, _vars, context) => {
-      if (context?.previousFeed) {
-        qc.setQueryData(FEED_QUERY_KEY, context.previousFeed)
-      }
-      if (context?.previousUserPosts) {
-        for (const [key, data] of context.previousUserPosts) {
-          qc.setQueryData(key, data)
-        }
-      }
-      toast.error(error.message)
-    },
-    onSuccess: () => {
-      toast.success(t("voteSuccess"))
     },
   })
 }

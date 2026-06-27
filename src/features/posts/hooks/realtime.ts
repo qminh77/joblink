@@ -69,7 +69,6 @@ export function useRealtimeEngagement(
       "post_reactions",
       "post_comments",
       "post_shares",
-      "poll_options",
     ]) {
       channel.on(
         "postgres_changes",
@@ -130,14 +129,6 @@ export function useRealtimeEngagement(
                     }
                   } else if (table === "post_shares") {
                     if (payload.eventType === "INSERT") p.shareCount++
-                  } else if (table === "poll_options" && payload.eventType === "UPDATE") {
-                    if (p.pollOptions && typeof row.id === "number" && typeof row.vote_count === "number") {
-                      p.pollOptions = p.pollOptions.map((opt) =>
-                        opt.id === row.id
-                          ? { ...opt, voteCount: row.vote_count as number }
-                          : opt
-                      )
-                    }
                   }
                   return p
                 }),
@@ -157,7 +148,7 @@ export function useRealtimeEngagement(
     return () => {
       void supabase.removeChannel(channel)
     }
-  }, [cappedIds, qc])
+  }, [cappedIds, currentUserId, qc])
 }
 
 export function useRealtimeHomeStats(currentUserId: number | null) {

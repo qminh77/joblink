@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { BarChart2, Image as ImageIcon, Loader2, Video, X } from "lucide-react"
+import { Image as ImageIcon, Loader2, Video, X } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,6 @@ import {
 } from "../api/storage-client"
 import type { FeedPost } from "../types"
 import { ImagePreviewGrid } from "./post-composer/image-preview-grid"
-import { PollEditor } from "./post-composer/poll-editor"
 import { usePostComposer } from "./post-composer/use-post-composer"
 import { VideoPreview } from "./post-composer/video-preview"
 import { VisibilityMenu } from "./post-composer/visibility-menu"
@@ -41,23 +40,16 @@ export function PostComposer({
     fileRef,
     handleFileSelect,
     handleVideoSelect,
-    hasExistingPoll,
-    hasValidPoll,
     imageError,
     images,
     isEdit,
     isPending,
     isSharedPost,
     keptImages,
-    pollMode,
-    pollOptions,
-    removeAllImages,
     removeImageAt,
     removeVideo,
     setContent,
     setImageError,
-    setPollMode,
-    setPollOptions,
     setVisibility,
     submit,
     totalImages,
@@ -124,10 +116,6 @@ export function PostComposer({
                 className="w-full min-h-[120px] bg-transparent border-none focus:ring-0 resize-none text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
 
-              {pollMode && !hasExistingPoll ? (
-                <PollEditor options={pollOptions} onChange={setPollOptions} />
-              ) : null}
-
               {totalImages > 0 && !isSharedPost ? (
                 <ImagePreviewGrid
                   images={[
@@ -179,13 +167,11 @@ export function PostComposer({
                   type="button"
                   aria-label={tHome("photoVideo")}
                   onClick={() => {
-                    setPollMode(false)
                     fileRef.current?.click()
                   }}
                   disabled={
                     isSharedPost ||
                     totalImages >= MAX_POST_IMAGES ||
-                    pollMode ||
                     video != null
                   }
                   className={`p-2 rounded-xl transition-colors ${
@@ -195,30 +181,6 @@ export function PostComposer({
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <ImageIcon className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={tHome("poll")}
-                  onClick={() => {
-                    if (hasExistingPoll) return
-                    setPollMode((v) => !v)
-                    if (!pollMode) {
-                      removeAllImages()
-                    }
-                  }}
-                  disabled={
-                    hasExistingPoll ||
-                    totalImages > 0 ||
-                    isSharedPost ||
-                    video != null
-                  }
-                  className={`p-2 rounded-xl transition-colors ${
-                    pollMode
-                      ? "text-orange-500 bg-orange-500/10"
-                      : "text-orange-500 hover:bg-orange-500/10"
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
-                >
-                  <BarChart2 className="w-5 h-5" />
                 </button>
                 <input
                   ref={videoRef}
@@ -231,10 +193,9 @@ export function PostComposer({
                   type="button"
                   aria-label={tPosts("attachVideo")}
                   onClick={() => {
-                    setPollMode(false)
                     videoRef.current?.click()
                   }}
-                  disabled={isSharedPost || totalImages > 0 || pollMode || isEdit}
+                  disabled={isSharedPost || totalImages > 0 || isEdit}
                   className={`p-2 rounded-xl transition-colors ${
                     video
                       ? "text-purple-500 bg-purple-500/10"
@@ -247,10 +208,7 @@ export function PostComposer({
               <Button
                 onClick={submit}
                 disabled={
-                  (!content.trim() &&
-                    totalImages === 0 &&
-                    !hasValidPoll &&
-                    !video) ||
+                  (!content.trim() && totalImages === 0 && !video) ||
                   isPending
                 }
                 className="px-6 rounded-xl font-semibold"
