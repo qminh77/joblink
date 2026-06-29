@@ -65,7 +65,7 @@ export async function updateJobStatusAction(input: {
   jobId: number
   newStatus: string
 }): Promise<UpdateStatusResult> {
-  const te = await getTranslations("companies.dashboardErrors")
+  const te = await getTranslations("companies.jobActionErrors")
   const parsed = createJobStatusUpdateSchema(te).safeParse(input)
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }

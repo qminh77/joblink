@@ -10,7 +10,6 @@ import {
   Flag,
   Globe,
   Info,
-  LayoutDashboard,
   Mail,
   MapPin,
   Pencil,
@@ -157,11 +156,11 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                 {isOwner ? (
                   <>
                     <Link
-                      href="/company/dashboard"
+                      href="/company/post-job"
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
                     >
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                      {t("dashboard")}
+                      <Briefcase className="w-3.5 h-3.5" />
+                      {t("manageJobs")}
                     </Link>
                     <Link
                       href="/settings"

@@ -25,8 +25,6 @@ export type AppUserRow = {
   email_verified_at: string | null
   phone: string | null
   phone_verified_at: string | null
-  two_fa_enabled: boolean
-  two_fa_secret: string | null
   locale: string
   last_login_at: string | null
   connection_count: number
@@ -208,17 +206,6 @@ export type ConnectionRow = {
 
 export type ReportTargetType = "user" | "post" | "comment" | "job" | "company"
 export type ReportStatus = "pending" | "in_review" | "resolved" | "dismissed"
-
-export type ReportTypeRow = {
-  id: number
-  code: string
-  name: string
-  name_en: string | null
-  sort_order: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
 
 export type ReportRow = {
   id: number
@@ -431,14 +418,7 @@ export type JobApplicationRow = {
   applicant_id: number
   resume_url: string | null
   cover_letter: string | null
-  status:
-    | "applied"
-    | "reviewed"
-    | "interview"
-    | "offered"
-    | "hired"
-    | "rejected"
-    | "withdrawn"
+  status: "submitted" | "withdrawn" | "closed"
   applied_at: string
   updated_at: string
 }
@@ -628,10 +608,6 @@ export type Database = {
           comment_content?: string | null
         }
       >
-      report_types: TableDef<
-        ReportTypeRow,
-        Omit<ReportTypeRow, "id" | "created_at" | "updated_at">
-      >
       reports: TableDef<
         ReportRow,
         Omit<ReportRow, "id" | "created_at" | "updated_at" | "status" | "assigned_to" | "resolved_by" | "resolved_at"> & {
@@ -777,37 +753,6 @@ export type Database = {
       }
       toggle_follow_user: {
         Args: { p_target_user_id: number }
-        Returns: Json
-      }
-      get_company_dashboard_overview: {
-        Args: Record<string, never>
-        Returns: Json
-      }
-      get_company_jobs: {
-        Args: {
-          p_status?: string
-          p_search?: string | null
-          p_limit?: number
-          p_offset?: number
-        }
-        Returns: Json
-      }
-      get_company_applicants: {
-        Args: {
-          p_job_id?: number | null
-          p_status?: string
-          p_search?: string | null
-          p_limit?: number
-          p_offset?: number
-        }
-        Returns: Json
-      }
-      update_application_status: {
-        Args: {
-          p_application_id: number
-          p_new_status: string
-          p_note?: string | null
-        }
         Returns: Json
       }
       update_job_status: {

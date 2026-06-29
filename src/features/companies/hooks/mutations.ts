@@ -12,10 +12,10 @@ import type {
   ResubmitVerificationResult,
   UpdateStatusResult,
 } from "../types"
-import { translateDashboardError } from "./errors"
+import { translateJobActionError } from "./errors"
 
 export function useResubmitVerification() {
-  const te = useTranslations("companies.dashboardErrors")
+  const te = useTranslations("companies.jobActionErrors")
   const ts = useTranslations("companies.verification")
 
   return useMutation<ResubmitVerificationResult, Error, void>({
@@ -28,15 +28,15 @@ export function useResubmitVerification() {
       toast.success(ts("resubmitSuccess"))
     },
     onError: (error) => {
-      toast.error(translateDashboardError(te, error.message))
+      toast.error(translateJobActionError(te, error.message))
     },
   })
 }
 
 export function useUpdateJobStatus() {
   const qc = useQueryClient()
-  const te = useTranslations("companies.dashboardErrors")
-  const ts = useTranslations("companies.dashboard")
+  const te = useTranslations("companies.jobActionErrors")
+  const ts = useTranslations("companies.jobManagement")
 
   return useMutation<
     UpdateStatusResult,
@@ -51,10 +51,10 @@ export function useUpdateJobStatus() {
     onSuccess: (result) => {
       if (!result.ok || result.noop) return
       toast.success(ts("jobStatusUpdated"))
-      qc.invalidateQueries({ queryKey: ["companies", "dashboard"] })
+      qc.invalidateQueries({ queryKey: ["companies", "jobs"] })
     },
     onError: (error) => {
-      toast.error(translateDashboardError(te, error.message))
+      toast.error(translateJobActionError(te, error.message))
     },
   })
 }

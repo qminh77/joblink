@@ -31,9 +31,7 @@ import { BlockedAccountsCard } from "./blocked-accounts-card"
 import { ChangePasswordCard } from "./change-password-card"
 import { NotificationPreferencesCard } from "./notification-preferences-card"
 import { OpenToHireCard } from "./open-to-hire-card"
-import { PasskeysCard } from "./passkeys-card"
 import { PrivacyCard } from "./privacy-card"
-import { TwoFactorCard } from "./two-factor-card"
 
 type Profile =
   | { kind: "member"; data: MemberProfileDetail }
@@ -52,14 +50,12 @@ export function SettingsTabs({
   profile,
   provinces,
   locale,
-  passkeyEnabled = false,
 }: {
   user: SessionUserSummary
   phone: string | null
   profile: Profile
   provinces: ProvinceRow[]
   locale: string
-  passkeyEnabled?: boolean
 }) {
   const t = useTranslations("settings")
   const isCompany = profile?.kind === "company"
@@ -178,8 +174,6 @@ export function SettingsTabs({
         {activeTab === "security" ? (
           <div className="space-y-6">
             <ChangePasswordCard />
-            <TwoFactorCard />
-            {passkeyEnabled ? <PasskeysCard /> : null}
           </div>
         ) : null}
 

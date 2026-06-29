@@ -6,12 +6,9 @@ import type { ActionResult } from "@/lib/action/result"
 import { requirePermission } from "@/lib/rbac"
 
 import { createReportSchema } from "../schemas"
-import {
-  insertReport,
-  type ReportTypeOption,
-} from "../data/reports.repo"
+import { insertReport } from "../data/reports.repo"
 
-export type { ReportTypeOption } from "../data/reports.repo"
+export type { ReportReasonOption } from "../lib/report-reasons"
 
 export async function createReportAction(input: {
   targetType: string

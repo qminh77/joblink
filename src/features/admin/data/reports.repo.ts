@@ -39,11 +39,6 @@ export type ReporterUserRow = {
   email: string
 }
 
-export type ReportTypeNameRow = {
-  code: string
-  name: string
-}
-
 export type PostTargetRow = {
   id: number
   content: string | null
@@ -142,20 +137,6 @@ export async function listReporterIdentityRows(
     companies: (companies ?? []) as ReporterCompanyRow[],
     users: (users ?? []) as ReporterUserRow[],
   }
-}
-
-export async function listReportTypeNameRows(
-  supabase: AdminSupabase,
-  reasonCodes: string[],
-) {
-  if (reasonCodes.length === 0) return []
-
-  const { data } = await supabase
-    .from("report_types")
-    .select("code, name")
-    .in("code", reasonCodes)
-
-  return (data ?? []) as ReportTypeNameRow[]
 }
 
 export async function listReportTargetRows(

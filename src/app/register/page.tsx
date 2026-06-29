@@ -3,15 +3,11 @@ import { getTranslations } from "next-intl/server"
 
 import { AuthLayout } from "@/features/auth/components/auth-layout"
 import { RegisterForm } from "@/features/auth/components/register-form"
-import { loadPublicAuthSettings } from "@/features/system-settings/api/public-settings"
 
 export const dynamic = "force-dynamic"
 
 export default async function RegisterPage() {
-  const [t, settings] = await Promise.all([
-    getTranslations("auth.register"),
-    loadPublicAuthSettings(),
-  ])
+  const t = await getTranslations("auth.register")
 
   return (
     <AuthLayout
@@ -30,7 +26,7 @@ export default async function RegisterPage() {
         </p>
       }
     >
-      <RegisterForm recaptcha={settings.recaptcha} />
+      <RegisterForm />
     </AuthLayout>
   )
 }

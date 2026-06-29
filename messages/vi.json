@@ -187,14 +187,7 @@
       "noAccount": "Chưa có tài khoản?",
       "register": "Đăng ký ngay",
       "success": "Đăng nhập thành công",
-      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA",
-      "orContinueWith": "Hoặc tiếp tục với",
-      "mfa": {
-        "title": "Xác thực hai lớp",
-        "hint": "Nhập mã 6 số từ ứng dụng xác thực của bạn.",
-        "verify": "Xác nhận",
-        "verifying": "Đang xác nhận..."
-      }
+      "orContinueWith": "Hoặc tiếp tục với"
     },
     "register": {
       "title": "Tạo tài khoản",
@@ -245,7 +238,6 @@
       "successNeedVerify": "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.",
       "successCompanyPending": "Đã gửi hồ sơ doanh nghiệp. Tài khoản sẽ kích hoạt sau khi Admin phê duyệt — vui lòng đợi email thông báo.",
       "companyPendingNotice": "Tài khoản doanh nghiệp cần Admin phê duyệt sau khi đăng ký trước khi có thể đăng nhập.",
-      "protectedByRecaptcha": "Được bảo vệ bởi Google reCAPTCHA",
       "website": "Website",
       "websitePlaceholder": "https://congty.com",
       "phone": "Số điện thoại",
@@ -279,10 +271,7 @@
       "accountSuspended": "Tài khoản đã bị tạm khóa. Vui lòng liên hệ Admin.",
       "accountBanned": "Tài khoản đã bị cấm.",
       "taxIdAlreadyExists": "Mã số thuế này đã được đăng ký.",
-      "registrationFailed": "Đăng ký không thành công, vui lòng thử lại.",
-      "recaptchaFailed": "Xác thực reCAPTCHA thất bại. Vui lòng thử lại.",
-      "mfaInvalid": "Mã xác thực không đúng",
-      "mfaUnavailable": "Không tìm thấy thiết bị 2FA, vui lòng thử lại"
+      "registrationFailed": "Đăng ký không thành công, vui lòng thử lại."
     },
     "validation": {
       "emailRequired": "Vui lòng nhập email",
@@ -315,11 +304,6 @@
       "google": "Tiếp tục với Google",
       "redirecting": "Đang chuyển hướng...",
       "error": "Không thể đăng nhập bằng Google, vui lòng thử lại"
-    },
-    "passkey": {
-      "signIn": "Đăng nhập bằng Passkey",
-      "signingIn": "Đang xác thực...",
-      "signInError": "Đăng nhập Passkey thất bại, vui lòng thử lại"
     }
   },
   "profile": {
@@ -610,43 +594,6 @@
       "loading": "Đang tải...",
       "empty": "Bạn chưa chặn tài khoản nào.",
       "unblock": "Bỏ chặn"
-    },
-    "twoFactor": {
-      "title": "Xác thực hai lớp (2FA)",
-      "subtitle": "Bảo vệ tài khoản bằng mã từ ứng dụng xác thực (Google Authenticator).",
-      "statusOn": "Đang bật",
-      "enable": "Bật 2FA",
-      "preparing": "Đang chuẩn bị...",
-      "scanHint": "Quét mã QR bằng Google Authenticator (hoặc app TOTP khác), rồi nhập mã 6 số.",
-      "secretHint": "Hoặc nhập thủ công khóa bí mật:",
-      "codeLabel": "Mã xác thực",
-      "verify": "Xác nhận",
-      "verifying": "Đang xác nhận...",
-      "cancel": "Hủy",
-      "enabled": "Đã bật xác thực hai lớp",
-      "invalidCode": "Mã không đúng, vui lòng thử lại",
-      "enrollError": "Không thể bật 2FA, vui lòng thử lại",
-      "disable": "Tắt 2FA",
-      "disabled": "Đã tắt xác thực hai lớp",
-      "disableError": "Không thể tắt 2FA, vui lòng thử lại",
-      "disableTitle": "Tắt xác thực hai lớp?",
-      "disableDescription": "Tài khoản sẽ kém an toàn hơn. Bạn có chắc muốn tắt 2FA?"
-    },
-    "passkeys": {
-      "title": "Passkey",
-      "subtitle": "Đăng nhập không mật khẩu bằng vân tay, Face ID hoặc khóa bảo mật.",
-      "unsupported": "Trình duyệt của bạn không hỗ trợ Passkey.",
-      "empty": "Bạn chưa có passkey nào.",
-      "add": "Thêm passkey",
-      "adding": "Đang thêm...",
-      "added": "Đã thêm passkey",
-      "addError": "Không thể thêm passkey, vui lòng thử lại",
-      "delete": "Xóa",
-      "deleted": "Đã xóa passkey",
-      "deleteError": "Không thể xóa passkey",
-      "defaultName": "Passkey",
-      "created": "Tạo {date}",
-      "lastUsed": "dùng gần nhất {date}"
     }
   },
   "companies": {
@@ -670,7 +617,8 @@
       "contactHeading": "Thông tin liên hệ",
       "contactEmpty": "Công ty chưa cập nhật thông tin liên hệ.",
       "representativeLabel": "Người đại diện",
-      "report": "Báo cáo công ty"
+      "report": "Báo cáo công ty",
+      "manageJobs": "Quản lý tin"
     },
     "errors": {
       "invalidCompany": "Công ty không hợp lệ",
@@ -679,27 +627,6 @@
       "companyNotFound": "Không tìm thấy công ty",
       "notCompany": "Tài khoản không phải công ty",
       "companyInactive": "Công ty đang bị tạm khoá",
-      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
-    },
-    "dashboardErrors": {
-      "unauthorized": "Vui lòng đăng nhập lại",
-      "invalidStatus": "Trạng thái không hợp lệ",
-      "applicationNotFound": "Không tìm thấy đơn ứng tuyển",
-      "notOwner": "Bạn không có quyền với đơn này",
-      "cannotWithdraw": "Chỉ ứng viên mới có thể rút đơn",
-      "invalidApplication": "Đơn không hợp lệ",
-      "invalidJob": "Việc làm không hợp lệ",
-      "jobNotFound": "Không tìm thấy việc làm",
-      "jobRemoved": "Việc làm đã bị xoá",
-      "noteTooLong": "Ghi chú quá dài",
-      "invalidScheduleTime": "Thời gian phỏng vấn phải ở tương lai",
-      "invalidDuration": "Thời lượng không hợp lệ",
-      "locationTooLong": "Địa điểm/link quá dài",
-      "cannotSchedule": "Không thể lên lịch cho đơn ở trạng thái này",
-      "interviewNotFound": "Không tìm thấy lịch phỏng vấn",
-      "notResubmittable": "Hồ sơ không ở trạng thái có thể gửi lại",
-      "companyNotFound": "Không tìm thấy công ty",
-      "notCompany": "Tài khoản không phải công ty",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
     },
     "applicantDetail": {
@@ -730,6 +657,25 @@
       "reasonLabel": "Lý do",
       "resubmit": "Gửi lại hồ sơ",
       "resubmitSuccess": "Đã gửi lại hồ sơ, vui lòng chờ duyệt"
+    },
+    "jobActionErrors": {
+      "unauthorized": "Vui lòng đăng nhập lại",
+      "invalidStatus": "Trạng thái không hợp lệ",
+      "applicationNotFound": "Không tìm thấy đơn ứng tuyển",
+      "notOwner": "Bạn không có quyền với đơn này",
+      "cannotWithdraw": "Chỉ ứng viên mới có thể rút đơn",
+      "invalidApplication": "Đơn không hợp lệ",
+      "invalidJob": "Việc làm không hợp lệ",
+      "jobNotFound": "Không tìm thấy việc làm",
+      "jobRemoved": "Việc làm đã bị xoá",
+      "noteTooLong": "Ghi chú quá dài",
+      "notResubmittable": "Hồ sơ không ở trạng thái có thể gửi lại",
+      "companyNotFound": "Không tìm thấy công ty",
+      "notCompany": "Tài khoản không phải công ty",
+      "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
+    },
+    "jobManagement": {
+      "jobStatusUpdated": "Đã cập nhật trạng thái tin tuyển dụng"
     }
   },
   "jobs": {
@@ -760,7 +706,6 @@
       "withdrawing": "Đang rút...",
       "withdrawSuccess": "Đã rút đơn ứng tuyển",
       "notAcceptingApplications": "Không nhận ứng tuyển",
-      "manageOnDashboard": "Quản lý",
       "description": "Mô tả công việc",
       "requirements": "Yêu cầu",
       "requiredSkills": "Kỹ năng yêu cầu",
@@ -780,7 +725,8 @@
       "browseJobs": "Tìm việc làm",
       "savedAt": "Đã lưu {time}",
       "deadlineLabel": "Hạn nộp {date}",
-      "report": "Báo cáo tin tuyển dụng"
+      "report": "Báo cáo tin tuyển dụng",
+      "manageJob": "Quản lý tin"
     },
     "post": {
       "heading": "Đăng tin tuyển dụng",
@@ -856,13 +802,11 @@
       "jobTypeRequired": "Vui lòng chọn loại hình",
       "workModeRequired": "Vui lòng chọn hình thức",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại",
-      "alertLimit": "Bạn đã đạt giới hạn số cảnh báo (tối đa 20)",
-      "invalidAlert": "Cảnh báo không hợp lệ",
       "unexpected": "Đã xảy ra lỗi, vui lòng thử lại"
     },
     "applications": {
       "heading": "Đơn ứng tuyển của tôi",
-      "subheading": "Theo dõi trạng thái và lịch phỏng vấn",
+      "subheading": "Theo dõi trạng thái các đơn đã nộp",
       "empty": "Bạn chưa nộp đơn ứng tuyển nào.",
       "browseJobs": "Tìm việc làm",
       "appliedOn": "Đã nộp {date}",
@@ -1080,8 +1024,6 @@
   },
   "reports": {
     "reportTitle": "Báo cáo bài viết",
-    "loadingTypes": "Đang tải...",
-    "emptyTypes": "Không có loại báo cáo",
     "descriptionPlaceholder": "Mô tả thêm (không bắt buộc)...",
     "cancel": "Huỷ",
     "submitReport": "Gửi báo cáo",
@@ -1094,7 +1036,9 @@
       "invalidData": "Dữ liệu không hợp lệ",
       "createFailed": "Không thể gửi báo cáo",
       "unexpected": "Đã có lỗi xảy ra, vui lòng thử lại"
-    }
+    },
+    "loadingReasons": "Đang tải...",
+    "emptyReasons": "Không có lý do báo cáo"
   },
   "messages": {
     "title": "Tin nhắn",
@@ -1152,7 +1096,6 @@
       "posts": "Bài viết",
       "reports": "Báo cáo",
       "auditLog": "Nhật ký",
-      "reportTypes": "Loại báo cáo",
       "roles": "Quản lý quyền",
       "groups": {
         "overview": "Tổng quan",
@@ -1428,30 +1371,6 @@
       "yesterday": "Hôm qua",
       "loadMore": "Xem thêm",
       "loading": "Đang tải..."
-    },
-    "reportTypes": {
-      "title": "Loại báo cáo",
-      "subtitle": "Quản lý các danh mục báo cáo trên hệ thống",
-      "code": "Mã",
-      "name": "Tên",
-      "nameEn": "Tên (EN)",
-      "sortOrder": "Thứ tự",
-      "isActive": "Hoạt động",
-      "isSystem": "Hệ thống",
-      "add": "Thêm mới",
-      "edit": "Chỉnh sửa",
-      "delete": "Xoá",
-      "save": "Lưu",
-      "saving": "Đang lưu...",
-      "cancel": "Huỷ",
-      "confirmDelete": "Bạn có chắc muốn xoá loại báo cáo này?",
-      "cannotDeleteSystem": "Không thể xoá loại báo cáo hệ thống",
-      "empty": "Chưa có loại báo cáo nào",
-      "success": {
-        "created": "Đã tạo loại báo cáo",
-        "updated": "Đã cập nhật loại báo cáo",
-        "deleted": "Đã xoá loại báo cáo"
-      }
     },
     "roles": {
       "title": "Quản lý quyền",

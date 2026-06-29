@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server"
  * Dùng sliding window: đếm số request trong window, nếu vượt max → throw ActionError.
  *
  * @param userId - ID của user (bigint)
- * @param actionType - Loại hành động: 'post', 'comment', 'reaction', 'share', 'vote'
+ * @param actionType - Loại hành động: 'post', 'comment', 'reaction', 'share'
  * @param maxRequests - Số request tối đa trong window (mặc định: 10)
  * @param windowSeconds - Kích thước window tính bằng giây (mặc định: 10)
  */

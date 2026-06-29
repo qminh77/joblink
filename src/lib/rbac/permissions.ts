@@ -81,12 +81,6 @@ export const PERMISSIONS = {
   // Audit
   "audit.view": "Nhật ký hoạt động - Xem",
 
-  // Report Types
-  "report_types.view": "Loại báo cáo - Xem",
-  "report_types.create": "Loại báo cáo - Tạo mới",
-  "report_types.edit": "Loại báo cáo - Chỉnh sửa",
-  "report_types.delete": "Loại báo cáo - Xóa",
-
   // Settings
   "settings.view": "Cài đặt cá nhân - Xem",
   "settings.edit": "Cài đặt cá nhân - Chỉnh sửa",

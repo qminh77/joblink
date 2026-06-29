@@ -8,7 +8,7 @@ const FOLLOW_ERRORS = new Set([
   "unknown",
 ])
 
-const DASHBOARD_ERRORS = new Set([
+const JOB_ACTION_ERRORS = new Set([
   "unauthorized",
   "invalidStatus",
   "jobNotFound",
@@ -29,11 +29,11 @@ export function translateFollowError(
   return raw
 }
 
-export function translateDashboardError(
+export function translateJobActionError(
   t: (key: string) => string,
   raw: string,
 ) {
   if (!raw) return t("unknown")
-  if (DASHBOARD_ERRORS.has(raw)) return t(raw)
+  if (JOB_ACTION_ERRORS.has(raw)) return t(raw)
   return raw
 }

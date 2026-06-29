@@ -49,7 +49,7 @@ export function usePostJobForm({ editJob }: { editJob?: JobEditData }) {
   const [submitting, setSubmitting] = useState(false)
 
   const cancelHref =
-    isEdit && editJob ? `/jobs/${editJob.job.id}` : "/company/dashboard"
+    isEdit && editJob ? `/jobs/${editJob.job.id}` : "/company/post-job"
   const minExpiresAt = new Date().toISOString().slice(0, 10)
 
   function addSkill() {
@@ -115,7 +115,7 @@ export function usePostJobForm({ editJob }: { editJob?: JobEditData }) {
       status === "active" ? t("publishSuccess") : t("draftSuccess"),
     )
     router.push(
-      status === "active" ? `/jobs/${result.jobId}` : "/company/dashboard",
+      status === "active" ? `/jobs/${result.jobId}` : "/company/post-job",
     )
   }
 

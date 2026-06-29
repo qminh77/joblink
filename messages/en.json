@@ -187,14 +187,7 @@
       "noAccount": "Don't have an account?",
       "register": "Sign up",
       "success": "Signed in successfully",
-      "protectedByRecaptcha": "Protected by Google reCAPTCHA",
-      "orContinueWith": "Or continue with",
-      "mfa": {
-        "title": "Two-factor authentication",
-        "hint": "Enter the 6-digit code from your authenticator app.",
-        "verify": "Confirm",
-        "verifying": "Confirming..."
-      }
+      "orContinueWith": "Or continue with"
     },
     "register": {
       "title": "Create an account",
@@ -245,7 +238,6 @@
       "successNeedVerify": "Signed up successfully. Please check your email to verify your account.",
       "successCompanyPending": "Business profile submitted. Your account will be activated after Admin approval — please wait for our email.",
       "companyPendingNotice": "Business accounts require Admin approval after registration before they can sign in.",
-      "protectedByRecaptcha": "Protected by Google reCAPTCHA",
       "website": "Website",
       "websitePlaceholder": "https://company.com",
       "phone": "Phone number",
@@ -279,10 +271,7 @@
       "accountSuspended": "This account has been suspended. Please contact an Admin.",
       "accountBanned": "This account has been banned.",
       "taxIdAlreadyExists": "This Tax ID is already registered.",
-      "registrationFailed": "Registration failed, please try again.",
-      "recaptchaFailed": "reCAPTCHA verification failed. Please try again.",
-      "mfaInvalid": "Invalid verification code",
-      "mfaUnavailable": "No 2FA device found, please try again"
+      "registrationFailed": "Registration failed, please try again."
     },
     "validation": {
       "emailRequired": "Please enter your email",
@@ -315,11 +304,6 @@
       "google": "Continue with Google",
       "redirecting": "Redirecting...",
       "error": "Couldn't sign in with Google, please try again"
-    },
-    "passkey": {
-      "signIn": "Sign in with passkey",
-      "signingIn": "Authenticating...",
-      "signInError": "Passkey sign-in failed, please try again"
     }
   },
   "profile": {
@@ -610,43 +594,6 @@
       "loading": "Loading...",
       "empty": "You haven't blocked anyone yet.",
       "unblock": "Unblock"
-    },
-    "twoFactor": {
-      "title": "Two-factor authentication (2FA)",
-      "subtitle": "Protect your account with a code from an authenticator app (Google Authenticator).",
-      "statusOn": "Enabled",
-      "enable": "Enable 2FA",
-      "preparing": "Preparing...",
-      "scanHint": "Scan the QR code with Google Authenticator (or another TOTP app), then enter the 6-digit code.",
-      "secretHint": "Or enter the secret key manually:",
-      "codeLabel": "Verification code",
-      "verify": "Confirm",
-      "verifying": "Confirming...",
-      "cancel": "Cancel",
-      "enabled": "Two-factor authentication enabled",
-      "invalidCode": "Incorrect code, please try again",
-      "enrollError": "Couldn't enable 2FA, please try again",
-      "disable": "Disable 2FA",
-      "disabled": "Two-factor authentication disabled",
-      "disableError": "Couldn't disable 2FA, please try again",
-      "disableTitle": "Disable two-factor authentication?",
-      "disableDescription": "Your account will be less secure. Are you sure you want to disable 2FA?"
-    },
-    "passkeys": {
-      "title": "Passkeys",
-      "subtitle": "Sign in without a password using fingerprint, Face ID, or a security key.",
-      "unsupported": "Your browser doesn't support passkeys.",
-      "empty": "You don't have any passkeys yet.",
-      "add": "Add passkey",
-      "adding": "Adding...",
-      "added": "Passkey added",
-      "addError": "Couldn't add passkey, please try again",
-      "delete": "Delete",
-      "deleted": "Passkey deleted",
-      "deleteError": "Couldn't delete passkey",
-      "defaultName": "Passkey",
-      "created": "Created {date}",
-      "lastUsed": "last used {date}"
     }
   },
   "companies": {
@@ -670,7 +617,8 @@
       "contactHeading": "Contact information",
       "contactEmpty": "This company hasn't added contact information yet.",
       "representativeLabel": "Representative",
-      "report": "Report company"
+      "report": "Report company",
+      "manageJobs": "Manage jobs"
     },
     "errors": {
       "invalidCompany": "Invalid company",
@@ -679,27 +627,6 @@
       "companyNotFound": "Company not found",
       "notCompany": "Account is not a company",
       "companyInactive": "Company is currently suspended",
-      "unknown": "Something went wrong, please try again"
-    },
-    "dashboardErrors": {
-      "unauthorized": "Please sign in again",
-      "invalidStatus": "Invalid status",
-      "applicationNotFound": "Application not found",
-      "notOwner": "You don't have permission for this application",
-      "cannotWithdraw": "Only the applicant can withdraw",
-      "invalidApplication": "Invalid application",
-      "invalidJob": "Invalid job",
-      "jobNotFound": "Job not found",
-      "jobRemoved": "Job has been removed",
-      "noteTooLong": "Note is too long",
-      "invalidScheduleTime": "Interview time must be in the future",
-      "invalidDuration": "Invalid duration",
-      "locationTooLong": "Location/link is too long",
-      "cannotSchedule": "Cannot schedule for an application in this status",
-      "interviewNotFound": "Interview not found",
-      "notResubmittable": "Profile is not in a resubmittable state",
-      "companyNotFound": "Company not found",
-      "notCompany": "Account is not a company",
       "unknown": "Something went wrong, please try again"
     },
     "applicantDetail": {
@@ -730,6 +657,25 @@
       "reasonLabel": "Reason",
       "resubmit": "Resubmit profile",
       "resubmitSuccess": "Profile resubmitted, awaiting review"
+    },
+    "jobActionErrors": {
+      "unauthorized": "Please sign in again",
+      "invalidStatus": "Invalid status",
+      "applicationNotFound": "Application not found",
+      "notOwner": "You don't have permission for this application",
+      "cannotWithdraw": "Only the applicant can withdraw",
+      "invalidApplication": "Invalid application",
+      "invalidJob": "Invalid job",
+      "jobNotFound": "Job not found",
+      "jobRemoved": "Job has been removed",
+      "noteTooLong": "Note is too long",
+      "notResubmittable": "Profile is not in a resubmittable state",
+      "companyNotFound": "Company not found",
+      "notCompany": "Account is not a company",
+      "unknown": "Something went wrong, please try again"
+    },
+    "jobManagement": {
+      "jobStatusUpdated": "Job status updated"
     }
   },
   "jobs": {
@@ -760,7 +706,6 @@
       "withdrawing": "Withdrawing...",
       "withdrawSuccess": "Application withdrawn",
       "notAcceptingApplications": "Not accepting applications",
-      "manageOnDashboard": "Manage",
       "description": "Job description",
       "requirements": "Requirements",
       "requiredSkills": "Required skills",
@@ -780,7 +725,8 @@
       "browseJobs": "Browse jobs",
       "savedAt": "Saved {time}",
       "deadlineLabel": "Apply by {date}",
-      "report": "Report job"
+      "report": "Report job",
+      "manageJob": "Manage job"
     },
     "post": {
       "heading": "Post a job",
@@ -856,13 +802,11 @@
       "jobTypeRequired": "Please select a job type",
       "workModeRequired": "Please select a work mode",
       "unknown": "Something went wrong, please try again",
-      "alertLimit": "You've reached the maximum number of alerts (20)",
-      "invalidAlert": "Invalid alert",
       "unexpected": "Something went wrong, please try again"
     },
     "applications": {
       "heading": "My applications",
-      "subheading": "Track status and interview schedules",
+      "subheading": "Track submitted application statuses",
       "empty": "You haven't applied to any jobs yet.",
       "browseJobs": "Browse jobs",
       "appliedOn": "Applied on {date}",
@@ -1080,8 +1024,6 @@
   },
   "reports": {
     "reportTitle": "Report post",
-    "loadingTypes": "Loading...",
-    "emptyTypes": "No report types available",
     "descriptionPlaceholder": "Additional details (optional)...",
     "cancel": "Cancel",
     "submitReport": "Submit report",
@@ -1094,7 +1036,9 @@
       "invalidData": "Invalid data",
       "createFailed": "Could not submit report",
       "unexpected": "Something went wrong, please try again"
-    }
+    },
+    "loadingReasons": "Loading...",
+    "emptyReasons": "No report reasons available"
   },
   "messages": {
     "title": "Messages",
@@ -1152,7 +1096,6 @@
       "posts": "Posts",
       "reports": "Reports",
       "auditLog": "Audit log",
-      "reportTypes": "Report types",
       "roles": "Roles",
       "groups": {
         "overview": "Overview",
@@ -1428,30 +1371,6 @@
       "yesterday": "Yesterday",
       "loadMore": "Load more",
       "loading": "Loading..."
-    },
-    "reportTypes": {
-      "title": "Report types",
-      "subtitle": "Manage report categories used across the platform",
-      "code": "Code",
-      "name": "Name",
-      "nameEn": "Name (EN)",
-      "sortOrder": "Order",
-      "isActive": "Active",
-      "isSystem": "System",
-      "add": "Add",
-      "edit": "Edit",
-      "delete": "Delete",
-      "save": "Save",
-      "saving": "Saving...",
-      "cancel": "Cancel",
-      "confirmDelete": "Delete this report type?",
-      "cannotDeleteSystem": "System report types cannot be deleted",
-      "empty": "No report types yet",
-      "success": {
-        "created": "Report type created",
-        "updated": "Report type updated",
-        "deleted": "Report type deleted"
-      }
     },
     "roles": {
       "title": "Roles",

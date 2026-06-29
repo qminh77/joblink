@@ -1,13 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import { Lock, Mail, ShieldCheck } from "lucide-react"
-import { toast } from "sonner"
+import { Lock, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -20,32 +17,20 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { verifyAuthRecaptchaAction } from "@/features/system-settings/api/actions"
-import {
-  useRecaptcha,
-  type RecaptchaConfig,
-} from "@/features/system-settings/components/use-recaptcha"
 
-import { challengeAndVerify } from "../api/mfa-client"
 import { useLogin } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
 
 import { GoogleSignInButton } from "./google-sign-in-button"
-import { PasskeySignInButton } from "./passkey-sign-in-button"
 import { PasswordInput } from "./password-input"
 
 export function LoginForm({
-  recaptcha,
   googleEnabled = false,
-  passkeyEnabled = false,
 }: {
-  recaptcha?: RecaptchaConfig
   googleEnabled?: boolean
-  passkeyEnabled?: boolean
 } = {}) {
   const t = useTranslations("auth.login")
   const tv = useTranslations("auth.validation")
-  const tErr = useTranslations("auth.errors")
   const schema = createLoginSchema(tv)
 
   const form = useForm<LoginInput>({
@@ -53,85 +38,10 @@ export function LoginForm({
     defaultValues: { email: "", password: "", remember: false },
   })
 
-  const router = useRouter()
-  const [mfaStep, setMfaStep] = useState(false)
-  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null)
-  const [mfaCode, setMfaCode] = useState("")
-  const [verifyingMfa, setVerifyingMfa] = useState(false)
-
-  const login = useLogin({
-    onMfaRequired: (factorId) => {
-      setMfaFactorId(factorId)
-      setMfaStep(true)
-    },
-  })
-  const { enabled: captchaEnabled, getToken } = useRecaptcha(
-    recaptcha ?? { enabled: false, siteKey: null },
-  )
-  const [verifying, setVerifying] = useState(false)
-
-  // UC-09/10: bước nhập mã 2FA sau khi mật khẩu đúng (tài khoản đã bật 2FA).
-  async function submitMfa() {
-    if (mfaCode.trim().length < 6) return
-    if (!mfaFactorId) {
-      toast.error(tErr("mfaUnavailable"))
-      return
-    }
-    setVerifyingMfa(true)
-    try {
-      await challengeAndVerify(mfaFactorId, mfaCode.trim())
-      toast.success(t("success"))
-      router.push("/home")
-    } catch {
-      toast.error(tErr("mfaInvalid"))
-    } finally {
-      setVerifyingMfa(false)
-    }
-  }
+  const login = useLogin()
 
   async function onSubmit(values: LoginInput) {
-    if (captchaEnabled) {
-      setVerifying(true)
-      const token = await getToken("login")
-      const verification = await verifyAuthRecaptchaAction(token, "login")
-      setVerifying(false)
-      if (!verification.ok) {
-        toast.error(tErr("recaptchaFailed"))
-        return
-      }
-    }
     login.mutate(values)
-  }
-
-  if (mfaStep) {
-    return (
-      <div className="w-full space-y-4">
-        <div className="space-y-1">
-          <h2 className="font-headline font-bold text-lg text-foreground">
-            {t("mfa.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{t("mfa.hint")}</p>
-        </div>
-        <Input
-          value={mfaCode}
-          onChange={(e) =>
-            setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-          }
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          placeholder="000000"
-          className="h-12 rounded-xl text-center tracking-[0.4em] text-lg"
-        />
-        <Button
-          type="button"
-          onClick={submitMfa}
-          disabled={verifyingMfa || mfaCode.trim().length < 6}
-          className="w-full h-12 text-base font-semibold rounded-xl"
-        >
-          {verifyingMfa ? t("mfa.verifying") : t("mfa.verify")}
-        </Button>
-      </div>
-    )
   }
 
   return (
@@ -222,20 +132,13 @@ export function LoginForm({
 
         <Button
           type="submit"
-          disabled={login.isPending || verifying}
+          disabled={login.isPending}
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
-          {login.isPending || verifying ? t("submitting") : t("submit")}
+          {login.isPending ? t("submitting") : t("submit")}
         </Button>
 
-        {captchaEnabled ? (
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" />
-            {t("protectedByRecaptcha")}
-          </p>
-        ) : null}
-
-        {googleEnabled || passkeyEnabled ? (
+        {googleEnabled ? (
           <>
             <div className="flex items-center gap-3 pt-1">
               <span className="h-px flex-1 bg-border" />
@@ -245,8 +148,7 @@ export function LoginForm({
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            {googleEnabled ? <GoogleSignInButton /> : null}
-            {passkeyEnabled ? <PasskeySignInButton /> : null}
+            <GoogleSignInButton />
           </>
         ) : null}
       </form>

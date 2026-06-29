@@ -3,10 +3,10 @@
 -- PostgreSQL / Supabase
 -- Charset: UTF8
 -- 
--- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260623_083).
+-- ⮕ FILE DUY NHẤT: gộp từ TOÀN BỘ supabase/migrations (đến 20260629_086).
 -- ⮕ ĐÃ LOẠI các bảng legacy không dùng.
--- ⮕ ĐÃ LƯỢC BỎ: application_status_history, interview_schedules, các RPC dashboard/pipeline,
---   đơn giản hoá job_applications.status (chỉ còn submitted/withdrawn/closed).
+-- ⮕ ĐÃ LƯỢC BỎ các UC ngoài phạm vi mini; status ứng tuyển chỉ còn
+--   submitted/withdrawn/closed.
 -- =============================================================================
 
 -- =============================================================================
@@ -36,8 +36,6 @@ CREATE TABLE IF NOT EXISTS users (
     email_verified_at TIMESTAMPTZ NULL,
     phone             VARCHAR(20)  NULL,
     phone_verified_at TIMESTAMPTZ NULL,
-    two_fa_enabled    BOOLEAN NOT NULL DEFAULT FALSE,
-    two_fa_secret     VARCHAR(255) NULL,
     locale            VARCHAR(10)  NOT NULL DEFAULT 'vi',
     last_login_at     TIMESTAMPTZ NULL,
     connection_count   INT NOT NULL DEFAULT 0,
@@ -768,18 +766,6 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 -- =============================================================================
 -- 9. REPORTS & MODERATION
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS report_types (
-    id          BIGSERIAL PRIMARY KEY,
-    code        VARCHAR(60)  NOT NULL,
-    name        VARCHAR(160) NOT NULL,
-    name_en     VARCHAR(160) NULL,
-    sort_order  INT     NOT NULL DEFAULT 0,
-    is_active   BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_report_types_code UNIQUE (code)
-);
-
 CREATE TABLE IF NOT EXISTS reports (
     id          BIGSERIAL PRIMARY KEY,
     reporter_id BIGINT NOT NULL,
@@ -815,23 +801,6 @@ CREATE TABLE IF NOT EXISTS moderation_actions (
     CONSTRAINT fk_moderation_moderator FOREIGN KEY (moderator_id) REFERENCES users(id)   ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS appeals (
-    id                   BIGSERIAL PRIMARY KEY,
-    appellant_id         BIGINT NOT NULL,
-    report_id            BIGINT NULL,
-    moderation_action_id BIGINT NULL,
-    reason               TEXT NOT NULL,
-    status               VARCHAR(20) NOT NULL DEFAULT 'pending',
-    reviewed_by          BIGINT NULL,
-    reviewed_at          TIMESTAMPTZ NULL,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_appeal_status CHECK (status IN ('pending','accepted','rejected')),
-    CONSTRAINT fk_appeal_user     FOREIGN KEY (appellant_id)         REFERENCES users(id)              ON DELETE CASCADE,
-    CONSTRAINT fk_appeal_report   FOREIGN KEY (report_id)            REFERENCES reports(id)            ON DELETE SET NULL,
-    CONSTRAINT fk_appeal_mod_act  FOREIGN KEY (moderation_action_id) REFERENCES moderation_actions(id) ON DELETE SET NULL,
-    CONSTRAINT fk_appeal_reviewer FOREIGN KEY (reviewed_by)          REFERENCES users(id)              ON DELETE SET NULL
-);
-
 -- =============================================================================
 -- 10. AUDIT LOGS
 -- =============================================================================
@@ -865,49 +834,6 @@ CREATE TABLE IF NOT EXISTS system_settings (
     CONSTRAINT uk_system_setting UNIQUE (setting_key),
     CONSTRAINT fk_system_setting_user FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
-
--- =============================================================================
--- 11.5 CONTACT SUBMISSIONS
--- =============================================================================
-CREATE TABLE IF NOT EXISTS contact_submissions (
-    id            BIGSERIAL PRIMARY KEY,
-    name          VARCHAR(255) NOT NULL,
-    email         VARCHAR(255) NOT NULL,
-    subject       VARCHAR(255) NOT NULL DEFAULT '',
-    message       TEXT NOT NULL,
-    status        VARCHAR(20) NOT NULL DEFAULT 'pending',
-    user_id       BIGINT NULL,
-    replied_at    TIMESTAMPTZ NULL,
-    reply_message TEXT NULL,
-    replied_by    BIGINT NULL,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at    TIMESTAMPTZ NULL,
-    CONSTRAINT chk_contact_status CHECK (status IN ('pending','read','replied','closed')),
-    CONSTRAINT fk_contact_user   FOREIGN KEY (user_id)    REFERENCES users(id) ON DELETE SET NULL,
-    CONSTRAINT fk_contact_replier FOREIGN KEY (replied_by) REFERENCES users(id) ON DELETE SET NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_contact_status     ON contact_submissions(status);
-CREATE INDEX IF NOT EXISTS idx_contact_created_at ON contact_submissions(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_contact_deleted_at ON contact_submissions(deleted_at);
-
-ALTER TABLE contact_submissions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "contact_submissions_insert_anon"
-    ON contact_submissions FOR INSERT
-    TO anon
-    WITH CHECK (true);
-
-CREATE POLICY "contact_submissions_select_admin"
-    ON contact_submissions FOR SELECT
-    USING (auth.jwt() ->> 'role' = 'service_role' OR
-           auth.jwt() ->> 'aud' IN (SELECT aud FROM auth.users WHERE id = auth.uid())
-           AND public.is_admin());
-
-CREATE POLICY "contact_submissions_update_admin"
-    ON contact_submissions FOR UPDATE
-    USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- =============================================================================
 -- 12. O(1) ARCHITECTURE SUPPORT TABLES
@@ -1820,8 +1746,8 @@ DECLARE
     'job_applications',
     'saved_jobs','job_view_logs','conversations',
     'conversation_participants','messages','user_blocks','notifications',
-    'notification_preferences','report_types','reports','moderation_actions',
-    'appeals','audit_logs','system_settings','network_suggestions','user_feeds'
+    'notification_preferences','reports','moderation_actions',
+    'audit_logs','system_settings','network_suggestions','user_feeds'
   ];
 BEGIN
   FOR r IN
@@ -1867,10 +1793,8 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.report_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.moderation_actions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.appeals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.network_suggestions ENABLE ROW LEVEL SECURITY;
@@ -2226,11 +2150,6 @@ CREATE POLICY notification_preferences_update_own ON public.notification_prefere
 CREATE POLICY notification_preferences_delete_own ON public.notification_preferences
   FOR DELETE USING (user_id = public.auth_user_id() AND public.is_active_user());
 
-CREATE POLICY report_types_select_active ON public.report_types
-  FOR SELECT USING (is_active = TRUE OR public.is_admin());
-CREATE POLICY report_types_admin_all ON public.report_types
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-
 CREATE POLICY reports_admin_all ON public.reports
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 CREATE POLICY reports_select_own ON public.reports
@@ -2240,13 +2159,6 @@ CREATE POLICY reports_insert_own ON public.reports
 
 CREATE POLICY moderation_actions_admin_all ON public.moderation_actions
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-
-CREATE POLICY appeals_admin_all ON public.appeals
-  FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
-CREATE POLICY appeals_select_own ON public.appeals
-  FOR SELECT USING (appellant_id = public.auth_user_id());
-CREATE POLICY appeals_insert_own ON public.appeals
-  FOR INSERT WITH CHECK (appellant_id = public.auth_user_id() AND public.is_active_user());
 
 CREATE POLICY audit_logs_admin_select ON public.audit_logs
   FOR SELECT USING (public.is_admin());
@@ -2440,19 +2352,6 @@ CREATE POLICY "cvs: owner delete"
 -- 20. SEED DATA
 -- =============================================================================
 
-INSERT INTO report_types (code, name, name_en, sort_order) VALUES
-    ('spam',             'Spam / Quảng cáo',              'Spam / Advertising',              1),
-    ('harassment',       'Quấy rối / Bắt nạt',            'Harassment / Bullying',           2),
-    ('misinformation',   'Tin giả / Sai sự thật',          'Misinformation / False news',      3),
-    ('inappropriate',    'Nội dung không phù hợp',         'Inappropriate content',            4),
-    ('violence',         'Bạo lực / Nguy hiểm',           'Violence / Dangerous content',      5),
-    ('hate_speech',      'Ngôn từ thù địch',              'Hate speech',                      6),
-    ('impersonation',    'Giả mạo danh tính',             'Impersonation',                    7),
-    ('copyright',        'Vi phạm bản quyền',              'Copyright violation',              8),
-    ('fraud',            'Lừa đảo',                       'Fraud / Scam',                     9),
-    ('other',            'Khác',                          'Other',                            10)
-ON CONFLICT (code) DO NOTHING;
-
 INSERT INTO system_settings (setting_key, setting_group, value, encrypted) VALUES
     ('site_name',           'site_identity', '"Joblink"'::jsonb,                                          FALSE),
     ('site_description',    'site_identity', '"Mạng xã hội việc làm và tuyển dụng "'::jsonb, FALSE),
@@ -2469,20 +2368,10 @@ INSERT INTO system_settings (setting_key, setting_group, value, encrypted) VALUE
     ('smtp_encryption',     'smtp',          '"tls"'::jsonb,                                              FALSE),
     ('smtp_from_email',     'smtp',          'null'::jsonb,                                               FALSE),
     ('smtp_from_name',      'smtp',          '"Joblink"'::jsonb,                                          FALSE),
-    ('recaptcha_enabled',   'recaptcha',     'false'::jsonb,                                              FALSE),
-    ('recaptcha_site_key',  'recaptcha',     'null'::jsonb,                                               FALSE),
-    ('recaptcha_secret',    'recaptcha',     'null'::jsonb,                                               TRUE),
     ('login_rate_limit',    'security',      '10'::jsonb,                                                 FALSE),
     ('upload_max_mb',       'security',      '10'::jsonb,                                                 FALSE),
-    ('require_2fa_admin',   'security',      'true'::jsonb,                                               FALSE),
     ('google_auth_enabled',       'security',     'false'::jsonb, FALSE),
-    ('require_email_verification', 'security', 'false'::jsonb, FALSE),
-    ('passkey_enabled',           'security',     'false'::jsonb, FALSE),
-    ('contact_address',     'contact',     'null'::jsonb,  FALSE),
-    ('contact_email',       'contact',     'null'::jsonb,  FALSE),
-    ('contact_phone',       'contact',     'null'::jsonb,  FALSE),
-    ('contact_content',     'contact',     'null'::jsonb,  FALSE),
-    ('contact_map_url',     'contact',     'null'::jsonb,  FALSE)
+    ('require_email_verification', 'security', 'false'::jsonb, FALSE)
 ON CONFLICT (setting_key) DO NOTHING;
 
 INSERT INTO job_types (code, name, name_en, sort_order, is_system) VALUES
@@ -4386,7 +4275,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_post_comments(BIGINT, INT) TO authenticated;
 
 -- =============================================================================
--- 27. RPCs — Company Dashboard
+-- 27. RPCs — Company job actions
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.update_job_status(p_job_id BIGINT, p_new_status TEXT)
@@ -4696,7 +4585,6 @@ BEGIN
     VALUES (p_job_id, v_me, NULLIF(btrim(COALESCE(p_resume_url, '')), ''),
             NULLIF(btrim(COALESCE(p_cover_letter, '')), ''), 'submitted')
     RETURNING id INTO v_application_id;
-    -- application_status_history removed
     RETURN jsonb_build_object('ok', TRUE, 'applicationId', v_application_id, 'status', 'submitted');
 END;
 $$;
@@ -4717,7 +4605,6 @@ BEGIN
     IF v_old_status IN ('withdrawn','closed') THEN
         RETURN jsonb_build_object('ok', FALSE, 'error', 'cannotWithdrawNow'); END IF;
     UPDATE public.job_applications SET status = 'withdrawn', updated_at = NOW() WHERE id = p_application_id;
-    -- application_status_history removed
     RETURN jsonb_build_object('ok', TRUE, 'status', 'withdrawn');
 END;
 $$;
@@ -5499,14 +5386,9 @@ INSERT INTO public.modules (name, label, sort_order) VALUES
 ('jobs', 'Quản lý việc làm', 4),
 ('posts', 'Quản lý bài viết', 5),
 ('reports', 'Quản lý báo cáo', 6),
-('appeals', 'Quản lý kháng nghị', 7),
-('audit', 'Nhật ký hoạt động', 8),
-('contacts', 'Liên hệ hỗ trợ', 9),
-('brand', 'Thương hiệu', 10),
-('report_types', 'Loại báo cáo', 11),
-('lookups', 'Danh mục', 12),
-('settings', 'Cài đặt cá nhân', 13),
-('roles', 'Quản lý quyền', 14)
+('audit', 'Nhật ký hoạt động', 7),
+('settings', 'Cài đặt cá nhân', 8),
+('roles', 'Quản lý quyền', 9)
 ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label, sort_order = EXCLUDED.sort_order;
 
 INSERT INTO public.actions (name, label) VALUES
@@ -5518,8 +5400,7 @@ INSERT INTO public.actions (name, label) VALUES
 ('ban', 'Cấm'),
 ('restore', 'Khôi phục'),
 ('moderate', 'Duyệt / Kiểm duyệt'),
-('status', 'Đổi trạng thái'),
-('reply', 'Trả lời')
+('status', 'Đổi trạng thái')
 ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
 
 WITH permission_pairs(module_name, action_names) AS (
@@ -5530,12 +5411,7 @@ WITH permission_pairs(module_name, action_names) AS (
     ('jobs', ARRAY['view','moderate','delete']),
     ('posts', ARRAY['view','moderate','delete']),
     ('reports', ARRAY['view','moderate','status']),
-    ('appeals', ARRAY['view','moderate']),
     ('audit', ARRAY['view']),
-    ('contacts', ARRAY['view','reply']),
-    ('brand', ARRAY['view','edit']),
-    ('report_types', ARRAY['view','create','edit','delete']),
-    ('lookups', ARRAY['view','create','edit','delete']),
     ('settings', ARRAY['view','edit']),
     ('roles', ARRAY['view','create','edit','delete'])
 ),
@@ -5555,13 +5431,12 @@ INSERT INTO public.roles (name, description, is_system) VALUES
 ('member', 'Thành viên thường', TRUE),
 ('company', 'Nhà tuyển dụng', TRUE),
 ('content_moderator', 'Người duyệt nội dung', FALSE),
-('user_manager', 'Quản lý người dùng', FALSE),
-('support_agent', 'Hỗ trợ khách hàng', FALSE)
+('user_manager', 'Quản lý người dùng', FALSE)
 ON CONFLICT (name) DO NOTHING;
 
 DELETE FROM public.role_permissions WHERE role_id IN (
   SELECT id FROM public.roles
-  WHERE name IN ('admin', 'member', 'company', 'content_moderator', 'user_manager', 'support_agent')
+  WHERE name IN ('admin', 'member', 'company', 'content_moderator', 'user_manager')
 );
 
 INSERT INTO public.role_permissions (role_id, permission_id)
@@ -5574,7 +5449,7 @@ INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM public.roles r, public.permissions p
 WHERE r.name = 'content_moderator'
-  AND (p.name = 'dashboard.view' OR p.name LIKE 'posts.%' OR p.name LIKE 'reports.%' OR p.name LIKE 'appeals.%' OR p.name LIKE 'audit.%')
+  AND (p.name = 'dashboard.view' OR p.name LIKE 'posts.%' OR p.name LIKE 'reports.%' OR p.name LIKE 'audit.%')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.role_permissions (role_id, permission_id)
@@ -5582,13 +5457,6 @@ SELECT r.id, p.id
 FROM public.roles r, public.permissions p
 WHERE r.name = 'user_manager'
   AND (p.name = 'dashboard.view' OR p.name LIKE 'users.%' OR p.name LIKE 'companies.%' OR p.name LIKE 'audit.%')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM public.roles r, public.permissions p
-WHERE r.name = 'support_agent'
-  AND (p.name = 'dashboard.view' OR p.name LIKE 'contacts.%' OR p.name = 'reports.view' OR p.name = 'audit.view')
 ON CONFLICT DO NOTHING;
 
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -5713,15 +5581,10 @@ INSERT INTO public.modules (name, label, sort_order) VALUES
 ('jobs', 'Quản lý việc làm', 10),
 ('posts', 'Quản lý bài viết', 11),
 ('reports', 'Quản lý báo cáo', 12),
-('appeals', 'Quản lý kháng nghị', 13),
-('audit', 'Nhật ký hoạt động', 14),
-('contacts', 'Liên hệ hỗ trợ', 15),
-('search', 'Tìm kiếm', 16),
-('brand', 'Thương hiệu', 17),
-('report_types', 'Loại báo cáo', 18),
-('lookups', 'Danh mục', 19),
-('settings', 'Cài đặt cá nhân', 20),
-('roles', 'Quản lý quyền', 21)
+('audit', 'Nhật ký hoạt động', 13),
+('search', 'Tìm kiếm', 14),
+('settings', 'Cài đặt cá nhân', 15),
+('roles', 'Quản lý quyền', 16)
 ON CONFLICT (name) DO UPDATE
 SET label = EXCLUDED.label,
     sort_order = EXCLUDED.sort_order;
@@ -5737,7 +5600,6 @@ INSERT INTO public.actions (name, label) VALUES
 ('restore', 'Khôi phục'),
 ('moderate', 'Duyệt / Kiểm duyệt'),
 ('status', 'Đổi trạng thái'),
-('reply', 'Trả lời'),
 ('apply', 'Ứng tuyển'),
 ('save', 'Lưu'),
 ('send', 'Gửi'),
@@ -5765,12 +5627,7 @@ WITH permission_pairs(module_name, action_names) AS (
     ('jobs', ARRAY['view','create','edit','apply','save','moderate','delete']),
     ('posts', ARRAY['view','create','edit','comment','react','share','moderate','delete']),
     ('reports', ARRAY['create','view','moderate','status']),
-    ('appeals', ARRAY['view','create','moderate']),
     ('audit', ARRAY['view']),
-    ('contacts', ARRAY['create','view','reply']),
-    ('brand', ARRAY['view','edit']),
-    ('report_types', ARRAY['view','create','edit','delete']),
-    ('lookups', ARRAY['view','create','edit','delete']),
     ('settings', ARRAY['view','edit']),
     ('roles', ARRAY['view','create','edit','delete'])
 ),
@@ -5787,7 +5644,7 @@ ON CONFLICT (name) DO UPDATE SET label = EXCLUDED.label;
 
 DELETE FROM public.role_permissions WHERE role_id IN (
   SELECT id FROM public.roles
-  WHERE name IN ('admin', 'member', 'company', 'content_moderator', 'user_manager', 'support_agent')
+  WHERE name IN ('admin', 'member', 'company', 'content_moderator', 'user_manager')
 );
 
 INSERT INTO public.role_permissions (role_id, permission_id)
@@ -5808,8 +5665,7 @@ WITH role_permission_seed(role_name, permission_name) AS (
     ('member', 'jobs.view'), ('member', 'jobs.apply'), ('member', 'jobs.save'),
     ('member', 'posts.view'), ('member', 'posts.create'), ('member', 'posts.edit'), ('member', 'posts.comment'),
     ('member', 'posts.react'), ('member', 'posts.share'), ('member', 'posts.delete'),
-    ('member', 'reports.create'), ('member', 'appeals.view'), ('member', 'appeals.create'),
-    ('member', 'contacts.create'), ('member', 'settings.view'), ('member', 'settings.edit'),
+    ('member', 'reports.create'), ('member', 'settings.view'), ('member', 'settings.edit'),
 
     ('company', 'feed.view'), ('company', 'search.view'),
     ('company', 'network.view'), ('company', 'network.follow'), ('company', 'network.connect'), ('company', 'network.block'),
@@ -5820,13 +5676,12 @@ WITH role_permission_seed(role_name, permission_name) AS (
     ('company', 'jobs.view'), ('company', 'jobs.create'), ('company', 'jobs.edit'),
     ('company', 'posts.view'), ('company', 'posts.create'), ('company', 'posts.edit'), ('company', 'posts.comment'),
     ('company', 'posts.react'), ('company', 'posts.share'), ('company', 'posts.delete'),
-    ('company', 'reports.create'), ('company', 'appeals.view'), ('company', 'appeals.create'),
-    ('company', 'contacts.create'), ('company', 'settings.view'), ('company', 'settings.edit'),
+    ('company', 'reports.create'), ('company', 'settings.view'), ('company', 'settings.edit'),
 
     ('content_moderator', 'admin.access'), ('content_moderator', 'dashboard.view'),
     ('content_moderator', 'posts.view'), ('content_moderator', 'posts.moderate'), ('content_moderator', 'posts.delete'),
     ('content_moderator', 'reports.view'), ('content_moderator', 'reports.moderate'), ('content_moderator', 'reports.status'),
-    ('content_moderator', 'appeals.view'), ('content_moderator', 'appeals.moderate'), ('content_moderator', 'audit.view'),
+    ('content_moderator', 'audit.view'),
 
     ('user_manager', 'admin.access'), ('user_manager', 'dashboard.view'),
     ('user_manager', 'users.view'), ('user_manager', 'users.create'), ('user_manager', 'users.edit'),
@@ -5834,11 +5689,7 @@ WITH role_permission_seed(role_name, permission_name) AS (
     ('user_manager', 'users.ban'), ('user_manager', 'users.restore'),
     ('user_manager', 'companies.view'), ('user_manager', 'companies.edit'), ('user_manager', 'companies.suspend'),
     ('user_manager', 'companies.moderate'), ('user_manager', 'companies.restore'),
-    ('user_manager', 'roles.view'), ('user_manager', 'audit.view'),
-
-    ('support_agent', 'admin.access'), ('support_agent', 'dashboard.view'),
-    ('support_agent', 'contacts.view'), ('support_agent', 'contacts.reply'),
-    ('support_agent', 'reports.view'), ('support_agent', 'audit.view')
+    ('user_manager', 'roles.view'), ('user_manager', 'audit.view')
 )
 INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.id, p.id

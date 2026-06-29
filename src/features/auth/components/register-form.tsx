@@ -4,14 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
-import { Lock, Mail, ShieldCheck } from "lucide-react"
-import { toast } from "sonner"
-
-import { verifyAuthRecaptchaAction } from "@/features/system-settings/api/actions"
-import {
-  useRecaptcha,
-  type RecaptchaConfig,
-} from "@/features/system-settings/components/use-recaptcha"
+import { Lock, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -79,19 +72,10 @@ const defaultValues: RegisterFormValues = {
 const INPUT_CLASS =
   "pl-11 h-12 bg-card border-border hover:bg-muted/30 transition-all duration-300 focus:bg-card focus:ring-1 focus:ring-primary/50 focus:border-primary rounded-xl"
 
-export function RegisterForm({
-  recaptcha,
-}: {
-  recaptcha?: RecaptchaConfig
-} = {}) {
+export function RegisterForm() {
   const t = useTranslations("auth.register")
   const tv = useTranslations("auth.validation")
-  const tErr = useTranslations("auth.errors")
   const registerSchema = useMemo(() => createRegisterSchema(tv), [tv])
-  const { enabled: captchaEnabled, getToken } = useRecaptcha(
-    recaptcha ?? { enabled: false, siteKey: null },
-  )
-  const [verifying, setVerifying] = useState(false)
 
   const form = useForm<RegisterFormValues>({
     defaultValues,
@@ -145,16 +129,6 @@ export function RegisterForm({
   }, [role, form])
 
   async function onSubmit(values: RegisterFormValues) {
-    if (captchaEnabled) {
-      setVerifying(true)
-      const token = await getToken("register")
-      const verification = await verifyAuthRecaptchaAction(token, "register")
-      setVerifying(false)
-      if (!verification.ok) {
-        toast.error(tErr("recaptchaFailed"))
-        return
-      }
-    }
     const payload: RegisterInput =
       values.role === "company"
         ? {
@@ -311,22 +285,15 @@ export function RegisterForm({
 
         <Button
           type="submit"
-          disabled={register.isPending || verifying}
+          disabled={register.isPending}
           className="w-full h-12 text-base font-semibold hover:opacity-90 transition-opacity duration-300 rounded-xl"
         >
-          {register.isPending || verifying
+          {register.isPending
             ? t("submitting")
             : role === "company"
               ? t("submitCompany")
               : t("submitMember")}
         </Button>
-
-        {captchaEnabled ? (
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" />
-            {t("protectedByRecaptcha")}
-          </p>
-        ) : null}
       </form>
     </Form>
   )

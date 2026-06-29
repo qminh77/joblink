@@ -12,7 +12,6 @@ import {
   Flag,
   LayoutDashboard,
   ScrollText,
-  Tags,
   Users,
   Shield,
   Menu,
@@ -50,7 +49,6 @@ const GROUPS = [
     key: "system",
     items: [
       { key: "roles", href: "/admin/roles", icon: Shield, requiredPermission: "roles.view" },
-      { key: "reportTypes", href: "/admin/report-types", icon: Tags, requiredPermission: "report_types.view" },
     ],
   },
 ] as const

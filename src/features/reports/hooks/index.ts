@@ -4,31 +4,17 @@ import { useQuery, useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { createClient } from "@/lib/supabase/client"
 import { createReportAction } from "../api/actions"
-import type { ReportTypeOption } from "../api/actions"
+import {
+  loadReportReasons,
+  type ReportReasonOption,
+} from "../lib/report-reasons"
 import type { CreateReportInput } from "../types"
 
-export function useReportTypes() {
-  return useQuery<ReportTypeOption[]>({
-    queryKey: ["report-types"],
-    queryFn: async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("report_types")
-        .select("id, code, name, name_en")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-
-      if (error) throw error
-
-      return (data ?? []).map((r: Record<string, unknown>) => ({
-        id: r.id as number,
-        code: r.code as string,
-        name: r.name as string,
-        nameEn: (r.name_en as string | null) ?? null,
-      })) as ReportTypeOption[]
-    },
+export function useReportReasons() {
+  return useQuery<ReportReasonOption[]>({
+    queryKey: ["report-reasons"],
+    queryFn: loadReportReasons,
     staleTime: 5 * 60 * 1000,
   })
 }

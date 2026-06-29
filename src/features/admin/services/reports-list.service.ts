@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { createAdminClient } from "@/lib/supabase/admin"
+import { getReportReasonLabel } from "@/features/reports/lib/report-reasons"
 import type { ReportTargetType } from "@/types/database"
 
 import type { AdminReportRow, ListReportsParams } from "../types"
@@ -9,7 +10,6 @@ import {
   listReporterIdentityRows,
   listReportRows,
   listReportTargetRows,
-  listReportTypeNameRows,
   type AdminReportRecord,
   type CommentTargetRow,
   type JobTargetRow,
@@ -41,7 +41,7 @@ export async function loadAdminReports(
   const rows = (data ?? []) as AdminReportRecord[]
 
   const reporterData = await buildReporterData(supabase, rows)
-  const reasonNameMap = await buildReasonNameMap(supabase, rows)
+  const reasonNameMap = buildReasonNameMap(rows)
   const targetIdsByType = groupTargetIdsByType(rows)
   const targetRows = await listReportTargetRows(supabase, targetIdsByType)
   const previewMap = buildPreviewMap(targetRows)
@@ -119,16 +119,12 @@ async function buildReporterData(
   return reporterData
 }
 
-async function buildReasonNameMap(
-  supabase: AdminSupabase,
-  rows: AdminReportRecord[],
-) {
+function buildReasonNameMap(rows: AdminReportRecord[]) {
   const reasonCodes = [...new Set(rows.map((row) => row.reason))]
-  const reportTypes = await listReportTypeNameRows(supabase, reasonCodes)
   const reasonNameMap: Record<string, string> = {}
 
-  for (const reportType of reportTypes) {
-    reasonNameMap[reportType.code] = reportType.name
+  for (const reasonCode of reasonCodes) {
+    reasonNameMap[reasonCode] = getReportReasonLabel(reasonCode)
   }
 
   return reasonNameMap

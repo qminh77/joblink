@@ -86,9 +86,6 @@ export function JobsListClient({
       modeIds.length > 0,
     [search, provinceId, typeIds, modeIds],
   )
-
-  // (alertFilters removed — job alerts feature removed)
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/40">

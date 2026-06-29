@@ -87,7 +87,7 @@
 │           Supabase (Backend)                                │
 │  ┌────────────┐ ┌──────────────┐ ┌───────────┐ ┌───────┐  │
 │  │ PostgreSQL │ │  Auth (JWT)  │ │ Realtime  │ │Storage│  │
-│  │ + RLS/RPC  │ │  + Passkey  │ │ (WS)      │ │       │  │
+│  │ + RLS/RPC  │ │              │ │ (WS)      │ │       │  │
 │  └────────────┘ └──────────────┘ └───────────┘ └───────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -132,8 +132,6 @@ TanStack Query invalidation → Feed refresh
 
 ### 🔐 Authentication & Security
 - **Đăng ký / Đăng nhập**: Email + password, Google OAuth
-- **Passkey (WebAuthn)**: Đăng nhập không mật khẩu
-- **2FA**: Xác thực hai yếu tố (TOTP)
 - **Quên mật khẩu**: Email reset
 - **Kiểm soát phiên**: Middleware chặn user bị ban/suspend
 - **Phân quyền**: 3 roles — `member`, `company`, `admin`
@@ -141,22 +139,20 @@ TanStack Query invalidation → Feed refresh
 ### 📝 Posts & Social Feed
 | Tính năng | Mô tả |
 |-----------|-------|
-| **Bài viết đa phương tiện** | Text, image, video, article, poll |
+| **Bài viết đa phương tiện** | Text, image, video, article |
 | **Mentions** | @tag người dùng |
 | **Link preview** | Tự động fetch metadata |
 | **Reactions** | 6 cảm xúc: like, celebrate, support, love, insightful, funny |
 | **Comments** | Thread bình luận |
 | **Shares** | Chia sẻ bài viết (quote/share) |
 | **Visibility** | public / connections / private |
-| **Bình chọn (Poll)** | Tạo và vote |
 
 ### 💼 Jobs & Tuyển dụng
 - **Đăng tin tuyển dụng**: Full-time, part-time, internship, contract, freelance
 - **Hình thức làm việc**: On-site, remote, hybrid
-- **Ứng tuyển**: Theo dõi trạng thái (applied → reviewed → interview → offered → hired / rejected)
+- **Ứng tuyển**: Theo dõi trạng thái đơn giản (`submitted`, `withdrawn`, `closed`)
 - **Lưu tin**: Saved jobs
-- **Job Alerts**: Thông báo việc làm phù hợp
-- **Company Dashboard**: Quản lý tin đã đăng, ứng viên
+- **Quản lý tin tuyển dụng**: Công ty đăng, sửa, lưu nháp và đóng/mở tin
 
 ### 🏢 Company Profiles
 - Hồ sơ công ty (logo, cover, mô tả, ngành, quy mô, địa chỉ)
@@ -186,12 +182,11 @@ TanStack Query invalidation → Feed refresh
 
 ### ⚙️ Settings
 - Thông tin tài khoản
-- Bảo mật: đổi mật khẩu, 2FA, passkeys, Google Auth toggle
+- Bảo mật: đổi mật khẩu
 - Quyền riêng tư: visibility profile
 - Ngôn ngữ: Tiếng Việt / English
 - Notification preferences
 - Tài khoản bị chặn
-- Appeal: khiếu nại khi bị xử phạt
 
 ### 🛡 Admin Panel (Toàn quyền)
 | Module | Chức năng |
@@ -202,10 +197,8 @@ TanStack Query invalidation → Feed refresh
 | **Posts** | Kiểm duyệt bài viết |
 | **Jobs** | Kiểm duyệt tin tuyển dụng |
 | **Reports** | Xử lý báo cáo vi phạm |
-| **Appeals** | Xử lý khiếu nại |
 | **Audit Log** | Nhật ký hành động admin |
-| **Lookups** | Quản lý danh mục |
-| **Settings** | System settings (regional, email, security) |
+| **Roles** | Quản lý vai trò và quyền |
 
 ---
 
@@ -291,7 +284,7 @@ Client Input
 ### Database Performance
 - **Extensions**: `pgcrypto`, `pg_trgm`
 - **Stored Procedures**: 40+ RPC functions cho logic phức tạp
-- **Triggers**: Feed sync, notification fan-out, vote counting
+- **Triggers**: Feed sync, notification fan-out, counter sync
 - **Indexes**: Full-text search, foreign keys
 
 ---
@@ -308,8 +301,8 @@ Client Input
 │ email       │     │ content     │     │ author_id   │
 │ role        │     │ post_type   │     │ content     │
 │ status      │     │ media       │     └─────────────┘
-│ 2fa_enabled │     │ visibility  │
-│ locale      │     │ status      │     ┌─────────────┐
+│ locale      │     │ visibility  │
+│ last_login  │     │ status      │     ┌─────────────┐
 └──────┬──────┘     │ reaction_c  │1──N│  reactions  │
        │            │ comment_c   │     │ post_id     │
        │            │ share_c     │     │ user_id     │
@@ -349,7 +342,7 @@ Client Input
 
 > 📐 File ERD: `ERD_Joblink.drawio` | `FULL_ERD_Joblink.drawio` (mở bằng draw.io)
 
-### Bảng chính (37+ tables)
+### Bảng chính (40+ tables)
 
 | Bảng | Mục đích |
 |------|----------|
@@ -357,29 +350,26 @@ Client Input
 | `member_profiles` | Hồ sơ thành viên |
 | `company_profiles` | Hồ sơ công ty |
 | `posts` | Bài viết |
-| `post_media` | Media (ảnh/video) đính kèm bài viết |
-| `comments` | Bình luận |
-| `reactions` | Cảm xúc bài viết |
-| `polls` / `poll_options` / `poll_votes` | Bình chọn |
+| `post_comments` | Bình luận |
+| `post_reactions` | Cảm xúc bài viết |
+| `post_shares` | Chia sẻ bài viết |
 | `jobs` | Tin tuyển dụng |
-| `applications` | Đơn ứng tuyển |
-| `job_alerts` | Thông báo việc làm |
+| `job_applications` | Đơn ứng tuyển |
 | `connections` | Kết nối (pending/accepted/rejected/blocked) |
-| `user_follows` | Follow |
+| `follows` | Follow |
 | `user_blocks` | Chặn |
 | `conversations` / `messages` | Nhắn tin |
 | `notifications` | Thông báo |
 | `notification_preferences` | Cài đặt thông báo |
-| `reports` / `report_types` | Báo cáo vi phạm |
-| `appeals` | Khiếu nại |
+| `reports` | Báo cáo vi phạm |
 | `audit_logs` | Nhật ký admin |
-| `administrative_units` | Đơn vị hành chính (tỉnh/huyện) |
+| `provinces` / `wards` | Đơn vị hành chính |
 | `member_cvs` | CV của member |
 | `system_settings` | Cài đặt hệ thống (regional, email, security) |
 | `member_skills` | Kỹ năng |
 | `saved_jobs` | Việc làm đã lưu |
 
-> 📄 Xem schema đầy đủ: [`schema.sql`](./schema.sql) (5.453 dòng, hợp nhất từ 66+ migration files)
+> 📄 Xem schema đầy đủ: [`schema.sql`](./schema.sql) (hợp nhất đến migration 086)
 
 ---
 
@@ -406,26 +396,26 @@ joblink/
 │   │       ├── home/         # /home — feed
 │   │       ├── profile/      # /profile/[id], /profile/edit
 │   │       ├── jobs/         # /jobs, /jobs/[id], /jobs/applications
-│   │       ├── company/      # /company/[id], /company/dashboard, /company/post-job
+│   │       ├── company/      # /company/[id], /company/post-job
 │   │       ├── network/      # /network
 │   │       ├── messages/     # /messages
 │   │       ├── notifications/# /notifications
 │   │       ├── search/       # /search
 │   │       ├── saved-jobs/   # /saved-jobs
 │   │       ├── settings/     # /settings
-│   │       └── admin/        # /admin/dashboard, users, companies, posts, jobs, reports, appeals, audit-log, lookups, settings
+│   │       └── admin/        # /admin/dashboard, users, companies, posts, jobs, reports, roles, audit-log
 │   │
 │   ├── features/             # Feature modules
-│   │   ├── auth/             # Authentication (login, register, OAuth, MFA, Passkey)
-│   │   ├── posts/            # Posts, feed, comments, reactions, polls, shares
+│   │   ├── auth/             # Authentication (login, register, OAuth)
+│   │   ├── posts/            # Posts, feed, comments, reactions, shares
 │   │   ├── jobs/             # Job management, applications
-│   │   ├── companies/        # Company profiles, verification, dashboard
+│   │   ├── companies/        # Company profiles, verification
 │   │   ├── network/          # Connections, follows, blocks, suggestions
 │   │   ├── messaging/        # Real-time chat
 │   │   ├── notifications/    # Real-time notifications
 │   │   ├── search/           # Full-text search
 │   │   ├── settings/         # User settings
-│   │   ├── reports/          # Report & appeal system
+│   │   ├── reports/          # Report system
 │   │   ├── admin/            # Admin panel services
 │   │   └── system-settings/  # System settings
 │   │

@@ -50,7 +50,7 @@ type Props = {
 export function JobDetailClient({ detail }: Props) {
   const locale = useLocale()
   const t = useTranslations("jobs.public")
-  const tAppStatus = useTranslations("companies.dashboard.appStatus")
+  const tAppStatus = useTranslations("notifications.appStatus")
   const formatRel = useRelativeTimeFormatter()
 
   const [saved, setSaved] = useState(detail.viewer.viewerSaved)
@@ -167,7 +167,7 @@ export function JobDetailClient({ detail }: Props) {
                     <Button asChild className="w-full sm:w-auto" size="lg">
                       <Link href="/company/post-job">
                         <Pencil />
-                        {t("manageOnDashboard")}
+                        {t("manageJob")}
                       </Link>
                     </Button>
                   ) : viewer.viewerApplied ? (

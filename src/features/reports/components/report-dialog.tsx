@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
-import { useReportTypes, useCreateReport } from "../hooks"
+import { useReportReasons, useCreateReport } from "../hooks"
 
 type Props = {
   open: boolean
@@ -25,7 +25,7 @@ type Props = {
 export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
   const t = useTranslations("reports")
   const locale = useLocale()
-  const { data: reportTypes = [], isLoading, isError } = useReportTypes()
+  const { data: reportReasons = [], isLoading, isError } = useReportReasons()
   const createReport = useCreateReport()
 
   const [reason, setReason] = useState("")
@@ -54,24 +54,24 @@ export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
         <div className="px-2 pb-2 max-h-60 overflow-y-auto">
           {isLoading ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              {t("loadingTypes")}
+              {t("loadingReasons")}
             </div>
           ) : isError ? (
             <div className="py-6 text-center text-sm text-destructive">
               {t("errors.unexpected")}
             </div>
-          ) : reportTypes.length === 0 ? (
+          ) : reportReasons.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              {t("emptyTypes")}
+              {t("emptyReasons")}
             </div>
           ) : (
-            reportTypes.map((rt) => {
-              const active = reason === rt.code
+            reportReasons.map((option) => {
+              const active = reason === option.code
               return (
                 <button
-                  key={rt.id}
+                  key={option.id}
                   type="button"
-                  onClick={() => setReason(rt.code)}
+                  onClick={() => setReason(option.code)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                     active
@@ -79,7 +79,9 @@ export function ReportDialog({ open, onClose, targetType, targetId }: Props) {
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >
-                  {locale === "en" && rt.nameEn ? rt.nameEn : rt.name}
+                  {locale === "en" && option.nameEn
+                    ? option.nameEn
+                    : option.name}
                 </button>
               )
             })
