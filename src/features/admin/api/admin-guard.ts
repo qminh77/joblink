@@ -10,13 +10,6 @@ function isAdminRole(user: CurrentUser): boolean {
 }
 
 /**
- * Yêu cầu user phải là admin.
- */
-export async function requireAdmin(): Promise<CurrentUser> {
-  return requireAdminAccess()
-}
-
-/**
  * Yêu cầu user có role admin để vào khu vực quản trị.
  */
 export async function requireAdminAccess(): Promise<CurrentUser> {

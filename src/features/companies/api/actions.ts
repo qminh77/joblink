@@ -23,11 +23,6 @@ import {
 } from "../services/company-notifications"
 
 type StatusPayload = { noop: boolean; status: string; oldStatus?: string }
-type CompanyErrorTranslator = Awaited<ReturnType<typeof getTranslations>>
-
-function companyOnlyError(te: CompanyErrorTranslator) {
-  return { ok: false as const, error: te("notCompany") }
-}
 
 /**
  * Toggle follow/unfollow công ty. Idempotent — trả luôn count mới để client
@@ -77,7 +72,6 @@ export async function updateJobStatusAction(input: {
   }
 
   const current = await requireCurrentUser()
-  if (current.appUser.role !== "company") return companyOnlyError(te)
   const supabase = await createClient()
 
   const result = await rpcResult<StatusPayload>(
@@ -108,8 +102,6 @@ export async function updateJobStatusAction(input: {
  */
 export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerificationResult> {
   const current = await requireCurrentUser()
-  const te = await getTranslations("companies.errors")
-  if (current.appUser.role !== "company") return companyOnlyError(te)
   const supabase = await createClient()
 
   const result = await rpcResult<{ status: "pending" }>(

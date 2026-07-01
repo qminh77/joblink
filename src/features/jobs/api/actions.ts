@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server"
 import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import type { CurrentUser } from "@/features/auth/types"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -39,12 +38,6 @@ type JobTranslator = Awaited<ReturnType<typeof getTranslations>>
 
 function validationError(te: JobTranslator, message?: string) {
   return { ok: false as const, error: message ?? te("unknown") }
-}
-
-function ensureMemberApplicant(current: CurrentUser, te: JobTranslator) {
-  return current.appUser.role === "member"
-    ? null
-    : validationError(te, te("memberOnly"))
 }
 
 export async function createJobAction(
@@ -118,8 +111,6 @@ export async function applyToJobAction(input: {
   }
 
   const current = await requireCurrentUser()
-  const memberGate = ensureMemberApplicant(current, te)
-  if (memberGate) return memberGate
   await checkRateLimit(current.appUser.id, "application", 5, 60) // 5 applications / 60s
   const supabase = await createClient()
   const result = await applyToJob(
@@ -152,8 +143,6 @@ export async function withdrawApplicationAction(
   }
 
   const current = await requireCurrentUser()
-  const memberGate = ensureMemberApplicant(current, te)
-  if (memberGate) return memberGate
   const supabase = await createClient()
   const result = await withdrawApplication(supabase, current, parsed.data)
 
@@ -178,8 +167,6 @@ export async function toggleSavedJobAction(
   }
 
   const current = await requireCurrentUser()
-  const memberGate = ensureMemberApplicant(current, te)
-  if (memberGate) return memberGate
   const supabase = await createClient()
   const result = await toggleSavedJob(supabase, parsed.data)
 
