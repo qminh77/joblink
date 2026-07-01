@@ -1,7 +1,6 @@
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { CurrentUserProvider } from "@/features/auth/components/current-user-provider"
 import type { SessionUserSummary } from "@/features/auth/types"
-import { getAdminUserPermissions } from "@/features/admin/api/admin-guard"
 import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
 import { RealtimeNotifications } from "@/features/notifications/components/realtime-notifications"
 import { RealtimeMessaging } from "@/features/messaging/components/realtime-messaging"
@@ -16,10 +15,7 @@ export default async function MainLayout({
   children: React.ReactNode
 }) {
   const user = await requireCurrentUser()
-  const permissions = await getAdminUserPermissions()
-  const adminHref = getAdminEntryHref(permissions)
-
-
+  const adminHref = getAdminEntryHref(user.appUser.role)
 
   const sessionUser: SessionUserSummary = {
     id: user.appUser.id,
@@ -32,7 +28,6 @@ export default async function MainLayout({
     coverUrl: user.profile.coverUrl,
     headline: user.profile.headline,
     companyVerificationStatus: user.profile.companyVerificationStatus,
-    permissions,
     adminHref,
   }
 

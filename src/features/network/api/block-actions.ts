@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { writeAuditLog } from "@/lib/audit"
 import type { ActionResult } from "@/lib/action/result"
 import { action, parse } from "@/lib/action/server"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { createTargetUserIdSchema } from "../schemas"
@@ -26,7 +26,7 @@ export async function getBlockStatusAction(
 }
 
 export async function listBlockedUsersAction(): Promise<BlockedUserItem[]> {
-  const current = await requirePermission("network.block")
+  const current = await requireCurrentUser()
   return listBlockedUsersForUser(current)
 }
 
@@ -35,7 +35,7 @@ export async function blockUserAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requirePermission("network.block")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     await blockUser(supabase, current, target)
@@ -54,7 +54,7 @@ export async function unblockUserAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requirePermission("network.block")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     await unblockUser(supabase, current, target)

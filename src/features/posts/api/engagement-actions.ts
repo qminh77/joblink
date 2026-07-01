@@ -4,7 +4,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
 import { action, parse } from "@/lib/action/server"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -33,7 +33,7 @@ export async function toggleReactionAction(
   postId: number,
 ): Promise<ActionResult<ToggleReactionResult>> {
   return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.react")
+    const current = await requireCurrentUser()
     const data = parse(createReactionInputSchema(t), {
       postId,
       reactionType: "like",
@@ -55,7 +55,7 @@ export async function createCommentAction(
   input: CreateCommentActionInput,
 ): Promise<ActionResult<CreateCommentResult>> {
   return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.comment")
+    const current = await requireCurrentUser()
     const data = parse(createCommentInputSchema(t), input)
     await checkRateLimit(current.appUser.id, "comment", 15, 60) // 15 comments / 60s
     const supabase = await createClient()
@@ -76,7 +76,7 @@ export async function deleteCommentAction(
 ): Promise<ActionResult<DeleteCommentResult>> {
   return action("posts.errors", async (t) => {
     const id = parse(createCommentIdSchema(t), commentId)
-    const current = await requirePermission("posts.delete")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
     const result = await deletePostComment(supabase, current, id)
     await writeAuditLog({
@@ -94,7 +94,7 @@ export async function sharePostAction(
 ): Promise<ActionResult<SharePostResult>> {
   return action("posts.errors", async (t) => {
     const data = parse(createShareInputSchema(t), input)
-    const current = await requirePermission("posts.share")
+    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "share", 10, 60) // 10 shares / 60s
     const supabase = await createClient()
     const result = await shareFeedPost(supabase, current, data)

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { deleteCvAction } from '../../../src/features/cvs/api/actions';
 
-vi.mock('../../../src/lib/rbac', () => ({
-  requirePermission: vi.fn().mockResolvedValue({ appUser: { id: 1 } })
+vi.mock('../../../src/features/auth/api/auth-server', () => ({
+  requireCurrentUser: vi.fn().mockResolvedValue({ appUser: { id: 1, role: 'member' } }),
+  requireUserRole: vi.fn().mockResolvedValue({ appUser: { id: 1, role: 'member' } })
 }));
 
 vi.mock('../../../src/lib/supabase/server', () => ({

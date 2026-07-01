@@ -6,9 +6,9 @@
 
 ## Kết quả rà soát
 Kiểm tra tại `src/features/network/api/actions.ts` và `src/features/search/api/actions.ts`:
-- **FR-M04-001 (Theo dõi)**: Hàm `toggleFollowUserAction` đã được sử dụng. RBAC `network.follow`, Rate limit: 10 connections/60s. Có gửi thông báo qua `notifyUserFollowed`.
-- **FR-M04-002 (Kết nối)**: Đầy đủ các hàm `sendConnectionRequestAction`, `cancelConnectionRequestAction`, `respondConnectionRequestAction`, `removeConnectionAction`. RBAC: `network.connect`.
-- **FR-M04-003 (Chặn người dùng)**: `blockUserAction` và `unblockUserAction`. RBAC: `network.block`.
+- **FR-M04-001 (Theo dõi)**: Hàm `toggleFollowUserAction` đã được sử dụng. Action yêu cầu đăng nhập, Rate limit: 10 connections/60s. Có gửi thông báo qua `notifyUserFollowed`.
+- **FR-M04-002 (Kết nối)**: Đầy đủ các hàm `sendConnectionRequestAction`, `cancelConnectionRequestAction`, `respondConnectionRequestAction`, `removeConnectionAction`; các owner check nằm trong service.
+- **FR-M04-003 (Chặn người dùng)**: `blockUserAction` và `unblockUserAction` yêu cầu đăng nhập và kiểm tra quan hệ người dùng ở service.
 - **FR-M04-004 đến 006 (Tìm kiếm)**: `globalSearchAction` và `searchPageAction` lọc và giới hạn hiệu quả `MIN_QUERY = 2`. Hỗ trợ People, Companies, Jobs, Posts.
 
 ## Bugs / Issues

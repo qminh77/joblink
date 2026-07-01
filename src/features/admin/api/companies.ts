@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdminPermission } from "./admin-guard"
+import { requireAdminAccess } from "./admin-guard"
 import { revalidateAdminSection } from "./revalidation"
 import { companyActionSchema, type CompanyActionInput } from "../schemas"
 import {
@@ -24,7 +24,7 @@ export type {
 export async function listAdminCompanies(
   params: ListCompaniesParams = {},
 ): Promise<AdminCompanyListResult> {
-  await requireAdminPermission("companies.view")
+  await requireAdminAccess()
   const supabase = createAdminClient()
   return loadAdminCompanies(supabase, params)
 }
@@ -38,7 +38,7 @@ export async function applyCompanyAction(
     return { ok: false, error: "reason_required" }
   }
 
-  const current = await requireAdminPermission("companies.moderate")
+  const current = await requireAdminAccess()
   const supabase = createAdminClient()
   const result = await applyCompanyVerificationAction(
     supabase,

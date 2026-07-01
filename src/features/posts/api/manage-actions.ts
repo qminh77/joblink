@@ -4,7 +4,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
 import { action, parse } from "@/lib/action/server"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { createPostIdSchema, createPostUpdateSchema } from "../schemas"
@@ -19,7 +19,7 @@ export async function updatePostAction(
   input: UpdatePostActionInput,
 ): Promise<ActionResult<UpdatePostResult>> {
   return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.edit")
+    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 updates / 60s
     const supabase = await createClient()
 
@@ -40,7 +40,7 @@ export async function updatePostAction(
 export async function deletePostAction(postId: number): Promise<ActionResult> {
   return action("posts.errors", async (t) => {
     const id = parse(createPostIdSchema(t), postId)
-    const current = await requirePermission("posts.delete")
+    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 deletes / 60s
     const supabase = await createClient()
     await deleteOwnPost(supabase, current, id)

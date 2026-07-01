@@ -3,9 +3,8 @@
 import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
+import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -24,7 +23,7 @@ export async function updateMemberProfileAction(
   input: MemberProfileInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const data = parse(createMemberProfileSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -45,7 +44,7 @@ export async function updateMemberMediaAction(input: {
   coverUrl?: string | null
 }): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     if (input.avatarUrl === undefined && input.coverUrl === undefined) return
     const supabase = await createClient()
 

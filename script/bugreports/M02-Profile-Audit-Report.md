@@ -13,7 +13,7 @@ Sau khi kiểm tra các thư mục `src/features/profile`, `src/features/compani
 
 ## Bugs / Issues
 **Không có lỗi (No bugs found)**.
-- Phân quyền (RBAC) được áp dụng chặt chẽ qua `requirePermission("profile.edit")` và `requirePermission("cvs.create")`.
+- Các thao tác chỉnh sửa được chặn bằng session guard và role guard nghiệp vụ (`member`/`company`) ở application layer.
 - Audit logs được ghi đầy đủ với hàm `writeAuditLog`.
 - `requirePositiveId` xử lý id hợp lệ (integer > 0).
 

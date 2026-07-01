@@ -1,6 +1,6 @@
 /**
  * Loose Supabase client types for tables not yet in generated Database types.
- * Use this for new tables (RBAC, etc.) until `supabase gen types` is re-run.
+ * Use this for new tables until `supabase gen types` is re-run.
  */
 
 export type LooseClient = {

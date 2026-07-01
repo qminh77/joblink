@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { ReportStatus } from "@/types/database"
 
-import { requireAdminPermission } from "./admin-guard"
+import { requireAdminAccess } from "./admin-guard"
 import { revalidateAdminSection } from "./revalidation"
 import {
   moderationActionSchema,
@@ -26,7 +26,7 @@ export type { ListReportsParams } from "../types"
 export async function listAdminReports(
   params: ListReportsParams = {},
 ): Promise<AdminReportRow[]> {
-  await requireAdminPermission("reports.view")
+  await requireAdminAccess()
   const supabase = createAdminClient()
   return loadAdminReports(supabase, params)
 }
@@ -38,7 +38,7 @@ export async function setReportStatus(
   const parsed = reportStatusSchema.safeParse({ reportId, status })
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminPermission("reports.status")
+  const current = await requireAdminAccess()
   const supabase = createAdminClient()
   const result = await changeReportStatus(
     supabase,
@@ -57,7 +57,7 @@ export async function applyModerationAction(
   const parsed = moderationActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminPermission("reports.moderate")
+  const current = await requireAdminAccess()
   const supabase = createAdminClient()
   const result = await applyReportModeration(supabase, current, parsed.data)
 

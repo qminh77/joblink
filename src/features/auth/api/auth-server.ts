@@ -4,6 +4,7 @@ import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+import type { UserRole } from "@/lib/constants"
 import type { AppUserRow, CompanyVerification } from "@/types/database"
 
 import type { CurrentUser } from "../types"
@@ -46,6 +47,12 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireCurrentUser(): Promise<CurrentUser> {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
+  return user
+}
+
+export async function requireUserRole(role: UserRole): Promise<CurrentUser> {
+  const user = await requireCurrentUser()
+  if (user.appUser.role !== role) redirect("/home")
   return user
 }
 

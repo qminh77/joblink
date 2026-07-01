@@ -4,7 +4,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
 import { action, parse } from "@/lib/action/server"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { createPostInputSchema } from "../schemas"
@@ -19,7 +19,7 @@ export async function createPostAction(
   input: CreatePostActionInput,
 ): Promise<ActionResult<FeedPost>> {
   return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.create")
+    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "post", 5, 60) // 5 posts / 60s
     const supabase = await createClient()
 

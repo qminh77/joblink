@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-import { requireAdminPermission } from "./admin-guard"
+import { requireAdminAccess } from "./admin-guard"
 import { revalidateAdminSection } from "./revalidation"
 import { jobActionSchema, type JobActionInput } from "../schemas"
 import {
@@ -16,7 +16,7 @@ export type { AdminJobRow, ListJobsParams } from "../types"
 export async function listAdminJobs(
   params: ListJobsParams = {},
 ): Promise<AdminJobRow[]> {
-  await requireAdminPermission("jobs.view")
+  await requireAdminAccess()
   const supabase = createAdminClient()
   return loadAdminJobs(supabase, params)
 }
@@ -27,7 +27,7 @@ export async function applyJobAction(
   const parsed = jobActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminPermission("jobs.moderate")
+  const current = await requireAdminAccess()
   const supabase = createAdminClient()
   const result = await applyJobModerationAction(
     supabase,

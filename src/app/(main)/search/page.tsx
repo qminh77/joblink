@@ -1,5 +1,5 @@
 import { SearchPageClient } from "@/features/search/components/search-page-client"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -8,7 +8,7 @@ type Props = {
 export const dynamic = "force-dynamic"
 
 export default async function SearchRoute({ searchParams }: Props) {
-  await requirePermission("search.view")
+  await requireCurrentUser()
   const params = await searchParams
   const q = typeof params.q === "string" ? params.q : ""
   return <SearchPageClient initialQuery={q} />

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { sendMessageAction } from '../../../src/features/messaging/api/actions';
 
-vi.mock('../../../src/lib/rbac', () => ({
-  requirePermission: vi.fn().mockResolvedValue({ appUser: { id: 1 }, profile: { displayName: 'Test', avatarUrl: '' } })
+vi.mock('../../../src/features/auth/api/auth-server', () => ({
+  requireCurrentUser: vi.fn().mockResolvedValue({ appUser: { id: 1, role: 'member' }, profile: { displayName: 'Test', avatarUrl: '' } }),
+  requireUserRole: vi.fn().mockResolvedValue({ appUser: { id: 1, role: 'member' }, profile: { displayName: 'Test', avatarUrl: '' } })
 }));
 
 vi.mock('../../../src/lib/action/rate-limit', () => ({

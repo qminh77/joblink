@@ -7,7 +7,7 @@
 ## Kết quả rà soát
 Kiểm tra `src/features/jobs/api/actions.ts`:
 - **FR-M05-001 (Đăng tuyển)**: `createJobAction` và `updateJobAction` đã được kiểm tra chặt chẽ bằng `ensureCompanyCanManageJobs` (chỉ công ty đã được Admin duyệt `verified` mới được phép đăng). Rate limit: 5 creates/60s.
-- **FR-M05-002 (Ứng tuyển)**: `applyToJobAction` hoạt động với RBAC `jobs.apply` và bắt buộc có `resumeCvId`. Rate limit: 5 applications/60s. Rút đơn bằng `withdrawApplicationAction`.
+- **FR-M05-002 (Ứng tuyển)**: `applyToJobAction` yêu cầu tài khoản `member` và bắt buộc có `resumeCvId`. Rate limit: 5 applications/60s. Rút đơn bằng `withdrawApplicationAction`.
 - **FR-M05-003 (Lưu việc làm)**: `toggleSavedJobAction` hoạt động chính xác.
 - **FR-M05-004 (Lịch phỏng vấn)**: Ứng viên có thể xác nhận/từ chối lịch qua `respondInterviewAction`.
 

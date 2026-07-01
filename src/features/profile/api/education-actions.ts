@@ -3,9 +3,8 @@
 import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
+import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -25,7 +24,7 @@ export async function addEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const data = parse(createMemberEducationSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -44,7 +43,7 @@ export async function updateEducationAction(
   input: MemberEducationInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const data = parse(createMemberEducationSchema(await validation()), input)
     const supabase = await createClient()
 
@@ -64,7 +63,7 @@ export async function deleteEducationAction(
   educationId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const supabase = await createClient()
 
     await deleteEducation(supabase, current.appUser.id, educationId)

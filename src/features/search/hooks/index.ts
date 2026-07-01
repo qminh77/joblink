@@ -7,8 +7,6 @@ import type {
   GlobalSearchResults,
   SearchCompaniesResult,
   SearchJobsResult,
-  SearchPagePerson,
-  SearchPagePost,
   SearchPeopleResult,
   SearchPostsResult,
   SearchTab,

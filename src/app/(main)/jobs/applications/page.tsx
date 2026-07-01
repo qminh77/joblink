@@ -1,9 +1,9 @@
 import { MyApplicationsServerPage } from "@/features/jobs/components/my-applications-page"
-import { requirePermission } from "@/lib/rbac"
+import { requireUserRole } from "@/features/auth/api/auth-server"
 
 export const dynamic = "force-dynamic"
 
 export default async function MyApplicationsRoute() {
-  await requirePermission("jobs.apply")
+  await requireUserRole("member")
   return <MyApplicationsServerPage />
 }

@@ -3,10 +3,10 @@ import { getTranslations } from "next-intl/server"
 
 import { loadProfileEditOverview } from "@/features/profile/api/queries"
 import { EditProfileTabs } from "@/features/profile/components/edit/edit-profile-tabs"
-import { requirePermission } from "@/lib/rbac/rbac-guard"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 export default async function EditProfilePage() {
-  const current = await requirePermission("profile.edit")
+  const current = await requireCurrentUser()
   if (current.appUser.role === "company") {
     redirect("/settings")
   }

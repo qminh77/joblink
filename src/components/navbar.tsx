@@ -34,29 +34,26 @@ import { useCurrentUser } from "@/features/auth/components/current-user-provider
 import { HeaderSearch } from "@/features/search/components/header-search"
 
 const NAV_ITEMS = [
-  { key: "home", href: "/home", icon: Home, requiredPermission: "feed.view" },
-  { key: "network", href: "/network", icon: Users, requiredPermission: "network.view" },
-  { key: "jobs", href: "/jobs", icon: Briefcase, requiredPermission: "jobs.view" },
+  { key: "home", href: "/home", icon: Home },
+  { key: "network", href: "/network", icon: Users },
+  { key: "jobs", href: "/jobs", icon: Briefcase },
   {
     key: "messages",
     href: "/messages",
     icon: MessageSquare,
     hasDropdown: "messages" as const,
-    requiredPermission: "messages.view",
   },
   {
     key: "notifications",
     href: "/notifications",
     icon: Bell,
     hasDropdown: "notifications" as const,
-    requiredPermission: "notifications.view",
   },
 ] satisfies Array<{
   key: "home" | "network" | "jobs" | "messages" | "notifications"
   href: string
   icon: typeof Home
   hasDropdown?: "messages" | "notifications"
-  requiredPermission: string
 }>
 
 export function Navbar() {
@@ -66,13 +63,9 @@ export function Navbar() {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const tNav = useTranslations("nav")
   const tPost = useTranslations("posts")
-  const permissionSet = new Set(user.permissions)
-  const visibleNavItems = NAV_ITEMS.filter((item) =>
-    permissionSet.has(item.requiredPermission),
-  )
-  const canCreatePost = permissionSet.has("posts.create")
+  const visibleNavItems = NAV_ITEMS
+  const canCreatePost = user.role !== "admin"
   const canCreateJob =
-    permissionSet.has("jobs.create") &&
     user.role === "company" &&
     user.companyVerificationStatus === "verified"
   const canCreateAny = canCreatePost || canCreateJob

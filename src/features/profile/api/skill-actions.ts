@@ -3,9 +3,8 @@
 import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
+import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import { createSkillNameSchema } from "../schemas"
@@ -16,7 +15,7 @@ const validation = () => getTranslations("profile.validation")
 
 export async function addSkillAction(skillName: string): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const name = parse(createSkillNameSchema(await validation()), skillName)
     const supabase = await createClient()
 
@@ -35,7 +34,7 @@ export async function removeSkillAction(
   skillId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const supabase = await createClient()
 
     await removeSkill(supabase, current.appUser.id, skillId)

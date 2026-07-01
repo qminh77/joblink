@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { action, parse, unwrap } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 import { createReportSchema } from "../schemas"
 import { insertReport } from "../data/reports.repo"
@@ -18,7 +18,7 @@ export async function createReportAction(input: {
 }): Promise<ActionResult<{ reportId: number }>> {
   return action("reports.errors", async (t) => {
     const data = parse(createReportSchema(t), input)
-    const current = await requirePermission("reports.create")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     const row = unwrap(

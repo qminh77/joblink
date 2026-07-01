@@ -2,7 +2,7 @@
 
 import { action, parse } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { searchMentionableProfiles } from "../data/posts.repo"
@@ -24,12 +24,12 @@ import {
 export async function getFeedPageAction(
   cursor: string | null,
 ): Promise<FeedPage> {
-  await requirePermission("feed.view")
+  await requireCurrentUser()
   return loadFeedPage(cursor)
 }
 
 export async function getHomeStatsAction(): Promise<HomeFeedStats> {
-  await requirePermission("feed.view")
+  await requireCurrentUser()
   return loadHomeStats()
 }
 
@@ -37,7 +37,7 @@ export async function getUserPostsPageAction(
   targetUserId: number,
   cursor: string | null,
 ): Promise<UserPostsPage> {
-  await requirePermission("posts.view")
+  await requireCurrentUser()
   return loadUserPosts(targetUserId, cursor)
 }
 
@@ -45,7 +45,7 @@ export async function getPostCommentsAction(
   postId: number,
 ): Promise<ActionResult<FeedComment[]>> {
   return action("posts.errors", async (t) => {
-    await requirePermission("posts.view")
+    await requireCurrentUser()
     const id = parse(createPostIdSchema(t), postId)
     return loadPostComments(id)
   })
@@ -57,7 +57,7 @@ export async function searchMentionableUsersAction(
 ): Promise<MentionableUser[]> {
   const q = query.trim()
   if (q.length === 0) return []
-  await requirePermission("search.view")
+  await requireCurrentUser()
   const supabase = await createClient()
   return searchMentionableProfiles(supabase, q, limit)
 }

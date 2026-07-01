@@ -26,40 +26,40 @@ import {
 const GROUPS = [
   {
     key: "overview",
-    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, requiredPermission: "dashboard.view" }],
+    items: [{ key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
   },
   {
     key: "management",
     items: [
-      { key: "users", href: "/admin/users", icon: Users, requiredPermission: "users.view" },
-      { key: "companies", href: "/admin/companies", icon: Building2, requiredPermission: "companies.view" },
-      { key: "jobs", href: "/admin/jobs", icon: Briefcase, requiredPermission: "jobs.view" },
-      { key: "posts", href: "/admin/posts", icon: FileText, requiredPermission: "posts.view" },
+      { key: "users", href: "/admin/users", icon: Users },
+      { key: "companies", href: "/admin/companies", icon: Building2 },
+      { key: "jobs", href: "/admin/jobs", icon: Briefcase },
+      { key: "posts", href: "/admin/posts", icon: FileText },
     ],
   },
   {
     key: "moderation",
     items: [
-      { key: "reports", href: "/admin/reports", icon: Flag, requiredPermission: "reports.view" },
-      { key: "auditLog", href: "/admin/audit-log", icon: ScrollText, requiredPermission: "audit.view" },
+      { key: "reports", href: "/admin/reports", icon: Flag },
+      { key: "auditLog", href: "/admin/audit-log", icon: ScrollText },
     ],
   },
 ] as const
 
-export function AdminSidebar({ permissions }: { permissions: string[] }) {
+export function AdminSidebar() {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
 
   return (
     <aside className="hidden lg:flex flex-col w-56 shrink-0">
       <div className="sticky top-24 space-y-4">
-        <NavContent pathname={pathname} t={t} permissions={permissions} />
+        <NavContent pathname={pathname} t={t} />
       </div>
     </aside>
   )
 }
 
-export function AdminMobileNav({ permissions }: { permissions: string[] }) {
+export function AdminMobileNav() {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
   const [open, setOpen] = useState(false)
@@ -76,7 +76,7 @@ export function AdminMobileNav({ permissions }: { permissions: string[] }) {
           <SheetTitle className="text-lg font-bold">Admin Panel</SheetTitle>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <NavContent pathname={pathname} t={t} onNavigate={() => setOpen(false)} permissions={permissions} />
+          <NavContent pathname={pathname} t={t} onNavigate={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>
@@ -87,12 +87,10 @@ function NavContent({
   pathname,
   t,
   onNavigate,
-  permissions,
 }: {
   pathname: string
   t: (key: string) => string
   onNavigate?: () => void
-  permissions: string[]
 }) {
   return (
     <>
@@ -103,7 +101,6 @@ function NavContent({
           pathname={pathname}
           t={t}
           onNavigate={onNavigate}
-          permissions={permissions}
         />
       ))}
     </>
@@ -144,31 +141,23 @@ function SidebarGroup({
   pathname,
   t,
   onNavigate,
-  permissions,
 }: {
   group: (typeof GROUPS)[number]
   pathname: string
   t: (key: string) => string
   onNavigate?: () => void
-  permissions: string[]
 }) {
-  const visibleItems = group.items.filter(
-    (item) => !item.requiredPermission || permissions.includes(item.requiredPermission),
-  )
-
-  const hasActive = visibleItems.some(
+  const hasActive = group.items.some(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   )
   const [isOpen, setIsOpen] = useState(hasActive || group.key === "overview")
 
-  if (visibleItems.length === 0) return null
-
-  const isSingleItem = visibleItems.length === 1 && group.key === "overview"
+  const isSingleItem = group.items.length === 1 && group.key === "overview"
 
   if (isSingleItem) {
     return (
       <SidebarItem
-        item={visibleItems[0]}
+        item={group.items[0]}
         pathname={pathname}
         t={t}
         onNavigate={onNavigate}
@@ -191,7 +180,7 @@ function SidebarGroup({
       </button>
       {isOpen && (
         <div className="space-y-0.5">
-          {visibleItems.map((item) => (
+          {group.items.map((item) => (
             <SidebarItem
               key={item.href}
               item={item}

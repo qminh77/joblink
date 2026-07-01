@@ -23,6 +23,5 @@ export type SessionUserSummary = {
   coverUrl: string | null
   headline: string | null
   companyVerificationStatus?: CompanyVerification | null
-  permissions: string[]
   adminHref?: string | null
 }

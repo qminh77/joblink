@@ -7,7 +7,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { fail, type ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 import {
   createConversationIdSchema,
@@ -34,12 +34,12 @@ import {
 // ── Reads (RLS lo lọc participant) ───────────────────────────────────────────
 
 export async function getMessagingOverviewAction(): Promise<MessagingOverview> {
-  await requirePermission("messages.view")
+  await requireCurrentUser()
   return loadMessagingOverview()
 }
 
 export async function getUnreadConversationsCountAction(): Promise<number> {
-  await requirePermission("messages.view")
+  await requireCurrentUser()
   return loadUnreadConversationsCount()
 }
 
@@ -47,7 +47,7 @@ export async function getConversationMessagesAction(
   conversationId: number,
   cursor?: { beforeCreatedAt: string; beforeId: number },
 ): Promise<ConversationMessagesPage> {
-  await requirePermission("messages.view")
+  await requireCurrentUser()
   return loadConversationMessages(conversationId, cursor)
 }
 
@@ -62,7 +62,7 @@ export async function ensureConversationWithAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("invalidUser") }
   }
 
-  await requirePermission("messages.send")
+  await requireCurrentUser()
   const supabase = await createClient()
 
   return ensureDirectConversation(supabase, parsed.data)
@@ -78,7 +78,7 @@ export async function sendMessageAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
   }
 
-  const current = await requirePermission("messages.send")
+  const current = await requireCurrentUser()
   await checkRateLimit(current.appUser.id, "message", 30, 60) // 30 messages / 60s
   const supabase = await createClient()
 
@@ -105,7 +105,7 @@ export async function markConversationReadAction(
     return fail(parsed.error.issues[0]?.message ?? te("invalidConversation"))
   }
 
-  const current = await requirePermission("messages.view")
+  const current = await requireCurrentUser()
   const supabase = await createClient()
   const result = await markConversationRead(supabase, current, parsed.data)
 

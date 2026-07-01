@@ -4,7 +4,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import type { ActionResult } from "@/lib/action/result"
 import { action, parse } from "@/lib/action/server"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { createConnectionIdSchema, createTargetUserIdSchema } from "../schemas"
@@ -21,7 +21,7 @@ export async function sendConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const target = parse(createTargetUserIdSchema(t), targetUserId)
-    const current = await requirePermission("network.connect")
+    const current = await requireCurrentUser()
     await checkRateLimit(current.appUser.id, "connection", 10, 60)
     const supabase = await createClient()
 
@@ -41,7 +41,7 @@ export async function cancelConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requirePermission("network.connect")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     await cancelConnectionRequest(supabase, current, id)
@@ -61,7 +61,7 @@ export async function respondConnectionRequestAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requirePermission("network.connect")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     await respondConnectionRequest(supabase, current, id, accept)
@@ -80,7 +80,7 @@ export async function removeConnectionAction(
 ): Promise<ActionResult> {
   return action("network.errors", async (t) => {
     const id = parse(createConnectionIdSchema(t), connectionId)
-    const current = await requirePermission("network.connect")
+    const current = await requireCurrentUser()
     const supabase = await createClient()
 
     await removeConnection(supabase, current, id)

@@ -1,26 +1,13 @@
-import type { PermissionName } from "@/lib/rbac/permissions"
-
 const ADMIN_ENTRY_ITEMS = [
-  { href: "/admin/dashboard", requiredPermission: "dashboard.view" },
-  { href: "/admin/users", requiredPermission: "users.view" },
-  { href: "/admin/companies", requiredPermission: "companies.view" },
-  { href: "/admin/jobs", requiredPermission: "jobs.view" },
-  { href: "/admin/posts", requiredPermission: "posts.view" },
-  { href: "/admin/reports", requiredPermission: "reports.view" },
-  { href: "/admin/audit-log", requiredPermission: "audit.view" },
-] as const satisfies Array<{
-  href: string
-  requiredPermission: PermissionName
-}>
+  "/admin/dashboard",
+  "/admin/users",
+  "/admin/companies",
+  "/admin/jobs",
+  "/admin/posts",
+  "/admin/reports",
+  "/admin/audit-log",
+] as const
 
-export function getAdminEntryHref(
-  permissions: readonly string[],
-): string | null {
-  const permissionSet = new Set(permissions)
-  if (!permissionSet.has("admin.access")) return null
-  return (
-    ADMIN_ENTRY_ITEMS.find((item) =>
-      permissionSet.has(item.requiredPermission),
-    )?.href ?? null
-  )
+export function getAdminEntryHref(role: string): string | null {
+  return role === "admin" ? ADMIN_ENTRY_ITEMS[0] : null
 }

@@ -7,13 +7,16 @@ import {
   loadMySavedJobs,
   type JobsListFilters,
 } from "./queries"
-import { requirePermission } from "@/lib/rbac"
+import {
+  requireCurrentUser,
+  requireUserRole,
+} from "@/features/auth/api/auth-server"
 import type { JobsListPage, SavedJobsPage } from "../types"
 
 export async function loadJobsListViaAction(
   input: JobsListFilters,
 ): Promise<JobsListPage> {
-  await requirePermission("jobs.view")
+  await requireCurrentUser()
   return loadJobsList(input)
 }
 
@@ -21,6 +24,6 @@ export async function loadMySavedJobsViaAction(input: {
   limit?: number
   offset?: number
 }): Promise<SavedJobsPage> {
-  await requirePermission("jobs.save")
+  await requireUserRole("member")
   return loadMySavedJobs(input)
 }

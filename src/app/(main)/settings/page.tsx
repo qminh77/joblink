@@ -1,8 +1,7 @@
 import { getTranslations } from "next-intl/server"
 
-import { getAdminUserPermissions } from "@/features/admin/api/admin-guard"
 import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import {
   loadOwnCompanyProfile,
   loadOwnMemberProfile,
@@ -12,9 +11,8 @@ import type { SessionUserSummary } from "@/features/auth/types"
 import { SettingsTabs } from "@/features/settings/components/settings-tabs"
 
 export default async function SettingsPage() {
-  const current = await requirePermission("settings.view")
+  const current = await requireCurrentUser()
   const t = await getTranslations("settings")
-  const permissions = await getAdminUserPermissions()
 
   const sessionUser: SessionUserSummary = {
     id: current.appUser.id,
@@ -26,8 +24,7 @@ export default async function SettingsPage() {
     avatarUrl: current.profile.avatarUrl,
     coverUrl: current.profile.coverUrl,
     headline: current.profile.headline,
-    permissions,
-    adminHref: getAdminEntryHref(permissions),
+    adminHref: getAdminEntryHref(current.appUser.role),
   }
 
   const member =

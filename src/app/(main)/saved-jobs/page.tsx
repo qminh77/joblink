@@ -1,9 +1,9 @@
 import { SavedJobsServerPage } from "@/features/jobs/components/saved-jobs-page"
-import { requirePermission } from "@/lib/rbac"
+import { requireUserRole } from "@/features/auth/api/auth-server"
 
 export const dynamic = "force-dynamic"
 
 export default async function SavedJobsRoute() {
-  await requirePermission("jobs.save")
+  await requireUserRole("member")
   return <SavedJobsServerPage />
 }

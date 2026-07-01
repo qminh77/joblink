@@ -5,7 +5,8 @@ import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import type { CurrentUser } from "@/features/auth/types"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -40,6 +41,12 @@ function validationError(te: JobTranslator, message?: string) {
   return { ok: false as const, error: message ?? te("unknown") }
 }
 
+function ensureMemberApplicant(current: CurrentUser, te: JobTranslator) {
+  return current.appUser.role === "member"
+    ? null
+    : validationError(te, te("memberOnly"))
+}
+
 export async function createJobAction(
   input: CreateJobInput,
 ): Promise<CreateJobResult> {
@@ -49,7 +56,7 @@ export async function createJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requirePermission("jobs.create")
+  const current = await requireCurrentUser()
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
   await checkRateLimit(current.appUser.id, "job", 5, 60) // 5 creates / 60s
@@ -78,7 +85,7 @@ export async function updateJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requirePermission("jobs.edit")
+  const current = await requireCurrentUser()
   const companyGate = ensureCompanyCanManageJobs(current, te)
   if (companyGate) return companyGate
   await checkRateLimit(current.appUser.id, "job", 10, 60) // 10 updates / 60s
@@ -110,7 +117,9 @@ export async function applyToJobAction(input: {
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requirePermission("jobs.apply")
+  const current = await requireCurrentUser()
+  const memberGate = ensureMemberApplicant(current, te)
+  if (memberGate) return memberGate
   await checkRateLimit(current.appUser.id, "application", 5, 60) // 5 applications / 60s
   const supabase = await createClient()
   const result = await applyToJob(
@@ -142,7 +151,9 @@ export async function withdrawApplicationAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requirePermission("jobs.apply")
+  const current = await requireCurrentUser()
+  const memberGate = ensureMemberApplicant(current, te)
+  if (memberGate) return memberGate
   const supabase = await createClient()
   const result = await withdrawApplication(supabase, current, parsed.data)
 
@@ -166,7 +177,9 @@ export async function toggleSavedJobAction(
     return validationError(te, parsed.error.issues[0]?.message)
   }
 
-  const current = await requirePermission("jobs.save")
+  const current = await requireCurrentUser()
+  const memberGate = ensureMemberApplicant(current, te)
+  if (memberGate) return memberGate
   const supabase = await createClient()
   const result = await toggleSavedJob(supabase, parsed.data)
 

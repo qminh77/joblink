@@ -3,9 +3,8 @@
 import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
+import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
 import { createClient } from "@/lib/supabase/server"
 
 import {
@@ -25,7 +24,7 @@ export async function addExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const tv = await validation()
     const data = parse(createMemberExperienceSchema(tv), input)
     const supabase = await createClient()
@@ -50,7 +49,7 @@ export async function updateExperienceAction(
   input: MemberExperienceInput,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const tv = await validation()
     const data = parse(createMemberExperienceSchema(tv), input)
     const supabase = await createClient()
@@ -76,7 +75,7 @@ export async function deleteExperienceAction(
   experienceId: number,
 ): Promise<ActionResult> {
   return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
+    const current = await requireRole("member")
     const supabase = await createClient()
 
     await deleteExperience(supabase, current.appUser.id, experienceId)

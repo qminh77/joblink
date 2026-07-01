@@ -41,14 +41,12 @@ export function ProfileDropdown() {
   const initials = getInitials(user.displayName, "JL")
   const tNav = useTranslations("nav")
   const tMenu = useTranslations("profileMenu")
-  const canViewProfile = user.permissions.includes("profile.view")
-  const canViewNetwork = user.permissions.includes("network.view")
-  const canViewSavedJobs = user.permissions.includes("jobs.save")
-  const canViewApplications = user.permissions.includes("jobs.apply")
-  const canManageCompanyJobs =
-    user.permissions.includes("jobs.create") ||
-    user.permissions.includes("jobs.edit")
-  const canViewSettings = user.permissions.includes("settings.view")
+  const isMember = user.role === "member"
+  const isCompany = user.role === "company"
+  const canViewProfile = user.role !== "admin"
+  const canViewSavedJobs = isMember
+  const canViewApplications = isMember
+  const canManageCompanyJobs = isCompany
 
   return (
     <DropdownMenu>
@@ -110,7 +108,7 @@ export function ProfileDropdown() {
                 <span>{tMenu("viewProfileShort")}</span>
               </Link>
             ) : null}
-            {canViewNetwork ? (
+            {user.role !== "admin" ? (
               <Link
                 href="/network"
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -251,7 +249,6 @@ export function ProfileDropdown() {
           ) : null}
 
           <DropdownMenuGroup>
-            {canViewSettings ? (
             <motion.div
               variants={itemVariants}
               initial="hidden"
@@ -273,7 +270,6 @@ export function ProfileDropdown() {
                 </div>
               </DropdownMenuItem>
             </motion.div>
-            ) : null}
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator className="my-1 bg-border/20" />

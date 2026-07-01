@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server"
 import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { rpcResult } from "@/lib/action/rpc"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 
 import { createTargetUserIdSchema } from "../schemas"
@@ -26,7 +26,7 @@ export async function toggleFollowUserAction(
     }
   }
 
-  const current = await requirePermission("network.follow")
+  const current = await requireCurrentUser()
   await checkRateLimit(current.appUser.id, "connection", 10, 60) // 10 connections / 60s
   const supabase = await createClient()
 

@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { loadSinglePost } from "@/features/posts/api/queries"
 import { PostDetailView } from "@/features/posts/components/post-detail-view"
-import { requirePermission } from "@/lib/rbac"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -16,7 +16,7 @@ export default async function PostPage({ params }: Props) {
   const postId = Number.parseInt(rawId, 10)
   if (!Number.isFinite(postId) || postId <= 0) notFound()
 
-  await requirePermission("posts.view")
+  await requireCurrentUser()
   const post = await loadSinglePost(postId)
   if (!post) notFound()
 

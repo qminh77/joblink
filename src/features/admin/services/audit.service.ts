@@ -21,6 +21,13 @@ export type AuditLogPage = {
   total: number
 }
 
+export type AuditLogPageData = {
+  page: AuditLogPage
+  total: number
+  actions: string[]
+  entityTypes: string[]
+}
+
 export type { AuditFilterParams, ListAuditParams }
 
 export async function loadAuditLogs(
@@ -53,6 +60,20 @@ export function loadDistinctAuditEntityTypes(
   supabase: AdminSupabase,
 ): Promise<string[]> {
   return listDistinctAuditEntityTypes(supabase)
+}
+
+export async function loadAuditLogPageData(
+  supabase: AdminSupabase,
+  params: ListAuditParams = {},
+): Promise<AuditLogPageData> {
+  const [page, total, actions, entityTypes] = await Promise.all([
+    loadAuditLogs(supabase, params),
+    countAuditLogsByFilter(supabase, params),
+    loadDistinctAuditActions(supabase),
+    loadDistinctAuditEntityTypes(supabase),
+  ])
+
+  return { page, total, actions, entityTypes }
 }
 
 function mapAuditLogEntry(row: AuditLogRawRow): AdminAuditLogEntry {
