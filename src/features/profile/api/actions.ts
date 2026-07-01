@@ -1,310 +1,108 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-import { getTranslations } from "next-intl/server"
-
-import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
-import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
-import { createClient } from "@/lib/supabase/server"
-
 import {
-  createCompanyProfileSchema,
-  createMemberEducationSchema,
-  createMemberExperienceSchema,
-  createMemberProfileSchema,
-  createSkillNameSchema,
-  type CompanyProfileInput,
-  type MemberEducationInput,
-  type MemberExperienceInput,
-  type MemberProfileInput,
-} from "../schemas"
+  updateCompanyMediaAction as updateCompanyMedia,
+  updateCompanyProfileAction as updateCompanyProfile,
+} from "./company-actions"
 import {
-  addEducation,
-  addExperience,
-  addSkill,
-  deleteEducation,
-  deleteExperience,
-  editEducation,
-  editExperience,
-  getProfileStats,
-  logProfileView,
-  removeSkill,
-  updateCompanyMedia,
-  updateCompanyProfile,
-  updateMemberMedia,
-  updateMemberProfile,
-} from "../services/profile.service"
+  addEducationAction as addEducation,
+  deleteEducationAction as deleteEducation,
+  updateEducationAction as updateEducation,
+} from "./education-actions"
+import {
+  addExperienceAction as addExperience,
+  deleteExperienceAction as deleteExperience,
+  updateExperienceAction as updateExperience,
+} from "./experience-actions"
+import {
+  updateMemberMediaAction as updateMemberMedia,
+  updateMemberProfileAction as updateMemberProfile,
+} from "./member-actions"
+import {
+  addSkillAction as addSkill,
+  removeSkillAction as removeSkill,
+} from "./skill-actions"
+import {
+  getProfileStatsAction as getProfileStats,
+  logProfileViewAction as logProfileView,
+} from "./view-actions"
 
-const validation = () => getTranslations("profile.validation")
-
-function revalidateProfile(userId: number) {
-  revalidatePath("/profile/edit")
-  revalidatePath(`/profile/${userId}`)
-  revalidatePath("/profile/me")
-  revalidatePath("/settings")
-  revalidatePath("/home")
-}
-
-export async function updateMemberProfileAction(
-  input: MemberProfileInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const data = parse(createMemberProfileSchema(await validation()), input)
-    const supabase = await createClient()
-
-    await updateMemberProfile(supabase, current.appUser.id, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.update",
-      entityType: "member_profiles",
-      entityId: current.appUser.id,
-      newData: { fullName: data.fullName, headline: data.headline },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function updateMemberMediaAction(input: {
-  avatarUrl?: string | null
-  coverUrl?: string | null
-}): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    if (input.avatarUrl === undefined && input.coverUrl === undefined) return
-    const supabase = await createClient()
-
-    await updateMemberMedia(supabase, current.appUser.id, input)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.media_update",
-      entityType: "member_profiles",
-      entityId: current.appUser.id,
-      newData: input,
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function updateCompanyMediaAction(input: {
-  logoUrl?: string | null
-  coverUrl?: string | null
-}): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    if (input.logoUrl === undefined && input.coverUrl === undefined) return
-    const supabase = await createClient()
-
-    await updateCompanyMedia(supabase, current.appUser.id, input)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "company.media_update",
-      entityType: "company_profiles",
-      entityId: current.appUser.id,
-      newData: input,
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function addExperienceAction(
-  input: MemberExperienceInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const tv = await validation()
-    const data = parse(createMemberExperienceSchema(tv), input)
-    const supabase = await createClient()
-
-    await addExperience(
-      supabase,
-      current.appUser.id,
-      data,
-      tv("startDateRequired"),
-    )
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_add",
-      entityType: "member_experiences",
-      newData: { companyName: data.companyName, position: data.position },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function updateExperienceAction(
-  input: MemberExperienceInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const tv = await validation()
-    const data = parse(createMemberExperienceSchema(tv), input)
-    const supabase = await createClient()
-
-    await editExperience(
-      supabase,
-      current.appUser.id,
-      data,
-      tv("startDateRequired"),
-    )
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_update",
-      entityType: "member_experiences",
-      entityId: data.id ?? undefined,
-      newData: { companyName: data.companyName, position: data.position },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function deleteExperienceAction(
-  experienceId: number,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const supabase = await createClient()
-
-    await deleteExperience(supabase, current.appUser.id, experienceId)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_delete",
-      entityType: "member_experiences",
-      entityId: experienceId,
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function addEducationAction(
-  input: MemberEducationInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const data = parse(createMemberEducationSchema(await validation()), input)
-    const supabase = await createClient()
-
-    await addEducation(supabase, current.appUser.id, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.education_add",
-      entityType: "member_educations",
-      newData: { schoolName: data.schoolName, degree: data.degree },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function updateEducationAction(
-  input: MemberEducationInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const data = parse(createMemberEducationSchema(await validation()), input)
-    const supabase = await createClient()
-
-    await editEducation(supabase, current.appUser.id, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.education_update",
-      entityType: "member_educations",
-      entityId: data.id ?? undefined,
-      newData: { schoolName: data.schoolName, degree: data.degree },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function deleteEducationAction(
-  educationId: number,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const supabase = await createClient()
-
-    await deleteEducation(supabase, current.appUser.id, educationId)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.education_delete",
-      entityType: "member_educations",
-      entityId: educationId,
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function addSkillAction(skillName: string): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const name = parse(createSkillNameSchema(await validation()), skillName)
-    const supabase = await createClient()
-
-    await addSkill(supabase, current.appUser.id, name)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.skill_add",
-      entityType: "member_skills",
-      newData: { name },
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function removeSkillAction(
-  skillId: number,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const supabase = await createClient()
-
-    await removeSkill(supabase, current.appUser.id, skillId)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.skill_remove",
-      entityType: "member_skills",
-      entityId: skillId,
-    })
-    revalidateProfile(current.appUser.id)
-  })
-}
-
-export async function logProfileViewAction(
-  targetUserId: number,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.view")
-    const supabase = await createClient()
-    await logProfileView(supabase, current.appUser.id, targetUserId)
-  })
+export async function updateCompanyMediaAction(
+  input: Parameters<typeof updateCompanyMedia>[0],
+) {
+  return updateCompanyMedia(input)
 }
 
 export async function updateCompanyProfileAction(
-  input: CompanyProfileInput,
-): Promise<ActionResult> {
-  return action("profile.errors", async () => {
-    const current = await requirePermission("profile.edit")
-    const data = parse(createCompanyProfileSchema(await validation()), input)
-    const supabase = await createClient()
-
-    await updateCompanyProfile(supabase, current.appUser.id, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "company.profile_update",
-      entityType: "company_profiles",
-      entityId: current.appUser.id,
-      newData: { name: data.name, industry: data.industry },
-    })
-    revalidateProfile(current.appUser.id)
-  })
+  input: Parameters<typeof updateCompanyProfile>[0],
+) {
+  return updateCompanyProfile(input)
 }
 
-export async function getProfileStatsAction(): Promise<{
-  profileViewCount: number
-  connectionCount: number
-}> {
-  const current = await requirePermission("profile.view")
-  const supabase = await createClient()
-  return getProfileStats(supabase, current.appUser.id)
+export async function addEducationAction(
+  input: Parameters<typeof addEducation>[0],
+) {
+  return addEducation(input)
+}
+
+export async function deleteEducationAction(
+  educationId: Parameters<typeof deleteEducation>[0],
+) {
+  return deleteEducation(educationId)
+}
+
+export async function updateEducationAction(
+  input: Parameters<typeof updateEducation>[0],
+) {
+  return updateEducation(input)
+}
+
+export async function addExperienceAction(
+  input: Parameters<typeof addExperience>[0],
+) {
+  return addExperience(input)
+}
+
+export async function deleteExperienceAction(
+  experienceId: Parameters<typeof deleteExperience>[0],
+) {
+  return deleteExperience(experienceId)
+}
+
+export async function updateExperienceAction(
+  input: Parameters<typeof updateExperience>[0],
+) {
+  return updateExperience(input)
+}
+
+export async function updateMemberMediaAction(
+  input: Parameters<typeof updateMemberMedia>[0],
+) {
+  return updateMemberMedia(input)
+}
+
+export async function updateMemberProfileAction(
+  input: Parameters<typeof updateMemberProfile>[0],
+) {
+  return updateMemberProfile(input)
+}
+
+export async function addSkillAction(skillName: Parameters<typeof addSkill>[0]) {
+  return addSkill(skillName)
+}
+
+export async function removeSkillAction(
+  skillId: Parameters<typeof removeSkill>[0],
+) {
+  return removeSkill(skillId)
+}
+
+export async function getProfileStatsAction() {
+  return getProfileStats()
+}
+
+export async function logProfileViewAction(
+  targetUserId: Parameters<typeof logProfileView>[0],
+) {
+  return logProfileView(targetUserId)
 }

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import type { CurrentUser } from "@/features/auth/types"
 import { writeAuditLog } from "@/lib/audit"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { requirePermission } from "@/lib/rbac"
@@ -24,6 +23,7 @@ import {
   updateJob,
   withdrawApplication,
 } from "../services/jobs.service"
+import { ensureCompanyCanManageJobs } from "../services/job-management-policy"
 import type {
   ApplyResult,
   CreateJobInput,
@@ -186,20 +186,4 @@ export async function logJobViewAction(jobId: number): Promise<void> {
   if (!Number.isInteger(jobId) || jobId <= 0) return
   const supabase = await createClient()
   await logJobView(supabase, jobId)
-}
-
-function ensureCompanyCanManageJobs(
-  current: CurrentUser,
-  te: JobTranslator,
-): { ok: false; error: string } | null {
-  if (current.appUser.role !== "company") {
-    return { ok: false, error: te("notCompany") }
-  }
-  if (
-    current.appUser.status !== "active" ||
-    current.profile.companyVerificationStatus !== "verified"
-  ) {
-    return { ok: false, error: te("companyPendingApproval") }
-  }
-  return null
 }

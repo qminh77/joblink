@@ -6,7 +6,7 @@ import type {
   ReportStatus,
   ReportTargetType,
 } from "@/types/database"
-import type { UserRole, UserStatus } from "@/lib/constants"
+import type { JobStatus, UserRole, UserStatus } from "@/lib/constants"
 
 export type AdminDashboardStats = {
   totalUsers: number
@@ -152,6 +152,23 @@ export type ListReportsParams = {
 }
 
 export type AdminActionResult = { ok: boolean; error?: string }
+
+export type AdminJobRow = {
+  id: number
+  title: string
+  status: JobStatus
+  companyUserId: number
+  companyName: string
+  applicationsCount: number
+  createdAt: string
+  expiresAt: string | null
+}
+
+export type ListJobsParams = {
+  search?: string
+  status?: JobStatus | "all"
+  limit?: number
+}
 
 export type AdminAuditLogEntry = {
   id: number

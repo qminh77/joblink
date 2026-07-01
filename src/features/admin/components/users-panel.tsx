@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/select"
 import { applyUserAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
-import type { AdminRoleRow } from "@/features/admin/api/roles"
-import { USER_STATUSES } from "@/lib/constants"
+import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
 import { type UserActionType, UsersActionDialog } from "./users/users-action-dialog"
 import { UsersTableRow } from "./users/users-table-row"
 
@@ -27,11 +26,9 @@ import { UsersTableRow } from "./users/users-table-row"
 
 export function UsersPanel({
   initial,
-  roles,
   query,
 }: {
   initial: AdminUserListResult
-  roles: AdminRoleRow[]
   query: {
     search?: string
     role?: string
@@ -133,10 +130,9 @@ export function UsersPanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allRoles")}</SelectItem>
-            {roles.map((role) => (
-              <SelectItem key={role.id} value={String(role.id)}>
-                {role.name}
-                {role.is_system ? " (Hệ thống)" : ""}
+            {USER_ROLES.map((role) => (
+              <SelectItem key={role} value={role}>
+                {t(`roles.${role}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -170,7 +166,7 @@ export function UsersPanel({
               <tr className="border-b border-border/30 bg-muted/20">
                 <th className="text-left px-4 py-3 font-semibold">User</th>
                 <th className="text-left px-4 py-3 font-semibold">
-                  {t("rbacRole")}
+                  {t("role")}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold">
                   {t("status")}
@@ -198,7 +194,6 @@ export function UsersPanel({
                   <UsersTableRow
                     key={user.id}
                     user={user}
-                    roles={roles}
                     pending={pending}
                     onAction={setConfirmTarget}
                   />

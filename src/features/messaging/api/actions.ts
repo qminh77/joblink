@@ -5,9 +5,8 @@ import { getTranslations } from "next-intl/server"
 
 import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
-import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
-import { ok, fail, type ActionResult } from "@/lib/action/result"
+import { fail, type ActionResult } from "@/lib/action/result"
 import { requirePermission } from "@/lib/rbac"
 
 import {
@@ -18,24 +17,19 @@ import {
 import type {
   ConversationMessagesPage,
   EnsureConversationResult,
-  MessageItem,
   MessagingOverview,
   SendMessageResult,
 } from "../types"
 import {
-  clearNewMessageNotifications,
-  notifyNewMessage,
-} from "../lib/new-message-notification"
+  ensureDirectConversation,
+  markConversationRead,
+  sendMessage,
+} from "../services/messaging.service"
 import {
   loadConversationMessages,
   loadMessagingOverview,
   loadUnreadConversationsCount,
 } from "./queries"
-
-function excerpt(text: string | null, max = 120): string {
-  const t = (text ?? "").trim()
-  return t.length > max ? `${t.slice(0, max - 1)}…` : t
-}
 
 // ── Reads (RLS lo lọc participant) ───────────────────────────────────────────
 
@@ -71,11 +65,7 @@ export async function ensureConversationWithAction(
   await requirePermission("messages.send")
   const supabase = await createClient()
 
-  return rpcResult<{ conversationId: number }>(
-    supabase.rpc("find_or_create_direct_conversation", {
-      p_other_user_id: parsed.data,
-    }),
-  )
+  return ensureDirectConversation(supabase, parsed.data)
 }
 
 export async function sendMessageAction(
@@ -92,23 +82,9 @@ export async function sendMessageAction(
   await checkRateLimit(current.appUser.id, "message", 30, 60) // 30 messages / 60s
   const supabase = await createClient()
 
-  const result = await rpcResult<{ message: MessageItem; recipientId: number }>(
-    supabase.rpc("send_message", {
-      p_conversation_id: parsed.data.conversationId,
-      p_content: parsed.data.content,
-    }),
-  )
+  const result = await sendMessage(supabase, current, parsed.data)
 
   if (result.ok) {
-    // Notify new_message (gộp nếu đã có row chưa đọc cho cùng convo).
-    await notifyNewMessage({
-      recipientId: result.recipientId,
-      senderId: current.appUser.id,
-      conversationId: parsed.data.conversationId,
-      senderName: current.profile.displayName,
-      senderAvatarUrl: current.profile.avatarUrl,
-      excerpt: excerpt(result.message.content),
-    })
     await writeAuditLog({
       actorId: current.appUser.id,
       action: "messaging.send",
@@ -131,23 +107,10 @@ export async function markConversationReadAction(
 
   const current = await requirePermission("messages.view")
   const supabase = await createClient()
-
-  const { error } = await supabase.rpc("mark_conversation_read", {
-    p_conversation_id: parsed.data,
-  })
-  if (error) {
-    console.error("[markConversationReadAction]", error)
-    return fail("unknown")
-  }
-
-  // Dọn notification new_message chưa đọc của convo này (giảm spam dropdown).
-  await clearNewMessageNotifications({
-    recipientId: current.appUser.id,
-    conversationId: parsed.data,
-  })
+  const result = await markConversationRead(supabase, current, parsed.data)
 
   // Badge global ở navbar đọc qua react-query (client invalidate); vẫn revalidate
   // layout phòng SSR-hydrated.
-  revalidatePath("/", "layout")
-  return ok(undefined)
+  if (result.ok) revalidatePath("/", "layout")
+  return result
 }

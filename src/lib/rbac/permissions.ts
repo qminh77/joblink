@@ -84,12 +84,6 @@ export const PERMISSIONS = {
   // Settings
   "settings.view": "Cài đặt cá nhân - Xem",
   "settings.edit": "Cài đặt cá nhân - Chỉnh sửa",
-
-  // Roles
-  "roles.view": "Quản lý quyền - Xem",
-  "roles.create": "Quản lý quyền - Tạo mới",
-  "roles.edit": "Quản lý quyền - Chỉnh sửa",
-  "roles.delete": "Quản lý quyền - Xóa",
 } as const
 
 export type PermissionKey = keyof typeof PERMISSIONS

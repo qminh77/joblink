@@ -4,10 +4,12 @@ import { redirect } from "next/navigation"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
-import { checkUserPermission, getUserPermissionsByUserId } from "@/lib/rbac"
+import { getPermissionsForRole } from "@/lib/rbac"
 import type { PermissionName } from "@/lib/rbac"
 
-const ADMIN_ACCESS_PERMISSION = "admin.access" satisfies PermissionName
+function isAdminRole(user: CurrentUser): boolean {
+  return user.appUser.role === "admin"
+}
 
 /**
  * Yêu cầu user phải là admin (backward compat).
@@ -23,11 +25,7 @@ export async function requireAdminAccess(): Promise<CurrentUser> {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const allowed = await checkUserPermission(
-    user.appUser.id,
-    ADMIN_ACCESS_PERMISSION,
-  )
-  if (!allowed) redirect("/home")
+  if (!isAdminRole(user)) redirect("/home")
 
   return user
 }
@@ -38,7 +36,7 @@ export async function requireAdminAccess(): Promise<CurrentUser> {
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
-  return checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION)
+  return isAdminRole(user)
 }
 
 /**
@@ -48,12 +46,8 @@ export async function requireAdminPermission(permission: PermissionName): Promis
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const [canAccessAdmin, allowed] = await Promise.all([
-    checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION),
-    checkUserPermission(user.appUser.id, permission),
-  ])
-  if (!canAccessAdmin) redirect("/home")
-  if (!allowed) redirect("/home")
+  void permission
+  if (!isAdminRole(user)) redirect("/home")
 
   return user
 }
@@ -64,11 +58,8 @@ export async function requireAdminPermission(permission: PermissionName): Promis
 export async function hasAdminPermission(permission: PermissionName): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
-  const [canAccessAdmin, allowed] = await Promise.all([
-    checkUserPermission(user.appUser.id, ADMIN_ACCESS_PERMISSION),
-    checkUserPermission(user.appUser.id, permission),
-  ])
-  return canAccessAdmin && allowed
+  void permission
+  return isAdminRole(user)
 }
 
 /**
@@ -77,6 +68,5 @@ export async function hasAdminPermission(permission: PermissionName): Promise<bo
 export async function getAdminUserPermissions(): Promise<string[]> {
   const user = await getCurrentUser()
   if (!user) return []
-  const perms = await getUserPermissionsByUserId(user.appUser.id)
-  return perms
+  return getPermissionsForRole(user.appUser.role)
 }

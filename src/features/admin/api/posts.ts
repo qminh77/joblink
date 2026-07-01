@@ -1,10 +1,9 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminPermission } from "./admin-guard"
+import { revalidateAdminSection } from "./revalidation"
 import { postActionSchema, type PostActionInput } from "../schemas"
 import {
   applyPostModerationAction,
@@ -36,12 +35,6 @@ export async function applyPostAction(
     parsed.data,
   )
 
-  if (result.ok) revalidateAdminPostViews()
+  if (result.ok) revalidateAdminSection("posts")
   return result
-}
-
-function revalidateAdminPostViews() {
-  revalidatePath("/admin/posts")
-  revalidatePath("/admin/audit-log")
-  revalidatePath("/admin/dashboard")
 }

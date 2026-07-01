@@ -15,7 +15,6 @@ export const MODULES = [
   "audit",
   "search",
   "settings",
-  "roles",
 ] as const
 
 export type ModuleName = (typeof MODULES)[number]
@@ -37,5 +36,4 @@ export const MODULE_LABELS: Record<ModuleName, string> = {
   audit: "Nhật ký hoạt động",
   search: "Tìm kiếm",
   settings: "Cài đặt hệ thống",
-  roles: "Quản lý quyền",
 }

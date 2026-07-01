@@ -2,355 +2,137 @@ import "server-only"
 
 import { cache } from "react"
 
+import type { UserRole } from "@/lib/constants"
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { LooseClient } from "@/lib/supabase/loose-types"
 
-import type { ModuleName } from "./modules"
-import type { ActionName } from "./actions"
 import type { PermissionName } from "./permissions"
 import { getAllPermissionNames } from "./permissions"
 
 type UserRoleLookup = {
-  role: string
+  role: UserRole
 }
 
-const ADMIN_ROLE_NAME = "admin"
+const MEMBER_PERMISSIONS = [
+  "feed.view",
+  "search.view",
+  "network.view",
+  "network.follow",
+  "network.connect",
+  "network.block",
+  "messages.view",
+  "messages.send",
+  "notifications.view",
+  "notifications.edit",
+  "profile.view",
+  "profile.edit",
+  "cvs.view",
+  "cvs.create",
+  "cvs.edit",
+  "cvs.delete",
+  "companies.view",
+  "companies.follow",
+  "jobs.view",
+  "jobs.apply",
+  "jobs.save",
+  "posts.view",
+  "posts.create",
+  "posts.edit",
+  "posts.comment",
+  "posts.react",
+  "posts.share",
+  "posts.delete",
+  "reports.create",
+  "settings.view",
+  "settings.edit",
+] satisfies PermissionName[]
 
-function hasAdminRole(user: UserRoleLookup): boolean {
-  return user.role === ADMIN_ROLE_NAME
+const COMPANY_PERMISSIONS = [
+  "feed.view",
+  "search.view",
+  "network.view",
+  "network.follow",
+  "network.connect",
+  "network.block",
+  "messages.view",
+  "messages.send",
+  "notifications.view",
+  "notifications.edit",
+  "profile.view",
+  "profile.edit",
+  "companies.view",
+  "companies.follow",
+  "companies.edit",
+  "jobs.view",
+  "jobs.create",
+  "jobs.edit",
+  "posts.view",
+  "posts.create",
+  "posts.edit",
+  "posts.comment",
+  "posts.react",
+  "posts.share",
+  "posts.delete",
+  "reports.create",
+  "settings.view",
+  "settings.edit",
+] satisfies PermissionName[]
+
+const ROLE_PERMISSIONS: Record<UserRole, readonly PermissionName[]> = {
+  admin: getAllPermissionNames(),
+  member: MEMBER_PERMISSIONS,
+  company: COMPANY_PERMISSIONS,
 }
 
-export type RoleRow = {
-  id: number
-  name: string
-  description: string | null
-  is_system: boolean
-  created_at: string
-  updated_at: string
+export function getPermissionsForRole(role: UserRole): PermissionName[] {
+  return [...ROLE_PERMISSIONS[role]]
 }
 
-export type RoleWithPermissions = RoleRow & {
-  permissions: PermissionName[]
-  permission_count: number
-  user_count: number
+export function roleHasPermission(
+  role: UserRole,
+  permission: PermissionName,
+): boolean {
+  return role === "admin" || ROLE_PERMISSIONS[role].includes(permission)
 }
 
-export type PermissionRow = {
-  id: number
-  name: string
-  label: string
-  module_name: ModuleName
-  module_label: string
-  action_name: ActionName
-  action_label: string
-}
-
-/**
- * Lấy tất cả roles (có cache trong 1 request)
- */
-export const getAllRoles = cache(async (): Promise<RoleRow[]> => {
-  const supabase = createAdminClient() as unknown as LooseClient
-  const { data, error } = await supabase
-    .from("roles")
-    .select("id, name, description, is_system, created_at, updated_at")
-    .is("deleted_at", null)
-    .order("id")
-
-  if (error) {
-    console.error("[rbac:getAllRoles]", error)
-    return []
-  }
-
-  return (data ?? []) as RoleRow[]
-})
-
-/**
- * Lấy role by ID với permissions — parallel queries cho performance
- */
-export const getRoleById = cache(
-  async (roleId: number): Promise<RoleWithPermissions | null> => {
-    const supabase = createAdminClient() as unknown as LooseClient
-
-    const { data: role, error: roleError } = await supabase
-      .from("roles")
-      .select("id, name, description, is_system, created_at, updated_at")
-      .eq("id", roleId)
-      .is("deleted_at", null)
-      .single()
-
-    if (roleError || !role) return null
-
-    const roleData = role as RoleRow
-
-    // Parallel queries instead of sequential
-    const [permsResult, permCountResult, userCountResult] = await Promise.all([
-      supabase
-        .from("role_permissions")
-        .select("permissions(name)")
-        .eq("role_id", roleId),
-      supabase
-        .from("role_permissions")
-        .select("permission_id", { count: "exact", head: true })
-        .eq("role_id", roleId),
-      supabase
-        .from("users")
-        .select("id", { count: "exact", head: true })
-        .eq("role", roleData.name)
-        .is("deleted_at", null),
-    ])
-
-    const permissions = ((permsResult.data ?? []) as Array<{ permissions: { name: string } }>)
-      .map((rp) => rp.permissions?.name)
-      .filter(Boolean) as PermissionName[]
-
-    return {
-      ...roleData,
-      permissions,
-      permission_count: permCountResult.count ?? 0,
-      user_count: userCountResult.count ?? 0,
-    }
-  },
-)
-
-/**
- * Lấy role by name
- */
-export const getRoleByName = cache(
-  async (name: string): Promise<RoleRow | null> => {
-    const supabase = createAdminClient() as unknown as LooseClient
-    const { data, error } = await supabase
-      .from("roles")
-      .select("id, name, description, is_system, created_at, updated_at")
-      .eq("name", name)
-      .is("deleted_at", null)
-      .single()
-
-    if (error || !data) return null
-    return data as RoleRow
-  },
-)
-
-/**
- * Lấy tất cả permissions — query base tables directly
- */
-export const getAllPermissions = cache(
-  async (): Promise<PermissionRow[]> => {
-    const supabase = createAdminClient() as unknown as LooseClient
-    const { data, error } = await supabase
-      .from("permissions")
-      .select("id, name, label, modules(name, label, sort_order), actions(name, label)")
-      .order("name")
-
-    if (error) {
-      console.error("[rbac:getAllPermissions]", error.message, error)
-      return []
-    }
-
-    if (!data || data.length === 0) {
-      console.warn("[rbac:getAllPermissions] empty — tables may not exist yet")
-      return []
-    }
-
-    return (data as Array<Record<string, unknown>>).map((row) => {
-      const mod = row.modules as { name: string; label: string; sort_order: number } | null
-      const act = row.actions as { name: string; label: string } | null
-      return {
-        id: row.id as number,
-        name: row.name as string,
-        label: row.label as string,
-        module_name: (mod?.name ?? "") as ModuleName,
-        module_label: mod?.label ?? "",
-        action_name: (act?.name ?? "") as ActionName,
-        action_label: act?.label ?? "",
-      }
-    }) as PermissionRow[]
-  },
-)
-
-/**
- * Lấy permissions của user — single query với role_permissions + permissions join
- */
 export const getUserPermissionsByUserId = cache(
   async (userId: number): Promise<PermissionName[]> => {
-    const supabase = createAdminClient() as unknown as LooseClient
-
-    const { data: user, error: userError } = await supabase
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
       .from("users")
       .select("role")
       .eq("id", userId)
       .is("deleted_at", null)
-      .single()
+      .single<UserRoleLookup>()
 
-    if (userError || !user) {
-      console.error("[rbac:getUserPermissions] user not found:", userError?.message)
+    if (error || !data) {
+      console.error("[roles:getUserPermissions] user not found:", error?.message)
       return []
     }
 
-    const userData = user as UserRoleLookup
-
-    if (hasAdminRole(userData)) {
-      return getAllPermissionNames()
-    }
-
-    // Get role_id from role name, then query permissions
-    const { data: roleData } = await supabase
-      .from("roles")
-      .select("id")
-      .eq("name", userData.role)
-      .is("deleted_at", null)
-      .single()
-
-    if (!roleData) return []
-
-    const { data: rpData, error: rpError } = await supabase
-      .from("role_permissions")
-      .select("permission_id")
-      .eq("role_id", (roleData as { id: number }).id)
-
-    if (rpError) {
-      console.error("[rbac:getUserPermissions] query error:", rpError.message)
-      return []
-    }
-
-    if (!rpData || rpData.length === 0) return []
-
-    const permIds = (rpData as Array<{ permission_id: number }>).map((r) => r.permission_id)
-
-    const { data: permData } = await supabase
-      .from("permissions")
-      .select("name")
-      .in("id", permIds)
-
-    return ((permData ?? []) as Array<{ name: string }>)
-      .map((p) => p.name as PermissionName)
+    return getPermissionsForRole(data.role)
   },
 )
 
-/**
- * Kiểm tra user có permission cụ thể không
- * O(1) — uses direct queries with index
- */
 export async function checkUserPermission(
   userId: number,
   permission: PermissionName,
 ): Promise<boolean> {
-  const supabase = createAdminClient() as unknown as LooseClient
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .is("deleted_at", null)
-    .single()
-
-  if (!user) return false
-  const userData = user as UserRoleLookup
-
-  if (hasAdminRole(userData)) return true
-
-  const { data: roleData } = await supabase
-    .from("roles")
-    .select("id")
-    .eq("name", userData.role)
-    .is("deleted_at", null)
-    .single()
-
-  if (!roleData) return false
-
-  const { data } = await supabase
-    .from("role_permissions")
-    .select("permission_id, permissions!inner(name)")
-    .eq("role_id", (roleData as { id: number }).id)
-    .eq("permissions.name", permission)
-    .limit(1)
-
-  return (data ?? []).length > 0
+  const permissions = await getUserPermissionsByUserId(userId)
+  return permissions.includes(permission)
 }
 
-/**
- * Kiểm tra user có TẤT CẢ permissions không (AND logic)
- * Batches into single query instead of N+1
- */
 export async function checkUserAllPermissions(
   userId: number,
   permissions: PermissionName[],
 ): Promise<boolean> {
-  const supabase = createAdminClient() as unknown as LooseClient
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .is("deleted_at", null)
-    .single()
-
-  if (!user) return false
-  const userData = user as UserRoleLookup
-
-  if (hasAdminRole(userData)) return true
-
-  const { data: roleData } = await supabase
-    .from("roles")
-    .select("id")
-    .eq("name", userData.role)
-    .is("deleted_at", null)
-    .single()
-
-  if (!roleData) return false
-
-  const { data: rpData } = await supabase
-    .from("role_permissions")
-    .select("permissions!inner(name)")
-    .eq("role_id", (roleData as { id: number }).id)
-    .in("permissions.name", permissions)
-
-  if (!rpData) return false
-
-  const foundNames = new Set(
-    (rpData as unknown as Array<{ permissions: { name: string } | null }>).map(
-      (r) => r.permissions?.name,
-    ).filter(Boolean),
-  )
-  return permissions.every((p) => foundNames.has(p))
+  const allowed = await getUserPermissionsByUserId(userId)
+  return permissions.every((permission) => allowed.includes(permission))
 }
 
-/**
- * Kiểm tra user có ÍT NHẤT 1 permission không (OR logic)
- * Batches into single query instead of N+1
- */
 export async function checkUserAnyPermission(
   userId: number,
   permissions: PermissionName[],
 ): Promise<boolean> {
-  const supabase = createAdminClient() as unknown as LooseClient
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .is("deleted_at", null)
-    .single()
-
-  if (!user) return false
-  const userData = user as UserRoleLookup
-
-  if (hasAdminRole(userData)) return true
-
-  const { data: roleData } = await supabase
-    .from("roles")
-    .select("id")
-    .eq("name", userData.role)
-    .is("deleted_at", null)
-    .single()
-
-  if (!roleData) return false
-
-  const { data: rpData } = await supabase
-    .from("role_permissions")
-    .select("permissions!inner(name)")
-    .eq("role_id", (roleData as { id: number }).id)
-    .in("permissions.name", permissions)
-    .limit(1)
-
-  return (rpData ?? []).length > 0
+  const allowed = await getUserPermissionsByUserId(userId)
+  return permissions.some((permission) => allowed.includes(permission))
 }

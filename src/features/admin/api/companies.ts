@@ -1,10 +1,9 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminPermission } from "./admin-guard"
+import { revalidateAdminSection } from "./revalidation"
 import { companyActionSchema, type CompanyActionInput } from "../schemas"
 import {
   applyCompanyVerificationAction,
@@ -47,12 +46,6 @@ export async function applyCompanyAction(
     parsed.data,
   )
 
-  if (result.ok) revalidateAdminCompanyViews()
+  if (result.ok) revalidateAdminSection("companies")
   return result
-}
-
-function revalidateAdminCompanyViews() {
-  revalidatePath("/admin/companies")
-  revalidatePath("/admin/audit-log")
-  revalidatePath("/admin/dashboard")
 }

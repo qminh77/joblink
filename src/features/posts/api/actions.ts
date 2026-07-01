@@ -1,264 +1,88 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-
-import { writeAuditLog } from "@/lib/audit"
-import { action, parse } from "@/lib/action/server"
-import { checkRateLimit } from "@/lib/action/rate-limit"
-import type { ActionResult } from "@/lib/action/result"
-import { requirePermission } from "@/lib/rbac"
-import { createClient } from "@/lib/supabase/server"
-
-import { searchMentionableProfiles } from "../data/posts.repo"
+import { createPostAction as createPost } from "./create-actions"
 import {
-  createCommentIdSchema,
-  createCommentInputSchema,
-  createPostIdSchema,
-  createPostInputSchema,
-  createPostUpdateSchema,
-  createReactionInputSchema,
-  createShareInputSchema,
-} from "../schemas"
+  createCommentAction as createComment,
+  deleteCommentAction as deleteComment,
+  sharePostAction as sharePost,
+  toggleReactionAction as toggleReaction,
+} from "./engagement-actions"
 import {
-  createPostComment,
-  createStandardPost,
-  createVideoPost,
-  deleteOwnPost,
-  deletePostComment,
-  shareFeedPost,
-  togglePostReaction,
-  updateStandardPost,
-} from "../services/post-actions.service"
+  deletePostAction as deletePost,
+  updatePostAction as updatePost,
+} from "./manage-actions"
 import {
-  loadFeedPage,
-  loadHomeStats,
-  loadPostComments,
-  loadUserPosts,
-} from "./queries"
-import type {
-  CreateCommentActionInput,
-  CreateCommentResult,
-  CreatePostActionInput,
-  DeleteCommentResult,
-  FeedComment,
-  FeedPage,
-  FeedPost,
-  HomeFeedStats,
-  MentionableUser,
-  SharePostActionInput,
-  SharePostResult,
-  ToggleReactionResult,
-  UpdatePostActionInput,
-  UpdatePostResult,
-  UserPostsPage,
-} from "../types"
+  getFeedPageAction as getFeedPage,
+  getHomeStatsAction as getHomeStats,
+  getPostCommentsAction as getPostComments,
+  getUserPostsPageAction as getUserPostsPage,
+  searchMentionableUsersAction as searchMentionableUsers,
+} from "./read-actions"
 
 export type { MentionableUser } from "../types"
 
-function revalidateHome() {
-  revalidatePath("/home")
-}
-
-// ── Reads (RLS lo việc lọc; trả thẳng domain, không bọc ActionResult) ─────────
-
 export async function getFeedPageAction(
-  cursor: string | null,
-): Promise<FeedPage> {
-  await requirePermission("feed.view")
-  return loadFeedPage(cursor)
+  cursor: Parameters<typeof getFeedPage>[0],
+) {
+  return getFeedPage(cursor)
 }
 
-export async function getHomeStatsAction(): Promise<HomeFeedStats> {
-  await requirePermission("feed.view")
-  return loadHomeStats()
+export async function getHomeStatsAction() {
+  return getHomeStats()
 }
 
 export async function getUserPostsPageAction(
-  targetUserId: number,
-  cursor: string | null,
-): Promise<UserPostsPage> {
-  await requirePermission("posts.view")
-  return loadUserPosts(targetUserId, cursor)
+  targetUserId: Parameters<typeof getUserPostsPage>[0],
+  cursor: Parameters<typeof getUserPostsPage>[1],
+) {
+  return getUserPostsPage(targetUserId, cursor)
 }
 
 export async function getPostCommentsAction(
-  postId: number,
-): Promise<ActionResult<FeedComment[]>> {
-  return action("posts.errors", async (t) => {
-    await requirePermission("posts.view")
-    const id = parse(createPostIdSchema(t), postId)
-    return loadPostComments(id)
-  })
+  postId: Parameters<typeof getPostComments>[0],
+) {
+  return getPostComments(postId)
 }
 
 export async function searchMentionableUsersAction(
-  query: string,
-  limit = 8,
-): Promise<MentionableUser[]> {
-  const q = query.trim()
-  if (q.length === 0) return []
-  await requirePermission("search.view")
-  const supabase = await createClient()
-  return searchMentionableProfiles(supabase, q, limit)
+  query: Parameters<typeof searchMentionableUsers>[0],
+  limit?: Parameters<typeof searchMentionableUsers>[1],
+) {
+  return searchMentionableUsers(query, limit)
 }
 
-// ── Writes ────────────────────────────────────────────────────────────────
-
-export async function createPostAction(
-  input: CreatePostActionInput,
-): Promise<ActionResult<FeedPost>> {
-  return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.create")
-    await checkRateLimit(current.appUser.id, "post", 5, 60) // 5 posts / 60s
-    const supabase = await createClient()
-
-    const videoUrl =
-      typeof input.videoUrl === "string" && input.videoUrl.startsWith("http")
-        ? input.videoUrl
-        : null
-    if (videoUrl) {
-      const data = parse(createPostInputSchema(t), { ...input, mediaItems: [] })
-      const post = await createVideoPost(supabase, current, data, videoUrl)
-      await writeAuditLog({
-        actorId: current.appUser.id,
-        action: "post.create_video",
-        entityType: "posts",
-        entityId: post.id,
-        newData: { postType: "video", visibility: data.visibility },
-      })
-      revalidateHome()
-      return post
-    }
-
-    const data = parse(createPostInputSchema(t), input)
-    const post = await createStandardPost(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.create",
-      entityType: "posts",
-      entityId: post.id,
-      newData: { visibility: data.visibility },
-    })
-    revalidateHome()
-    return post
-  })
+export async function createPostAction(input: Parameters<typeof createPost>[0]) {
+  return createPost(input)
 }
 
 export async function toggleReactionAction(
-  postId: number,
-): Promise<ActionResult<ToggleReactionResult>> {
-  return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.react")
-    const data = parse(createReactionInputSchema(t), {
-      postId,
-      reactionType: "like",
-    })
-    await checkRateLimit(current.appUser.id, "reaction", 30, 60) // 30 reactions / 60s
-    const supabase = await createClient()
-    const result = await togglePostReaction(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: result.reacted ? "post.reaction_add" : "post.reaction_remove",
-      entityType: "post_reactions",
-      entityId: postId,
-    })
-    return result
-  })
+  postId: Parameters<typeof toggleReaction>[0],
+) {
+  return toggleReaction(postId)
 }
 
 export async function createCommentAction(
-  input: CreateCommentActionInput,
-): Promise<ActionResult<CreateCommentResult>> {
-  return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.comment")
-    const data = parse(createCommentInputSchema(t), input)
-    await checkRateLimit(current.appUser.id, "comment", 15, 60) // 15 comments / 60s
-    const supabase = await createClient()
-    const result = await createPostComment(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.comment_add",
-      entityType: "post_comments",
-      entityId: data.postId,
-      newData: { content: data.content.substring(0, 200) },
-    })
-    return result
-  })
+  input: Parameters<typeof createComment>[0],
+) {
+  return createComment(input)
 }
 
 export async function deleteCommentAction(
-  commentId: number,
-): Promise<ActionResult<DeleteCommentResult>> {
-  return action("posts.errors", async (t) => {
-    const id = parse(createCommentIdSchema(t), commentId)
-    const current = await requirePermission("posts.delete")
-    const supabase = await createClient()
-    const result = await deletePostComment(supabase, current, id)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.comment_delete",
-      entityType: "post_comments",
-      entityId: id,
-    })
-    return result
-  })
+  commentId: Parameters<typeof deleteComment>[0],
+) {
+  return deleteComment(commentId)
 }
 
-export async function sharePostAction(
-  input: SharePostActionInput,
-): Promise<ActionResult<SharePostResult>> {
-  return action("posts.errors", async (t) => {
-    const data = parse(createShareInputSchema(t), input)
-    const current = await requirePermission("posts.share")
-    await checkRateLimit(current.appUser.id, "share", 10, 60) // 10 shares / 60s
-    const supabase = await createClient()
-    const result = await shareFeedPost(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.share",
-      entityType: "post_shares",
-      entityId: data.postId,
-    })
-    revalidateHome()
-    return result
-  })
+export async function sharePostAction(input: Parameters<typeof sharePost>[0]) {
+  return sharePost(input)
 }
 
-export async function updatePostAction(
-  input: UpdatePostActionInput,
-): Promise<ActionResult<UpdatePostResult>> {
-  return action("posts.errors", async (t) => {
-    const current = await requirePermission("posts.edit")
-    await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 updates / 60s
-    const supabase = await createClient()
-
-    const data = parse(createPostUpdateSchema(t), input)
-    const result = await updateStandardPost(supabase, current, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.update",
-      entityType: "posts",
-      entityId: input.postId,
-      newData: { visibility: data.visibility },
-    })
-    revalidateHome()
-    return result
-  })
+export async function updatePostAction(input: Parameters<typeof updatePost>[0]) {
+  return updatePost(input)
 }
 
-export async function deletePostAction(postId: number): Promise<ActionResult> {
-  return action("posts.errors", async (t) => {
-    const id = parse(createPostIdSchema(t), postId)
-    const current = await requirePermission("posts.delete")
-    await checkRateLimit(current.appUser.id, "post", 10, 60) // 10 deletes / 60s
-    const supabase = await createClient()
-    await deleteOwnPost(supabase, current, id)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "post.delete",
-      entityType: "posts",
-      entityId: id,
-    })
-    revalidateHome()
-  })
+export async function deletePostAction(
+  postId: Parameters<typeof deletePost>[0],
+) {
+  return deletePost(postId)
 }

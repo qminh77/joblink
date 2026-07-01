@@ -1,25 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useTranslations, useFormatter } from "next-intl"
 import { RotateCcw, Shield, ShieldOff } from "lucide-react"
-import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import type { AdminUserRow } from "@/features/admin/types"
-import type { AdminRoleRow } from "@/features/admin/api/roles"
-import { updateUserRbacRole } from "@/features/admin/api/users"
 import { getInitials } from "@/lib/utils/format"
 import { profileHref } from "@/lib/utils/profile-url"
 import type { UserActionType } from "./users-action-dialog"
@@ -37,37 +25,18 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function UsersTableRow({
   user,
-  roles,
   pending,
   onAction,
 }: {
   user: AdminUserRow
-  roles: AdminRoleRow[]
   pending: boolean
   onAction: (target: { user: AdminUserRow; action: UserActionType }) => void
 }) {
   const t = useTranslations("admin.users")
+  const tRoles = useTranslations("admin.users.roles")
   const tStatuses = useTranslations("admin.users.statuses")
   const format = useFormatter()
-  const router = useRouter()
-  const [updatingRbac, setUpdatingRbac] = useState(false)
   const isProtectedAdmin = user.role === "admin"
-
-  const handleRbacRoleChange = async (newRoleName: string) => {
-    if (newRoleName === "unassigned" || newRoleName === user.role) return
-    setUpdatingRbac(true)
-    try {
-      const result = await updateUserRbacRole(user.id, newRoleName)
-      if (result.ok) {
-        toast.success(t("roleUpdateSuccess"))
-        router.refresh()
-      } else {
-        toast.error(result.error)
-      }
-    } finally {
-      setUpdatingRbac(false)
-    }
-  }
 
   return (
     <tr className="hover:bg-muted/20">
@@ -95,22 +64,9 @@ export function UsersTableRow({
         </Link>
       </td>
       <td className="px-4 py-3">
-        <Select
-          value={user.role}
-          onValueChange={handleRbacRoleChange}
-          disabled={pending || updatingRbac || isProtectedAdmin}
-        >
-          <SelectTrigger className="w-[180px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {roles.map((r) => (
-              <SelectItem key={r.id} value={r.name}>
-                {r.name} {r.is_system && "(Hệ thống)"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Badge variant="secondary" className="text-xs">
+          {tRoles(user.role)}
+        </Badge>
       </td>
       <td className="px-4 py-3">
         <Badge

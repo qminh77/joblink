@@ -8,7 +8,6 @@ const ADMIN_ENTRY_ITEMS = [
   { href: "/admin/posts", requiredPermission: "posts.view" },
   { href: "/admin/reports", requiredPermission: "reports.view" },
   { href: "/admin/audit-log", requiredPermission: "audit.view" },
-  { href: "/admin/roles", requiredPermission: "roles.view" },
 ] as const satisfies Array<{
   href: string
   requiredPermission: PermissionName

@@ -1,11 +1,10 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { ReportStatus } from "@/types/database"
 
 import { requireAdminPermission } from "./admin-guard"
+import { revalidateAdminSection } from "./revalidation"
 import {
   moderationActionSchema,
   reportStatusSchema,
@@ -48,7 +47,7 @@ export async function setReportStatus(
     parsed.data.status,
   )
 
-  if (result.ok) revalidateAdminReportViews()
+  if (result.ok) revalidateAdminSection("reports")
   return result
 }
 
@@ -62,12 +61,6 @@ export async function applyModerationAction(
   const supabase = createAdminClient()
   const result = await applyReportModeration(supabase, current, parsed.data)
 
-  if (result.ok) revalidateAdminReportViews()
+  if (result.ok) revalidateAdminSection("reports")
   return result
-}
-
-function revalidateAdminReportViews() {
-  revalidatePath("/admin/reports")
-  revalidatePath("/admin/audit-log")
-  revalidatePath("/admin/dashboard")
 }

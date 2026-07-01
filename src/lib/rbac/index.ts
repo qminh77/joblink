@@ -20,17 +20,12 @@ export {
 } from "./permissions"
 
 export {
-  getAllRoles,
-  getRoleById,
-  getRoleByName,
-  getAllPermissions,
+  getPermissionsForRole,
   getUserPermissionsByUserId,
+  roleHasPermission,
   checkUserPermission,
   checkUserAllPermissions,
   checkUserAnyPermission,
-  type RoleRow,
-  type RoleWithPermissions,
-  type PermissionRow,
 } from "./rbac"
 
 export {

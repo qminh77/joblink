@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   ScrollText,
   Users,
-  Shield,
   Menu,
 } from "lucide-react"
 
@@ -43,12 +42,6 @@ const GROUPS = [
     items: [
       { key: "reports", href: "/admin/reports", icon: Flag, requiredPermission: "reports.view" },
       { key: "auditLog", href: "/admin/audit-log", icon: ScrollText, requiredPermission: "audit.view" },
-    ],
-  },
-  {
-    key: "system",
-    items: [
-      { key: "roles", href: "/admin/roles", icon: Shield, requiredPermission: "roles.view" },
     ],
   },
 ] as const
