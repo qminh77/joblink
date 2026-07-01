@@ -5,6 +5,7 @@ import { ReportDialog } from "@/features/reports/components/report-dialog"
 import { ApplyDialog } from "../apply-dialog"
 import { JobSendModal } from "../job-send-modal"
 import { JobShareModal } from "../job-share-modal"
+import type { ApplyResult } from "../../types"
 
 type JobDetailDialogsProps = {
   companyName: string
@@ -15,6 +16,7 @@ type JobDetailDialogsProps = {
   showSend: boolean
   showShare: boolean
   onCloseApply: () => void
+  onApplied?: (result: Extract<ApplyResult, { ok: true }>) => void
   onCloseReport: () => void
   onCloseSend: () => void
   onCloseShare: () => void
@@ -29,6 +31,7 @@ export function JobDetailDialogs({
   showSend,
   showShare,
   onCloseApply,
+  onApplied,
   onCloseReport,
   onCloseSend,
   onCloseShare,
@@ -40,6 +43,7 @@ export function JobDetailDialogs({
         jobTitle={jobTitle}
         companyName={companyName}
         open={showApply}
+        onApplied={onApplied}
         onClose={onCloseApply}
       />
 

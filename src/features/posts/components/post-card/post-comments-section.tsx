@@ -4,11 +4,13 @@ import { CommentInput } from "../comment-input"
 import { CommentsThread } from "../comments-thread"
 
 export function PostCommentsSection({
+  commentCount,
   enabled,
   isSubmitting,
   onSubmit,
   postId,
 }: {
+  commentCount: number
   enabled: boolean
   isSubmitting: boolean
   onSubmit: (text: string) => void
@@ -19,7 +21,11 @@ export function PostCommentsSection({
   return (
     <div className="p-4 bg-muted/10 border-t border-border/30 space-y-3">
       <CommentInput isSubmitting={isSubmitting} onSubmit={onSubmit} />
-      <CommentsThread postId={postId} enabled={enabled} />
+      <CommentsThread
+        commentCount={commentCount}
+        postId={postId}
+        enabled={enabled}
+      />
     </div>
   )
 }

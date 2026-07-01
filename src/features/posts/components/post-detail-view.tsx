@@ -70,6 +70,7 @@ export function PostDetailView({ post }: Props) {
         />
 
         <PostCommentsSection
+          commentCount={post.commentCount}
           enabled={commentsOpen}
           isSubmitting={createComment.isPending}
           onSubmit={(text) =>

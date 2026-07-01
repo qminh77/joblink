@@ -12,6 +12,7 @@ import type {
   HomeFeedStats,
   UserPostsPage,
 } from "../types"
+import { clampCommentsLimit } from "../lib/comments"
 
 const EMPTY_STATS: HomeFeedStats = {
   connection_count: 0,
@@ -124,13 +125,13 @@ export async function loadUserPosts(
  */
 export async function loadPostComments(
   postId: number,
-  limit = 50,
+  limit?: number,
 ): Promise<FeedComment[]> {
   const supabase = await createClient()
 
   const { data, error } = await supabase.rpc("get_post_comments", {
     p_post_id: postId,
-    p_limit: limit,
+    p_limit: clampCommentsLimit(limit),
   })
 
   if (error) {

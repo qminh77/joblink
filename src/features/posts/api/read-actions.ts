@@ -43,11 +43,12 @@ export async function getUserPostsPageAction(
 
 export async function getPostCommentsAction(
   postId: number,
+  limit?: number,
 ): Promise<ActionResult<FeedComment[]>> {
   return action("posts.errors", async (t) => {
     await requireCurrentUser()
     const id = parse(createPostIdSchema(t), postId)
-    return loadPostComments(id)
+    return loadPostComments(id, limit)
   })
 }
 

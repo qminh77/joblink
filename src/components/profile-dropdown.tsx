@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -47,6 +48,40 @@ export function ProfileDropdown() {
   const canViewSavedJobs = isMember
   const canViewApplications = isMember
   const canManageCompanyJobs = isCompany
+  const adminHref = user.adminHref ?? "/admin"
+  const warmupHrefs = useMemo(() => {
+    const hrefs = [
+      canViewProfile ? selfHref : null,
+      user.role !== "admin" ? "/network" : null,
+      canViewSavedJobs ? "/saved-jobs" : null,
+      canViewApplications ? "/jobs/applications" : null,
+      canManageCompanyJobs ? "/company/post-job" : null,
+      user.adminHref ? adminHref : null,
+      "/settings",
+    ]
+    return Array.from(new Set(hrefs.filter(Boolean))) as string[]
+  }, [
+    adminHref,
+    canManageCompanyJobs,
+    canViewApplications,
+    canViewProfile,
+    canViewSavedJobs,
+    selfHref,
+    user.adminHref,
+    user.role,
+  ])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      for (const href of warmupHrefs) router.prefetch(href)
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [router, warmupHrefs])
+
+  function pushWarm(href: string) {
+    router.prefetch(href)
+    router.push(href)
+  }
 
   return (
     <DropdownMenu>
@@ -132,7 +167,9 @@ export function ProfileDropdown() {
               transition={{ delay: 0.05 }}
             >
               <DropdownMenuItem
-                onClick={() => router.push(selfHref)}
+                onPointerEnter={() => router.prefetch(selfHref)}
+                onFocus={() => router.prefetch(selfHref)}
+                onClick={() => pushWarm(selfHref)}
                 className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
               >
                 <User className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
@@ -155,7 +192,9 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.08 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push("/saved-jobs")}
+                  onPointerEnter={() => router.prefetch("/saved-jobs")}
+                  onFocus={() => router.prefetch("/saved-jobs")}
+                  onClick={() => pushWarm("/saved-jobs")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <Bookmark className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
@@ -178,7 +217,9 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.09 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push("/jobs/applications")}
+                  onPointerEnter={() => router.prefetch("/jobs/applications")}
+                  onFocus={() => router.prefetch("/jobs/applications")}
+                  onClick={() => pushWarm("/jobs/applications")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <FileText className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
@@ -206,7 +247,9 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.1 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push("/company/post-job")}
+                  onPointerEnter={() => router.prefetch("/company/post-job")}
+                  onFocus={() => router.prefetch("/company/post-job")}
+                  onClick={() => pushWarm("/company/post-job")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <LayoutDashboard className="w-4 h-4 text-primary mr-3 shrink-0" />
@@ -233,7 +276,9 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.1 }}
               >
                 <DropdownMenuItem
-                  onClick={() => router.push(user.adminHref ?? "/admin")}
+                  onPointerEnter={() => router.prefetch(adminHref)}
+                  onFocus={() => router.prefetch(adminHref)}
+                  onClick={() => pushWarm(adminHref)}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <Shield className="w-4 h-4 text-primary mr-3 shrink-0" />
@@ -256,7 +301,9 @@ export function ProfileDropdown() {
               transition={{ delay: 0.11 }}
             >
               <DropdownMenuItem
-                onClick={() => router.push("/settings")}
+                onPointerEnter={() => router.prefetch("/settings")}
+                onFocus={() => router.prefetch("/settings")}
+                onClick={() => pushWarm("/settings")}
                 className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
               >
                 <Settings className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />

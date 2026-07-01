@@ -12,6 +12,7 @@ import { loadOwnCvsAction } from "@/features/cvs/api/actions"
 import { modalContent, modalOverlay } from "@/lib/animations"
 
 import { useApplyToJob } from "../hooks"
+import type { ApplyResult } from "../types"
 
 type Props = {
   jobId: number
@@ -19,6 +20,7 @@ type Props = {
   companyName: string
   open: boolean
   onClose: () => void
+  onApplied?: (result: Extract<ApplyResult, { ok: true }>) => void
 }
 
 type PickerCv = {
@@ -58,11 +60,13 @@ function ApplyDialogContent({
   jobTitle,
   companyName,
   onClose,
+  onApplied,
 }: {
   jobId: number
   jobTitle: string
   companyName: string
   onClose: () => void
+  onApplied?: (result: Extract<ApplyResult, { ok: true }>) => void
 }) {
   const t = useTranslations("jobs.public")
   const [coverLetter, setCoverLetter] = useState("")
@@ -102,7 +106,10 @@ function ApplyDialogContent({
       },
       {
         onSuccess: (result) => {
-          if (result.ok) onClose()
+          if (result.ok) {
+            onApplied?.(result)
+            onClose()
+          }
         },
       },
     )
@@ -196,7 +203,14 @@ function ApplyDialogContent({
   )
 }
 
-export function ApplyDialog({ jobId, jobTitle, companyName, open, onClose }: Props) {
+export function ApplyDialog({
+  jobId,
+  jobTitle,
+  companyName,
+  open,
+  onApplied,
+  onClose,
+}: Props) {
   return (
     <AnimatePresence>
       {open ? (
@@ -212,6 +226,7 @@ export function ApplyDialog({ jobId, jobTitle, companyName, open, onClose }: Pro
             jobId={jobId}
             jobTitle={jobTitle}
             companyName={companyName}
+            onApplied={onApplied}
             onClose={onClose}
           />
         </motion.div>

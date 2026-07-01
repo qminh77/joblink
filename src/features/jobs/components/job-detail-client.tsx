@@ -22,6 +22,7 @@ type Props = {
 
 export function JobDetailClient({ detail }: Props) {
   const [saved, setSaved] = useState(detail.viewer.viewerSaved)
+  const [viewer, setViewer] = useState(detail.viewer)
   const [showApply, setShowApply] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [showShare, setShowShare] = useState(false)
@@ -32,7 +33,7 @@ export function JobDetailClient({ detail }: Props) {
   })
   const withdraw = useWithdrawApplication()
 
-  const { job, viewer } = detail
+  const { job } = detail
 
   const handleToggleSave = () => {
     if (toggle.isPending) return
@@ -70,7 +71,18 @@ export function JobDetailClient({ detail }: Props) {
             onSend={() => setShowSend(true)}
             onShare={() => setShowShare(true)}
             onToggleSave={handleToggleSave}
-            onWithdraw={(applicationId) => withdraw.mutate(applicationId)}
+            onWithdraw={(applicationId) => {
+              const previous = viewer
+              setViewer({
+                ...previous,
+                viewerApplied: false,
+                applicationId: null,
+                applicationStatus: null,
+              })
+              withdraw.mutate(applicationId, {
+                onError: () => setViewer(previous),
+              })
+            }}
           />
         </motion.div>
 
@@ -92,6 +104,14 @@ export function JobDetailClient({ detail }: Props) {
         showSend={showSend}
         showShare={showShare}
         onCloseApply={() => setShowApply(false)}
+        onApplied={(result) =>
+          setViewer((current) => ({
+            ...current,
+            viewerApplied: true,
+            applicationId: result.applicationId,
+            applicationStatus: result.status,
+          }))
+        }
         onCloseReport={() => setShowReport(false)}
         onCloseSend={() => setShowSend(false)}
         onCloseShare={() => setShowShare(false)}

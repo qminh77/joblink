@@ -80,6 +80,7 @@ export function PostCard({ post, onShare, onSend }: Props) {
         />
 
         <PostCommentsSection
+          commentCount={post.commentCount}
           enabled={commentsOpen}
           isSubmitting={createComment.isPending}
           onSubmit={(text) =>

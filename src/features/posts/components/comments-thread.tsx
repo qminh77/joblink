@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { Flag, MessageSquare, Trash2 } from "lucide-react"
+import { Loader2, MessageSquare, Trash2 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { fadeUp, staggerSm } from "@/lib/animations"
@@ -16,6 +16,12 @@ import { ReportDialog } from "@/features/reports/components/report-dialog"
 
 import type { FeedComment } from "../types"
 import { useCreateComment, useDeleteComment, usePostComments } from "../hooks"
+import {
+  COMMENTS_INITIAL_LIMIT,
+  COMMENTS_LIMIT_STEP,
+  COMMENTS_MAX_LIMIT,
+  clampCommentsLimit,
+} from "../lib/comments"
 
 import { CommentBody } from "./comment-body"
 import { CommentInput, type ReplyTarget } from "./comment-input"
@@ -76,17 +82,30 @@ function CommentSkeleton() {
 }
 
 export function CommentsThread({
+  commentCount,
   postId,
   enabled,
 }: {
+  commentCount: number
   postId: number
   enabled: boolean
 }) {
   const tFeed = useTranslations("feed")
   const user = useCurrentUser()
-  const { data: comments, isLoading } = usePostComments(postId, enabled)
+  const [limit, setLimit] = useState(COMMENTS_INITIAL_LIMIT)
+  const {
+    data: comments,
+    isFetching,
+    isLoading,
+  } = usePostComments(postId, enabled, limit)
 
   const tree = useMemo(() => buildTree(comments ?? []), [comments])
+  const loadedCount = comments?.length ?? 0
+  const remaining = Math.max(0, commentCount - loadedCount)
+  const canLoadMore =
+    remaining > 0 &&
+    limit < COMMENTS_MAX_LIMIT &&
+    loadedCount >= Math.min(limit, commentCount)
 
   const [reportCommentId, setReportCommentId] = useState<number | null>(null)
 
@@ -125,6 +144,27 @@ export function CommentsThread({
             onReport={setReportCommentId}
           />
         ))}
+        {canLoadMore ? (
+          <li className="pt-1">
+            <button
+              type="button"
+              disabled={isFetching}
+              onClick={() =>
+                setLimit((value) =>
+                  clampCommentsLimit(value + COMMENTS_LIMIT_STEP),
+                )
+              }
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground disabled:opacity-60"
+            >
+              {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {isFetching
+                ? tFeed("loadingMore")
+                : tFeed("viewMoreComments", {
+                    count: Math.min(remaining, COMMENTS_LIMIT_STEP),
+                  })}
+            </button>
+          </li>
+        ) : null}
       </motion.ul>
     )
   }

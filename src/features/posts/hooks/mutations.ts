@@ -25,7 +25,8 @@ import {
 } from "./cache"
 import {
   FEED_QUERY_KEY,
-  POST_COMMENTS_KEY,
+  POST_COMMENTS_BASE_KEY,
+  POST_COMMENTS_PREFIX,
 } from "./keys"
 
 export function useCreatePost() {
@@ -132,8 +133,11 @@ export function useCreateComment() {
       return result.data.comment
     },
     onMutate: async (input) => {
-      await qc.cancelQueries({ queryKey: POST_COMMENTS_KEY(input.postId) })
-      const previousComments = qc.getQueryData<FeedComment[]>(POST_COMMENTS_KEY(input.postId))
+      const commentsKey = POST_COMMENTS_PREFIX(input.postId)
+      await qc.cancelQueries({ queryKey: commentsKey })
+      const previousComments = qc.getQueriesData<FeedComment[]>({
+        queryKey: commentsKey,
+      })
 
       const tempId = -Date.now()
       const tempComment: FeedComment = {
@@ -157,25 +161,29 @@ export function useCreateComment() {
         commentCount: post.commentCount + 1,
       }))
 
-      qc.setQueryData<FeedComment[]>(
-        POST_COMMENTS_KEY(input.postId),
+      qc.setQueriesData<FeedComment[]>(
+        { queryKey: commentsKey },
         (prev) => (prev ? [...prev, tempComment] : [tempComment]),
       )
 
       return { previousComments, tempId }
     },
     onSuccess: (realComment, input, context) => {
-      qc.setQueryData<FeedComment[]>(
-        POST_COMMENTS_KEY(realComment.postId),
+      qc.setQueriesData<FeedComment[]>(
+        { queryKey: POST_COMMENTS_PREFIX(realComment.postId) },
         (prev) => {
           if (!prev) return [realComment]
-          return prev.map(c => c.id === context?.tempId ? realComment : c)
-        }
+          return prev.map((c) =>
+            c.id === context?.tempId ? realComment : c,
+          )
+        },
       )
     },
     onError: (error: Error, input, context) => {
       if (context?.previousComments) {
-        qc.setQueryData(POST_COMMENTS_KEY(input.postId), context.previousComments)
+        for (const [key, data] of context.previousComments) {
+          qc.setQueryData(key, data)
+        }
       }
       applyToAllPostCaches(qc, input.postId, (post) => ({
         ...post,
@@ -195,17 +203,58 @@ export function useDeleteComment() {
       if (!result.ok) throw new Error(result.error)
       return result.data
     },
-    onSuccess: ({ commentId, postId }) => {
-      qc.setQueryData<FeedComment[]>(POST_COMMENTS_KEY(postId), (prev) =>
-        prev ? prev.filter((comment) => comment.id !== commentId) : prev,
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: POST_COMMENTS_BASE_KEY })
+      const previousComments = qc.getQueriesData<FeedComment[]>({
+        queryKey: POST_COMMENTS_BASE_KEY,
+      })
+      const postId = previousComments
+        .flatMap(([, comments]) => comments ?? [])
+        .find((comment) => comment.id === commentId)?.postId
+
+      qc.setQueriesData<FeedComment[]>(
+        { queryKey: POST_COMMENTS_BASE_KEY },
+        (prev) =>
+          prev ? prev.filter((comment) => comment.id !== commentId) : prev,
       )
-      applyToAllPostCaches(qc, postId, (post) => ({
-        ...post,
-        commentCount: Math.max(0, post.commentCount - 1),
-      }))
+
+      if (postId != null) {
+        applyToAllPostCaches(qc, postId, (post) => ({
+          ...post,
+          commentCount: Math.max(0, post.commentCount - 1),
+        }))
+      }
+
+      return { previousComments, postId }
+    },
+    onSuccess: ({ commentId, postId }, _commentId, context) => {
+      qc.setQueriesData<FeedComment[]>(
+        { queryKey: POST_COMMENTS_PREFIX(postId) },
+        (prev) =>
+          prev ? prev.filter((comment) => comment.id !== commentId) : prev,
+      )
+      if (context?.postId == null) {
+        applyToAllPostCaches(qc, postId, (post) => ({
+          ...post,
+          commentCount: Math.max(0, post.commentCount - 1),
+        }))
+      }
       toast.success(t("deleteCommentSuccess"))
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error, _commentId, context) => {
+      if (context?.previousComments) {
+        for (const [key, data] of context.previousComments) {
+          qc.setQueryData(key, data)
+        }
+      }
+      if (context?.postId != null) {
+        applyToAllPostCaches(qc, context.postId, (post) => ({
+          ...post,
+          commentCount: post.commentCount + 1,
+        }))
+      }
+      toast.error(error.message)
+    },
   })
 }
 

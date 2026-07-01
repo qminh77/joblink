@@ -27,27 +27,27 @@ export function CompanyFollowButton({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [followerCount, setFollowerCount] = useState(initialFollowerCount)
 
-  const toggle = useToggleFollowCompany({
-    onRollback: () => {
-      // Rollback exactly the optimistic change we did in onClick.
-      setIsFollowing((prev) => !prev)
-      setFollowerCount((prev) =>
-        Math.max(0, prev + (isFollowing ? 1 : -1)),
-      )
-    },
-  })
+  const toggle = useToggleFollowCompany()
 
   const handleClick = () => {
     if (toggle.isPending || disabled) return
 
-    // Optimistic update — server result sẽ ghi đè để chính xác lại
-    // (trường hợp count khác do follow đồng thời từ thiết bị khác).
-    setIsFollowing((prev) => !prev)
-    setFollowerCount((prev) =>
-      Math.max(0, prev + (isFollowing ? -1 : 1)),
+    const previousIsFollowing = isFollowing
+    const previousFollowerCount = followerCount
+    const nextIsFollowing = !previousIsFollowing
+    const nextFollowerCount = Math.max(
+      0,
+      previousFollowerCount + (nextIsFollowing ? 1 : -1),
     )
 
+    setIsFollowing(nextIsFollowing)
+    setFollowerCount(nextFollowerCount)
+
     toggle.mutate(companyUserId, {
+      onError: () => {
+        setIsFollowing(previousIsFollowing)
+        setFollowerCount(previousFollowerCount)
+      },
       onSuccess: (result) => {
         if (!result.ok) return
         setIsFollowing(result.isFollowing)

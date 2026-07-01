@@ -40,8 +40,9 @@ export async function getUserPostsPageAction(
 
 export async function getPostCommentsAction(
   postId: Parameters<typeof getPostComments>[0],
+  limit?: Parameters<typeof getPostComments>[1],
 ) {
-  return getPostComments(postId)
+  return getPostComments(postId, limit)
 }
 
 export async function searchMentionableUsersAction(

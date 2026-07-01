@@ -1,6 +1,10 @@
 "use client"
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query"
 
 import {
   getFeedPageAction,
@@ -17,9 +21,10 @@ import type {
 import {
   FEED_QUERY_KEY,
   HOME_STATS_KEY,
-  POST_COMMENTS_KEY,
+  POST_COMMENTS_LIMIT_KEY,
   USER_POSTS_QUERY_KEY,
 } from "./keys"
+import { clampCommentsLimit } from "../lib/comments"
 
 export function useHomeFeed(initialPage: FeedPage) {
   return useInfiniteQuery<FeedPage>({
@@ -44,15 +49,21 @@ export function useUserPosts(userId: number, initialPage: UserPostsPage) {
   })
 }
 
-export function usePostComments(postId: number, enabled: boolean) {
+export function usePostComments(
+  postId: number,
+  enabled: boolean,
+  limit?: number,
+) {
+  const safeLimit = clampCommentsLimit(limit)
   return useQuery<FeedComment[]>({
-    queryKey: POST_COMMENTS_KEY(postId),
+    queryKey: POST_COMMENTS_LIMIT_KEY(postId, safeLimit),
     enabled,
     queryFn: async () => {
-      const result = await getPostCommentsAction(postId)
+      const result = await getPostCommentsAction(postId, safeLimit)
       if (!result.ok) throw new Error(result.error)
       return result.data
     },
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

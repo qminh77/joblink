@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { HeaderSearch } from "@/features/search/components/header-search"
+import { profileHref } from "@/lib/utils/profile-url"
 
 const NAV_ITEMS = [
   { key: "home", href: "/home", icon: Home },
@@ -69,6 +70,34 @@ export function Navbar() {
     user.role === "company" &&
     user.companyVerificationStatus === "verified"
   const canCreateAny = canCreatePost || canCreateJob
+  const warmupHrefs = useMemo(() => {
+    const hrefs = [
+      "/home",
+      "/network",
+      "/jobs",
+      "/messages",
+      "/notifications",
+      "/settings",
+      profileHref(user.id, user.role),
+      user.role === "member" ? "/saved-jobs" : null,
+      user.role === "member" ? "/jobs/applications" : null,
+      canCreateJob ? "/company/post-job" : null,
+      user.adminHref,
+    ]
+    return Array.from(new Set(hrefs.filter(Boolean))) as string[]
+  }, [canCreateJob, user.adminHref, user.id, user.role])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      for (const href of warmupHrefs) router.prefetch(href)
+    }, 500)
+    return () => window.clearTimeout(timer)
+  }, [router, warmupHrefs])
+
+  function pushWarm(href: string) {
+    router.prefetch(href)
+    router.push(href)
+  }
 
   return (
     <>
@@ -176,7 +205,9 @@ export function Navbar() {
                 ) : null}
                 {canCreateJob ? (
                   <DropdownMenuItem
-                    onClick={() => router.push("/company/post-job")}
+                    onPointerEnter={() => router.prefetch("/company/post-job")}
+                    onFocus={() => router.prefetch("/company/post-job")}
+                    onClick={() => pushWarm("/company/post-job")}
                     className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-primary/5"
                   >
                     <Briefcase className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
