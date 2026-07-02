@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-06-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Kiem tra dieu kien truy cap tai khoan",
+      "preconditions": [
+        "Actor Tac vu tu dong matches the SRS actor for UC-06",
+        "Route or entry point protected routes is reachable"
+      ],
+      "steps": [
+        "Open protected routes",
+        "Start the Kiem tra dieu kien truy cap tai khoan control mapped to src/features/auth/api/auth-server.ts",
+        "Complete the flow using business data: authSession, userStatus, role",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "active allowed account passes access gate for protected routes/actions",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "active allowed account passes access gate for protected routes/actions",
+        "Input fields covered: authSession, userStatus, role"
+      ]
+    },
+    {
+      "id": "UC-06-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Kiem tra dieu kien truy cap tai khoan",
+      "preconditions": [
+        "Actor Tac vu tu dong can start Kiem tra dieu kien truy cap tai khoan",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open protected routes",
+        "Use the alternate or exception business condition for Kiem tra dieu kien truy cap tai khoan",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "suspended, banned, deleted, or pending company account is blocked",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "suspended, banned, deleted, or pending company account is blocked",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-06-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Kiem tra dieu kien truy cap tai khoan",
+      "preconditions": [
+        "Record the starting state before Kiem tra dieu kien truy cap tai khoan"
+      ],
+      "steps": [
+        "Execute Kiem tra dieu kien truy cap tai khoan",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "session request moves to allowed, redirected, or signed-out state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "session request moves to allowed, redirected, or signed-out state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-06-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Kiem tra dieu kien truy cap tai khoan",
+      "preconditions": [
+        "Complete the main Kiem tra dieu kien truy cap tai khoan path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "middleware/auth-server guards agree on user status and role",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "middleware/auth-server guards agree on user status and role",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-06-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Kiem tra dieu kien truy cap tai khoan",
+      "preconditions": [
+        "Open the UI surface for Kiem tra dieu kien truy cap tai khoan"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "user sees login reason instead of a blank protected page",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "user sees login reason instead of a blank protected page",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

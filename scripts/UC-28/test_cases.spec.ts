@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-28-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Sua hoac xoa bai viet",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-28",
+        "Route or entry point /home is reachable"
+      ],
+      "steps": [
+        "Open /home",
+        "Start the Sua hoac xoa bai viet control mapped to src/features/posts/api/actions.ts",
+        "Complete the flow using business data: postId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "post owner edits or deletes their own post",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "post owner edits or deletes their own post",
+        "Input fields covered: postId"
+      ]
+    },
+    {
+      "id": "UC-28-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Sua hoac xoa bai viet",
+      "preconditions": [
+        "Actor Nguoi dung can start Sua hoac xoa bai viet",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /home",
+        "Use the alternate or exception business condition for Sua hoac xoa bai viet",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-owner, moderated, or deleted post cannot be modified",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-owner, moderated, or deleted post cannot be modified",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-28-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Sua hoac xoa bai viet",
+      "preconditions": [
+        "Record the starting state before Sua hoac xoa bai viet"
+      ],
+      "steps": [
+        "Execute Sua hoac xoa bai viet",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "post moves through updated or soft-deleted state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "post moves through updated or soft-deleted state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-28-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Sua hoac xoa bai viet",
+      "preconditions": [
+        "Complete the main Sua hoac xoa bai viet path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "post update/delete service updates feed visibility and audit side effects",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "post update/delete service updates feed visibility and audit side effects",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-28-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Sua hoac xoa bai viet",
+      "preconditions": [
+        "Open the UI surface for Sua hoac xoa bai viet"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "post menu reflects owner-only actions and confirmation states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "post menu reflects owner-only actions and confirmation states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-65-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Kiem duyet tin tuyen dung",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-65",
+        "Route or entry point /admin/jobs is reachable"
+      ],
+      "steps": [
+        "Open /admin/jobs",
+        "Start the Kiem duyet tin tuyen dung control mapped to src/features/admin/api/jobs.ts",
+        "Complete the flow using business data: jobId, action",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin moderates a job posting",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin moderates a job posting",
+        "Input fields covered: jobId, action"
+      ]
+    },
+    {
+      "id": "UC-65-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Kiem duyet tin tuyen dung",
+      "preconditions": [
+        "Actor Quan tri vien can start Kiem duyet tin tuyen dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/jobs",
+        "Use the alternate or exception business condition for Kiem duyet tin tuyen dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid job id or unsupported moderation action is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid job id or unsupported moderation action is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-65-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Kiem duyet tin tuyen dung",
+      "preconditions": [
+        "Record the starting state before Kiem duyet tin tuyen dung"
+      ],
+      "steps": [
+        "Execute Kiem duyet tin tuyen dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "job moderation state moves active/removed/restored as allowed",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "job moderation state moves active/removed/restored as allowed",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-65-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Kiem duyet tin tuyen dung",
+      "preconditions": [
+        "Complete the main Kiem duyet tin tuyen dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "job moderation service updates jobs status and audit log",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "job moderation service updates jobs status and audit log",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-65-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Kiem duyet tin tuyen dung",
+      "preconditions": [
+        "Open the UI surface for Kiem duyet tin tuyen dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "jobs panel shows applications count, filters, and status action feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "jobs panel shows applications count, filters, and status action feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

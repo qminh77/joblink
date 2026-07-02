@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-67-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem nhat ky quan tri",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-67",
+        "Route or entry point /admin/audit-log is reachable"
+      ],
+      "steps": [
+        "Open /admin/audit-log",
+        "Start the Xem nhat ky quan tri control mapped to src/features/admin/api/audit.ts",
+        "Complete the flow using business data: filters",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin views audit log with filters and pagination",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin views audit log with filters and pagination",
+        "Input fields covered: filters"
+      ]
+    },
+    {
+      "id": "UC-67-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem nhat ky quan tri",
+      "preconditions": [
+        "Actor Quan tri vien can start Xem nhat ky quan tri",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/audit-log",
+        "Use the alternate or exception business condition for Xem nhat ky quan tri",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-admin or invalid filters cannot access private audit data",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-admin or invalid filters cannot access private audit data",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-67-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem nhat ky quan tri",
+      "preconditions": [
+        "Record the starting state before Xem nhat ky quan tri"
+      ],
+      "steps": [
+        "Execute Xem nhat ky quan tri",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "audit page moves through filtered page states",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "audit page moves through filtered page states",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-67-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem nhat ky quan tri",
+      "preconditions": [
+        "Complete the main Xem nhat ky quan tri path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "audit service reads audit view/count/distinct filters consistently",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "audit service reads audit view/count/distinct filters consistently",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-67-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem nhat ky quan tri",
+      "preconditions": [
+        "Open the UI surface for Xem nhat ky quan tri"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "audit log page shows filter chips, empty state, and paged results",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "audit log page shows filter chips, empty state, and paged results",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

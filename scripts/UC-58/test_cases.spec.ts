@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-58-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat quyen rieng tu ho so",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-58",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Cap nhat quyen rieng tu ho so control mapped to src/features/settings/api/actions.ts",
+        "Complete the flow using business data: profileVisibility",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user updates profile privacy or hiring/open-to-work status",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user updates profile privacy or hiring/open-to-work status",
+        "Input fields covered: profileVisibility"
+      ]
+    },
+    {
+      "id": "UC-58-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat quyen rieng tu ho so",
+      "preconditions": [
+        "Actor Nguoi dung can start Cap nhat quyen rieng tu ho so",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Cap nhat quyen rieng tu ho so",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid visibility value or wrong role-specific toggle is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid visibility value or wrong role-specific toggle is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-58-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat quyen rieng tu ho so",
+      "preconditions": [
+        "Record the starting state before Cap nhat quyen rieng tu ho so"
+      ],
+      "steps": [
+        "Execute Cap nhat quyen rieng tu ho so",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "privacy/status moves to selected visibility or availability state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "privacy/status moves to selected visibility or availability state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-58-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat quyen rieng tu ho so",
+      "preconditions": [
+        "Complete the main Cap nhat quyen rieng tu ho so path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "profile visibility affects UC-14 and company/member availability surfaces",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "profile visibility affects UC-14 and company/member availability surfaces",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-58-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat quyen rieng tu ho so",
+      "preconditions": [
+        "Open the UI surface for Cap nhat quyen rieng tu ho so"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "privacy card shows current value and saved/error state",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "privacy card shows current value and saved/error state",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-39-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Theo doi hoac bo theo doi nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-39",
+        "Route or entry point /profile/[id] is reachable"
+      ],
+      "steps": [
+        "Open /profile/[id]",
+        "Start the Theo doi hoac bo theo doi nguoi dung control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: targetUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user follows and unfollows another user",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user follows and unfollows another user",
+        "Input fields covered: targetUserId"
+      ]
+    },
+    {
+      "id": "UC-39-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Theo doi hoac bo theo doi nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung can start Theo doi hoac bo theo doi nguoi dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/[id]",
+        "Use the alternate or exception business condition for Theo doi hoac bo theo doi nguoi dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "self-follow, blocked relation, or invalid target is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "self-follow, blocked relation, or invalid target is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-39-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Theo doi hoac bo theo doi nguoi dung",
+      "preconditions": [
+        "Record the starting state before Theo doi hoac bo theo doi nguoi dung"
+      ],
+      "steps": [
+        "Execute Theo doi hoac bo theo doi nguoi dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "follow relation toggles on/off",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "follow relation toggles on/off",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-39-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Theo doi hoac bo theo doi nguoi dung",
+      "preconditions": [
+        "Complete the main Theo doi hoac bo theo doi nguoi dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "follows row, notifications, and profile relation cache remain consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "follows row, notifications, and profile relation cache remain consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-39-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Theo doi hoac bo theo doi nguoi dung",
+      "preconditions": [
+        "Open the UI surface for Theo doi hoac bo theo doi nguoi dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "follow button shows current relation and optimistic updates",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "follow button shows current relation and optimistic updates",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

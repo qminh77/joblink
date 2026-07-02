@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-32-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Tim nguoi de nhac ten",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-32",
+        "Route or entry point /home is reachable"
+      ],
+      "steps": [
+        "Open /home",
+        "Start the Tim nguoi de nhac ten control mapped to src/features/posts/api/actions.ts",
+        "Complete the flow using business data: query",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user searches mentionable people while composing content",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user searches mentionable people while composing content",
+        "Input fields covered: query"
+      ]
+    },
+    {
+      "id": "UC-32-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Tim nguoi de nhac ten",
+      "preconditions": [
+        "Actor Nguoi dung can start Tim nguoi de nhac ten",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /home",
+        "Use the alternate or exception business condition for Tim nguoi de nhac ten",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "empty/short query or blocked users return safe limited results",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "empty/short query or blocked users return safe limited results",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-32-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Tim nguoi de nhac ten",
+      "preconditions": [
+        "Record the starting state before Tim nguoi de nhac ten"
+      ],
+      "steps": [
+        "Execute Tim nguoi de nhac ten",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "mention query moves from idle to result selection state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "mention query moves from idle to result selection state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-32-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Tim nguoi de nhac ten",
+      "preconditions": [
+        "Complete the main Tim nguoi de nhac ten path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "mention search respects connection/block/visibility rules",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "mention search respects connection/block/visibility rules",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-32-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Tim nguoi de nhac ten",
+      "preconditions": [
+        "Open the UI surface for Tim nguoi de nhac ten"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "mention popover handles loading, no result, keyboard selection, and insertion",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "mention popover handles loading, no result, keyboard selection, and insertion",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

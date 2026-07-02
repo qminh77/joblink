@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-17-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Tao CV tu ho so",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-17",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Tao CV tu ho so control mapped to src/features/cvs/api/actions.ts",
+        "Complete the flow using business data: profileData, builderConfig",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member generates a CV from profile data and registers it as a saved CV",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member generates a CV from profile data and registers it as a saved CV",
+        "Input fields covered: profileData, builderConfig"
+      ]
+    },
+    {
+      "id": "UC-17-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Tao CV tu ho so",
+      "preconditions": [
+        "Actor Thanh vien can start Tao CV tu ho so",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Tao CV tu ho so",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing profile basics or invalid builder config is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing profile basics or invalid builder config is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-17-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Tao CV tu ho so",
+      "preconditions": [
+        "Record the starting state before Tao CV tu ho so"
+      ],
+      "steps": [
+        "Execute Tao CV tu ho so",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "profile data moves into builder preview and saved CV metadata",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "profile data moves into builder preview and saved CV metadata",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-17-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Tao CV tu ho so",
+      "preconditions": [
+        "Complete the main Tao CV tu ho so path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "profile query, PDF generation, and CV registration remain traceable",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "profile query, PDF generation, and CV registration remain traceable",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-17-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Tao CV tu ho so",
+      "preconditions": [
+        "Open the UI surface for Tao CV tu ho so"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "builder dialog preview and save states are clear",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "builder dialog preview and save states are clear",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

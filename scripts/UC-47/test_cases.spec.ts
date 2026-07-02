@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-47-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Ung tuyen viec lam",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-47",
+        "Route or entry point /jobs/[id] is reachable"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Start the Ung tuyen viec lam control mapped to src/features/jobs/api/actions.ts",
+        "Complete the flow using business data: jobId, resumeCvId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member applies to an open job using a saved CV and optional cover letter",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member applies to an open job using a saved CV and optional cover letter",
+        "Input fields covered: jobId, resumeCvId"
+      ]
+    },
+    {
+      "id": "UC-47-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Ung tuyen viec lam",
+      "preconditions": [
+        "Actor Thanh vien can start Ung tuyen viec lam",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Use the alternate or exception business condition for Ung tuyen viec lam",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing CV, already applied, closed job, or company user is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing CV, already applied, closed job, or company user is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-47-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Ung tuyen viec lam",
+      "preconditions": [
+        "Record the starting state before Ung tuyen viec lam"
+      ],
+      "steps": [
+        "Execute Ung tuyen viec lam",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "application moves to submitted state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "application moves to submitted state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-47-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Ung tuyen viec lam",
+      "preconditions": [
+        "Complete the main Ung tuyen viec lam path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "job_applications row, selected CV access, notification, and audit stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "job_applications row, selected CV access, notification, and audit stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-47-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Ung tuyen viec lam",
+      "preconditions": [
+        "Open the UI surface for Ung tuyen viec lam"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "apply dialog validates CV selection and closes on success",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "apply dialog validates CV selection and closes on success",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

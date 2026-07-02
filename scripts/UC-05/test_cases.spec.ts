@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-05-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dang nhap bang Google",
+      "preconditions": [
+        "Actor Khach, Google OAuth matches the SRS actor for UC-05",
+        "Route or entry point /login is reachable"
+      ],
+      "steps": [
+        "Open /login",
+        "Start the Dang nhap bang Google control mapped to src/features/auth/components/google-sign-in-button.tsx",
+        "Complete the flow using business data: provider, redirectTo",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "Google OAuth starts and returns through the auth callback successfully",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "Google OAuth starts and returns through the auth callback successfully",
+        "Input fields covered: provider, redirectTo"
+      ]
+    },
+    {
+      "id": "UC-05-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dang nhap bang Google",
+      "preconditions": [
+        "Actor Khach, Google OAuth can start Dang nhap bang Google",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /login",
+        "Use the alternate or exception business condition for Dang nhap bang Google",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "OAuth cancellation, disabled provider, or invalid email stops login safely",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "OAuth cancellation, disabled provider, or invalid email stops login safely",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-05-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dang nhap bang Google",
+      "preconditions": [
+        "Record the starting state before Dang nhap bang Google"
+      ],
+      "steps": [
+        "Execute Dang nhap bang Google",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "guest moves through external provider state into authenticated session",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "guest moves through external provider state into authenticated session",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-05-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dang nhap bang Google",
+      "preconditions": [
+        "Complete the main Dang nhap bang Google path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "Google OAuth, Supabase Auth, and callback redirect cooperate without orphan session",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "Google OAuth, Supabase Auth, and callback redirect cooperate without orphan session",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-05-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dang nhap bang Google",
+      "preconditions": [
+        "Open the UI surface for Dang nhap bang Google"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "Google button disables while redirecting and surfaces provider errors",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "Google button disables while redirecting and surfaces provider errors",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-01-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dang ky tai khoan ca nhan",
+      "preconditions": [
+        "Actor Khach matches the SRS actor for UC-01",
+        "Route or entry point /register is reachable"
+      ],
+      "steps": [
+        "Open /register",
+        "Start the Dang ky tai khoan ca nhan control mapped to src/features/auth/api/auth-actions.ts",
+        "Complete the flow using business data: fullName, email, password, termsAccepted",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member account is created with role member and verification email is requested",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member account is created with role member and verification email is requested",
+        "Input fields covered: fullName, email, password, termsAccepted"
+      ]
+    },
+    {
+      "id": "UC-01-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dang ky tai khoan ca nhan",
+      "preconditions": [
+        "Actor Khach can start Dang ky tai khoan ca nhan",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /register",
+        "Use the alternate or exception business condition for Dang ky tai khoan ca nhan",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "duplicate email, weak password, or missing terms is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "duplicate email, weak password, or missing terms is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-01-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dang ky tai khoan ca nhan",
+      "preconditions": [
+        "Record the starting state before Dang ky tai khoan ca nhan"
+      ],
+      "steps": [
+        "Execute Dang ky tai khoan ca nhan",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "guest state moves to registered account waiting for email verification",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "guest state moves to registered account waiting for email verification",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-01-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dang ky tai khoan ca nhan",
+      "preconditions": [
+        "Complete the main Dang ky tai khoan ca nhan path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "Supabase Auth user and public.users mirror are created consistently",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "Supabase Auth user and public.users mirror are created consistently",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-01-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dang ky tai khoan ca nhan",
+      "preconditions": [
+        "Open the UI surface for Dang ky tai khoan ca nhan"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "register form keeps safe input and highlights invalid required fields",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "register form keeps safe input and highlights invalid required fields",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

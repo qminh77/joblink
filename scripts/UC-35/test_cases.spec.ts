@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-35-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem goi y ket noi",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-35",
+        "Route or entry point /network is reachable"
+      ],
+      "steps": [
+        "Open /network",
+        "Start the Xem goi y ket noi control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: currentUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user sees connection suggestions and network overview",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user sees connection suggestions and network overview",
+        "Input fields covered: currentUserId"
+      ]
+    },
+    {
+      "id": "UC-35-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem goi y ket noi",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem goi y ket noi",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /network",
+        "Use the alternate or exception business condition for Xem goi y ket noi",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "blocked users or existing connections are excluded from suggestions",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "blocked users or existing connections are excluded from suggestions",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-35-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem goi y ket noi",
+      "preconditions": [
+        "Record the starting state before Xem goi y ket noi"
+      ],
+      "steps": [
+        "Execute Xem goi y ket noi",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "suggestion list moves from generated to dismissed/acted-on state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "suggestion list moves from generated to dismissed/acted-on state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-35-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem goi y ket noi",
+      "preconditions": [
+        "Complete the main Xem goi y ket noi path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "suggestion RPC and connection relation state stay aligned",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "suggestion RPC and connection relation state stay aligned",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-35-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem goi y ket noi",
+      "preconditions": [
+        "Open the UI surface for Xem goi y ket noi"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "network page shows requests, connections, suggestions, and empty states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "network page shows requests, connections, suggestions, and empty states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

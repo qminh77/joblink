@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-08-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dang xuat khoi he thong",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-08",
+        "Route or entry point profile menu is reachable"
+      ],
+      "steps": [
+        "Open profile menu",
+        "Start the Dang xuat khoi he thong control mapped to src/features/auth/api/auth-client.ts",
+        "Complete the flow using business data: session",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "signed-in user signs out and local session is cleared",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "signed-in user signs out and local session is cleared",
+        "Input fields covered: session"
+      ]
+    },
+    {
+      "id": "UC-08-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dang xuat khoi he thong",
+      "preconditions": [
+        "Actor Nguoi dung can start Dang xuat khoi he thong",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open profile menu",
+        "Use the alternate or exception business condition for Dang xuat khoi he thong",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "repeat logout or expired session remains idempotent",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "repeat logout or expired session remains idempotent",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-08-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dang xuat khoi he thong",
+      "preconditions": [
+        "Record the starting state before Dang xuat khoi he thong"
+      ],
+      "steps": [
+        "Execute Dang xuat khoi he thong",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "authenticated session moves to guest state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "authenticated session moves to guest state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-08-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dang xuat khoi he thong",
+      "preconditions": [
+        "Complete the main Dang xuat khoi he thong path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "Supabase client session, middleware cookie state, and router redirect align",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "Supabase client session, middleware cookie state, and router redirect align",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-08-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dang xuat khoi he thong",
+      "preconditions": [
+        "Open the UI surface for Dang xuat khoi he thong"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "menu item shows progress and returns to login/public surface",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "menu item shows progress and returns to login/public surface",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

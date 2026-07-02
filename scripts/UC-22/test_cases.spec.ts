@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-22-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat trang thai dang tuyen dung",
+      "preconditions": [
+        "Actor Cong ty matches the SRS actor for UC-22",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Cap nhat trang thai dang tuyen dung control mapped to src/features/companies/api/actions.ts",
+        "Complete the flow using business data: openToHire",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "company toggles open-to-hire state successfully",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "company toggles open-to-hire state successfully",
+        "Input fields covered: openToHire"
+      ]
+    },
+    {
+      "id": "UC-22-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat trang thai dang tuyen dung",
+      "preconditions": [
+        "Actor Cong ty can start Cap nhat trang thai dang tuyen dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Cap nhat trang thai dang tuyen dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-company account cannot update company hiring state",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-company account cannot update company hiring state",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-22-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat trang thai dang tuyen dung",
+      "preconditions": [
+        "Record the starting state before Cap nhat trang thai dang tuyen dung"
+      ],
+      "steps": [
+        "Execute Cap nhat trang thai dang tuyen dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "open_to_hire moves between true and false states",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "open_to_hire moves between true and false states",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-22-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat trang thai dang tuyen dung",
+      "preconditions": [
+        "Complete the main Cap nhat trang thai dang tuyen dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "settings action updates company profile without altering verification status",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "settings action updates company profile without altering verification status",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-22-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat trang thai dang tuyen dung",
+      "preconditions": [
+        "Open the UI surface for Cap nhat trang thai dang tuyen dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "toggle reflects optimistic and saved state accurately",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "toggle reflects optimistic and saved state accurately",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

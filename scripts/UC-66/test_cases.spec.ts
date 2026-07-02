@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-66-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xu ly bao cao vi pham",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-66",
+        "Route or entry point /admin/reports is reachable"
+      ],
+      "steps": [
+        "Open /admin/reports",
+        "Start the Xu ly bao cao vi pham control mapped to src/features/admin/api/reports.ts",
+        "Complete the flow using business data: reportId, action",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin changes report status or applies a moderation action",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin changes report status or applies a moderation action",
+        "Input fields covered: reportId, action"
+      ]
+    },
+    {
+      "id": "UC-66-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xu ly bao cao vi pham",
+      "preconditions": [
+        "Actor Quan tri vien can start Xu ly bao cao vi pham",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/reports",
+        "Use the alternate or exception business condition for Xu ly bao cao vi pham",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid transition, missing reason, or already resolved report is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid transition, missing reason, or already resolved report is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-66-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xu ly bao cao vi pham",
+      "preconditions": [
+        "Record the starting state before Xu ly bao cao vi pham"
+      ],
+      "steps": [
+        "Execute Xu ly bao cao vi pham",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "report state moves pending/reviewing/resolved/dismissed",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "report state moves pending/reviewing/resolved/dismissed",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-66-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xu ly bao cao vi pham",
+      "preconditions": [
+        "Complete the main Xu ly bao cao vi pham path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "report, moderation_actions, target entity, and audit log stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "report, moderation_actions, target entity, and audit log stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-66-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xu ly bao cao vi pham",
+      "preconditions": [
+        "Open the UI surface for Xu ly bao cao vi pham"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "reports panel shows action modal, status badge, and result feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "reports panel shows action modal, status badge, and result feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

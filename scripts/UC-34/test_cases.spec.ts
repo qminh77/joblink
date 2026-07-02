@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-34-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Tim kiem tong hop",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-34",
+        "Route or entry point /search is reachable"
+      ],
+      "steps": [
+        "Open /search",
+        "Start the Tim kiem tong hop control mapped to src/features/search/api/actions.ts",
+        "Complete the flow using business data: query",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user searches across people, companies, posts, and jobs",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user searches across people, companies, posts, and jobs",
+        "Input fields covered: query"
+      ]
+    },
+    {
+      "id": "UC-34-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Tim kiem tong hop",
+      "preconditions": [
+        "Actor Nguoi dung can start Tim kiem tong hop",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /search",
+        "Use the alternate or exception business condition for Tim kiem tong hop",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "blank query or unsupported filters return validation/empty result",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "blank query or unsupported filters return validation/empty result",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-34-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Tim kiem tong hop",
+      "preconditions": [
+        "Record the starting state before Tim kiem tong hop"
+      ],
+      "steps": [
+        "Execute Tim kiem tong hop",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "search state moves through all tab and filtered tab results",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "search state moves through all tab and filtered tab results",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-34-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Tim kiem tong hop",
+      "preconditions": [
+        "Complete the main Tim kiem tong hop path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "search repos aggregate result counts without leaking private content",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "search repos aggregate result counts without leaking private content",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-34-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Tim kiem tong hop",
+      "preconditions": [
+        "Open the UI surface for Tim kiem tong hop"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "search page shows loading, tabs, no results, and filter feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "search page shows loading, tabs, no results, and filter feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

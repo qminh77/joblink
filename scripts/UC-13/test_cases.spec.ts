@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-13-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Quan ly ky nang nghe nghiep",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-13",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Quan ly ky nang nghe nghiep control mapped to src/features/profile/api/actions.ts",
+        "Complete the flow using business data: skillName",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member can add and remove professional skills",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member can add and remove professional skills",
+        "Input fields covered: skillName"
+      ]
+    },
+    {
+      "id": "UC-13-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Quan ly ky nang nghe nghiep",
+      "preconditions": [
+        "Actor Thanh vien can start Quan ly ky nang nghe nghiep",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Quan ly ky nang nghe nghiep",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "empty, duplicate, or too-long skill names are rejected or normalized",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "empty, duplicate, or too-long skill names are rejected or normalized",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-13-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Quan ly ky nang nghe nghiep",
+      "preconditions": [
+        "Record the starting state before Quan ly ky nang nghe nghiep"
+      ],
+      "steps": [
+        "Execute Quan ly ky nang nghe nghiep",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "skill list moves through added and removed states",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "skill list moves through added and removed states",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-13-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Quan ly ky nang nghe nghiep",
+      "preconditions": [
+        "Complete the main Quan ly ky nang nghe nghiep path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "member_skills normalization avoids duplicate semantic entries",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "member_skills normalization avoids duplicate semantic entries",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-13-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Quan ly ky nang nghe nghiep",
+      "preconditions": [
+        "Open the UI surface for Quan ly ky nang nghe nghiep"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "skills section keeps quick-add feedback and duplicate messaging clear",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "skills section keeps quick-add feedback and duplicate messaging clear",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

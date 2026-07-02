@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-63-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Quan ly xac minh va trang thai cong ty",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-63",
+        "Route or entry point /admin/companies is reachable"
+      ],
+      "steps": [
+        "Open /admin/companies",
+        "Start the Quan ly xac minh va trang thai cong ty control mapped to src/features/admin/api/companies.ts",
+        "Complete the flow using business data: companyUserId, action",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin reviews company verification and updates company status",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin reviews company verification and updates company status",
+        "Input fields covered: companyUserId, action"
+      ]
+    },
+    {
+      "id": "UC-63-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Quan ly xac minh va trang thai cong ty",
+      "preconditions": [
+        "Actor Quan tri vien can start Quan ly xac minh va trang thai cong ty",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/companies",
+        "Use the alternate or exception business condition for Quan ly xac minh va trang thai cong ty",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing rejection note or invalid company state is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing rejection note or invalid company state is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-63-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Quan ly xac minh va trang thai cong ty",
+      "preconditions": [
+        "Record the starting state before Quan ly xac minh va trang thai cong ty"
+      ],
+      "steps": [
+        "Execute Quan ly xac minh va trang thai cong ty",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "company verification moves approved/rejected/pending_update/suspended as allowed",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "company verification moves approved/rejected/pending_update/suspended as allowed",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-63-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Quan ly xac minh va trang thai cong ty",
+      "preconditions": [
+        "Complete the main Quan ly xac minh va trang thai cong ty path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "company moderation updates company_profiles and writes audit log",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "company moderation updates company_profiles and writes audit log",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-63-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Quan ly xac minh va trang thai cong ty",
+      "preconditions": [
+        "Open the UI surface for Quan ly xac minh va trang thai cong ty"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "companies panel shows review note, filters, and status feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "companies panel shows review note, filters, and status feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

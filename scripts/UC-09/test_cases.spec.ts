@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-09-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat ho so ca nhan",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-09",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Cap nhat ho so ca nhan control mapped to src/features/profile/api/actions.ts",
+        "Complete the flow using business data: fullName, headline, about, visibility",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member profile fields update and render on public profile/edit overview",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member profile fields update and render on public profile/edit overview",
+        "Input fields covered: fullName, headline, about, visibility"
+      ]
+    },
+    {
+      "id": "UC-09-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat ho so ca nhan",
+      "preconditions": [
+        "Actor Thanh vien can start Cap nhat ho so ca nhan",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Cap nhat ho so ca nhan",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid visibility or overlong about/headline is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid visibility or overlong about/headline is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-09-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat ho so ca nhan",
+      "preconditions": [
+        "Record the starting state before Cap nhat ho so ca nhan"
+      ],
+      "steps": [
+        "Execute Cap nhat ho so ca nhan",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "profile draft moves to saved member profile state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "profile draft moves to saved member profile state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-09-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat ho so ca nhan",
+      "preconditions": [
+        "Complete the main Cap nhat ho so ca nhan path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "profile repo updates member_profiles without changing unrelated account data",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "profile repo updates member_profiles without changing unrelated account data",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-09-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat ho so ca nhan",
+      "preconditions": [
+        "Open the UI surface for Cap nhat ho so ca nhan"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "edit form reflects saved values and field-level errors",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "edit form reflects saved values and field-level errors",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

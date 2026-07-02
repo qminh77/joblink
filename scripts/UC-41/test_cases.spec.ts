@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-41-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Tim kiem va loc viec lam",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-41",
+        "Route or entry point /jobs is reachable"
+      ],
+      "steps": [
+        "Open /jobs",
+        "Start the Tim kiem va loc viec lam control mapped to src/features/jobs/api/queries.ts",
+        "Complete the flow using business data: filters",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member searches and filters jobs by keyword, location, type, and mode",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member searches and filters jobs by keyword, location, type, and mode",
+        "Input fields covered: filters"
+      ]
+    },
+    {
+      "id": "UC-41-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Tim kiem va loc viec lam",
+      "preconditions": [
+        "Actor Thanh vien can start Tim kiem va loc viec lam",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /jobs",
+        "Use the alternate or exception business condition for Tim kiem va loc viec lam",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid filters or out-of-range pagination are sanitized/rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid filters or out-of-range pagination are sanitized/rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-41-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Tim kiem va loc viec lam",
+      "preconditions": [
+        "Record the starting state before Tim kiem va loc viec lam"
+      ],
+      "steps": [
+        "Execute Tim kiem va loc viec lam",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "jobs list moves through filtered pages and load-more state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "jobs list moves through filtered pages and load-more state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-41-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Tim kiem va loc viec lam",
+      "preconditions": [
+        "Complete the main Tim kiem va loc viec lam path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "jobs list RPC returns only active/visible jobs with stable totals",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "jobs list RPC returns only active/visible jobs with stable totals",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-41-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Tim kiem va loc viec lam",
+      "preconditions": [
+        "Open the UI surface for Tim kiem va loc viec lam"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "jobs page shows skeleton, no result, active filters, and pagination",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "jobs page shows skeleton, no result, active filters, and pagination",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

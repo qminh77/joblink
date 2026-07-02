@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-12-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Quan ly hoc van",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-12",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Quan ly hoc van control mapped to src/features/profile/api/actions.ts",
+        "Complete the flow using business data: schoolName, degree, fieldOfStudy",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member can add, edit, and delete an education entry",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member can add, edit, and delete an education entry",
+        "Input fields covered: schoolName, degree, fieldOfStudy"
+      ]
+    },
+    {
+      "id": "UC-12-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Quan ly hoc van",
+      "preconditions": [
+        "Actor Thanh vien can start Quan ly hoc van",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Quan ly hoc van",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing school, invalid dates, or overlong description is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing school, invalid dates, or overlong description is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-12-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Quan ly hoc van",
+      "preconditions": [
+        "Record the starting state before Quan ly hoc van"
+      ],
+      "steps": [
+        "Execute Quan ly hoc van",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "education list moves through created, updated, and removed states",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "education list moves through created, updated, and removed states",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-12-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Quan ly hoc van",
+      "preconditions": [
+        "Complete the main Quan ly hoc van path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "member_educations updates only rows owned by the current member",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "member_educations updates only rows owned by the current member",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-12-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Quan ly hoc van",
+      "preconditions": [
+        "Open the UI surface for Quan ly hoc van"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "education section shows empty, editing, saved, and deleted states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "education section shows empty, editing, saved, and deleted states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

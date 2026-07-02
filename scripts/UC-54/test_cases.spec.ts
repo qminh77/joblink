@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-54-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Danh dau thong bao da doc",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-54",
+        "Route or entry point /notifications is reachable"
+      ],
+      "steps": [
+        "Open /notifications",
+        "Start the Danh dau thong bao da doc control mapped to src/features/notifications/api/actions.ts",
+        "Complete the flow using business data: notificationId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user marks one or all notifications as read",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user marks one or all notifications as read",
+        "Input fields covered: notificationId"
+      ]
+    },
+    {
+      "id": "UC-54-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Danh dau thong bao da doc",
+      "preconditions": [
+        "Actor Nguoi dung can start Danh dau thong bao da doc",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /notifications",
+        "Use the alternate or exception business condition for Danh dau thong bao da doc",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "another user's notification id or invalid id is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "another user's notification id or invalid id is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-54-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Danh dau thong bao da doc",
+      "preconditions": [
+        "Record the starting state before Danh dau thong bao da doc"
+      ],
+      "steps": [
+        "Execute Danh dau thong bao da doc",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "notification state moves unread -> read",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "notification state moves unread -> read",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-54-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Danh dau thong bao da doc",
+      "preconditions": [
+        "Complete the main Danh dau thong bao da doc path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "notifications read_at and unread count cache stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "notifications read_at and unread count cache stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-54-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Danh dau thong bao da doc",
+      "preconditions": [
+        "Open the UI surface for Danh dau thong bao da doc"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "read action updates badge/list immediately",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "read action updates badge/list immediately",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

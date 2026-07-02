@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-36-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Gui hoac huy loi moi ket noi",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-36",
+        "Route or entry point /network is reachable"
+      ],
+      "steps": [
+        "Open /network",
+        "Start the Gui hoac huy loi moi ket noi control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: targetUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user sends and cancels a connection request",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user sends and cancels a connection request",
+        "Input fields covered: targetUserId"
+      ]
+    },
+    {
+      "id": "UC-36-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Gui hoac huy loi moi ket noi",
+      "preconditions": [
+        "Actor Nguoi dung can start Gui hoac huy loi moi ket noi",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /network",
+        "Use the alternate or exception business condition for Gui hoac huy loi moi ket noi",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "self-request, duplicate request, connected user, or blocked relation is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "self-request, duplicate request, connected user, or blocked relation is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-36-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Gui hoac huy loi moi ket noi",
+      "preconditions": [
+        "Record the starting state before Gui hoac huy loi moi ket noi"
+      ],
+      "steps": [
+        "Execute Gui hoac huy loi moi ket noi",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "connection state moves none -> pending -> none when cancelled",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "connection state moves none -> pending -> none when cancelled",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-36-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Gui hoac huy loi moi ket noi",
+      "preconditions": [
+        "Complete the main Gui hoac huy loi moi ket noi path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "connections row and realtime/network cache stay synchronized",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "connections row and realtime/network cache stay synchronized",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-36-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Gui hoac huy loi moi ket noi",
+      "preconditions": [
+        "Open the UI surface for Gui hoac huy loi moi ket noi"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "connect button updates quickly and recovers on failure",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "connect button updates quickly and recovers on failure",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

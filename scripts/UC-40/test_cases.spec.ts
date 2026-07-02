@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-40-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Chan hoac bo chan nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-40",
+        "Route or entry point /profile/[id]|/settings is reachable"
+      ],
+      "steps": [
+        "Open /profile/[id]|/settings",
+        "Start the Chan hoac bo chan nguoi dung control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: targetUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user blocks and unblocks another user",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user blocks and unblocks another user",
+        "Input fields covered: targetUserId"
+      ]
+    },
+    {
+      "id": "UC-40-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Chan hoac bo chan nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung can start Chan hoac bo chan nguoi dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/[id]|/settings",
+        "Use the alternate or exception business condition for Chan hoac bo chan nguoi dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "self-block or invalid target is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "self-block or invalid target is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-40-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Chan hoac bo chan nguoi dung",
+      "preconditions": [
+        "Record the starting state before Chan hoac bo chan nguoi dung"
+      ],
+      "steps": [
+        "Execute Chan hoac bo chan nguoi dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "relationship moves to blocked and later unblocked state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "relationship moves to blocked and later unblocked state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-40-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Chan hoac bo chan nguoi dung",
+      "preconditions": [
+        "Complete the main Chan hoac bo chan nguoi dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "block removes/invalidates connection, follow, messaging, and suggestion access",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "block removes/invalidates connection, follow, messaging, and suggestion access",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-40-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Chan hoac bo chan nguoi dung",
+      "preconditions": [
+        "Open the UI surface for Chan hoac bo chan nguoi dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "profile/settings UI shows blocked state and unblock entry point",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "profile/settings UI shows blocked state and unblock entry point",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

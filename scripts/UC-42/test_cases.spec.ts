@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-42-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem chi tiet viec lam",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-42",
+        "Route or entry point /jobs/[id] is reachable"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Start the Xem chi tiet viec lam control mapped to src/features/jobs/api/queries.ts",
+        "Complete the flow using business data: jobId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user opens job detail with company and application/save state",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user opens job detail with company and application/save state",
+        "Input fields covered: jobId"
+      ]
+    },
+    {
+      "id": "UC-42-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem chi tiet viec lam",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem chi tiet viec lam",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Use the alternate or exception business condition for Xem chi tiet viec lam",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing, removed, or inaccessible job is not shown as active",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing, removed, or inaccessible job is not shown as active",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-42-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem chi tiet viec lam",
+      "preconditions": [
+        "Record the starting state before Xem chi tiet viec lam"
+      ],
+      "steps": [
+        "Execute Xem chi tiet viec lam",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "job detail moves to loaded or not-found/closed state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "job detail moves to loaded or not-found/closed state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-42-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem chi tiet viec lam",
+      "preconditions": [
+        "Complete the main Xem chi tiet viec lam path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "job detail query joins company, saved state, application state, and view log",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "job detail query joins company, saved state, application state, and view log",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-42-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem chi tiet viec lam",
+      "preconditions": [
+        "Open the UI surface for Xem chi tiet viec lam"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "detail page shows apply/save availability and company sidebar",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "detail page shows apply/save availability and company sidebar",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-62-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Quan ly trang thai nguoi dung",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-62",
+        "Route or entry point /admin/users is reachable"
+      ],
+      "steps": [
+        "Open /admin/users",
+        "Start the Quan ly trang thai nguoi dung control mapped to src/features/admin/api/users.ts",
+        "Complete the flow using business data: userId, action",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin filters users and changes allowed user status",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin filters users and changes allowed user status",
+        "Input fields covered: userId, action"
+      ]
+    },
+    {
+      "id": "UC-62-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Quan ly trang thai nguoi dung",
+      "preconditions": [
+        "Actor Quan tri vien can start Quan ly trang thai nguoi dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/users",
+        "Use the alternate or exception business condition for Quan ly trang thai nguoi dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "admin cannot self-ban or modify forbidden admin target",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "admin cannot self-ban or modify forbidden admin target",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-62-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Quan ly trang thai nguoi dung",
+      "preconditions": [
+        "Record the starting state before Quan ly trang thai nguoi dung"
+      ],
+      "steps": [
+        "Execute Quan ly trang thai nguoi dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "user status moves active/suspended/banned/restored as allowed",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "user status moves active/suspended/banned/restored as allowed",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-62-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Quan ly trang thai nguoi dung",
+      "preconditions": [
+        "Complete the main Quan ly trang thai nguoi dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "user moderation writes audit log and revalidates admin users section",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "user moderation writes audit log and revalidates admin users section",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-62-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Quan ly trang thai nguoi dung",
+      "preconditions": [
+        "Open the UI surface for Quan ly trang thai nguoi dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "users panel shows filters, status badges, and action feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "users panel shows filters, status badges, and action feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

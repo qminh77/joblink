@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-23-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Gui lai yeu cau xac minh cong ty",
+      "preconditions": [
+        "Actor Cong ty matches the SRS actor for UC-23",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Gui lai yeu cau xac minh cong ty control mapped to src/features/companies/api/actions.ts",
+        "Complete the flow using business data: verificationStatus",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "eligible company resubmits verification after rejection or pending update",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "eligible company resubmits verification after rejection or pending update",
+        "Input fields covered: verificationStatus"
+      ]
+    },
+    {
+      "id": "UC-23-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Gui lai yeu cau xac minh cong ty",
+      "preconditions": [
+        "Actor Cong ty can start Gui lai yeu cau xac minh cong ty",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Gui lai yeu cau xac minh cong ty",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "already verified or ineligible company cannot resubmit",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "already verified or ineligible company cannot resubmit",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-23-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Gui lai yeu cau xac minh cong ty",
+      "preconditions": [
+        "Record the starting state before Gui lai yeu cau xac minh cong ty"
+      ],
+      "steps": [
+        "Execute Gui lai yeu cau xac minh cong ty",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "verification status moves back to pending review",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "verification status moves back to pending review",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-23-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Gui lai yeu cau xac minh cong ty",
+      "preconditions": [
+        "Complete the main Gui lai yeu cau xac minh cong ty path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "company verification RPC and audit log record the resubmission",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "company verification RPC and audit log record the resubmission",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-23-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Gui lai yeu cau xac minh cong ty",
+      "preconditions": [
+        "Open the UI surface for Gui lai yeu cau xac minh cong ty"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "verification card shows pending status and next-step copy",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "verification card shows pending status and next-step copy",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-14-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem ho so nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-14",
+        "Route or entry point /profile/[id] is reachable"
+      ],
+      "steps": [
+        "Open /profile/[id]",
+        "Start the Xem ho so nguoi dung control mapped to src/features/profile/api/queries.ts",
+        "Complete the flow using business data: profileUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "viewer can see a profile allowed by visibility rules",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "viewer can see a profile allowed by visibility rules",
+        "Input fields covered: profileUserId"
+      ]
+    },
+    {
+      "id": "UC-14-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem ho so nguoi dung",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem ho so nguoi dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/[id]",
+        "Use the alternate or exception business condition for Xem ho so nguoi dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "private or blocked profile hides protected details",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "private or blocked profile hides protected details",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-14-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem ho so nguoi dung",
+      "preconditions": [
+        "Record the starting state before Xem ho so nguoi dung"
+      ],
+      "steps": [
+        "Execute Xem ho so nguoi dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "profile view moves to visible, limited, or denied state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "profile view moves to visible, limited, or denied state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-14-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem ho so nguoi dung",
+      "preconditions": [
+        "Complete the main Xem ho so nguoi dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "profile visibility, connection relation, and block checks are applied together",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "profile visibility, connection relation, and block checks are applied together",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-14-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem ho so nguoi dung",
+      "preconditions": [
+        "Open the UI surface for Xem ho so nguoi dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "profile page shows public, private, and not-found states clearly",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "profile page shows public, private, and not-found states clearly",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

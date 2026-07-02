@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-55-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat lua chon nhan thong bao",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-55",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Cap nhat lua chon nhan thong bao control mapped to src/features/notifications/api/actions.ts",
+        "Complete the flow using business data: category, channel, enabled",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user updates notification preferences per category/channel",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user updates notification preferences per category/channel",
+        "Input fields covered: category, channel, enabled"
+      ]
+    },
+    {
+      "id": "UC-55-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat lua chon nhan thong bao",
+      "preconditions": [
+        "Actor Nguoi dung can start Cap nhat lua chon nhan thong bao",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Cap nhat lua chon nhan thong bao",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "unknown category/channel or invalid boolean payload is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "unknown category/channel or invalid boolean payload is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-55-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat lua chon nhan thong bao",
+      "preconditions": [
+        "Record the starting state before Cap nhat lua chon nhan thong bao"
+      ],
+      "steps": [
+        "Execute Cap nhat lua chon nhan thong bao",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "preference state moves to selected enabled/disabled value",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "preference state moves to selected enabled/disabled value",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-55-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat lua chon nhan thong bao",
+      "preconditions": [
+        "Complete the main Cap nhat lua chon nhan thong bao path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "notification creation respects in-app/email preferences for later events",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "notification creation respects in-app/email preferences for later events",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-55-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat lua chon nhan thong bao",
+      "preconditions": [
+        "Open the UI surface for Cap nhat lua chon nhan thong bao"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "settings preference switches show loading and saved state",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "settings preference switches show loading and saved state",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

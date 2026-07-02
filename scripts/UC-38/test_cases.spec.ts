@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-38-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Huy ket noi",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-38",
+        "Route or entry point /network is reachable"
+      ],
+      "steps": [
+        "Open /network",
+        "Start the Huy ket noi control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: targetUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "connected user removes an existing connection",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "connected user removes an existing connection",
+        "Input fields covered: targetUserId"
+      ]
+    },
+    {
+      "id": "UC-38-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Huy ket noi",
+      "preconditions": [
+        "Actor Nguoi dung can start Huy ket noi",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /network",
+        "Use the alternate or exception business condition for Huy ket noi",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-connected or blocked target removal is rejected safely",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-connected or blocked target removal is rejected safely",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-38-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Huy ket noi",
+      "preconditions": [
+        "Record the starting state before Huy ket noi"
+      ],
+      "steps": [
+        "Execute Huy ket noi",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "connection state moves connected -> removed",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "connection state moves connected -> removed",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-38-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Huy ket noi",
+      "preconditions": [
+        "Complete the main Huy ket noi path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "connections/follows/suggestions derived state is refreshed",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "connections/follows/suggestions derived state is refreshed",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-38-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Huy ket noi",
+      "preconditions": [
+        "Open the UI surface for Huy ket noi"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "remove confirmation and connection count update correctly",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "remove confirmation and connection count update correctly",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

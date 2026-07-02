@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-61-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem tong quan quan tri",
+      "preconditions": [
+        "Actor Quan tri vien matches the SRS actor for UC-61",
+        "Route or entry point /admin/dashboard is reachable"
+      ],
+      "steps": [
+        "Open /admin/dashboard",
+        "Start the Xem tong quan quan tri control mapped to src/features/admin/api/dashboard.ts",
+        "Complete the flow using business data: adminSession",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "admin opens dashboard and sees aggregate operational metrics",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "admin opens dashboard and sees aggregate operational metrics",
+        "Input fields covered: adminSession"
+      ]
+    },
+    {
+      "id": "UC-61-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem tong quan quan tri",
+      "preconditions": [
+        "Actor Quan tri vien can start Xem tong quan quan tri",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /admin/dashboard",
+        "Use the alternate or exception business condition for Xem tong quan quan tri",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-admin cannot access dashboard data",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-admin cannot access dashboard data",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-61-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem tong quan quan tri",
+      "preconditions": [
+        "Record the starting state before Xem tong quan quan tri"
+      ],
+      "steps": [
+        "Execute Xem tong quan quan tri",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "dashboard state moves to loaded aggregate snapshot",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "dashboard state moves to loaded aggregate snapshot",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-61-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem tong quan quan tri",
+      "preconditions": [
+        "Complete the main Xem tong quan quan tri path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "dashboard service aggregates users, companies, jobs, posts, reports, and recent activity",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "dashboard service aggregates users, companies, jobs, posts, reports, and recent activity",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-61-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem tong quan quan tri",
+      "preconditions": [
+        "Open the UI surface for Xem tong quan quan tri"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "admin dashboard shows loading and empty metric states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "admin dashboard shows loading and empty metric states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

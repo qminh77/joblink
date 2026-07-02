@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-37-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Phan hoi loi moi ket noi",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-37",
+        "Route or entry point /network is reachable"
+      ],
+      "steps": [
+        "Open /network",
+        "Start the Phan hoi loi moi ket noi control mapped to src/features/network/api/actions.ts",
+        "Complete the flow using business data: requestId, response",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "receiver accepts or rejects a pending connection request",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "receiver accepts or rejects a pending connection request",
+        "Input fields covered: requestId, response"
+      ]
+    },
+    {
+      "id": "UC-37-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Phan hoi loi moi ket noi",
+      "preconditions": [
+        "Actor Nguoi dung can start Phan hoi loi moi ket noi",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /network",
+        "Use the alternate or exception business condition for Phan hoi loi moi ket noi",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-receiver or non-pending request cannot be answered",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-receiver or non-pending request cannot be answered",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-37-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Phan hoi loi moi ket noi",
+      "preconditions": [
+        "Record the starting state before Phan hoi loi moi ket noi"
+      ],
+      "steps": [
+        "Execute Phan hoi loi moi ket noi",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "request state moves pending -> connected or rejected",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "request state moves pending -> connected or rejected",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-37-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Phan hoi loi moi ket noi",
+      "preconditions": [
+        "Complete the main Phan hoi loi moi ket noi path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "connection counters, feed sync, suggestions, and notifications update consistently",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "connection counters, feed sync, suggestions, and notifications update consistently",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-37-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Phan hoi loi moi ket noi",
+      "preconditions": [
+        "Open the UI surface for Phan hoi loi moi ket noi"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "request card disappears or changes state after response",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "request card disappears or changes state after response",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

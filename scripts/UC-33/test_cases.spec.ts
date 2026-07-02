@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-33-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem chi tiet bai viet",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-33",
+        "Route or entry point /posts/[id] is reachable"
+      ],
+      "steps": [
+        "Open /posts/[id]",
+        "Start the Xem chi tiet bai viet control mapped to src/features/posts/api/queries.ts",
+        "Complete the flow using business data: postId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user opens a post detail page with comments and engagement",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user opens a post detail page with comments and engagement",
+        "Input fields covered: postId"
+      ]
+    },
+    {
+      "id": "UC-33-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem chi tiet bai viet",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem chi tiet bai viet",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /posts/[id]",
+        "Use the alternate or exception business condition for Xem chi tiet bai viet",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "not-found, deleted, or private post is hidden safely",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "not-found, deleted, or private post is hidden safely",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-33-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem chi tiet bai viet",
+      "preconditions": [
+        "Record the starting state before Xem chi tiet bai viet"
+      ],
+      "steps": [
+        "Execute Xem chi tiet bai viet",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "post detail moves to loaded or not-found/forbidden state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "post detail moves to loaded or not-found/forbidden state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-33-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem chi tiet bai viet",
+      "preconditions": [
+        "Complete the main Xem chi tiet bai viet path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "detail query, comments query, and engagement state agree",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "detail query, comments query, and engagement state agree",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-33-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem chi tiet bai viet",
+      "preconditions": [
+        "Open the UI surface for Xem chi tiet bai viet"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "detail page renders skeleton, comments, and action availability",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "detail page renders skeleton, comments, and action availability",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

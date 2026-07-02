@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-60-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Gui bao cao vi pham",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-60",
+        "Route or entry point report dialog is reachable"
+      ],
+      "steps": [
+        "Open report dialog",
+        "Start the Gui bao cao vi pham control mapped to src/features/reports/api/actions.ts",
+        "Complete the flow using business data: targetType, targetId, reason",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user reports a valid target with a fixed reason and optional description",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user reports a valid target with a fixed reason and optional description",
+        "Input fields covered: targetType, targetId, reason"
+      ]
+    },
+    {
+      "id": "UC-60-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Gui bao cao vi pham",
+      "preconditions": [
+        "Actor Nguoi dung can start Gui bao cao vi pham",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open report dialog",
+        "Use the alternate or exception business condition for Gui bao cao vi pham",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing reason, invalid target type/id, or self-ineligible target is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing reason, invalid target type/id, or self-ineligible target is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-60-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Gui bao cao vi pham",
+      "preconditions": [
+        "Record the starting state before Gui bao cao vi pham"
+      ],
+      "steps": [
+        "Execute Gui bao cao vi pham",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "report state moves to pending moderation",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "report state moves to pending moderation",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-60-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Gui bao cao vi pham",
+      "preconditions": [
+        "Complete the main Gui bao cao vi pham path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "reports row is visible to admin UC-66 without exposing reporter details publicly",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "reports row is visible to admin UC-66 without exposing reporter details publicly",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-60-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Gui bao cao vi pham",
+      "preconditions": [
+        "Open the UI surface for Gui bao cao vi pham"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "report dialog validates reason and thanks user on success",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "report dialog validates reason and thanks user on success",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

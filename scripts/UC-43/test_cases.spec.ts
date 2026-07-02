@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-43-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Luu hoac bo luu viec lam",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-43",
+        "Route or entry point /jobs/[id] is reachable"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Start the Luu hoac bo luu viec lam control mapped to src/features/jobs/api/actions.ts",
+        "Complete the flow using business data: jobId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member saves and unsaves a job",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member saves and unsaves a job",
+        "Input fields covered: jobId"
+      ]
+    },
+    {
+      "id": "UC-43-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Luu hoac bo luu viec lam",
+      "preconditions": [
+        "Actor Thanh vien can start Luu hoac bo luu viec lam",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /jobs/[id]",
+        "Use the alternate or exception business condition for Luu hoac bo luu viec lam",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "company/admin/non-member or invalid job cannot save",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "company/admin/non-member or invalid job cannot save",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-43-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Luu hoac bo luu viec lam",
+      "preconditions": [
+        "Record the starting state before Luu hoac bo luu viec lam"
+      ],
+      "steps": [
+        "Execute Luu hoac bo luu viec lam",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "saved state toggles on/off and saved list updates",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "saved state toggles on/off and saved list updates",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-43-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Luu hoac bo luu viec lam",
+      "preconditions": [
+        "Complete the main Luu hoac bo luu viec lam path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "saved_jobs row, saved jobs page, and job card cache stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "saved_jobs row, saved jobs page, and job card cache stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-43-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Luu hoac bo luu viec lam",
+      "preconditions": [
+        "Open the UI surface for Luu hoac bo luu viec lam"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "save button updates instantly and handles repeat clicks",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "save button updates instantly and handles repeat clicks",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

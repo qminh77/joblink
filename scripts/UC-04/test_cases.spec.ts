@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-04-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dang nhap bang email va mat khau",
+      "preconditions": [
+        "Actor Khach matches the SRS actor for UC-04",
+        "Route or entry point /login is reachable"
+      ],
+      "steps": [
+        "Open /login",
+        "Start the Dang nhap bang email va mat khau control mapped to src/features/auth/hooks/use-login.ts",
+        "Complete the flow using business data: email, password",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "valid email/password signs in and loads the app user mirror",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "valid email/password signs in and loads the app user mirror",
+        "Input fields covered: email, password"
+      ]
+    },
+    {
+      "id": "UC-04-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dang nhap bang email va mat khau",
+      "preconditions": [
+        "Actor Khach can start Dang nhap bang email va mat khau",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /login",
+        "Use the alternate or exception business condition for Dang nhap bang email va mat khau",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "wrong credentials or missing app user mirror signs out and shows safe error",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "wrong credentials or missing app user mirror signs out and shows safe error",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-04-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dang nhap bang email va mat khau",
+      "preconditions": [
+        "Record the starting state before Dang nhap bang email va mat khau"
+      ],
+      "steps": [
+        "Execute Dang nhap bang email va mat khau",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "guest session moves to authenticated session when UC-06 passes",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "guest session moves to authenticated session when UC-06 passes",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-04-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dang nhap bang email va mat khau",
+      "preconditions": [
+        "Complete the main Dang nhap bang email va mat khau path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "Supabase Auth session and public.users role/status checks stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "Supabase Auth session and public.users role/status checks stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-04-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dang nhap bang email va mat khau",
+      "preconditions": [
+        "Open the UI surface for Dang nhap bang email va mat khau"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "login form shows loading, success redirect, and translated error states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "login form shows loading, success redirect, and translated error states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

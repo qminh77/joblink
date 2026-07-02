@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-56-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat thong tin tai khoan",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-56",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Cap nhat thong tin tai khoan control mapped to src/features/settings/api/actions.ts",
+        "Complete the flow using business data: emailOrPhoneOrLocale",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user updates account email, phone, or locale",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user updates account email, phone, or locale",
+        "Input fields covered: emailOrPhoneOrLocale"
+      ]
+    },
+    {
+      "id": "UC-56-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat thong tin tai khoan",
+      "preconditions": [
+        "Actor Nguoi dung can start Cap nhat thong tin tai khoan",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Cap nhat thong tin tai khoan",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid email/phone/locale or duplicate email is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid email/phone/locale or duplicate email is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-56-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat thong tin tai khoan",
+      "preconditions": [
+        "Record the starting state before Cap nhat thong tin tai khoan"
+      ],
+      "steps": [
+        "Execute Cap nhat thong tin tai khoan",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "account info moves to pending verification or saved account state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "account info moves to pending verification or saved account state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-56-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat thong tin tai khoan",
+      "preconditions": [
+        "Complete the main Cap nhat thong tin tai khoan path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "Supabase Auth, public.users, email change mailer, and audit state stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "Supabase Auth, public.users, email change mailer, and audit state stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-56-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat thong tin tai khoan",
+      "preconditions": [
+        "Open the UI surface for Cap nhat thong tin tai khoan"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "settings account card shows verification and saved feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "settings account card shows verification and saved feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

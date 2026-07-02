@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-44-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dang tin tuyen dung",
+      "preconditions": [
+        "Actor Cong ty matches the SRS actor for UC-44",
+        "Route or entry point /company/post-job is reachable"
+      ],
+      "steps": [
+        "Open /company/post-job",
+        "Start the Dang tin tuyen dung control mapped to src/features/jobs/api/actions.ts",
+        "Complete the flow using business data: title, description, jobTypeId, workModeId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "verified company creates a job post with required job fields",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "verified company creates a job post with required job fields",
+        "Input fields covered: title, description, jobTypeId, workModeId"
+      ]
+    },
+    {
+      "id": "UC-44-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dang tin tuyen dung",
+      "preconditions": [
+        "Actor Cong ty can start Dang tin tuyen dung",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /company/post-job",
+        "Use the alternate or exception business condition for Dang tin tuyen dung",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "unverified company, invalid salary range, or missing required fields is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "unverified company, invalid salary range, or missing required fields is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-44-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dang tin tuyen dung",
+      "preconditions": [
+        "Record the starting state before Dang tin tuyen dung"
+      ],
+      "steps": [
+        "Execute Dang tin tuyen dung",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "job draft/form moves to created job state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "job draft/form moves to created job state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-44-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dang tin tuyen dung",
+      "preconditions": [
+        "Complete the main Dang tin tuyen dung path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "create job service checks company policy and writes audit log",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "create job service checks company policy and writes audit log",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-44-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dang tin tuyen dung",
+      "preconditions": [
+        "Open the UI surface for Dang tin tuyen dung"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "post job form shows validation, submit loading, and created redirect",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "post job form shows validation, submit loading, and created redirect",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

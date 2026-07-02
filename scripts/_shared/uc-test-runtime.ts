@@ -7,6 +7,11 @@ export type UcCaseKind =
   | "permission"
   | "boundary"
   | "side_effect"
+  | "business_flow"
+  | "alternate_flow"
+  | "state_transition"
+  | "integration"
+  | "ui_feedback"
 
 export type UcTestCase = {
   id: string
@@ -38,6 +43,11 @@ const REQUIRED_KINDS: UcCaseKind[] = [
   "permission",
   "boundary",
   "side_effect",
+  "business_flow",
+  "alternate_flow",
+  "state_transition",
+  "integration",
+  "ui_feedback",
 ]
 
 export function defineUcTestSuite(suite: UcTestSuite) {

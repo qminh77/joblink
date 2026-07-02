@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-10-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat anh ca nhan",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-10",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Cap nhat anh ca nhan control mapped to src/features/profile/api/actions.ts",
+        "Complete the flow using business data: avatarFile, coverFile",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "avatar or cover image uploads and updates the member profile media URL",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "avatar or cover image uploads and updates the member profile media URL",
+        "Input fields covered: avatarFile, coverFile"
+      ]
+    },
+    {
+      "id": "UC-10-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat anh ca nhan",
+      "preconditions": [
+        "Actor Thanh vien can start Cap nhat anh ca nhan",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Cap nhat anh ca nhan",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-image, oversized image, or failed crop/upload is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-image, oversized image, or failed crop/upload is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-10-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat anh ca nhan",
+      "preconditions": [
+        "Record the starting state before Cap nhat anh ca nhan"
+      ],
+      "steps": [
+        "Execute Cap nhat anh ca nhan",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "profile media moves from old image to new image state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "profile media moves from old image to new image state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-10-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat anh ca nhan",
+      "preconditions": [
+        "Complete the main Cap nhat anh ca nhan path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "storage upload and profile media update stay atomic enough for retry",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "storage upload and profile media update stay atomic enough for retry",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-10-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat anh ca nhan",
+      "preconditions": [
+        "Open the UI surface for Cap nhat anh ca nhan"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "image editor shows preview, loading, and rollback/error feedback",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "image editor shows preview, loading, and rollback/error feedback",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-24-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem trang cong ty",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-24",
+        "Route or entry point /company/[id] is reachable"
+      ],
+      "steps": [
+        "Open /company/[id]",
+        "Start the Xem trang cong ty control mapped to src/features/companies/api/queries.ts",
+        "Complete the flow using business data: companyUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user opens a company page with company profile, posts, and active jobs",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user opens a company page with company profile, posts, and active jobs",
+        "Input fields covered: companyUserId"
+      ]
+    },
+    {
+      "id": "UC-24-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem trang cong ty",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem trang cong ty",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /company/[id]",
+        "Use the alternate or exception business condition for Xem trang cong ty",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "missing, suspended, or hidden company returns safe empty/not-found state",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "missing, suspended, or hidden company returns safe empty/not-found state",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-24-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem trang cong ty",
+      "preconditions": [
+        "Record the starting state before Xem trang cong ty"
+      ],
+      "steps": [
+        "Execute Xem trang cong ty",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "company page moves to loaded public overview state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "company page moves to loaded public overview state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-24-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem trang cong ty",
+      "preconditions": [
+        "Complete the main Xem trang cong ty path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "company overview RPC joins profile, posts, follower state, and jobs consistently",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "company overview RPC joins profile, posts, follower state, and jobs consistently",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-24-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem trang cong ty",
+      "preconditions": [
+        "Open the UI surface for Xem trang cong ty"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "company page handles loading, empty jobs, and follow state",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "company page handles loading, empty jobs, and follow state",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

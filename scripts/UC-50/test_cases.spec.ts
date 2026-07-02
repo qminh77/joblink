@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-50-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Mo hoac tao hoi thoai truc tiep",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-50",
+        "Route or entry point /messages is reachable"
+      ],
+      "steps": [
+        "Open /messages",
+        "Start the Mo hoac tao hoi thoai truc tiep control mapped to src/features/messaging/api/actions.ts",
+        "Complete the flow using business data: targetUserId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user opens existing or creates direct conversation with another allowed user",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user opens existing or creates direct conversation with another allowed user",
+        "Input fields covered: targetUserId"
+      ]
+    },
+    {
+      "id": "UC-50-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Mo hoac tao hoi thoai truc tiep",
+      "preconditions": [
+        "Actor Nguoi dung can start Mo hoac tao hoi thoai truc tiep",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /messages",
+        "Use the alternate or exception business condition for Mo hoac tao hoi thoai truc tiep",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "blocked relation, self target, or invalid target is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "blocked relation, self target, or invalid target is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-50-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Mo hoac tao hoi thoai truc tiep",
+      "preconditions": [
+        "Record the starting state before Mo hoac tao hoi thoai truc tiep"
+      ],
+      "steps": [
+        "Execute Mo hoac tao hoi thoai truc tiep",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "conversation state moves absent -> existing/direct conversation",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "conversation state moves absent -> existing/direct conversation",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-50-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Mo hoac tao hoi thoai truc tiep",
+      "preconditions": [
+        "Complete the main Mo hoac tao hoi thoai truc tiep path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "conversation participants are created once and unread counters stay initialized",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "conversation participants are created once and unread counters stay initialized",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-50-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Mo hoac tao hoi thoai truc tiep",
+      "preconditions": [
+        "Open the UI surface for Mo hoac tao hoi thoai truc tiep"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "message button opens dock/page quickly with existing thread",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "message button opens dock/page quickly with existing thread",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

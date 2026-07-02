@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-19-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Dat CV mac dinh",
+      "preconditions": [
+        "Actor Thanh vien matches the SRS actor for UC-19",
+        "Route or entry point /profile/edit is reachable"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Start the Dat CV mac dinh control mapped to src/features/cvs/api/actions.ts",
+        "Complete the flow using business data: cvId",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "member marks exactly one saved CV as default",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "member marks exactly one saved CV as default",
+        "Input fields covered: cvId"
+      ]
+    },
+    {
+      "id": "UC-19-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Dat CV mac dinh",
+      "preconditions": [
+        "Actor Thanh vien can start Dat CV mac dinh",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /profile/edit",
+        "Use the alternate or exception business condition for Dat CV mac dinh",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "invalid or non-owned CV cannot become default",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "invalid or non-owned CV cannot become default",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-19-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Dat CV mac dinh",
+      "preconditions": [
+        "Record the starting state before Dat CV mac dinh"
+      ],
+      "steps": [
+        "Execute Dat CV mac dinh",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "default flag moves from previous CV to selected CV",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "default flag moves from previous CV to selected CV",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-19-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Dat CV mac dinh",
+      "preconditions": [
+        "Complete the main Dat CV mac dinh path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "set_default_member_cv keeps a single default per user",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "set_default_member_cv keeps a single default per user",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-19-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Dat CV mac dinh",
+      "preconditions": [
+        "Open the UI surface for Dat CV mac dinh"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "CV card badges update immediately and do not show two defaults",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "CV card badges update immediately and do not show two defaults",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

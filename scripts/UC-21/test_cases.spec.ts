@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-21-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Cap nhat hinh anh cong ty",
+      "preconditions": [
+        "Actor Cong ty matches the SRS actor for UC-21",
+        "Route or entry point /settings is reachable"
+      ],
+      "steps": [
+        "Open /settings",
+        "Start the Cap nhat hinh anh cong ty control mapped to src/features/companies/api/actions.ts",
+        "Complete the flow using business data: logoFile, coverFile",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "company logo or cover image uploads and updates company profile media",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "company logo or cover image uploads and updates company profile media",
+        "Input fields covered: logoFile, coverFile"
+      ]
+    },
+    {
+      "id": "UC-21-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Cap nhat hinh anh cong ty",
+      "preconditions": [
+        "Actor Cong ty can start Cap nhat hinh anh cong ty",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /settings",
+        "Use the alternate or exception business condition for Cap nhat hinh anh cong ty",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "non-image, oversized file, or failed upload is rejected",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "non-image, oversized file, or failed upload is rejected",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-21-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Cap nhat hinh anh cong ty",
+      "preconditions": [
+        "Record the starting state before Cap nhat hinh anh cong ty"
+      ],
+      "steps": [
+        "Execute Cap nhat hinh anh cong ty",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "company media moves from old asset to new asset state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "company media moves from old asset to new asset state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-21-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Cap nhat hinh anh cong ty",
+      "preconditions": [
+        "Complete the main Cap nhat hinh anh cong ty path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "storage upload and company_profiles media columns stay consistent",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "storage upload and company_profiles media columns stay consistent",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-21-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Cap nhat hinh anh cong ty",
+      "preconditions": [
+        "Open the UI surface for Cap nhat hinh anh cong ty"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "company image editor shows preview/progress/error states",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "company image editor shows preview/progress/error states",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

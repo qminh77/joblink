@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-26-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Xem bang tin",
+      "preconditions": [
+        "Actor Nguoi dung matches the SRS actor for UC-26",
+        "Route or entry point /home is reachable"
+      ],
+      "steps": [
+        "Open /home",
+        "Start the Xem bang tin control mapped to src/features/posts/api/queries.ts",
+        "Complete the flow using business data: cursor",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "user loads paged home feed with visible posts",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "user loads paged home feed with visible posts",
+        "Input fields covered: cursor"
+      ]
+    },
+    {
+      "id": "UC-26-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Xem bang tin",
+      "preconditions": [
+        "Actor Nguoi dung can start Xem bang tin",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /home",
+        "Use the alternate or exception business condition for Xem bang tin",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "blocked/private/deleted posts are excluded",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "blocked/private/deleted posts are excluded",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-26-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Xem bang tin",
+      "preconditions": [
+        "Record the starting state before Xem bang tin"
+      ],
+      "steps": [
+        "Execute Xem bang tin",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "feed cursor moves from first page to next page",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "feed cursor moves from first page to next page",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-26-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Xem bang tin",
+      "preconditions": [
+        "Complete the main Xem bang tin path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "feed RPC respects visibility, connections, and pagination",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "feed RPC respects visibility, connections, and pagination",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-26-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Xem bang tin",
+      "preconditions": [
+        "Open the UI surface for Xem bang tin"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "feed shows skeleton, empty state, and load-more state",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "feed shows skeleton, empty state, and load-more state",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })

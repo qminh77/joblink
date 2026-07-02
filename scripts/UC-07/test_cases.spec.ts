@@ -145,6 +145,115 @@ defineUcTestSuite({
         "Related aggregate/counter/cache state is consistent",
         "Expected side effects are present only once"
       ]
+    },
+    {
+      "id": "UC-07-business-main-flow",
+      "kind": "business_flow",
+      "title": "Run SRS business flow for Gui yeu cau dat lai mat khau",
+      "preconditions": [
+        "Actor Khach, Dich vu Email matches the SRS actor for UC-07",
+        "Route or entry point /forgot-password is reachable"
+      ],
+      "steps": [
+        "Open /forgot-password",
+        "Start the Gui yeu cau dat lai mat khau control mapped to src/features/auth/api/auth-actions.ts",
+        "Complete the flow using business data: email",
+        "Confirm the final business result and returned state"
+      ],
+      "expected": [
+        "valid reset request sends a password reset email without leaking account existence",
+        "The result is visible to the actor in the same workflow",
+        "No unrelated feature state is changed"
+      ],
+      "dataChecks": [
+        "valid reset request sends a password reset email without leaking account existence",
+        "Input fields covered: email"
+      ]
+    },
+    {
+      "id": "UC-07-alternate-business-flow",
+      "kind": "alternate_flow",
+      "title": "Exercise SRS alternative flow for Gui yeu cau dat lai mat khau",
+      "preconditions": [
+        "Actor Khach, Dich vu Email can start Gui yeu cau dat lai mat khau",
+        "Prepare data that triggers the documented exception path"
+      ],
+      "steps": [
+        "Open /forgot-password",
+        "Use the alternate or exception business condition for Gui yeu cau dat lai mat khau",
+        "Submit the flow and inspect the action result"
+      ],
+      "expected": [
+        "unknown or malformed email returns neutral response",
+        "The system explains the rejection without exposing sensitive data"
+      ],
+      "dataChecks": [
+        "unknown or malformed email returns neutral response",
+        "No partial mutation is committed"
+      ]
+    },
+    {
+      "id": "UC-07-business-state-transition",
+      "kind": "state_transition",
+      "title": "Verify business state transition for Gui yeu cau dat lai mat khau",
+      "preconditions": [
+        "Record the starting state before Gui yeu cau dat lai mat khau"
+      ],
+      "steps": [
+        "Execute Gui yeu cau dat lai mat khau",
+        "Reload the relevant page/query",
+        "Compare before and after state"
+      ],
+      "expected": [
+        "guest request moves to reset-email-sent or safe-neutral state",
+        "The transition is repeatable or idempotent according to the UC"
+      ],
+      "dataChecks": [
+        "guest request moves to reset-email-sent or safe-neutral state",
+        "Old and new state are not both active when mutually exclusive"
+      ]
+    },
+    {
+      "id": "UC-07-business-integration-check",
+      "kind": "integration",
+      "title": "Verify cross-feature integration for Gui yeu cau dat lai mat khau",
+      "preconditions": [
+        "Complete the main Gui yeu cau dat lai mat khau path once"
+      ],
+      "steps": [
+        "Open the dependent feature, list, badge, notification, audit, or public page",
+        "Refresh or refetch the dependent data",
+        "Confirm the dependent state follows the source action"
+      ],
+      "expected": [
+        "SMTP/Supabase reset link generation does not expose private user data",
+        "Dependent surfaces do not show stale or duplicated data"
+      ],
+      "dataChecks": [
+        "SMTP/Supabase reset link generation does not expose private user data",
+        "Related cache/revalidation/realtime output is consistent"
+      ]
+    },
+    {
+      "id": "UC-07-business-ui-feedback",
+      "kind": "ui_feedback",
+      "title": "Verify UI feedback for Gui yeu cau dat lai mat khau",
+      "preconditions": [
+        "Open the UI surface for Gui yeu cau dat lai mat khau"
+      ],
+      "steps": [
+        "Trigger loading, validation error, success, and empty/no-result states where applicable",
+        "Observe controls, disabled states, toasts, dialogs, and redirects",
+        "Repeat once to check idempotent or duplicate-click behavior"
+      ],
+      "expected": [
+        "forgot password form confirms next steps consistently",
+        "The UI does not feel stuck, stale, or ambiguous after the action"
+      ],
+      "dataChecks": [
+        "forgot password form confirms next steps consistently",
+        "Visible state matches action/query result"
+      ]
     }
   ]
 })
