@@ -1,5 +1,8 @@
 import "server-only"
 
+// SRS UC Trace - M01 UC-06 Kiem tra dieu kien truy cap tai khoan.
+// Flow: middleware/server component/server action -> getCurrentUser/requireCurrentUser -> public.users + profile status guard.
+
 import { cache } from "react"
 import { redirect } from "next/navigation"
 

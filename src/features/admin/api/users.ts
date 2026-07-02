@@ -1,5 +1,8 @@
 "use server"
 
+// SRS UC Trace - M09 UC-62 Quan ly trang thai nguoi dung.
+// Flow: /admin/users -> users panel -> admin users API -> users service/repo -> audit + revalidate admin section.
+
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminAccess } from "./admin-guard"

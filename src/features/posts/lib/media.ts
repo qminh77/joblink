@@ -34,7 +34,7 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
   return fromLegacy ? [fromLegacy] : []
 }
 
-// UC-34: media của bài video có dạng { type: "video", url }.
+// SRS UC-27: media của bài video có dạng { type: "video", url }.
 export function readVideoUrl(value: FeedPost["media"]): string | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null
   const obj = value as Record<string, unknown>

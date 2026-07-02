@@ -1,5 +1,9 @@
 import "server-only"
 
+// SRS UC Trace - M04:
+// UC-26 Xem bang tin; UC-33 Xem chi tiet bai viet.
+// Flow: /home|/posts/[id] -> server query -> posts repo/RPC -> feed/detail data with visibility rules.
+
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"

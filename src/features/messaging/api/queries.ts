@@ -1,5 +1,9 @@
 import "server-only"
 
+// SRS UC Trace - M07 Tin nhan:
+// UC-50 Tai tong quan hoi thoai; UC-52 Tai tin nhan va unread count.
+// Flow: messages server page/client hook -> messaging query -> messaging RPC -> conversations/messages/participants.
+
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 

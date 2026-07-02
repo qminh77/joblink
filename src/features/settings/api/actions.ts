@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M08 Cai dat ca nhan:
+// UC-56 Cap nhat thong tin tai khoan; UC-57 Doi mat khau; UC-58 Cap nhat quyen rieng tu/trang thai.
+// UC-59 Tai khoan da chan duoc doc qua network block actions trong settings UI.
+// Flow: /settings tabs -> settings action facade -> account/password/privacy actions -> settings repo/Supabase Auth.
+
 import {
   updateAccountAction as updateAccount,
 } from "./account-actions"

@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M03 Ho so cong ty:
+// UC-20 Cap nhat ho so cong ty; UC-21 Cap nhat hinh anh cong ty; UC-22 Trang thai dang tuyen dung.
+// UC-23 Gui lai yeu cau xac minh; UC-25 Theo doi/bo theo doi cong ty; UC-46 Doi trang thai tin tuyen dung.
+// Flow: settings/company page -> company action -> company service/RPC -> company_profiles/follows.
+
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 

@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M06 Viec lam va ung tuyen:
+// UC-43 Luu/bo luu viec; UC-44 Dang tin; UC-45 Sua tin; UC-46 Doi trang thai tin.
+// UC-47 Ung tuyen; UC-48 Rut ho so da ung tuyen; UC-49 Tao thong bao ung tuyen qua application-notifications.
+// Flow: jobs/company pages -> jobs action -> job-management-policy -> jobs.service -> jobs.repo/RPC + notifications/audit.
+
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 

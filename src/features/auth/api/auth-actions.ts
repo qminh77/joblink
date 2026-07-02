@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M01 Tai khoan va dang nhap:
+// UC-01 Dang ky tai khoan ca nhan; UC-02 Dang ky tai khoan cong ty.
+// UC-07 Gui yeu cau dat lai mat khau.
+// Flow: /register|/forgot-password -> auth component/hook -> server action -> auth-mailer -> Supabase Auth + public.users.
+
 import { getTranslations } from "next-intl/server"
 
 import { createAdminClient } from "@/lib/supabase/admin"

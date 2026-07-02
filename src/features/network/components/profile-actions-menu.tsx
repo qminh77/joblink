@@ -23,7 +23,7 @@ import {
 
 import { useBlockStatus, useBlockUser, useUnblockUser } from "../hooks"
 
-// Menu "•••" trên hồ sơ người khác: gộp Báo cáo + Chặn/Bỏ chặn (UC-46/UC-47).
+// Menu "•••" trên hồ sơ người khác: gộp Báo cáo (SRS UC-60) + Chặn/Bỏ chặn (SRS UC-40).
 // Báo cáo được uỷ quyền lên cha qua onReport để tái dùng ReportDialog sẵn có.
 export function ProfileActionsMenu({
   targetUserId,

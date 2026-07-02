@@ -175,7 +175,7 @@ export async function uploadPostImage(
   return { url: data.publicUrl, width: prepared.width, height: prepared.height }
 }
 
-// ── Video (UC-34) ────────────────────────────────────────────────────────────
+// ── Video media for post creation (SRS UC-27) ────────────────────────────────
 // Lưu ý: bucket "uploads" phải cho phép mime video và đủ giới hạn dung lượng.
 export const POST_VIDEO_MAX_BYTES = 50 * 1024 * 1024 // 50 MB
 export const POST_VIDEO_ALLOWED_TYPES = [

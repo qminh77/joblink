@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest"
+    "test": "vitest",
+    "test:uc": "vitest run --config scripts/vitest.uc.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

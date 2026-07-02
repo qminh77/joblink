@@ -1,5 +1,8 @@
 "use server"
 
+// SRS UC Trace - M09 UC-65 Kiem duyet tin tuyen dung.
+// Flow: /admin/jobs -> jobs panel -> admin job API -> jobs moderation service/repo -> audit + revalidate.
+
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminAccess } from "./admin-guard"

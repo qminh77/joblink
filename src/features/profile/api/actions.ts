@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M02 Ho so ca nhan:
+// UC-09 Cap nhat ho so ca nhan; UC-10 Cap nhat anh ca nhan.
+// UC-11 Kinh nghiem; UC-12 Hoc van; UC-13 Ky nang; UC-15 Thong ke ho so.
+// Flow: /profile/edit -> edit components/hooks -> profile actions -> profile service/repo -> Supabase.
+
 import {
   updateCompanyMediaAction as updateCompanyMedia,
   updateCompanyProfileAction as updateCompanyProfile,

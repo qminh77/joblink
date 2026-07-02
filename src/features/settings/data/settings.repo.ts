@@ -47,8 +47,8 @@ export function updateUserLocale(
     .eq("id", userId)
 }
 
-// UC-66: đổi SĐT — reset phone_verified_at vì SĐT mới chưa được xác minh
-// (xác minh SĐT qua OTP là UC-08, chưa triển khai).
+// SRS UC-56: đổi SĐT — reset phone_verified_at vì SĐT mới chưa được xác minh.
+// Xác minh SĐT qua OTP nằm ngoài danh sách 67 UC của SRS hiện tại.
 export function updateUserPhone(
   supabase: Supabase,
   userId: number,

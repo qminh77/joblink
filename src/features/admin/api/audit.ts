@@ -1,5 +1,8 @@
 import "server-only"
 
+// SRS UC Trace - M09 UC-67 Xem nhat ky quan tri.
+// Flow: /admin/audit-log -> audit log API -> audit service/repo -> v_admin_audit_log/filter RPC.
+
 import { createAdminClient } from "@/lib/supabase/admin"
 
 import { requireAdminAccess } from "./admin-guard"

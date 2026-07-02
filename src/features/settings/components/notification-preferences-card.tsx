@@ -13,7 +13,7 @@ import {
   defaultPreferenceMap,
 } from "@/features/notifications/lib/preferences"
 
-// UC-65: bật/tắt thông báo theo nhóm trên 2 kênh (trong ứng dụng + email).
+// SRS UC-55: bật/tắt thông báo theo nhóm trên 2 kênh (trong ứng dụng + email).
 // Kênh trong-ứng-dụng có hiệu lực ngay (gate ở createNotification); email được
 // lưu sẵn cho khi hệ thống bật gửi email theo sự kiện.
 export function NotificationPreferencesCard() {

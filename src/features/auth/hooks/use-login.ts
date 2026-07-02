@@ -1,5 +1,8 @@
 "use client"
 
+// SRS UC Trace - M01 UC-04 + UC-06.
+// Flow: login form submit -> Supabase password sign-in -> app user mirror/status check -> redirect or sign out with business error.
+
 import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"

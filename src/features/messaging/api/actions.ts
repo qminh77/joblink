@@ -1,5 +1,9 @@
 "use server"
 
+// SRS UC Trace - M07 Tin nhan:
+// UC-50 Mo/tao hoi thoai truc tiep; UC-51 Gui tin nhan; UC-52 Xem tin nhan va danh dau da doc.
+// Flow: /messages|message dock/dropdown -> messaging hooks -> action/query -> messaging.service -> messaging repo/RPC + realtime.
+
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 

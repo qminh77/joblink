@@ -1,5 +1,9 @@
 import "server-only"
 
+// SRS UC Trace - M02 Ho so ca nhan:
+// UC-14 Xem ho so nguoi dung; UC-15 Xem thong ke ho so ca nhan.
+// Flow: /profile/[id]|/profile/edit -> server query -> profile repo/RPC -> visibility + view log data.
+
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import type { ConnectionRelation } from "@/features/network/types"
 import { mapMemberCv, type MemberCv, type MemberCvRow } from "@/features/cvs/types"

@@ -20,7 +20,7 @@ export async function createNotification({
 }: CreateNotificationInput): Promise<void> {
   const admin = createAdminClient()
 
-  // UC-65: tôn trọng tùy chỉnh của người NHẬN theo nhóm.
+  // SRS UC-55: tôn trọng tùy chỉnh của người NHẬN theo nhóm.
   //   • Trong-ứng-dụng: KHÔNG có dòng = mặc định BẬT (chỉ bỏ qua khi tắt rõ ràng).
   //   • Email: chỉ gửi khi BẬT rõ ràng (mặc định TẮT — opt-in, tránh spam).
   const category = CATEGORY_BY_TYPE[type]

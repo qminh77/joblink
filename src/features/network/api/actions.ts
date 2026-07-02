@@ -1,5 +1,10 @@
 "use server"
 
+// SRS UC Trace - M05 Mang luoi:
+// UC-35 Goi y ket noi; UC-36 Gui/huy loi moi; UC-37 Phan hoi loi moi; UC-38 Huy ket noi.
+// UC-39 Theo doi/bo theo doi nguoi dung; UC-40 Chan/bo chan nguoi dung.
+// Flow: /network|profile action buttons -> network action facade -> connection/follow/block actions -> services/repos/RPC.
+
 import {
   blockUserAction as blockUser,
   getBlockStatusAction as getBlockStatus,

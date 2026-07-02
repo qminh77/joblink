@@ -1,5 +1,9 @@
 "use server"
 
+// SRS UC Trace - M04 Bang tin va bai viet:
+// UC-27 Dang bai; UC-28 Sua/xoa bai; UC-29 Cam xuc; UC-30 Binh luan/xoa binh luan; UC-31 Chia se; UC-32 Tim nguoi de nhac ten.
+// Flow: /home|/posts/[id] components/hooks -> post action facade -> create/manage/engagement/read actions -> post services/repos/RPC.
+
 import { createPostAction as createPost } from "./create-actions"
 import {
   createCommentAction as createComment,

@@ -230,7 +230,7 @@ function emailChangeStrings(
   }
 }
 
-// Đổi email (UC-66): tạo link xác nhận gửi tới email MỚI qua SMTP (không dùng
+// SRS UC-56: đổi email, tạo link xác nhận gửi tới email MỚI qua SMTP (không dùng
 // updateUser của Supabase). public.users.email đồng bộ bởi trigger 037 sau khi
 // người dùng xác nhận. (Giả định "Secure email change" của Supabase tắt — chỉ
 // cần xác nhận một phía email mới.)

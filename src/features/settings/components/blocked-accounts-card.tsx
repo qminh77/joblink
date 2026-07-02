@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { useBlockedUsers, useUnblockUser } from "@/features/network/hooks"
 import { getInitials } from "@/lib/utils/format"
 
-// Trang quản lý tài khoản bị chặn (UC-47) — điểm vào để bỏ chặn kể cả khi không
+// Trang quản lý tài khoản bị chặn (SRS UC-59) — điểm vào để bỏ chặn kể cả khi không
 // truy cập được hồ sơ người đã chặn. Dữ liệu nạp client-side qua React Query.
 export function BlockedAccountsCard() {
   const t = useTranslations("settings.blocked")

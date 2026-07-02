@@ -1,5 +1,9 @@
 import "server-only"
 
+// SRS UC Trace - M06:
+// UC-41 Tim kiem/loc viec lam; UC-42 Xem chi tiet viec lam; UC-48 Xem ho so da ung tuyen.
+// Flow: /jobs|/jobs/[id]|/jobs/applications -> server query -> jobs repo/RPC -> page data.
+
 import { createClient } from "@/lib/supabase/server"
 
 import type {
@@ -167,4 +171,3 @@ export async function loadWorkModes(): Promise<WorkModeRef[]> {
   }
   return (data ?? []) as WorkModeRef[]
 }
-

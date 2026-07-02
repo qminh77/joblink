@@ -1,5 +1,8 @@
 import "server-only"
 
+// SRS UC Trace - M07 UC-53 Xem thong bao va so thong bao chua doc.
+// Flow: notifications page/dropdown -> server query/action -> notifications repo -> paged notification data.
+
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
 import type { NotificationRow } from "@/types/database"

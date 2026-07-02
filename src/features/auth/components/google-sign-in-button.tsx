@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { createClient } from "@/lib/supabase/client"
 
-// UC-04: đăng nhập/đăng ký bằng Google. signInWithOAuth chuyển hướng sang Google;
+// SRS UC-05: đăng nhập/đăng ký bằng Google. signInWithOAuth chuyển hướng sang Google;
 // quay lại /auth/callback (đã có sẵn exchangeCodeForSession). Người dùng mới được
 // trigger handle_new_user tạo với role 'member', status 'active' (email Google đã
 // xác minh). YÊU CẦU: bật Google provider + cấu hình OAuth credentials trên Supabase.

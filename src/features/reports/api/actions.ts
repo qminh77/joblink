@@ -1,5 +1,8 @@
 "use server"
 
+// SRS UC Trace - M08 UC-60 Gui bao cao vi pham.
+// Flow: report dialog -> createReportAction -> reports repo -> reports table -> admin moderation UC-66.
+
 import { createClient } from "@/lib/supabase/server"
 import { action, parse, unwrap } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"

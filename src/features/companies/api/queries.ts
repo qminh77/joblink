@@ -1,5 +1,8 @@
 import "server-only"
 
+// SRS UC Trace - M03 UC-24 Xem trang cong ty.
+// Flow: /company/[id] -> company public query -> company repo/RPC -> public profile + posts + active jobs.
+
 import { createClient } from "@/lib/supabase/server"
 
 import type { CompanyPublicOverview } from "../types"

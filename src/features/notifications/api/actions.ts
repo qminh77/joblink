@@ -1,5 +1,9 @@
 "use server"
 
+// SRS UC Trace - M07 Thong bao:
+// UC-53 Xem thong bao; UC-54 Danh dau thong bao da doc; UC-55 Cap nhat lua chon nhan thong bao.
+// Flow: /notifications|navbar dropdown|settings notification card -> notification action/query -> notification repos -> realtime/cache.
+
 import { revalidatePath } from "next/cache"
 
 import { writeAuditLog } from "@/lib/audit"
@@ -86,7 +90,7 @@ export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   })
 }
 
-// ── Preferences (UC-65) ──────────────────────────────────────────────────────
+// ── Preferences (SRS UC-55) ──────────────────────────────────────────────────
 
 export async function getNotificationPreferencesAction(): Promise<NotificationPreferenceMap> {
   const current = await requireCurrentUser()

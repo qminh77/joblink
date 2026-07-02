@@ -1,5 +1,8 @@
 "use server"
 
+// SRS UC Trace - M09 UC-66 Xu ly bao cao vi pham.
+// Flow: /admin/reports -> reports panel -> admin report API -> reports moderation service/repo -> moderation action + audit.
+
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { ReportStatus } from "@/types/database"
 

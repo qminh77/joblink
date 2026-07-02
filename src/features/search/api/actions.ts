@@ -1,5 +1,8 @@
 "use server"
 
+// SRS UC Trace - M05 UC-34 Tim kiem tong hop.
+// Flow: navbar search|/search -> search action -> search repo -> users/companies/posts/jobs result tabs.
+
 import { searchAllTabAction as searchAllTab } from "./all-tab-search"
 import { globalSearchAction as globalSearch } from "./global-search"
 import {
