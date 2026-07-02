@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
 import { globalSearchAction, searchAllTabAction, searchPageAction } from "../api/actions"
 import type {
@@ -32,6 +32,21 @@ export type SearchAllData = {
   posts: SearchPostsResult
 }
 
+type SearchTabResult =
+  | SearchPeopleResult
+  | SearchCompaniesResult
+  | SearchJobsResult
+  | SearchPostsResult
+
+type SearchTabFilters = {
+  peopleLocation?: string | null
+  companyIndustry?: string | null
+  jobProvinceId?: number | null
+  jobTypeIds?: number[] | null
+  workModeIds?: number[] | null
+  salaryMin?: number | null
+}
+
 export function useSearchAllTab(query: string) {
   const q = query.trim()
   return useQuery<SearchAllData>({
@@ -46,14 +61,7 @@ export function useSearchTabResults(
   query: string,
   tab: SearchTab,
   offset: number,
-  filters?: {
-    peopleLocation?: string | null
-    companyIndustry?: string | null
-    jobProvinceId?: number | null
-    jobTypeIds?: number[] | null
-    workModeIds?: number[] | null
-    salaryMin?: number | null
-  },
+  filters?: SearchTabFilters,
 ) {
   const q = query.trim()
   return useQuery<
@@ -69,18 +77,33 @@ export function useSearchTabResults(
   })
 }
 
+export function useSearchTabInfiniteResults(
+  query: string,
+  tab: SearchTab,
+  filters?: SearchTabFilters,
+) {
+  const q = query.trim()
+  return useInfiniteQuery<SearchTabResult>({
+    queryKey: ["search-tab", q, tab, filters],
+    queryFn: ({ pageParam }) => searchPageAction(q, tab, Number(pageParam), filters),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce(
+        (total, page) => total + page.items.length,
+        0,
+      )
+      return loaded < lastPage.total ? loaded : undefined
+    },
+    enabled: q.length >= 2 && tab !== "all",
+    staleTime: 30_000,
+  })
+}
+
 export function useSearchMore(
   query: string,
   tab: SearchTab,
   offset: number,
-  filters?: {
-    peopleLocation?: string | null
-    companyIndustry?: string | null
-    jobProvinceId?: number | null
-    jobTypeIds?: number[] | null
-    workModeIds?: number[] | null
-    salaryMin?: number | null
-  },
+  filters?: SearchTabFilters,
 ) {
   const q = query.trim()
   return useQuery({

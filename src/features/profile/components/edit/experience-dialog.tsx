@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
@@ -86,7 +86,7 @@ export function ExperienceDialog({
     form.reset(toFormValues(experience))
   }, [experience, form])
 
-  const isCurrent = form.watch("isCurrent")
+  const isCurrent = useWatch({ control: form.control, name: "isCurrent" })
   const addMutation = useAddExperience()
   const updateMutation = useUpdateExperience()
   const isPending = addMutation.isPending || updateMutation.isPending

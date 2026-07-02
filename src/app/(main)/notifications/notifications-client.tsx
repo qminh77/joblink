@@ -5,7 +5,6 @@ import { useCallback, useState } from "react"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Bell, CheckCheck, ChevronDown } from "lucide-react"
-import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,7 +14,6 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "@/features/notifications/hooks"
-import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
 import {
   getNotificationLabelParams,
   getNotificationVisual,

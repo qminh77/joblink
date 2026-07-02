@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
 import { Building2, Camera, Image as ImageIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -53,7 +52,6 @@ export function CompanyAvatarCoverEditor({
   coverUrl,
 }: Props) {
   const router = useRouter()
-  const qc = useQueryClient()
   const initials = getInitials(companyName, "JL")
 
   const [pending, setPending] = React.useState<{

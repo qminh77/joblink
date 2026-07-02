@@ -53,7 +53,7 @@ function SendModalInner({
   const qc = useQueryClient()
 
   const { data: overview, isLoading } = useNetworkOverview()
-  const connections = overview?.connections ?? []
+  const connections = overview?.connections
 
   const [query, setQuery] = useState("")
   const [note, setNote] = useState("")
@@ -61,9 +61,10 @@ function SendModalInner({
   const [pendingId, setPendingId] = useState<number | null>(null)
 
   const filtered = useMemo(() => {
+    const items = connections ?? []
     const q = query.trim().toLowerCase()
-    if (!q) return connections
-    return connections.filter((c) => {
+    if (!q) return items
+    return items.filter((c) => {
       const name = c.displayName.toLowerCase()
       const headline = (c.headline ?? "").toLowerCase()
       return name.includes(q) || headline.includes(q)
@@ -175,7 +176,7 @@ function SendModalInner({
             </div>
           ) : filtered.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground py-8 px-4">
-              {connections.length === 0
+              {(connections?.length ?? 0) === 0
                 ? tPosts("sendEmpty")
                 : tPosts("sendNoMatch")}
             </p>

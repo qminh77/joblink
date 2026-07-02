@@ -4,11 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
 import { motion } from "framer-motion"
-import {
-  Building2,
-  CheckCircle2,
-  Clock,
-} from "lucide-react"
+import { Building2, Clock } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"

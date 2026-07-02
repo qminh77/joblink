@@ -1,10 +1,9 @@
 "use client"
 
 import { useFormatter, useTranslations } from "next-intl"
-import { ExternalLink, MessageSquare } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { AdminReportRow } from "@/features/admin/types"
 import type { ReportStatus } from "@/lib/constants"

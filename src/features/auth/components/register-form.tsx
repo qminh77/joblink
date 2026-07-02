@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import Link from "next/link"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslations } from "next-intl"
 import { Lock, Mail } from "lucide-react"
 
@@ -21,7 +21,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { useRegister } from "../hooks"
 import {
-  COMPANY_SIZE_OPTIONS,
   createRegisterSchema,
   type CompanySize,
   type RegisterInput,
@@ -121,7 +120,7 @@ export function RegisterForm() {
     },
   })
 
-  const role = form.watch("role")
+  const role = useWatch({ control: form.control, name: "role" })
   const register = useRegister()
 
   useEffect(() => {

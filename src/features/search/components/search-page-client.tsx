@@ -11,14 +11,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDebounce } from "@/lib/utils/use-debounce"
 
 import type { SearchTab } from "../types"
-import { useSearchAllTab, useSearchTabResults } from "../hooks"
+import { useSearchAllTab, useSearchTabInfiniteResults } from "../hooks"
 import { PeopleCard, CompanyCard, JobCard, PostCard } from "./search-cards"
 
 type Props = {
   initialQuery: string
 }
 
-const PAGE_SIZE = 20
+const SEARCH_TABS = new Set<SearchTab>([
+  "all",
+  "people",
+  "companies",
+  "jobs",
+  "posts",
+])
+
+function isSearchTab(value: string | null): value is SearchTab {
+  return value != null && SEARCH_TABS.has(value as SearchTab)
+}
+
+function getSearchItemKey(item: unknown): string {
+  const record = item as Record<string, unknown>
+  return String(record.id ?? record.userId ?? JSON.stringify(record))
+}
 
 function SearchSkeleton() {
   return (
@@ -72,39 +87,36 @@ function useTabPagination(
   tab: SearchTab,
   deps?: Record<string, unknown>,
 ) {
-  const [offset, setOffset] = useState(0)
-  const [allItems, setAllItems] = useState<unknown[]>([])
-  const { data, isFetching } = useSearchTabResults(query, tab, offset, deps)
+  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
+    useSearchTabInfiniteResults(query, tab, deps)
 
-  useEffect(() => {
-    setAllItems([])
-    setOffset(0)
-  }, [query, JSON.stringify(deps ?? {})])
-
-  useEffect(() => {
-    if (data && "items" in data) {
-      const newItems = (data as { items: unknown[] }).items
-      setAllItems((prev) => {
-        const seen = new Set(
-          prev.map((i) => (i as Record<string, unknown>).id),
-        )
-        const deduped = newItems.filter(
-          (i) => !seen.has((i as Record<string, unknown>).id),
-        )
-        return [...prev, ...deduped]
-      })
+  const allItems = useMemo(() => {
+    const seen = new Set<string>()
+    const items: unknown[] = []
+    for (const page of data?.pages ?? []) {
+      for (const item of page.items) {
+        const key = getSearchItemKey(item)
+        if (seen.has(key)) continue
+        seen.add(key)
+        items.push(item)
+      }
     }
+    return items
   }, [data])
 
-  const total = data && "total" in data ? (data as { total: number }).total : 0
-  const hasMore = allItems.length < total
+  const loadMore = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return
+    void fetchNextPage()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+  const total = data?.pages[0]?.total ?? 0
 
   return {
     allItems,
-    isFetching,
-    hasMore,
+    isFetching: isFetching || isFetchingNextPage,
+    hasMore: Boolean(hasNextPage),
     total,
-    loadMore: () => setOffset((prev) => prev + PAGE_SIZE),
+    loadMore,
   }
 }
 
@@ -115,9 +127,8 @@ export function SearchPageClient({ initialQuery }: Props) {
   const sp = useSearchParams()
 
   const [query, setQuery] = useState(initialQuery)
-  const [activeTab, setActiveTab] = useState<SearchTab>(
-    (sp.get("tab") as SearchTab) ?? "all",
-  )
+  const tabParam = sp.get("tab")
+  const activeTab = isSearchTab(tabParam) ? tabParam : "all"
   const debouncedQuery = useDebounce(query, 300)
 
   const allData = useSearchAllTab(debouncedQuery)
@@ -133,11 +144,6 @@ export function SearchPageClient({ initialQuery }: Props) {
     )
   }, [allResults])
 
-  useEffect(() => {
-    const tab = sp.get("tab") as SearchTab | null
-    if (tab && tab !== activeTab) setActiveTab(tab)
-  }, [sp, activeTab])
-
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     const q = query.trim()
@@ -147,6 +153,17 @@ export function SearchPageClient({ initialQuery }: Props) {
       if (activeTab !== "all") params.set("tab", activeTab)
       router.push(`/search?${params.toString()}`)
     }
+  }
+
+  function handleTabChange(tab: SearchTab) {
+    const params = new URLSearchParams(sp.toString())
+    if (tab === "all") {
+      params.delete("tab")
+    } else {
+      params.set("tab", tab)
+    }
+    const qs = params.toString()
+    router.push(qs ? `/search?${qs}` : "/search")
   }
 
   return (
@@ -178,7 +195,7 @@ export function SearchPageClient({ initialQuery }: Props) {
       ) : (
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as SearchTab)}
+          onValueChange={(v) => handleTabChange(v as SearchTab)}
         >
           <TabsList className="bg-muted/60 p-1 rounded-xl mb-4 overflow-x-auto w-full justify-start">
             <TabsTrigger value="all" className="rounded-lg text-sm">
@@ -431,7 +448,7 @@ function LoadMore({
         </div>
       ) : hasMore ? (
         <div ref={sentinelRef}>
-          {loaded} / {total} — scroll for more
+          {loaded} / {total} - scroll for more
         </div>
       ) : total > 0 ? (
         <span>Showing all {total} results</span>

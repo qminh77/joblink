@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Calendar, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {

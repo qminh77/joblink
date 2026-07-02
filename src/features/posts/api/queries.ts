@@ -6,7 +6,6 @@ import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 import type { UserRole } from "@/lib/constants"
 import type {
   FeedComment,
@@ -151,11 +150,12 @@ export async function loadSinglePost(
 ): Promise<FeedPost | null> {
   const current = await getCurrentUser()
   const supabase = await createClient()
-  const admin = createAdminClient()
 
-  const { data: post } = await admin
+  const { data: post } = await supabase
     .from("posts")
-    .select("id, author_id, content, post_type, media, visibility, created_at")
+    .select(
+      "id, author_id, content, post_type, media, visibility, created_at, reaction_count, comment_count, share_count",
+    )
     .eq("id", postId)
     .is("deleted_at", null)
     .eq("status", "active")
@@ -167,40 +167,37 @@ export async function loadSinglePost(
       media: unknown
       visibility: string
       created_at: string
+      reaction_count: number
+      comment_count: number
+      share_count: number
     }>()
 
   if (!post) return null
 
-  const [usersRes, memberRes, companyRes, countRes, reactedRes] =
-    await Promise.all([
-      admin
-        .from("users")
-        .select("id, role")
-        .eq("id", post.author_id)
-        .single<{ id: number; role: UserRole }>(),
-      supabase
-        .from("member_profiles")
-        .select("user_id, full_name, avatar_url, headline")
-        .eq("user_id", post.author_id)
-        .is("deleted_at", null)
-        .maybeSingle(),
-      supabase
-        .from("company_profiles")
-        .select("user_id, name, logo_url, industry")
-        .eq("user_id", post.author_id)
-        .is("deleted_at", null)
-        .maybeSingle(),
-      admin
-        .from("posts")
-        .select("reaction_count, comment_count, share_count")
-        .eq("id", postId)
-        .single<{ reaction_count: number; comment_count: number; share_count: number }>(),
-      supabase
-        .from("post_reactions")
-        .select("id", { count: "exact", head: true })
-        .eq("post_id", postId)
-        .eq("user_id", current?.appUser.id ?? 0),
-    ])
+  const [usersRes, memberRes, companyRes, reactedRes] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, role")
+      .eq("id", post.author_id)
+      .single<{ id: number; role: UserRole }>(),
+    supabase
+      .from("member_profiles")
+      .select("user_id, full_name, avatar_url, headline")
+      .eq("user_id", post.author_id)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    supabase
+      .from("company_profiles")
+      .select("user_id, name, logo_url, industry")
+      .eq("user_id", post.author_id)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    supabase
+      .from("post_reactions")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId)
+      .eq("user_id", current?.appUser.id ?? 0),
+  ])
 
   const role = usersRes.data?.role ?? "member"
   const member = memberRes.data
@@ -208,12 +205,6 @@ export async function loadSinglePost(
   const displayName = member?.full_name ?? company?.name ?? "JobLink"
   const avatarUrl = member?.avatar_url ?? company?.logo_url ?? null
   const headline = member?.headline ?? company?.industry ?? null
-
-  const counts = countRes.data ?? {
-    reaction_count: 0,
-    comment_count: 0,
-    share_count: 0,
-  }
 
   return {
     id: post.id,
@@ -230,9 +221,9 @@ export async function loadSinglePost(
       avatarUrl,
       headline,
     },
-    reactionCount: counts.reaction_count,
-    commentCount: counts.comment_count,
-    shareCount: counts.share_count,
+    reactionCount: post.reaction_count,
+    commentCount: post.comment_count,
+    shareCount: post.share_count,
     viewerReacted: (reactedRes.count ?? 0) > 0,
   }
 }

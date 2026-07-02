@@ -584,30 +584,6 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.are_connected(BIGINT, BIGINT) TO anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.can_view_post(post_id BIGINT)
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-      FROM public.posts p
-     WHERE p.id = can_view_post.post_id
-       AND p.deleted_at IS NULL
-       AND (
-            p.visibility = 'public'
-         OR p.author_id = public.auth_user_id()
-         OR (p.visibility = 'connections'
-             AND public.are_connected(public.auth_user_id(), p.author_id))
-         OR public.is_admin()
-       )
-  );
-$$;
-
-GRANT EXECUTE ON FUNCTION public.can_view_post(BIGINT) TO anon, authenticated;
-
 -- =============================================================================
 -- 6. JOBS & RECRUITMENT
 -- =============================================================================

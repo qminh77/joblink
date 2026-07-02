@@ -4,8 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
-import { Bell, CheckCheck, ChevronRight } from "lucide-react"
-import { toast } from "sonner"
+import { CheckCheck, ChevronRight } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -18,7 +17,6 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "@/features/notifications/hooks"
-import { verifyNotificationTargetAction } from "@/features/notifications/api/actions"
 import {
   getNotificationLabelParams,
   getNotificationVisual,

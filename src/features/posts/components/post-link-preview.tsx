@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, ImageIcon, Loader2 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { FileText, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -47,33 +47,17 @@ function excerpt(text: string, max = 120): string {
 }
 
 export function PostLinkPreview({ postId, variant = "incoming" }: Props) {
-  const [data, setData] = useState<PostPreviewData>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const {
+    data = null,
+    isError,
+    isLoading,
+  } = useQuery<PostPreviewData>({
+    queryKey: ["post-preview", postId],
+    queryFn: () => getPostPreviewAction(postId),
+  })
   const formatRel = useRelativeTimeFormatter()
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(false)
-    getPostPreviewAction(postId)
-      .then((result) => {
-        if (cancelled) return
-        setData(result)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(true)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [postId])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
         <Loader2 className="w-3 h-3 animate-spin" />
@@ -82,7 +66,7 @@ export function PostLinkPreview({ postId, variant = "incoming" }: Props) {
     )
   }
 
-  if (error || !data) {
+  if (isError || !data) {
     return (
       <Link
         href={`/posts/${postId}`}
@@ -109,6 +93,7 @@ export function PostLinkPreview({ postId, variant = "incoming" }: Props) {
     >
       {imageUrl ? (
         <div className="aspect-[16/9] relative overflow-hidden bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt=""

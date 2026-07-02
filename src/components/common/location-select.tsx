@@ -89,19 +89,18 @@ export function LocationSelect({
     [provinces],
   )
 
-  const wardRaw: WardOption[] =
-    provinceId == null
-      ? []
-      : wards.length > 0
-        ? wards
-        : wardId != null && initialWardName
-          ? [{ id: wardId, name: initialWardName }]
-          : []
+  const wardOptions = useMemo<SearchOption[]>(() => {
+    const wardRaw: WardOption[] =
+      provinceId == null
+        ? []
+        : wards.length > 0
+          ? wards
+          : wardId != null && initialWardName
+            ? [{ id: wardId, name: initialWardName }]
+            : []
 
-  const wardOptions = useMemo<SearchOption[]>(
-    () => wardRaw.map((w) => ({ value: String(w.id), label: w.name })),
-    [wardRaw],
-  )
+    return wardRaw.map((w) => ({ value: String(w.id), label: w.name }))
+  }, [provinceId, wards, wardId, initialWardName])
 
   const wardDisabled = disabled || provinceId == null || loadingWards
 
