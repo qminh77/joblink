@@ -9,10 +9,14 @@ import {
 import type { NotificationItem } from "../types"
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from "./keys"
 
-export function useNotifications(initialData?: NotificationItem[]) {
+export function useNotifications(
+  initialData?: NotificationItem[],
+  options?: { enabled?: boolean },
+) {
   return useQuery<NotificationItem[]>({
     queryKey: NOTIFICATIONS_KEY,
     queryFn: getNotificationsAction,
+    enabled: options?.enabled ?? true,
     initialData,
     staleTime: 30_000,
   })

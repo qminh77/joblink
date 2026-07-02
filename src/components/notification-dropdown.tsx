@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
@@ -16,6 +17,7 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
+  useUnreadNotificationCount,
 } from "@/features/notifications/hooks"
 import {
   getNotificationLabelParams,
@@ -45,16 +47,19 @@ export function NotificationDropdown({
   const tTypes = useTranslations("notifications.types")
   const tStatus = useTranslations("notifications.appStatus")
   const router = useRouter()
-  const { data: notifications = [] } = useNotifications()
+  const [open, setOpen] = useState(false)
+  const { data: unreadCount = 0 } = useUnreadNotificationCount()
+  const { data: notifications = [], isLoading } = useNotifications(undefined, {
+    enabled: open,
+  })
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
   const formatRel = useRelativeTimeFormatter()
 
-  const unreadCount = notifications.filter((item) => !item.isRead).length
   const visible = notifications.slice(0, DROPDOWN_LIMIT)
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <span className="relative inline-flex">
           {children}
@@ -95,7 +100,22 @@ export function NotificationDropdown({
         </div>
 
         <div className="max-h-80 overflow-y-auto">
-          {visible.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-2 p-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 rounded-xl px-1 py-2"
+                >
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-muted animate-pulse" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                    <div className="h-2.5 w-full rounded bg-muted animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : visible.length === 0 ? (
             <p className="px-4 py-8 text-center text-xs text-muted-foreground">
               {t("dropdown.empty")}
             </p>

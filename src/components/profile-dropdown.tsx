@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -49,34 +48,6 @@ export function ProfileDropdown() {
   const canViewApplications = isMember
   const canManageCompanyJobs = isCompany
   const adminHref = user.adminHref ?? "/admin"
-  const warmupHrefs = useMemo(() => {
-    const hrefs = [
-      canViewProfile ? selfHref : null,
-      user.role !== "admin" ? "/network" : null,
-      canViewSavedJobs ? "/saved-jobs" : null,
-      canViewApplications ? "/jobs/applications" : null,
-      canManageCompanyJobs ? "/company/post-job" : null,
-      user.adminHref ? adminHref : null,
-      "/settings",
-    ]
-    return Array.from(new Set(hrefs.filter(Boolean))) as string[]
-  }, [
-    adminHref,
-    canManageCompanyJobs,
-    canViewApplications,
-    canViewProfile,
-    canViewSavedJobs,
-    selfHref,
-    user.adminHref,
-    user.role,
-  ])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      for (const href of warmupHrefs) router.prefetch(href)
-    }, 700)
-    return () => window.clearTimeout(timer)
-  }, [router, warmupHrefs])
 
   function pushWarm(href: string) {
     router.prefetch(href)

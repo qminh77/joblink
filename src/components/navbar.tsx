@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
@@ -21,7 +22,6 @@ import { NotificationDropdown } from "@/components/notification-dropdown"
 import { ProfileDropdown } from "@/components/profile-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { PostComposer } from "@/features/posts/components/post-composer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 import { HeaderSearch } from "@/features/search/components/header-search"
-import { profileHref } from "@/lib/utils/profile-url"
 
 const NAV_ITEMS = [
   { key: "home", href: "/home", icon: Home },
@@ -57,6 +56,14 @@ const NAV_ITEMS = [
   hasDropdown?: "messages" | "notifications"
 }>
 
+const PostComposer = dynamic(
+  () =>
+    import("@/features/posts/components/post-composer").then(
+      (mod) => mod.PostComposer,
+    ),
+  { ssr: false },
+)
+
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -70,29 +77,6 @@ export function Navbar() {
     user.role === "company" &&
     user.companyVerificationStatus === "verified"
   const canCreateAny = canCreatePost || canCreateJob
-  const warmupHrefs = useMemo(() => {
-    const hrefs = [
-      "/home",
-      "/network",
-      "/jobs",
-      "/messages",
-      "/notifications",
-      "/settings",
-      profileHref(user.id, user.role),
-      user.role === "member" ? "/saved-jobs" : null,
-      user.role === "member" ? "/jobs/applications" : null,
-      canCreateJob ? "/company/post-job" : null,
-      user.adminHref,
-    ]
-    return Array.from(new Set(hrefs.filter(Boolean))) as string[]
-  }, [canCreateJob, user.adminHref, user.id, user.role])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      for (const href of warmupHrefs) router.prefetch(href)
-    }, 500)
-    return () => window.clearTimeout(timer)
-  }, [router, warmupHrefs])
 
   function pushWarm(href: string) {
     router.prefetch(href)
@@ -101,7 +85,12 @@ export function Navbar() {
 
   return (
     <>
-      <PostComposer open={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
+      {isCreatePostOpen ? (
+        <PostComposer
+          open={isCreatePostOpen}
+          onClose={() => setIsCreatePostOpen(false)}
+        />
+      ) : null}
 
       <nav className="bg-background/80 backdrop-blur-xl border-b border-border/40 fixed top-0 w-full flex justify-between items-center px-4 md:px-8 h-16 z-50 transition-colors">
         <div className="flex items-center gap-4 lg:gap-6">
