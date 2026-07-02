@@ -17,6 +17,20 @@ function isPublicPath(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
+  const { pathname, search } = request.nextUrl
+  const isPublic = isPublicPath(pathname)
+  const isRoot = pathname === "/"
+  const isAuthCallback = pathname.startsWith("/auth/callback")
+  const hasAuthCookie = hasSupabaseAuthCookie(request)
+
+  if (!hasAuthCookie) {
+    if (!isPublic && !isRoot) {
+      return redirectToLogin(request, pathname + (search ?? ""))
+    }
+    if (isRoot) return redirectToLogin(request)
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -44,12 +58,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname, search } = request.nextUrl
-  const isPublic = isPublicPath(pathname)
-  const isRoot = pathname === "/"
-  const isAuthCallback = pathname.startsWith("/auth/callback")
-
-  if (user && !isAuthCallback) {
+  if (user && !isAuthCallback && (isPublic || isRoot)) {
     const blockedReason = await getBlockedSessionReason(supabase, user.id)
     if (blockedReason) {
       await supabase.auth.signOut()
@@ -62,13 +71,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!user && !isPublic && !isRoot) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    url.search = ""
-    if (pathname !== "/login") {
-      url.searchParams.set("redirect", pathname + (search ?? ""))
-    }
-    return NextResponse.redirect(url)
+    return redirectToLogin(request, pathname + (search ?? ""))
   }
 
   if (user && (isPublic || isRoot)) {
@@ -82,13 +85,30 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!user && isRoot) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    url.search = ""
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   return supabaseResponse
+}
+
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some(
+      ({ name }) =>
+        name.startsWith("sb-") &&
+        (name.includes("auth-token") || name.includes("auth-token.")),
+    )
+}
+
+function redirectToLogin(request: NextRequest, redirect?: string) {
+  const url = request.nextUrl.clone()
+  url.pathname = "/login"
+  url.search = ""
+  if (redirect && redirect !== "/login") {
+    url.searchParams.set("redirect", redirect)
+  }
+  return NextResponse.redirect(url)
 }
 
 async function getBlockedSessionReason(

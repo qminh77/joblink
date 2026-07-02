@@ -11,6 +11,7 @@ import type {
 } from "../types"
 
 const OVERVIEW_LIMIT = 50
+const OVERVIEW_MAX_LIMIT = 50
 // Mở chat: chỉ load "tin gần nhất" đủ cho 1-2 màn hình → cảm giác mở nhanh.
 // Cuộn lên load tiếp qua cursor (p_before_created_at/p_before_id).
 const MESSAGES_PAGE = 15
@@ -37,13 +38,23 @@ type MessagesRpcResponse = {
   otherUserId?: number | null
 } | null
 
-export async function loadMessagingOverview(): Promise<MessagingOverview> {
+function clampOverviewLimit(limit?: number) {
+  if (!Number.isFinite(limit)) return OVERVIEW_LIMIT
+  return Math.min(
+    OVERVIEW_MAX_LIMIT,
+    Math.max(1, Math.floor(limit ?? OVERVIEW_LIMIT)),
+  )
+}
+
+export async function loadMessagingOverview(options?: {
+  limit?: number
+}): Promise<MessagingOverview> {
   const current = await getCurrentUser()
   if (!current) return EMPTY_OVERVIEW
 
   const supabase = await createClient()
   const { data, error } = await supabase.rpc("get_messaging_overview", {
-    p_limit: OVERVIEW_LIMIT,
+    p_limit: clampOverviewLimit(options?.limit),
   })
 
   if (error) {

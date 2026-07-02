@@ -33,9 +33,11 @@ import {
 
 // ── Reads (RLS lo lọc participant) ───────────────────────────────────────────
 
-export async function getMessagingOverviewAction(): Promise<MessagingOverview> {
+export async function getMessagingOverviewAction(
+  limit?: number,
+): Promise<MessagingOverview> {
   await requireCurrentUser()
-  return loadMessagingOverview()
+  return loadMessagingOverview({ limit })
 }
 
 export async function getUnreadConversationsCountAction(): Promise<number> {

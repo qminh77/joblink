@@ -76,12 +76,22 @@ function applyMessageInsert(
 
   const fromMe = row.sender_id === currentUserId
   const isActive = isConversationActive(convId)
-  const overview = qc.getQueryData<MessagingOverview>(MESSAGING_OVERVIEW_KEY)
-  if (overview) {
-    const idx = overview.items.findIndex(
-      (item) => item.conversationId === convId,
-    )
-    if (idx >= 0) {
+  let matchedOverview = false
+  let missingOverview = false
+  let shouldIncrementUnread = false
+
+  qc.setQueriesData<MessagingOverview>(
+    { queryKey: MESSAGING_OVERVIEW_KEY },
+    (overview) => {
+      if (!overview) return overview
+      const idx = overview.items.findIndex(
+        (item) => item.conversationId === convId,
+      )
+      if (idx < 0) {
+        missingOverview = true
+        return overview
+      }
+      matchedOverview = true
       const current = overview.items[idx]
       const prevUnread = current.unreadCount
       const nextUnread = fromMe || isActive ? prevUnread : prevUnread + 1
@@ -98,21 +108,21 @@ function applyMessageInsert(
       }
       const rest = overview.items.filter((_, itemIndex) => itemIndex !== idx)
       const becameUnread = prevUnread === 0 && nextUnread > 0
-      qc.setQueryData<MessagingOverview>(MESSAGING_OVERVIEW_KEY, {
+      if (becameUnread) shouldIncrementUnread = true
+      return {
         items: [updated, ...rest],
         unreadConversations: becameUnread
           ? overview.unreadConversations + 1
           : overview.unreadConversations,
-      })
-
-      if (becameUnread && !fromMe && !isActive) {
-        const prevCount = qc.getQueryData<number>(MESSAGING_UNREAD_KEY) ?? 0
-        qc.setQueryData<number>(MESSAGING_UNREAD_KEY, prevCount + 1)
       }
-    } else {
-      invalidateMessaging(qc)
-    }
-  } else {
+    },
+  )
+
+  if (shouldIncrementUnread && !fromMe && !isActive) {
+    const prevCount = qc.getQueryData<number>(MESSAGING_UNREAD_KEY) ?? 0
+    qc.setQueryData<number>(MESSAGING_UNREAD_KEY, prevCount + 1)
+  }
+  if (!matchedOverview || missingOverview) {
     invalidateMessaging(qc)
   }
 }
@@ -156,9 +166,10 @@ export function useRealtimeMessaging({
       if (isConversationActive(row.conversation_id)) return
 
       if (showToast && isDocumentVisible()) {
-        const overview = qc.getQueryData<MessagingOverview>(
-          MESSAGING_OVERVIEW_KEY,
-        )
+        const overview = qc
+          .getQueriesData<MessagingOverview>({ queryKey: MESSAGING_OVERVIEW_KEY })
+          .map(([, data]) => data)
+          .find((data) => data?.items.length)
         const conversation = overview?.items.find(
           (item) => item.conversationId === row.conversation_id,
         )

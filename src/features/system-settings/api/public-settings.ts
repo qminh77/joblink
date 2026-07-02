@@ -1,6 +1,6 @@
 import "server-only"
 
-import { cache } from "react"
+import { unstable_cache } from "next/cache"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -14,7 +14,7 @@ export type PublicAuthSettings = {
 
 const AUTH_KEYS = ["site_name", "site_description", "google_auth_enabled"]
 
-export const loadPublicAuthSettings = cache(
+export const loadPublicAuthSettings = unstable_cache(
   async (): Promise<PublicAuthSettings> => {
     const fallback: PublicAuthSettings = {
       site: { name: "Joblink", description: null },
@@ -48,5 +48,10 @@ export const loadPublicAuthSettings = cache(
     } catch {
       return fallback
     }
+  },
+  ["public-auth-settings"],
+  {
+    revalidate: 300,
+    tags: ["public-auth-settings", "system-settings"],
   },
 )

@@ -1,13 +1,17 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
 
-import { useEnsureConversation, useMessagingOverview } from "../../hooks"
+import {
+  useEnsureConversation,
+  useMessagingOverview,
+  useUnreadConversationsCount,
+} from "../../hooks"
 import { translateMessagingError } from "../../lib/translate-error"
 import type { ConversationItem } from "../../types"
 
@@ -33,16 +37,28 @@ import type { OpenWindow } from "./types"
 export function MessagingDock() {
   const pathname = usePathname()
   const user = useCurrentUser()
-  const { data } = useMessagingOverview()
 
   const [listOpen, setListOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([])
+  const [idleReady, setIdleReady] = useState(false)
   const ensure = useEnsureConversation()
   const tErr = useTranslations("messages.errors")
+  const { data: unreadCount = 0 } = useUnreadConversationsCount()
+  const shouldLoadOverview = idleReady || listOpen || openWindows.length > 0
+  const { data } = useMessagingOverview(undefined, {
+    enabled: shouldLoadOverview,
+    limit: 8,
+    staleTime: 30_000,
+  })
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIdleReady(true), 1500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const items = useMemo(() => data?.items ?? [], [data])
-  const unreadConversations = items.filter((c) => c.unreadCount > 0).length
+  const unreadConversations = data?.unreadConversations ?? unreadCount
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()

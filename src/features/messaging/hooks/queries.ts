@@ -12,17 +12,30 @@ import type {
   MessagingOverview,
 } from "../types"
 import {
+  MESSAGING_OVERVIEW_LIMIT_KEY,
   MESSAGING_MESSAGES_KEY,
   MESSAGING_OVERVIEW_KEY,
   MESSAGING_UNREAD_KEY,
 } from "./keys"
 
-export function useMessagingOverview(initialData?: MessagingOverview) {
+export function useMessagingOverview(
+  initialData?: MessagingOverview,
+  options?: {
+    enabled?: boolean
+    limit?: number
+    staleTime?: number
+  },
+) {
+  const limit = options?.limit
   return useQuery<MessagingOverview>({
-    queryKey: MESSAGING_OVERVIEW_KEY,
-    queryFn: getMessagingOverviewAction,
+    queryKey:
+      typeof limit === "number"
+        ? MESSAGING_OVERVIEW_LIMIT_KEY(limit)
+        : MESSAGING_OVERVIEW_KEY,
+    queryFn: () => getMessagingOverviewAction(limit),
+    enabled: options?.enabled ?? true,
     initialData,
-    staleTime: 15_000,
+    staleTime: options?.staleTime ?? 15_000,
   })
 }
 

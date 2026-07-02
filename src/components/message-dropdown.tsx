@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
@@ -12,7 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { useMessagingOverview } from "@/features/messaging/hooks"
+import {
+  useMessagingOverview,
+  useUnreadConversationsCount,
+} from "@/features/messaging/hooks"
+import type { ConversationItem } from "@/features/messaging/types"
 import { getInitials } from "@/lib/utils/format"
 import { useEnsureConversation } from "@/features/messaging/hooks"
 import { useRouter } from "next/navigation"
@@ -39,19 +44,25 @@ export function MessageDropdown({
 }) {
   const t = useTranslations("messages")
   const tErr = useTranslations("messages.errors")
-  const { data } = useMessagingOverview()
+  const [open, setOpen] = useState(false)
+  const { data: unreadCount = 0 } = useUnreadConversationsCount()
+  const { data, isLoading } = useMessagingOverview(undefined, {
+    enabled: open,
+    limit: PREVIEW_LIMIT,
+    staleTime: 10_000,
+  })
   const formatRel = useRelativeTimeFormatter()
   const ensure = useEnsureConversation()
   const router = useRouter()
 
-  const handleItemClick = (conv: any) => {
+  const handleItemClick = (conv: ConversationItem) => {
     if (conv.conversationId != null) {
       router.push(`/messages?c=${conv.conversationId}`)
       return
     }
     ensure.mutate(conv.otherUserId, {
       onSuccess: (cid) => router.push(`/messages?c=${cid}`),
-      onError: (err) => toast.error(translateMessagingError(tErr, err.message))
+      onError: (err) => toast.error(translateMessagingError(tErr, err.message)),
     })
   }
 
@@ -59,10 +70,10 @@ export function MessageDropdown({
   // placeholder connections — tránh nhiễu cho người đang xem nhanh inbox.
   const allItems = data?.items ?? []
   const items = allItems.slice(0, PREVIEW_LIMIT)
-  const unreadConversations = allItems.filter((c) => c.unreadCount > 0).length
+  const unreadConversations = data?.unreadConversations ?? unreadCount
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <span className="relative inline-flex">
           {children}
@@ -100,7 +111,22 @@ export function MessageDropdown({
         </div>
 
         <div className="max-h-80 overflow-y-auto">
-          {items.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-2 p-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 rounded-xl px-1 py-2"
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-muted animate-pulse" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                    <div className="h-2.5 w-full rounded bg-muted animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : items.length === 0 ? (
             <div className="p-6 text-center text-xs text-muted-foreground">
               {t("dropdown.empty")}
             </div>

@@ -19,7 +19,8 @@ vi.mock('../../../src/lib/audit', () => ({
 }));
 
 vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn()
+  revalidatePath: vi.fn(),
+  unstable_cache: (fn: unknown) => fn
 }));
 
 vi.mock('next-intl/server', () => ({

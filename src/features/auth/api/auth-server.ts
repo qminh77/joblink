@@ -47,6 +47,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireCurrentUser(): Promise<CurrentUser> {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
+  const blockedReason = getBlockedCurrentUserReason(user)
+  if (blockedReason) redirect(`/login?reason=${blockedReason}`)
   return user
 }
 
@@ -100,4 +102,26 @@ async function loadCompanyProfile(supabase: SupabaseServer, userId: number) {
     headline: data?.industry ?? null,
     companyVerificationStatus: data?.verification_status ?? null,
   }
+}
+
+function getBlockedCurrentUserReason(user: CurrentUser) {
+  const { appUser, profile } = user
+  if (
+    appUser.role === "company" &&
+    appUser.status === "pending_verification"
+  ) {
+    return "company_pending"
+  }
+  if (
+    appUser.role === "company" &&
+    appUser.status === "active" &&
+    profile.companyVerificationStatus !== "verified"
+  ) {
+    return "company_pending"
+  }
+  if (appUser.status === "suspended") return "account_suspended"
+  if (appUser.status === "banned" || appUser.status === "deleted") {
+    return "account_banned"
+  }
+  return null
 }

@@ -92,7 +92,7 @@ export function useSendMessage(currentUserId: number) {
       }).catch(console.error)
 
       // Optimistically update overview for sender
-      qc.setQueryData<MessagingOverview>(MESSAGING_OVERVIEW_KEY, (prev) => {
+      qc.setQueriesData<MessagingOverview>({ queryKey: MESSAGING_OVERVIEW_KEY }, (prev) => {
         if (!prev) return prev
         const existingConvo = prev.items.find(i => i.conversationId === conversationId)
         if (!existingConvo) return prev
@@ -135,7 +135,7 @@ export function useEnsureConversation() {
       return result.conversationId
     },
     onSuccess: (cid, targetUserId) => {
-      qc.setQueryData<Record<string, unknown>>(MESSAGING_OVERVIEW_KEY, (prev: Record<string, unknown> | undefined) => {
+      qc.setQueriesData<Record<string, unknown>>({ queryKey: MESSAGING_OVERVIEW_KEY }, (prev: Record<string, unknown> | undefined) => {
         if (!prev || !Array.isArray(prev.items)) return prev
         return {
           ...prev,
