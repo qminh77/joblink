@@ -916,6 +916,7 @@ CREATE INDEX IF NOT EXISTS idx_company_profiles_industry_trgm ON company_profile
 CREATE INDEX IF NOT EXISTS idx_posts_author_created ON posts(author_id, created_at) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_posts_visibility     ON posts(visibility, status) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_posts_status         ON posts(status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_posts_content_trgm   ON posts USING gin (content gin_trgm_ops) WHERE deleted_at IS NULL AND status = 'active';
 CREATE INDEX IF NOT EXISTS idx_posts_counts         ON posts(reaction_count DESC, comment_count DESC);
 CREATE INDEX IF NOT EXISTS idx_post_reactions_post  ON post_reactions(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_comments_post   ON post_comments(post_id, created_at);

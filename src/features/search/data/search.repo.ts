@@ -68,16 +68,11 @@ export async function searchPagePeople(
 ): Promise<{ items: SearchPagePerson[]; total: number }> {
   const like = likeOf(q)
 
-  const { count: total } = await supabase
+  const { data, count: total } = await supabase
     .from("member_profiles")
-    .select("user_id", { count: "exact", head: true })
-    .ilike("full_name", like)
-    .neq("profile_visibility", "private")
-    .is("deleted_at", null)
-
-  const { data } = await supabase
-    .from("member_profiles")
-    .select("user_id, full_name, avatar_url, headline, profile_visibility")
+    .select("user_id, full_name, avatar_url, headline, profile_visibility", {
+      count: "exact",
+    })
     .ilike("full_name", like)
     .neq("profile_visibility", "private")
     .is("deleted_at", null)
@@ -91,30 +86,28 @@ export async function searchPagePeople(
     headline: string | null
     profile_visibility: string
   }[])
-  if (profiles.length === 0) return { items: [], total: 0 }
+  if (profiles.length === 0) return { items: [], total: total ?? 0 }
 
   const userIds = profiles.map((m) => m.user_id)
 
-  const { data: userRows } = await supabase
-    .from("users")
-    .select("id, role")
-    .in("id", userIds)
+  const [userRes, connRes] = await Promise.all([
+    supabase.from("users").select("id, role").in("id", userIds),
+    supabase
+      .from("connections")
+      .select("requester_id, receiver_id, status")
+      .or(
+        `and(requester_id.eq.${currentUserId},receiver_id.in.(${userIds.join(",")})),` +
+          `and(receiver_id.eq.${currentUserId},requester_id.in.(${userIds.join(",")}))`,
+      ),
+  ])
 
   const roleMap = new Map<number, string>()
-  for (const u of userRows ?? []) {
+  for (const u of userRes.data ?? []) {
     roleMap.set(u.id, u.role)
   }
 
-  const { data: connRows } = await supabase
-    .from("connections")
-    .select("requester_id, receiver_id, status")
-    .or(
-      `and(requester_id.eq.${currentUserId},receiver_id.in.(${userIds.join(",")})),` +
-        `and(receiver_id.eq.${currentUserId},requester_id.in.(${userIds.join(",")}))`,
-    )
-
   const connMap = new Map<number, "pending" | "connected">()
-  for (const c of connRows ?? []) {
+  for (const c of connRes.data ?? []) {
     const otherId =
       c.requester_id === currentUserId ? c.receiver_id : c.requester_id
     if (c.status === "accepted") {
@@ -145,15 +138,11 @@ export async function searchPageCompanies(
 ): Promise<{ items: SearchPageCompany[]; total: number }> {
   const like = likeOf(q)
 
-  const { count: total } = await supabase
+  const { data, count: total } = await supabase
     .from("company_profiles")
-    .select("user_id", { count: "exact", head: true })
-    .ilike("name", like)
-    .is("deleted_at", null)
-
-  const { data } = await supabase
-    .from("company_profiles")
-    .select("user_id, name, logo_url, industry, verification_status")
+    .select("user_id, name, logo_url, industry, verification_status", {
+      count: "exact",
+    })
     .ilike("name", like)
     .is("deleted_at", null)
     .order("name", { ascending: true })
@@ -181,17 +170,11 @@ export async function searchPosts(
 ): Promise<{ items: SearchPagePost[]; total: number }> {
   const like = likeOf(q)
 
-  const { count: total } = await supabase
-    .from("posts")
-    .select("id", { count: "exact", head: true })
-    .ilike("content", like)
-    .is("deleted_at", null)
-    .eq("status", "active")
-
-  const { data: postRows } = await supabase
+  const { data: postRows, count: total } = await supabase
     .from("posts")
     .select(
       "id, author_id, content, post_type, created_at, reaction_count, comment_count",
+      { count: "exact" },
     )
     .ilike("content", like)
     .is("deleted_at", null)
@@ -199,7 +182,9 @@ export async function searchPosts(
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (!postRows || postRows.length === 0) return { items: [], total: 0 }
+  if (!postRows || postRows.length === 0) {
+    return { items: [], total: total ?? 0 }
+  }
 
   const authorIds = Array.from(new Set(postRows.map((p) => p.author_id)))
 
