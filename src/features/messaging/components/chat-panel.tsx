@@ -51,8 +51,33 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
   const isOpening = conversationId == null
   useActiveConversation(conversationId)
 
+  const placeholderData = useMemo(() => {
+    if (conversationId == null) return undefined
+    if (conversation.lastMessageId == null) {
+      return { items: [], hasMore: false, otherUserId: conversation.otherUserId }
+    }
+    if (conversation.lastCreatedAt != null) {
+      return {
+        items: [
+          {
+            id: conversation.lastMessageId,
+            senderId: conversation.lastSenderId ?? 0,
+            content: conversation.lastContent,
+            media: conversation.lastMedia,
+            readAt: null,
+            createdAt: conversation.lastCreatedAt,
+          },
+        ],
+        hasMore: true,
+        otherUserId: conversation.otherUserId,
+      }
+    }
+    return undefined
+  }, [conversationId, conversation])
+
   const { data, isLoading: isLoadingMessages } = useConversationMessages(
     conversationId,
+    { placeholderData }
   )
   const messages = data?.items ?? []
   const isLoading = isOpening || isLoadingMessages

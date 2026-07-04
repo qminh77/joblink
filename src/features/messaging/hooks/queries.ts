@@ -50,7 +50,10 @@ export function useUnreadConversationsCount(initialData?: number) {
 
 export function useConversationMessages(
   conversationId: number | null,
-  initialData?: ConversationMessagesPage,
+  options?: {
+    initialData?: ConversationMessagesPage
+    placeholderData?: ConversationMessagesPage
+  },
 ) {
   return useQuery<ConversationMessagesPage>({
     queryKey: conversationId
@@ -63,7 +66,8 @@ export function useConversationMessages(
       return getConversationMessagesAction(conversationId)
     },
     enabled: conversationId != null,
-    initialData,
+    initialData: options?.initialData,
+    placeholderData: options?.placeholderData,
     staleTime: 10_000,
   })
 }
