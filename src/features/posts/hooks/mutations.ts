@@ -15,7 +15,7 @@ import {
   toggleReactionAction,
   updatePostAction,
 } from "../api/actions"
-import type { FeedComment } from "../types"
+import type { CreatePostActionInput, FeedComment } from "../types"
 import {
   applyToAllPostCaches,
   removePostFromAllCaches,
@@ -33,12 +33,7 @@ export function useCreatePost() {
   const prepend = usePrependPost()
   const t = useTranslations("posts")
   return useMutation({
-    mutationFn: async (input: {
-      content: string
-      visibility?: "public" | "connections" | "private"
-      mediaItems?: { url: string; width?: number; height?: number }[]
-      videoUrl?: string
-    }) => {
+    mutationFn: async (input: CreatePostActionInput) => {
       const result = await createPostAction(input)
       if (!result.ok) throw new Error(result.error)
       return result.data

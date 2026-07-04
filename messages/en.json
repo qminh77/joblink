@@ -715,7 +715,8 @@
       "deadlineLabel": "Apply by {date}",
       "report": "Report job",
       "manageJob": "Manage job",
-      "statusUpdateSuccess": "Job status updated"
+      "statusUpdateSuccess": "Job status updated",
+      "viewDetails": "View details"
     },
     "post": {
       "heading": "Post a job",

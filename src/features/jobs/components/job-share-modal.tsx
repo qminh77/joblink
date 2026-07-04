@@ -8,41 +8,28 @@ import { toast } from "sonner"
 
 import { modalContent, modalOverlay } from "@/lib/animations"
 import { useCreatePost } from "@/features/posts/hooks/mutations"
+import type { SharedJobPreview } from "@/features/posts/types"
 
 export function JobShareModal({
-  jobId,
-  jobTitle,
-  companyName,
+  job,
   open,
   onClose,
 }: {
-  jobId: number
-  jobTitle: string
-  companyName: string
+  job: SharedJobPreview
   open: boolean
   onClose: () => void
 }) {
   if (!open) return null
   return (
-    <JobShareModalInner
-      key={jobId}
-      jobId={jobId}
-      jobTitle={jobTitle}
-      companyName={companyName}
-      onClose={onClose}
-    />
+    <JobShareModalInner key={job.id} job={job} onClose={onClose} />
   )
 }
 
 function JobShareModalInner({
-  jobId,
-  jobTitle,
-  companyName,
+  job,
   onClose,
 }: {
-  jobId: number
-  jobTitle: string
-  companyName: string
+  job: SharedJobPreview
   onClose: () => void
 }) {
   const tPosts = useTranslations("posts")
@@ -51,16 +38,12 @@ function JobShareModalInner({
 
   async function handleShareToFeed() {
     if (createPost.isPending) return
-    const url = `${window.location.origin}/jobs/${jobId}`
-    const content = comment.trim()
-      ? `${comment.trim()}\n\n${url}`
-      : `${jobTitle} - ${companyName}\n${url}`
-    await createPost.mutateAsync({ content })
+    await createPost.mutateAsync({ content: comment.trim(), sharedJob: job })
     onClose()
   }
 
   async function handleCopyLink() {
-    const url = `${window.location.origin}/jobs/${jobId}`
+    const url = `${window.location.origin}/jobs/${job.id}`
     try {
       await navigator.clipboard.writeText(url)
       toast.success(tPosts("copyLinkSuccess"))

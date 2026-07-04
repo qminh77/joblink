@@ -1,5 +1,5 @@
 import type { UserRole } from "@/features/auth/lib/constants"
-import type { FeedAuthor, FeedPost } from "../types"
+import type { FeedAuthor, FeedPost, SharedJobPreview } from "../types"
 import type { Json, PostType } from "@/types/database"
 
 export type MediaItem = {
@@ -17,7 +17,11 @@ export function readMediaItems(value: FeedPost["media"]): MediaItem[] {
   if (!value || typeof value !== "object" || Array.isArray(value)) return []
   const obj = value as Record<string, unknown>
 
-  if (obj.type === "shared" || obj.type === "video") {
+  if (
+    obj.type === "shared" ||
+    obj.type === "video" ||
+    obj.type === "job_share"
+  ) {
     return []
   }
 
@@ -113,6 +117,50 @@ export function buildSharedMedia(snapshot: SharedOriginal): Json {
         headline: snapshot.author.headline,
       },
     },
+  } as unknown as Json
+}
+
+export function readSharedJobPreview(
+  value: FeedPost["media"],
+): SharedJobPreview | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  const obj = value as Record<string, unknown>
+  if (obj.type !== "job_share") return null
+
+  const raw = obj.job as Record<string, unknown> | undefined
+  if (!raw || typeof raw !== "object") return null
+
+  const id = Number(raw.id)
+  const companyUserId = Number(raw.companyUserId)
+  if (!Number.isFinite(id) || !Number.isFinite(companyUserId)) return null
+  if (typeof raw.title !== "string" || typeof raw.companyName !== "string") {
+    return null
+  }
+
+  return {
+    id,
+    title: raw.title,
+    companyUserId,
+    companyName: raw.companyName,
+    companyLogoUrl:
+      typeof raw.companyLogoUrl === "string" ? raw.companyLogoUrl : null,
+    companyVerified: raw.companyVerified === true,
+    provinceName: typeof raw.provinceName === "string" ? raw.provinceName : null,
+    wardName: typeof raw.wardName === "string" ? raw.wardName : null,
+    jobTypeName: typeof raw.jobTypeName === "string" ? raw.jobTypeName : null,
+    workModeName: typeof raw.workModeName === "string" ? raw.workModeName : null,
+    salaryMin: typeof raw.salaryMin === "number" ? raw.salaryMin : null,
+    salaryMax: typeof raw.salaryMax === "number" ? raw.salaryMax : null,
+    salaryVisible: raw.salaryVisible === true,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : "",
+  }
+}
+
+export function buildSharedJobMedia(job: SharedJobPreview): Json {
+  return {
+    type: "job_share",
+    jobId: job.id,
+    job,
   } as unknown as Json
 }
 

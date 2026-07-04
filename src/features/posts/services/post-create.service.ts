@@ -7,6 +7,7 @@ import type { Json } from "@/types/database"
 
 import { insertPost } from "../data/posts.repo"
 import { authorRefFrom, newFeedPost } from "../lib/map"
+import { buildSharedJobMedia } from "../lib/media"
 import type { PostInput } from "../schemas"
 import type { FeedPost } from "../types"
 import { imageMedia } from "./post-media.service"
@@ -47,13 +48,14 @@ export async function createStandardPost(
   current: CurrentUser,
   data: PostInput,
 ): Promise<FeedPost> {
-  const hasMedia = data.mediaItems.length > 0
+  const sharedJobMedia = data.sharedJob ? buildSharedJobMedia(data.sharedJob) : null
+  const hasMedia = !sharedJobMedia && data.mediaItems.length > 0
   const row = unwrap(
     await insertPost(supabase, {
       authorId: current.appUser.id,
       content: data.content,
       postType: hasMedia ? "image" : "text",
-      media: imageMedia(data.mediaItems),
+      media: sharedJobMedia ?? imageMedia(data.mediaItems),
       visibility: data.visibility,
     }),
     "createFailed",

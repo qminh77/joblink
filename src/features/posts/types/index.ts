@@ -59,6 +59,23 @@ export type FeedJob = {
   viewerApplied: boolean
 }
 
+export type SharedJobPreview = {
+  id: number
+  title: string
+  companyUserId: number
+  companyName: string
+  companyLogoUrl: string | null
+  companyVerified: boolean
+  provinceName: string | null
+  wardName: string | null
+  jobTypeName: string | null
+  workModeName: string | null
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryVisible: boolean
+  createdAt: string
+}
+
 export type HomeFeedPayload = {
   stats: HomeFeedStats
   suggestions: NetworkUserCard[]
@@ -106,6 +123,7 @@ export type CreatePostActionInput = {
   visibility?: "public" | "connections" | "private"
   mediaItems?: { url: string; width?: number; height?: number }[]
   videoUrl?: string
+  sharedJob?: SharedJobPreview
 }
 
 export type ToggleReactionResult = { reacted: boolean }

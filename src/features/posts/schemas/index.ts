@@ -34,11 +34,33 @@ export function createPostInputSchema(t: Translator) {
         )
         .optional()
         .default([]),
+      sharedJob: z
+        .object({
+          id: z.number().int().positive(),
+          title: z.string().trim().min(1),
+          companyUserId: z.number().int().positive(),
+          companyName: z.string().trim().min(1),
+          companyLogoUrl: z.string().url().nullable(),
+          companyVerified: z.boolean(),
+          provinceName: z.string().nullable(),
+          wardName: z.string().nullable(),
+          jobTypeName: z.string().nullable(),
+          workModeName: z.string().nullable(),
+          salaryMin: z.number().nullable(),
+          salaryMax: z.number().nullable(),
+          salaryVisible: z.boolean(),
+          createdAt: z.string().trim().min(1),
+        })
+        .optional(),
     })
-    .refine((d) => d.content.length > 0 || d.mediaItems.length > 0, {
-      message: t("contentOrMediaRequired"),
-      path: ["content"],
-    })
+    .refine(
+      (d) =>
+        d.content.length > 0 || d.mediaItems.length > 0 || Boolean(d.sharedJob),
+      {
+        message: t("contentOrMediaRequired"),
+        path: ["content"],
+      },
+    )
 }
 
 export type PostInput = z.infer<ReturnType<typeof createPostInputSchema>>

@@ -17,7 +17,11 @@ import {
   type PostImageErrorCode,
 } from "../../api/storage-client"
 import { useCreatePost, useUpdatePost } from "../../hooks"
-import { readMediaItems, readSharedOriginal } from "../../lib/media"
+import {
+  readMediaItems,
+  readSharedJobPreview,
+  readSharedOriginal,
+} from "../../lib/media"
 import type { FeedPost } from "../../types"
 import type { Visibility } from "./visibility-menu"
 
@@ -48,7 +52,10 @@ export function usePostComposer({
   const tPosts = useTranslations("posts")
 
   const isEdit = post != null
-  const isSharedPost = post != null && readSharedOriginal(post.media) != null
+  const isSharedPost =
+    post != null &&
+    (readSharedOriginal(post.media) != null ||
+      readSharedJobPreview(post.media) != null)
   const isVideoPost = post != null && post.postType === "video"
 
   const [content, setContent] = useState(post?.content ?? "")
@@ -76,7 +83,11 @@ export function usePostComposer({
       return []
     })
 
-    if (post && !readSharedOriginal(post.media)) {
+    if (
+      post &&
+      !readSharedOriginal(post.media) &&
+      !readSharedJobPreview(post.media)
+    ) {
       const items = readMediaItems(post.media)
       setKeptImages(
         items.map((item, index) => ({

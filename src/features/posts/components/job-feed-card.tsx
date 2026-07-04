@@ -183,9 +183,22 @@ export function JobFeedCard({ job }: Props) {
       </Card>
 
       <JobShareModal
-        jobId={job.id}
-        jobTitle={job.title}
-        companyName={job.companyName}
+        job={{
+          id: job.id,
+          title: job.title,
+          companyUserId: job.companyUserId,
+          companyName: job.companyName,
+          companyLogoUrl: job.companyLogoUrl,
+          companyVerified: job.companyVerified,
+          provinceName: job.provinceName,
+          wardName: job.wardName,
+          jobTypeName: job.jobTypeName,
+          workModeName: job.workModeName,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryVisible: job.salaryVisible,
+          createdAt: job.createdAt,
+        }}
         open={showShare}
         onClose={() => setShowShare(false)}
       />

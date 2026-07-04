@@ -1,9 +1,10 @@
 "use client"
 
 import type { MediaItem } from "../../lib/media"
-import { readSharedOriginal, readVideoUrl } from "../../lib/media"
+import { readSharedJobPreview, readSharedOriginal, readVideoUrl } from "../../lib/media"
 import type { FeedPost } from "../../types"
 import { PostMediaView } from "../post-media-view"
+import { SharedJobQuote } from "../shared-job-quote"
 import { SharedPostQuote } from "../shared-post-quote"
 
 export function PostCardBody({
@@ -14,6 +15,7 @@ export function PostCardBody({
   post: FeedPost
 }) {
   const sharedOriginal = readSharedOriginal(post.media)
+  const sharedJob = readSharedJobPreview(post.media)
   const videoUrl = readVideoUrl(post.media)
   const isSharedPost = sharedOriginal != null
 
@@ -25,7 +27,9 @@ export function PostCardBody({
         </div>
       ) : null}
 
-      {isSharedPost ? (
+      {sharedJob ? (
+        <SharedJobQuote job={sharedJob} />
+      ) : isSharedPost ? (
         <SharedPostQuote media={post.media} onOpenLightbox={onOpenLightbox} />
       ) : videoUrl ? (
         <div className="mt-4 rounded-xl overflow-hidden bg-black">

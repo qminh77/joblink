@@ -715,7 +715,8 @@
       "deadlineLabel": "Hạn nộp {date}",
       "report": "Báo cáo tin tuyển dụng",
       "manageJob": "Quản lý tin",
-      "statusUpdateSuccess": "Đã cập nhật trạng thái tin tuyển dụng"
+      "statusUpdateSuccess": "Đã cập nhật trạng thái tin tuyển dụng",
+      "viewDetails": "Xem chi tiết"
     },
     "post": {
       "heading": "Đăng tin tuyển dụng",

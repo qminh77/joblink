@@ -96,9 +96,22 @@ export function JobDetailClient({ detail }: Props) {
       </motion.div>
 
       <JobDetailDialogs
-        jobId={job.id}
-        jobTitle={job.title}
-        companyName={job.companyName}
+        job={{
+          id: job.id,
+          title: job.title,
+          companyUserId: job.companyUserId,
+          companyName: job.companyName,
+          companyLogoUrl: job.companyLogoUrl,
+          companyVerified: job.companyVerified,
+          provinceName: job.provinceName,
+          wardName: job.wardName,
+          jobTypeName: job.jobTypeName,
+          workModeName: job.workModeName,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryVisible: job.salaryVisible,
+          createdAt: job.createdAt,
+        }}
         showApply={showApply}
         showReport={showReport}
         showSend={showSend}
