@@ -1,4 +1,4 @@
 import "server-only"
 
-export { writeAuditLog } from "@/lib/audit"
-export type { AuditLogInput } from "@/lib/audit"
+export type { AuditLogInput } from "../services/audit-log.service"
+export { writeAuditLog } from "../services/audit-log.service"

@@ -3,10 +3,11 @@
 // SRS UC Trace - M09 UC-65 Kiem duyet tin tuyen dung.
 // Flow: /admin/jobs -> jobs panel -> admin job API -> jobs moderation service/repo -> audit + revalidate.
 
-import { createAdminClient } from "@/lib/supabase/admin"
-
-import { requireAdminAccess } from "./admin-guard"
-import { revalidateAdminSection } from "./revalidation"
+import {
+  requireAdminClient,
+  requireAdminContext,
+} from "../services/admin-context.service"
+import { revalidateAdminSection } from "../services/admin-revalidation.service"
 import { jobActionSchema, type JobActionInput } from "../schemas"
 import {
   applyJobModerationAction,
@@ -19,8 +20,7 @@ export type { AdminJobRow, ListJobsParams } from "../types"
 export async function listAdminJobs(
   params: ListJobsParams = {},
 ): Promise<AdminJobRow[]> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAdminJobs(supabase, params)
 }
 
@@ -30,8 +30,7 @@ export async function applyJobAction(
   const parsed = jobActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminAccess()
-  const supabase = createAdminClient()
+  const { current, supabase } = await requireAdminContext()
   const result = await applyJobModerationAction(
     supabase,
     current,

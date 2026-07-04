@@ -3,7 +3,7 @@ import "server-only"
 import type { JobStatus } from "@/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 
-import { writeAuditLog } from "../api/audit-log"
+import { writeAuditLog } from "./audit-log.service"
 import type { JobActionInput } from "../schemas"
 import {
   getAdminJobTarget,

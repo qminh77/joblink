@@ -3,10 +3,11 @@
 // SRS UC Trace - M09 UC-64 Kiem duyet bai viet.
 // Flow: /admin/posts -> posts panel -> admin post API -> posts moderation service/repo -> audit + revalidate.
 
-import { createAdminClient } from "@/lib/supabase/admin"
-
-import { requireAdminAccess } from "./admin-guard"
-import { revalidateAdminSection } from "./revalidation"
+import {
+  requireAdminClient,
+  requireAdminContext,
+} from "../services/admin-context.service"
+import { revalidateAdminSection } from "../services/admin-revalidation.service"
 import { postActionSchema, type PostActionInput } from "../schemas"
 import {
   applyPostModerationAction,
@@ -19,8 +20,7 @@ export type { AdminPostRow, ListPostsParams } from "../types"
 export async function listAdminPosts(
   params: ListPostsParams = {},
 ): Promise<AdminPostRow[]> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAdminPosts(supabase, params)
 }
 
@@ -30,8 +30,7 @@ export async function applyPostAction(
   const parsed = postActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminAccess()
-  const supabase = createAdminClient()
+  const { current, supabase } = await requireAdminContext()
   const result = await applyPostModerationAction(
     supabase,
     current,

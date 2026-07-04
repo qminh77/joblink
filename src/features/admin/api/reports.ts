@@ -3,11 +3,13 @@
 // SRS UC Trace - M09 UC-66 Xu ly bao cao vi pham.
 // Flow: /admin/reports -> reports panel -> admin report API -> reports moderation service/repo -> moderation action + audit.
 
-import { createAdminClient } from "@/lib/supabase/admin"
 import type { ReportStatus } from "@/types/database"
 
-import { requireAdminAccess } from "./admin-guard"
-import { revalidateAdminSection } from "./revalidation"
+import {
+  requireAdminClient,
+  requireAdminContext,
+} from "../services/admin-context.service"
+import { revalidateAdminSection } from "../services/admin-revalidation.service"
 import {
   moderationActionSchema,
   reportStatusSchema,
@@ -29,8 +31,7 @@ export type { ListReportsParams } from "../types"
 export async function listAdminReports(
   params: ListReportsParams = {},
 ): Promise<AdminReportRow[]> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAdminReports(supabase, params)
 }
 
@@ -41,8 +42,7 @@ export async function setReportStatus(
   const parsed = reportStatusSchema.safeParse({ reportId, status })
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminAccess()
-  const supabase = createAdminClient()
+  const { current, supabase } = await requireAdminContext()
   const result = await changeReportStatus(
     supabase,
     current,
@@ -60,8 +60,7 @@ export async function applyModerationAction(
   const parsed = moderationActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminAccess()
-  const supabase = createAdminClient()
+  const { current, supabase } = await requireAdminContext()
   const result = await applyReportModeration(supabase, current, parsed.data)
 
   if (result.ok) revalidateAdminSection("reports")

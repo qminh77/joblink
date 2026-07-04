@@ -4,7 +4,7 @@ import { COMPANY_VERIFICATION_STATUSES, type UserStatus } from "@/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 import type { CompanyVerification } from "@/types/database"
 
-import { writeAuditLog } from "../api/audit-log"
+import { writeAuditLog } from "./audit-log.service"
 import type { CompanyActionInput } from "../schemas"
 import {
   countCompanyProfiles,

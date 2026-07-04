@@ -7,7 +7,7 @@ import type {
   ReportTargetType,
 } from "@/types/database"
 
-import { writeAuditLog } from "../api/audit-log"
+import { writeAuditLog } from "./audit-log.service"
 import type { ModerationActionInput } from "../schemas"
 import type { AdminActionResult } from "../types"
 import {

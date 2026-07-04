@@ -2,7 +2,7 @@ import "server-only"
 
 import type { createAdminClient } from "@/lib/supabase/admin"
 
-import { writeAuditLog } from "../api/audit-log"
+import { writeAuditLog } from "./audit-log.service"
 import type { PostActionInput } from "../schemas"
 import {
   getAdminPostTarget,

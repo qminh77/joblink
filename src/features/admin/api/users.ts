@@ -3,10 +3,11 @@
 // SRS UC Trace - M09 UC-62 Quan ly trang thai nguoi dung.
 // Flow: /admin/users -> users panel -> admin users API -> users service/repo -> audit + revalidate admin section.
 
-import { createAdminClient } from "@/lib/supabase/admin"
-
-import { requireAdminAccess } from "./admin-guard"
-import { revalidateAdminSection } from "./revalidation"
+import {
+  requireAdminClient,
+  requireAdminContext,
+} from "../services/admin-context.service"
+import { revalidateAdminSection } from "../services/admin-revalidation.service"
 import { userActionSchema, type UserActionInput } from "../schemas"
 import {
   applyUserModerationAction,
@@ -26,8 +27,7 @@ export type {
 export async function listAdminUsers(
   params: ListUsersParams = {},
 ): Promise<AdminUserListResult> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAdminUsers(supabase, params)
 }
 
@@ -37,8 +37,7 @@ export async function applyUserAction(
   const parsed = userActionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "invalid_input" }
 
-  const current = await requireAdminAccess()
-  const supabase = createAdminClient()
+  const { current, supabase } = await requireAdminContext()
   const result = await applyUserModerationAction(
     supabase,
     current,

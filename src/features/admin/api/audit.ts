@@ -3,9 +3,7 @@ import "server-only"
 // SRS UC Trace - M09 UC-67 Xem nhat ky quan tri.
 // Flow: /admin/audit-log -> audit log API -> audit service/repo -> v_admin_audit_log/filter RPC.
 
-import { createAdminClient } from "@/lib/supabase/admin"
-
-import { requireAdminAccess } from "./admin-guard"
+import { requireAdminClient } from "../services/admin-context.service"
 import {
   countAuditLogsByFilter,
   loadAuditLogs,
@@ -32,8 +30,7 @@ export type {
 export async function listAuditLogs(
   params: ListAuditParams = {},
 ): Promise<AuditLogPage> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAuditLogs(supabase, params)
 }
 
@@ -43,8 +40,7 @@ export async function listAuditLogs(
 export async function countAuditLogs(
   params: AuditFilterParams,
 ): Promise<number> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return countAuditLogsByFilter(supabase, params)
 }
 
@@ -52,8 +48,7 @@ export async function countAuditLogs(
  * Get distinct action values for the filter dropdown. O(1) — cached RPC.
  */
 export async function listDistinctActions(): Promise<string[]> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadDistinctAuditActions(supabase)
 }
 
@@ -61,15 +56,13 @@ export async function listDistinctActions(): Promise<string[]> {
  * Get distinct entity_type values for the filter dropdown. O(1).
  */
 export async function listDistinctEntityTypes(): Promise<string[]> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadDistinctAuditEntityTypes(supabase)
 }
 
 export async function loadAdminAuditLogPage(
   params: ListAuditParams = {},
 ): Promise<AuditLogPageData> {
-  await requireAdminAccess()
-  const supabase = createAdminClient()
+  const supabase = await requireAdminClient()
   return loadAuditLogPageData(supabase, params)
 }
