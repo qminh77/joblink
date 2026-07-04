@@ -1,4 +1,3 @@
-
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16.2.6-black?style=flat-square&logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat-square&logo=react" alt="React" />
@@ -11,7 +10,7 @@
 <h1 align="center">Joblink — Mạng xã hội việc làm & tuyển dụng </h1>
 
 <p align="center">
-  <strong>Joblink</strong> là nền tảng kết nối ứng viên và nhà tuyển dụng, tích hợp đầy đủ tính năng mạng xã hội : bài viết, kết nối, nhắn tin, tuyển dụng, và quản trị hệ thống.
+  <strong>Joblink</strong> là nền tảng kết nối ứng viên và nhà tuyển dụng, tích hợp đầy đủ tính năng mạng xã hội: bài viết, kết nối, nhắn tin, tuyển dụng, và quản trị hệ thống.
 </p>
 
 <hr />
@@ -25,7 +24,7 @@
 - [Hiệu suất & Tối ưu](#-hiệu-suất--tối-ưu)
 - [Database Schema](#-database-schema)
 - [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
-- [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt)
+- [Hướng dẫn cài đặt & Chạy dự án (Local & Prod)](#-hướng-dẫn-cài-đặt--chạy-dự-án)
 - [API & Server Actions](#-api--server-actions)
 - [Đồ án môn học](#-đồ-án-môn-học)
 
@@ -41,14 +40,14 @@
 | **Tailwind CSS** | ^4 | CSS utility framework |
 | **shadcn/ui** | Radix UI | Component library |
 | **Supabase** | ^2.105.4 | Backend-as-a-Service (Auth, Database, Storage, Realtime) |
-| **TanStack Query** | ^5.100 | Quản lý state server & caching |
-| **next-intl** | ^4.12 | Đa ngôn ngữ (vi/en) |
-| **Zod** | ^4.4 | Schema validation |
-| **Framer Motion** | ^12.38 | Animation |
-| **react-hook-form** | ^7.76 | Form management |
-| **Lucide React** | ^1.16 | Icon library |
-| **Sonner** | ^2.0 | Toast notifications |
-| **Nodemailer** | ^8.0 | Gửi email server-side |
+| **TanStack Query** | ^5.100.10 | Quản lý state server & caching |
+| **next-intl** | ^4.12.0 | Đa ngôn ngữ (vi/en) |
+| **Zod** | ^4.4.3 | Schema validation |
+| **Framer Motion** | ^12.38.0 | Animation |
+| **react-hook-form** | ^7.76.0 | Form management |
+| **Lucide React** | ^1.16.0 | Icon library |
+| **Sonner** | ^2.0.7 | Toast notifications |
+| **Nodemailer** | ^8.0.8 | Gửi email server-side |
 
 ---
 
@@ -96,10 +95,10 @@
 
 | Nguyên tắc | Mô tả |
 |------------|-------|
-| **Feature-based** | Code được tổ chức theo feature (posts, jobs, network, messaging...) thay vì layer |
+| **Feature-based** | Code được tổ chức theo module tính năng (posts, jobs, network, messaging...) thay vì layer |
 | **3-tier Data Access** | Server Action → Repository → Supabase (RPC/RLS) |
 | **RSC-first** | Mặc định dùng React Server Components, chỉ dùng "use client" khi cần tương tác |
-| **Safe Errors** | Mọi lỗi DB được catch và trả về message an toàn — không rò SQL/stack trace |
+| **Safe Errors** | Mọi lỗi DB được catch và trả về message an toàn — không rò rỉ SQL/stack trace |
 | **Zero ORM** | Query trực tiếp Supabase client — gọi RPC cho logic phức tạp |
 
 ### Luồng dữ liệu điển hình
@@ -131,10 +130,10 @@ TanStack Query invalidation → Feed refresh
 ## ✨ Tính năng chính
 
 ### 🔐 Authentication & Security
-- **Đăng ký / Đăng nhập**: Email + password, Google OAuth
-- **Quên mật khẩu**: Email reset
-- **Kiểm soát phiên**: Middleware chặn user bị ban/suspend
-- **Phân quyền**: 3 roles — `member`, `company`, `admin`
+- **Đăng ký / Đăng nhập**: Email + password, Google OAuth.
+- **Quên mật khẩu**: Email reset.
+- **Kiểm soát phiên**: Middleware chặn user bị ban/suspend.
+- **Phân quyền**: 3 roles — `member`, `company`, `admin`.
 
 ### 📝 Posts & Social Feed
 | Tính năng | Mô tả |
@@ -151,25 +150,23 @@ TanStack Query invalidation → Feed refresh
 - **Đăng tin tuyển dụng**: Full-time, part-time, internship, contract, freelance
 - **Hình thức làm việc**: On-site, remote, hybrid
 - **Ứng tuyển**: Theo dõi trạng thái đơn giản (`submitted`, `withdrawn`, `closed`)
-- **Lưu tin**: Saved jobs
+- **Lưu tin**: Saved jobs dành cho ứng viên
 - **Quản lý tin tuyển dụng**: Công ty đăng, sửa, lưu nháp và đóng/mở tin
 
-### 🏢 Company Profiles
-- Hồ sơ công ty (logo, cover, mô tả, ngành, quy mô, địa chỉ)
-- Hệ thống xác minh doanh nghiệp (pending → verified / rejected)
-- Trang công khai
+### 🏢 Company Profiles & CVs
+- Hồ sơ công ty (logo, cover, mô tả, ngành, quy mô, địa chỉ).
+- Quản lý và uỷ quyền xác minh doanh nghiệp (pending → verified / rejected).
+- **CVs**: Hệ thống quản lý CV ứng viên.
 
 ### 🤝 Network & Connections
-- **Kết nối**: Gửi / chấp nhận / từ chối lời mời
-- **Follow/Unfollow**: Theo dõi công ty
-- **Suggestions**: Gợi ý kết nối
-- **Block**: Chặn người dùng
+- **Kết nối**: Gửi / chấp nhận / từ chối lời mời.
+- **Follow/Unfollow**: Theo dõi công ty.
+- **Block & Suggestions**: Chặn người dùng, gợi ý kết nối.
 - **Profile views**: Đếm lượt xem
 
 ### 💬 Messaging (Real-time)
-- Nhắn tin real-time qua Supabase Realtime (WebSocket)
-- Danh sách hội thoại
-- Thông báo tin nhắn mới (dock, badge)
+- Nhắn tin real-time qua Supabase Realtime (WebSocket).
+- Danh sách hội thoại và thông báo tin nhắn mới (dock, badge).
 
 ### 🔔 Notifications
 - Real-time qua Supabase Realtime
@@ -177,8 +174,8 @@ TanStack Query invalidation → Feed refresh
 - Các loại: kết nối, bài viết, bình luận, reactions, tuyển dụng
 
 ### 🔍 Search
-- Tìm kiếm toàn cục (pg_trgm full-text search)
-- Filter: bài viết, người dùng, công ty, công việc
+- Tìm kiếm toàn cục mạnh mẽ bằng `pg_trgm` full-text search trên PostgreSQL.
+- Filter: bài viết, người dùng, công ty, công việc.
 
 ### ⚙️ Settings
 - Thông tin tài khoản
@@ -204,7 +201,7 @@ TanStack Query invalidation → Feed refresh
 
 ## 🔒 Bảo mật
 
-### Lớp bảo vệ
+Hệ thống được bảo vệ qua nhiều lớp:
 
 ```
 Client Input
@@ -234,58 +231,23 @@ Client Input
 └──────────────────────────────────────────┘
 ```
 
-### Chi tiết
-
-1. **Middleware Session Guard** (`src/lib/supabase/middleware.ts`)
-   - Refresh session ở đầu mỗi request
-   - Kiểm tra user status (banned/suspended) trước khi cho phép truy cập
-   - Redirect về login nếu chưa authenticated
-
-2. **Server Action Safety** (`src/lib/action/server.ts`)
-   - `action()` wrapper catch mọi exception
-   - `ActionError` chỉ expose message an toàn
-   - `unwrap()` log lỗi DB ở server nhưng trả `failKey` ra client
-   - File `server-only` — không bao giờ chạy ở client
-
-3. **Database RLS** — Mọi bảng đều có Row Level Security:
-   - User chỉ xem/sửa dữ liệu thuộc quyền
-   - Admin có policies riêng
-   - Ví dụ: `posts` — chỉ author mới edit, admin mới xoá
-
-4. **Admin Client** (`src/lib/supabase/admin.ts`)
-   - Dùng `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-   - Service role bypass RLS
-
-5. **Xác thực JWT local**: Dùng `auth.getClaims()` (local) thay vì `getUser()` (network)
-
-6. **Image domain whitelist**: Next.js Image chỉ cho phép Supabase storage domain
-
-7. **Environment validation**: Zod schema kiểm tra env vars khi khởi động
+1. **Zod Validation**: Lớp 1 - Xác thực chặt chẽ đầu vào.
+2. **Server Actions Guard**: Lớp 2 - Yêu cầu quyền (Role) thông qua middleware và higher-order functions.
+3. **ActionError**: Lớp 3 - Bọc lỗi Database và trả về `failKey` an toàn, không rò rỉ thông tin nội bộ.
+4. **Supabase RLS (Row Level Security)**: Lớp 4 - Chỉ chủ sở hữu mới có quyền thao tác trên dữ liệu của mình ở cấp độ Database.
+5. **Session Guard**: Middleware tự động chặn session nếu tài khoản bị khoá (banned/suspended).
 
 ---
 
 ## ⚡ Hiệu suất & Tối ưu
 
-### Tối ưu hiệu suất
-
-| Kỹ thuật | Áp dụng |
-|----------|---------|
-| **React Server Components** | Render HTML ở server, giảm JS bundle |
-| **TanStack Query** | Cache 60s, dedupe requests, background refetch |
-| **Supabase Realtime** | WebSocket realtime — không polling |
-| **Next.js Image** | Tự động tối ưu ảnh, WebP/AVIF, responsive sizes |
-| **Image resize client-side** | Ảnh post resize ≤ 1920px trước khi upload |
-| **Debounce** | Search input debounce tránh gọi API liên tục |
-| **Stagger animations** | Framer Motion stagger children cho feed |
-| **PostgreSQL Indexes** | pg_trgm cho full-text search |
-| **RPC functions** | Logic phức tạp chạy ở DB — giảm round-trips |
-| **Route groups** | Next.js Route Groups cho code splitting |
-
-### Database Performance
-- **Extensions**: `pgcrypto`, `pg_trgm`
-- **Stored Procedures**: 40+ RPC functions cho logic phức tạp
-- **Triggers**: Feed sync, notification fan-out, counter sync
-- **Indexes**: Full-text search, foreign keys
+- **React Server Components**: Tối ưu bundle size client.
+- **TanStack Query**: Cache 60s, dedupe requests, background refetch.
+- **Supabase Realtime**: WebSocket realtime — không polling.
+- **Next.js Image**: Tự động tối ưu ảnh, WebP/AVIF, responsive sizes.
+- **Debounce**: Search input debounce tránh spam API.
+- **PostgreSQL Indexes**: `pg_trgm` cho tìm kiếm cực nhanh.
+- **RPC functions**: Logic phức tạp chạy ở DB — giảm round-trips.
 
 ---
 
@@ -340,36 +302,20 @@ Client Input
                                          └──────────────────┘
 ```
 
-> 📐 File ERD: `ERD_Joblink.drawio` | `FULL_ERD_Joblink.drawio` (mở bằng draw.io)
-
 ### Bảng chính (40+ tables)
 
-| Bảng | Mục đích |
-|------|----------|
-| `users` | Người dùng (member/company/admin) |
-| `member_profiles` | Hồ sơ thành viên |
-| `company_profiles` | Hồ sơ công ty |
-| `posts` | Bài viết |
-| `post_comments` | Bình luận |
-| `post_reactions` | Cảm xúc bài viết |
-| `post_shares` | Chia sẻ bài viết |
-| `jobs` | Tin tuyển dụng |
-| `job_applications` | Đơn ứng tuyển |
-| `connections` | Kết nối (pending/accepted/rejected/blocked) |
-| `follows` | Follow |
-| `user_blocks` | Chặn |
-| `conversations` / `messages` | Nhắn tin |
-| `notifications` | Thông báo |
-| `notification_preferences` | Cài đặt thông báo |
-| `reports` | Báo cáo vi phạm |
-| `audit_logs` | Nhật ký admin |
-| `provinces` / `wards` | Đơn vị hành chính |
-| `member_cvs` | CV của member |
-| `system_settings` | Cài đặt hệ thống (regional, email, security) |
-| `member_skills` | Kỹ năng |
-| `saved_jobs` | Việc làm đã lưu |
+| Module | Bảng | Mục đích |
+|--------|------|----------|
+| **Core** | `users`, `system_settings`, `audit_logs` | Quản lý người dùng, cài đặt hệ thống, log admin |
+| **Profiles** | `member_profiles`, `company_profiles`, `member_skills`, `member_cvs` | Thông tin người dùng & doanh nghiệp, CV |
+| **Social** | `posts`, `post_comments`, `post_reactions`, `post_shares` | Mạng xã hội, bài đăng |
+| **Jobs** | `jobs`, `job_applications`, `saved_jobs` | Tuyển dụng & ứng tuyển |
+| **Network** | `connections`, `follows`, `user_blocks` | Kết nối, theo dõi |
+| **Chat** | `conversations`, `messages`, `conversation_participants` | Tin nhắn thời gian thực |
+| **Notify** | `notifications`, `notification_preferences` | Hệ thống báo sự kiện |
+| **Địa lý** | `provinces`, `wards` | Dữ liệu địa phương, hành chính |
 
-> 📄 Xem schema đầy đủ: [`schema.sql`](./schema.sql) (hợp nhất đến migration 086)
+> 📄 Tham khảo schema đầy đủ tại: [`schema.sql`](./schema.sql)
 
 ---
 
@@ -383,158 +329,117 @@ joblink/
 ├── FULL_ERD_Joblink.drawio
 │
 ├── src/
-│   ├── app/                  # Next.js App Router
-│   │   ├── layout.tsx        # Root layout (i18n, providers, fonts)
-│   │   ├── page.tsx          # / → redirect /login
-│   │   ├── globals.css       # Tailwind CSS + shadcn/ui vars
-│   │   ├── login/            # /login
-│   │   ├── register/         # /register
-│   │   ├── forgot-password/  # /forgot-password
-│   │   ├── auth/callback/    # OAuth callback
-│   │   └── (main)/           # Authenticated routes group
-│   │       ├── layout.tsx    # Navbar, CurrentUserProvider, Realtime
-│   │       ├── home/         # /home — feed
-│   │       ├── profile/      # /profile/[id], /profile/edit
-│   │       ├── jobs/         # /jobs, /jobs/[id], /jobs/applications
-│   │       ├── company/      # /company/[id], /company/post-job
-│   │       ├── network/      # /network
-│   │       ├── messages/     # /messages
-│   │       ├── notifications/# /notifications
-│   │       ├── search/       # /search
-│   │       ├── saved-jobs/   # /saved-jobs
-│   │       ├── settings/     # /settings
-│   │       └── admin/        # /admin/dashboard, users, companies, posts, jobs, reports, roles, audit-log
+│   ├── app/                  # Next.js App Router (Pages, Layouts)
+│   ├── features/             # Các module tính năng (Feature-based)
+│   │   ├── admin/            # Quản trị hệ thống
+│   │   ├── auth/             # Xác thực (Đăng nhập, đăng ký)
+│   │   ├── companies/        # Hồ sơ công ty
+│   │   ├── cvs/              # Quản lý CV
+│   │   ├── jobs/             # Tuyển dụng và việc làm
+│   │   ├── locations/        # Dữ liệu vị trí (Provinces/Wards)
+│   │   ├── messaging/        # Chat & Nhắn tin realtime
+│   │   ├── network/          # Mạng lưới kết nối
+│   │   ├── notifications/    # Thông báo hệ thống
+│   │   ├── posts/            # Bài viết, News feed
+│   │   ├── profile/          # Hồ sơ cá nhân
+│   │   ├── reports/          # Báo cáo vi phạm
+│   │   ├── search/           # Tìm kiếm tổng hợp
+│   │   └── settings/         # Cài đặt người dùng
 │   │
-│   ├── features/             # Feature modules
-│   │   ├── auth/             # Authentication (login, register, OAuth)
-│   │   ├── posts/            # Posts, feed, comments, reactions, shares
-│   │   ├── jobs/             # Job management, applications
-│   │   ├── companies/        # Company profiles, verification
-│   │   ├── network/          # Connections, follows, blocks, suggestions
-│   │   ├── messaging/        # Real-time chat
-│   │   ├── notifications/    # Real-time notifications
-│   │   ├── search/           # Full-text search
-│   │   ├── settings/         # User settings
-│   │   ├── reports/          # Report system
-│   │   ├── admin/            # Admin panel services
-│   │   └── system-settings/  # System settings
-│   │
-│   ├── components/           # Shared components
-│   │   ├── ui/               # shadcn/ui components (Radix-based)
-│   │   ├── navbar.tsx
-│   │   ├── logo.tsx
-│   │   ├── theme-toggle.tsx
-│   │   ├── language-switcher.tsx
-│   │   ├── profile-dropdown.tsx
-│   │   ├── message-dropdown.tsx
-│   │   └── notification-dropdown.tsx
-│   │
-│   ├── lib/                  # Shared utilities
-│   │   ├── supabase/         # Client (browser, server, admin, middleware)
-│   │   ├── action/           # Server action utilities (action, result, rpc)
-│   │   ├── utils/            # Format, debounce, relative time, profile URL
-│   │   ├── constants.ts      # Domain constants (roles, statuses, types)
-│   │   ├── animations.ts     # Framer Motion variants
-│   │   ├── query-client.ts   # TanStack Query client factory
-│   │   └── utils.ts          # cn() — tailwind-merge
-│   │
-│   ├── providers/            # React providers
-│   │   ├── index.tsx         # ThemeProvider + QueryProvider + TooltipProvider + Toaster
-│   │   └── query-provider.tsx
-│   │
-│   ├── config/               # Config
-│   │   ├── env.ts            # Zod-validated environment variables
-│   │   └── site.ts           # Site configuration
-│   │
-│   ├── i18n/                 # Internationalization
-│   │   ├── config.ts         # Locale config (vi/en)
-│   │   ├── request.ts        # next-intl request config
-│   │   └── actions.ts        # Locale switch action
-│   │
-│   └── types/                # Shared types
-│       └── database.ts       # Database row types (1053 lines)
+│   ├── components/           # UI Components chia sẻ (shadcn/ui, layout)
+│   ├── lib/                  # Utilities (Supabase client, actions, utils, animations)
+│   ├── providers/            # React Context Providers
+│   ├── config/               # Cấu hình site, môi trường (Zod Env)
+│   ├── i18n/                 # Đa ngôn ngữ (next-intl)
+│   └── types/                # TypeScript interfaces (database.ts)
 │
 ├── supabase/
-│   ├── migrations/           # 66+ SQL migration files
-│   ├── reset_public_schema.sql
-│   └── seed.sql
-│
-├── messages/                 # i18n translation files
-│   ├── vi.json               # Tiếng Việt
-│   └── en.json               # English
-│
-├── scripts/                  # Utility scripts
-│   └── migrate-post-media.ts
-│
+│   ├── migrations/           # File SQL tạo bảng, RLS
+│   └── seed.sql              # Dữ liệu mẫu (nếu có)
+├── messages/                 # Dữ liệu i18n (vi.json, en.json)
 ├── public/                   # Static assets
-├── proxy.ts                  # Middleware (auth session guard)
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
 └── package.json
 ```
 
 ---
 
-## 🚀 Hướng dẫn cài đặt
+## 🚀 Hướng dẫn cài đặt & Chạy dự án
+
+Dự án hỗ trợ 2 chế độ Backend: **Production (Cloud)** và **Local (Docker)**. Khuyên dùng **Supabase Local** để lập trình và test, tránh tác động tới DB thật.
 
 ### Yêu cầu
-
 - Node.js ≥ 18
-- npm / pnpm / yarn
-- Supabase project (tạo tại [supabase.com](https://supabase.com))
+- `npm`, `yarn`, hoặc `pnpm`
+- **Docker** (Khuyên dùng [OrbStack](https://orbstack.dev/) cho MacOS thay vì Docker Desktop).
 
-### Bước 1: Clone & cài đặt
+### 1. Clone & Cài đặt thư viện
 
 ```bash
 git clone <repo-url>
 cd joblink
-
-# Cài dependencies
 npm install
-# hoặc
-pnpm install
 ```
 
-### Bước 2: Cấu hình biến môi trường
+### 2. Thiết lập Môi trường (Local Supabase - Khuyên Dùng)
 
+**Bước 1: Cài đặt Supabase CLI**
+- Mac (Homebrew): `brew install supabase/tap/supabase`
+- Windows/Linux: Xem tại [Tài liệu Supabase CLI](https://supabase.com/docs/guides/cli/getting-started).
+
+**Bước 2: Khởi động Supabase Local**
+Chắc chắn Docker / OrbStack đang chạy, gõ:
+```bash
+supabase start
+```
+
+**Bước 3: Nạp cấu trúc Database (Schema)**
+File `schema.sql` sẽ tự động thiết lập toàn bộ cấu trúc bảng:
+```bash
+supabase db reset
+```
+
+**Bước 4: Cấu hình biến môi trường (`.env.local`)**
 ```bash
 cp .env.example .env.local
 ```
+Điền thông tin lấy từ terminal sau khi chạy `supabase start`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
+SUPABASE_SERVICE_ROLE_KEY=ey...
 
-Điền các giá trị từ Supabase project dashboard:
-
-| Biến | Mô tả | Nguồn |
-|------|-------|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Supabase Dashboard → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key | Supabase Dashboard → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only) | Supabase Dashboard → Settings → API |
-
-### Bước 3: Database Migration
-
-Chạy file schema tổng hợp:
-
-```bash
-# Cách 1: Dùng Supabase CLI
-supabase db push
-
-# Cách 2: Copy nội dung schema.sql vào Supabase SQL Editor
-# Mở schema.sql → Copy → Paste vào Supabase Dashboard → SQL Editor → Run
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+> **Mẹo:** Vào `http://127.0.0.1:54323` để mở Supabase Studio quản lý database trực quan.
 
-### Bước 4: Storage Buckets
+---
 
-Tạo các storage buckets trong Supabase Dashboard:
-- `uploads` — ảnh/video bài viết
-- `avatars` — ảnh đại diện
-- `covers` — ảnh bìa
-- `cvs` — CV ứng viên
+### 3. Đồng bộ Dữ liệu từ Production về Local (Tuỳ chọn)
 
-### Bước 5: Chạy development
+Nếu bạn muốn có dữ liệu thật (Prod) trên máy Local để test:
+
+1. **Dump dữ liệu từ Prod:**
+   ```bash
+   # Tải dữ liệu các bảng public
+   supabase db dump --db-url "postgresql://postgres.[project-ref]:[DB_PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres" --data-only --disable-triggers -n public > data.sql
+   
+   # Tải danh sách tài khoản auth (để đăng nhập được)
+   supabase db dump --db-url "postgresql://postgres.[project-ref]:[DB_PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres" --data-only --disable-triggers -t auth.users -t auth.identities > auth_data.sql
+   ```
+
+2. **Nạp dữ liệu vào Local (Sử dụng quyền supabase_admin):**
+   ```bash
+   docker exec -i supabase_db_joblink psql -U supabase_admin -d postgres < data.sql
+   docker exec -i supabase_db_joblink psql -U supabase_admin -d postgres < auth_data.sql
+   ```
+
+---
+
+### 4. Chạy Frontend (Next.js)
 
 ```bash
 npm run dev
-# Mở http://localhost:3000
+# Truy cập http://localhost:3000
 ```
 
 ### Scripts
@@ -545,15 +450,16 @@ npm run dev
 | `npm run build` | Production build |
 | `npm run start` | Start production |
 | `npm run lint` | ESLint kiểm tra code |
+| `npm run test` | Chạy Vitest |
 
 ---
 
 ## 🌐 API & Server Actions
 
-Joblink không dùng REST API truyền thống mà dùng **Next.js Server Actions**:
+Joblink sử dụng **Next.js Server Actions** một cách an toàn và nhất quán:
 
 ```typescript
-// Mỗi action đều được bọc bởi action() wrapper:
+// Mọi action đều được bọc bởi action() wrapper an toàn:
 const result = await action("posts", async (t) => {
   const input = parse(createPostSchema, formData)
   const user = await requireRole("member")
@@ -561,15 +467,13 @@ const result = await action("posts", async (t) => {
   return post
 })
 
-// Client nhận ActionResult:
+// Client sử dụng:
 if (result.ok) {
   toast.success("Đăng bài thành công!")
 } else {
-  toast.error(result.error) // Message an toàn, đã dịch
+  toast.error(result.error) // Lỗi đã được catch và dịch an toàn
 }
 ```
-
-**Chain bảo vệ**: `action()` → `requireRole()` → `parse(Zod)` → `unwrap(supabase)`
 
 ---
 
@@ -580,12 +484,12 @@ if (result.ok) {
 **Đề tài**: Xây dựng mạng xã hội việc làm và tuyển dụng 
 
 **Công nghệ sử dụng**:
-- Web Frontend: Next.js 16 + React 19 + TypeScript + Tailwind CSS
+- Web Frontend: Next.js 16 + React 19 + TypeScript + Tailwind CSS 4
 - UI Components: shadcn/ui (Radix UI) + Framer Motion + Lucide Icons
 - Backend & Database: Supabase (PostgreSQL + Auth + Realtime + Storage)
 - State Management: TanStack React Query 5
 - Validation: Zod 4 + react-hook-form
-- Đa ngôn ngữ: next-intl (tiếng Việt / English)
+- Đa ngôn ngữ: next-intl (vi / en)
 - Gửi Email: Nodemailer
 
 ---
