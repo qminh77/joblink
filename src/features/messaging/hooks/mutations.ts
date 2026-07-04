@@ -62,21 +62,26 @@ export function useSendMessage(currentUserId: number) {
       )
 
       // Broadcast immediately to the conversation channel for 0ms latency
+      // Use the existing joined channel to prevent REST fallback which can crash onMutate on iOS
       const supabase = createClient()
-      const channel = supabase.channel(`conversation-${conversationId}`)
-      channel.send({
-        type: "broadcast",
-        event: "new_message",
-        payload: {
-          id: tempId,
-          conversation_id: conversationId,
-          sender_id: currentUserId,
-          content,
-          media: null,
-          read_at: null,
-          created_at: optimistic.createdAt,
-        },
-      })
+      const topic = `realtime:conversation-${conversationId}`
+      const existingChannel = supabase.getChannels().find(c => c.topic === topic)
+      
+      if (existingChannel && existingChannel.state === 'joined') {
+        existingChannel.send({
+          type: "broadcast",
+          event: "new_message",
+          payload: {
+            id: tempId,
+            conversation_id: conversationId,
+            sender_id: currentUserId,
+            content,
+            media: null,
+            read_at: null,
+            created_at: optimistic.createdAt,
+          },
+        })
+      }
 
       return { snapshot, tempId }
     },

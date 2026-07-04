@@ -145,8 +145,8 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
     if (conversationId == null) return false
     if (!conversation.isConnected) return false
     if (conversation.blockedByMe || conversation.blockedMe) return false
-    return draft.trim().length > 0 && !send.isPending
-  }, [conversationId, conversation, draft, send.isPending])
+    return draft.trim().length > 0
+  }, [conversationId, conversation, draft])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()

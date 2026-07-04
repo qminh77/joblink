@@ -67,11 +67,12 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
       >
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
+          className="sm:w-auto sm:px-3 text-muted-foreground hover:text-destructive"
           aria-label={t("removeAction")}
         >
-          <UserMinus />
-          <span className="hidden sm:inline">
+          <UserMinus className="size-4" />
+          <span className="hidden sm:inline ml-2">
             {t("removeAction")}
           </span>
         </Button>
@@ -107,11 +108,11 @@ export function ConnectionsTab({
   return (
     <Card className="overflow-hidden p-0">
       <div className="px-5 py-3.5 border-b border-border/10 flex items-center justify-between gap-3">
-        <h2 className="font-headline font-bold text-sm sm:text-base text-foreground">
+        <h2 className="font-headline font-bold text-sm sm:text-base text-foreground truncate max-w-[50%]">
           {t("allTitle")}{" "}
           <span className="text-muted-foreground font-normal">({total})</span>
         </h2>
-        <div className="relative w-48">
+        <div className="relative flex-1 max-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <Input
             className="pl-8 h-8 rounded-full bg-muted border-none text-xs"

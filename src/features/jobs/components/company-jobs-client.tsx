@@ -3,10 +3,16 @@
 import React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Briefcase, Eye, FileText, Pencil, Plus } from "lucide-react"
+import { Briefcase, Eye, FileText, MoreHorizontal, Pencil, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { formatSalary } from "../lib/format"
 import { useUpdateJobStatus } from "../hooks"
@@ -117,39 +123,80 @@ function JobRow({ job, updateStatus }: { job: CompanyJobItem; updateStatus: any 
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-2">
           <Button asChild size="sm" variant="outline" className="rounded-lg">
             <Link href={`/jobs/${job.id}`}>
-              <Eye className="h-4 w-4" />
-              Xem
+              <Eye className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Xem</span>
+              <span className="sm:hidden">Xem</span>
             </Link>
           </Button>
-          <Button asChild size="sm" variant="outline" className="rounded-lg">
-            <Link href={`/company/post-job/${job.id}`}>
-              <Pencil className="h-4 w-4" />
-              Sửa
-            </Link>
-          </Button>
-          {optimisticStatus === "draft" || optimisticStatus === "closed" ? (
-            <Button
-              size="sm"
-              className="rounded-lg"
-              onClick={() => update(job.id, "active")}
-            >
-              <FileText className="h-4 w-4" />
-              Đăng lại
+          
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Button asChild size="sm" variant="outline" className="rounded-lg">
+              <Link href={`/company/post-job/${job.id}`}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Sửa
+              </Link>
             </Button>
-          ) : null}
-          {optimisticStatus === "active" ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-lg"
-              onClick={() => update(job.id, "closed")}
-            >
-              Đóng tin
-            </Button>
-          ) : null}
+            {optimisticStatus === "draft" || optimisticStatus === "closed" ? (
+              <Button
+                size="sm"
+                className="rounded-lg"
+                onClick={() => update(job.id, "active")}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Đăng lại
+              </Button>
+            ) : null}
+            {optimisticStatus === "active" ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-destructive hover:text-destructive"
+                onClick={() => update(job.id, "closed")}
+              >
+                Đóng tin
+              </Button>
+            ) : null}
+          </div>
+
+          {/* Mobile actions */}
+          <div className="sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                <DropdownMenuItem asChild className="cursor-pointer rounded-lg py-2">
+                  <Link href={`/company/post-job/${job.id}`}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Sửa
+                  </Link>
+                </DropdownMenuItem>
+                {optimisticStatus === "draft" || optimisticStatus === "closed" ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg py-2"
+                    onClick={() => update(job.id, "active")}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Đăng lại
+                  </DropdownMenuItem>
+                ) : null}
+                {optimisticStatus === "active" ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg py-2 text-destructive focus:text-destructive"
+                    onClick={() => update(job.id, "closed")}
+                  >
+                    Đóng tin
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </Card>

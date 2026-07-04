@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { SearchSelect } from "@/components/ui/search-select"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { fadeUp, staggerSm } from "@/lib/animations"
 import type { ProvinceRow } from "@/types/database"
 
@@ -44,7 +45,6 @@ export function JobsListClient({
   const [typeIds, setTypeIds] = useState<number[]>([])
   const [modeIds, setModeIds] = useState<number[]>([])
   const [page, setPage] = useState(0)
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false)
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -97,22 +97,113 @@ export function JobsListClient({
             {t("subheading")}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowFiltersMobile((v) => !v)}
-          className="lg:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-          aria-label={t("filters")}
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-        </button>
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              className="lg:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              aria-label={t("filters")}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl px-4 overflow-y-auto">
+            <SheetHeader className="mb-4 text-left">
+              <SheetTitle>{t("filters")}</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground"></span>
+                {hasFilters ? (
+                  <button
+                    onClick={clearAll}
+                    className="text-xs font-semibold text-primary hover:bg-primary/10 px-2 h-7 rounded-lg transition-colors"
+                  >
+                    {t("clearFilters")}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    {t("location")}
+                  </h3>
+                  <SearchSelect
+                    options={[
+                      { value: "", label: t("allLocations") },
+                      ...provinces.map((p) => ({
+                        value: String(p.id),
+                        label: p.name,
+                      })),
+                    ]}
+                    value={provinceId != null ? String(provinceId) : ""}
+                    onValueChange={(v) => {
+                      setProvinceId(v ? Number(v) : null)
+                      setPage(0)
+                    }}
+                    placeholder={t("allLocations")}
+                    searchPlaceholder={t("searchLocation")}
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    {t("jobType")}
+                  </h3>
+                  <div className="space-y-2">
+                    {jobTypes.map((jt) => (
+                      <label
+                        key={jt.id}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <Checkbox
+                          checked={typeIds.includes(jt.id)}
+                          onCheckedChange={() => {
+                            setTypeIds((prev) => toggleArr(prev, jt.id))
+                            setPage(0)
+                          }}
+                        />
+                        <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                          {jt.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    {t("workMode")}
+                  </h3>
+                  <div className="space-y-2">
+                    {workModes.map((wm) => (
+                      <label
+                        key={wm.id}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <Checkbox
+                          checked={modeIds.includes(wm.id)}
+                          onCheckedChange={() => {
+                            setModeIds((prev) => toggleArr(prev, wm.id))
+                            setPage(0)
+                          }}
+                        />
+                        <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                          {wm.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <aside
-          className={`lg:col-span-3 ${
-            showFiltersMobile ? "block" : "hidden lg:block"
-          }`}
-        >
+        <aside className="hidden lg:block lg:col-span-3">
           <Card className="bg-card border-border/40 rounded-2xl p-5 sticky top-24">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-headline font-bold text-foreground text-sm">
