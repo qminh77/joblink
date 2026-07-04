@@ -173,5 +173,61 @@ export type MyApplicationsPage = {
   total: number
 }
 
+export type CompanyJobItem = {
+  id: number
+  title: string
+  status: "draft" | "active" | "closed" | "expired" | "removed"
+  createdAt: string
+  updatedAt: string
+  expiresAt: string | null
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryVisible: boolean
+  applicantCount: number
+  jobTypeName: string | null
+  workModeName: string | null
+  provinceName: string | null
+  wardName: string | null
+}
+
+export type CompanyJobsPage = {
+  items: CompanyJobItem[]
+  total: number
+}
+
+export type CompanyApplicationItem = {
+  applicationId: number
+  jobId: number
+  jobTitle: string
+  applicantId: number
+  applicantName: string
+  applicantAvatarUrl: string | null
+  applicantHeadline: string | null
+  status: ApplicationStatusValue
+  appliedAt: string
+  updatedAt: string
+  coverLetter: string | null
+  resumeAvailable: boolean
+}
+
+export type CompanyApplicationsPage = {
+  items: CompanyApplicationItem[]
+  total: number
+  jobs: CompanyJobItem[]
+}
+
+export type CompanyDashboardOverview = {
+  stats: {
+    totalJobs: number
+    activeJobs: number
+    draftJobs: number
+    closedJobs: number
+    totalApplications: number
+    submittedApplications: number
+  }
+  recentJobs: CompanyJobItem[]
+  recentApplications: CompanyApplicationItem[]
+}
+
 export type JobTypeRef = { id: number; code: string; name: string }
 export type WorkModeRef = { id: number; code: string; name: string }

@@ -156,7 +156,7 @@ export function CompanyPublicPage({ overview, postsPage }: Props) {
                 {isOwner ? (
                   <>
                     <Link
-                      href="/company/post-job"
+                      href="/company/jobs"
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 h-8 rounded-lg transition-colors"
                     >
                       <Briefcase className="w-3.5 h-3.5" />

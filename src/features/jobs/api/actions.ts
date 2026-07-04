@@ -73,6 +73,8 @@ export async function createJobAction(
       newData: { title: parsed.data.title },
     })
     revalidatePath("/jobs")
+    revalidatePath("/company/jobs")
+    revalidatePath("/company/dashboard")
   }
   return result
 }
@@ -102,6 +104,8 @@ export async function updateJobAction(
       newData: { title: parsed.data.title },
     })
     revalidatePath("/jobs")
+    revalidatePath("/company/jobs")
+    revalidatePath("/company/dashboard")
     revalidatePath(`/jobs/${parsed.data.jobId}`)
   }
   return result
@@ -123,6 +127,8 @@ export async function updateJobStatusAction(input: {
 
   if (result.ok) {
     revalidatePath("/jobs")
+    revalidatePath("/company/jobs")
+    revalidatePath("/company/dashboard")
     revalidatePath(`/jobs/${parsed.data.jobId}`)
   }
   return result
@@ -158,6 +164,8 @@ export async function applyToJobAction(input: {
       newData: { jobId: parsed.data.jobId },
     })
     revalidatePath(`/jobs/${parsed.data.jobId}`)
+    revalidatePath("/company/applications")
+    revalidatePath("/company/dashboard")
   }
   return result
 }
@@ -182,6 +190,8 @@ export async function withdrawApplicationAction(
       entityType: "job_applications",
       entityId: parsed.data,
     })
+    revalidatePath("/company/applications")
+    revalidatePath("/company/dashboard")
   }
   return result
 }

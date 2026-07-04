@@ -1,35 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
 import { Camera, Image as ImageIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { updateMemberMediaAction } from "@/features/profile/api/actions"
 import {
-  PROFILE_IMAGE_ALLOWED_TYPES,
-  PROFILE_IMAGE_MAX_BYTES,
-  ProfileImageError,
-  uploadMemberImage,
+  getProfileImageErrorMessage,
+  PROFILE_IMAGE_ACCEPT,
+  useMemberProfileImageUpload,
+} from "@/features/profile/hooks"
+import {
   validateProfileImage,
   type CropRect,
-  type ProfileImageErrorCode,
   type ProfileImageKind,
 } from "@/features/profile/lib/media"
-import {
-  FEED_QUERY_KEY,
-  HOME_STATS_KEY,
-  USER_POSTS_QUERY_KEY,
-} from "@/features/posts/hooks"
-import {
-  MESSAGING_OVERVIEW_KEY,
-} from "@/features/messaging/hooks"
-import { NETWORK_OVERVIEW_KEY } from "@/features/network/hooks"
-import { NOTIFICATIONS_KEY } from "@/features/notifications/hooks"
 import { getInitials } from "@/lib/utils/format"
 
 import { CropDialog } from "./crop-dialog"
@@ -41,40 +28,23 @@ type Props = {
   coverUrl: string | null
 }
 
-const ACCEPT = PROFILE_IMAGE_ALLOWED_TYPES.join(",")
-
-function errorMessage(code: ProfileImageErrorCode): string {
-  switch (code) {
-    case "tooLarge":
-      return `Ảnh vượt quá ${Math.round(PROFILE_IMAGE_MAX_BYTES / 1024 / 1024)} MB`
-    case "invalidType":
-      return "Định dạng không hỗ trợ (chỉ JPG, PNG, GIF, WEBP)"
-    case "unauthorized":
-      return "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"
-    default:
-      return "Không thể tải ảnh lên, vui lòng thử lại"
-  }
-}
-
 // Header có thể chỉnh sửa cho /profile/edit:
 //   - Cover bằng `coverUrl` (rơi về gradient nếu chưa có).
 //   - Avatar nổi đè lên cover, có nút máy ảnh để mở picker.
-//   - Khi chọn file → mở CropDialog → upload → updateMemberMediaAction.
+//   - Khi chọn file → mở CropDialog → gọi media hook để upload + cập nhật.
 export function AvatarCoverEditor({
   userId,
   fullName,
   avatarUrl,
   coverUrl,
 }: Props) {
-  const router = useRouter()
-  const qc = useQueryClient()
   const initials = getInitials(fullName, "JL")
+  const { busy, uploadImage } = useMemberProfileImageUpload(userId)
 
   const [pending, setPending] = React.useState<{
     file: File
     kind: ProfileImageKind
   } | null>(null)
-  const [busy, setBusy] = React.useState(false)
 
   const avatarInputRef = React.useRef<HTMLInputElement | null>(null)
   const coverInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -91,7 +61,7 @@ export function AvatarCoverEditor({
     if (!file) return
     const code = validateProfileImage(file)
     if (code) {
-      toast.error(errorMessage(code))
+      toast.error(getProfileImageErrorMessage(code))
       return
     }
     setPending({ file, kind })
@@ -99,47 +69,13 @@ export function AvatarCoverEditor({
 
   async function handleConfirm(crop: CropRect) {
     if (!pending) return
-    setBusy(true)
-    try {
-      const url = await uploadMemberImage({
-        file: pending.file,
-        crop,
-        kind: pending.kind,
-        userId,
-      })
-      const result = await updateMemberMediaAction(
-        pending.kind === "avatar" ? { avatarUrl: url } : { coverUrl: url },
-      )
-      if (!result.ok) throw new Error(result.error)
-      toast.success(
-        pending.kind === "avatar"
-          ? "Đã cập nhật ảnh đại diện"
-          : "Đã cập nhật ảnh bìa",
-      )
+    const ok = await uploadImage({
+      file: pending.file,
+      crop,
+      kind: pending.kind,
+    })
+    if (ok) {
       setPending(null)
-      // Avatar bị embed trong nhiều cache phía client (feed/network/messaging/
-      // notifications/user-posts/home-stats). router.refresh() chỉ làm tươi
-      // server components — phải invalidate React Query để các view khác
-      // nhau cũng nhận ảnh mới ngay lập tức.
-      if (pending.kind === "avatar") {
-        qc.invalidateQueries({ queryKey: FEED_QUERY_KEY })
-        qc.invalidateQueries({ queryKey: USER_POSTS_QUERY_KEY(userId) })
-        qc.invalidateQueries({ queryKey: HOME_STATS_KEY })
-        qc.invalidateQueries({ queryKey: NETWORK_OVERVIEW_KEY })
-        qc.invalidateQueries({ queryKey: MESSAGING_OVERVIEW_KEY })
-        qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY })
-      }
-      router.refresh()
-    } catch (err) {
-      const message =
-        err instanceof ProfileImageError
-          ? errorMessage(err.code)
-          : err instanceof Error
-            ? err.message
-            : "Không thể tải ảnh lên"
-      toast.error(message)
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -213,14 +149,14 @@ export function AvatarCoverEditor({
       <input
         ref={avatarInputRef}
         type="file"
-        accept={ACCEPT}
+        accept={PROFILE_IMAGE_ACCEPT}
         className="hidden"
         onChange={(e) => onFileChosen("avatar", e.target.files?.[0])}
       />
       <input
         ref={coverInputRef}
         type="file"
-        accept={ACCEPT}
+        accept={PROFILE_IMAGE_ACCEPT}
         className="hidden"
         onChange={(e) => onFileChosen("cover", e.target.files?.[0])}
       />

@@ -48,8 +48,7 @@ export function usePostJobForm({ editJob }: { editJob?: JobEditData }) {
   const [skillInput, setSkillInput] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  const cancelHref =
-    isEdit && editJob ? `/jobs/${editJob.job.id}` : "/company/post-job"
+  const cancelHref = isEdit ? "/company/jobs" : "/company/dashboard"
   const minExpiresAt = new Date().toISOString().slice(0, 10)
 
   function addSkill() {
@@ -107,7 +106,7 @@ export function usePostJobForm({ editJob }: { editJob?: JobEditData }) {
 
     if (isEdit && editJob) {
       toast.success(t("updateSuccess"))
-      router.push(`/jobs/${editJob.job.id}`)
+      router.push("/company/jobs")
       return
     }
 
@@ -115,7 +114,7 @@ export function usePostJobForm({ editJob }: { editJob?: JobEditData }) {
       status === "active" ? t("publishSuccess") : t("draftSuccess"),
     )
     router.push(
-      status === "active" ? `/jobs/${result.jobId}` : "/company/post-job",
+      status === "active" ? `/jobs/${result.jobId}` : "/company/jobs",
     )
   }
 

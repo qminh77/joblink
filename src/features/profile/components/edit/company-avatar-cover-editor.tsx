@@ -1,22 +1,20 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { Building2, Camera, Image as ImageIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { updateCompanyMediaAction } from "@/features/profile/api/actions"
 import {
-  PROFILE_IMAGE_ALLOWED_TYPES,
-  PROFILE_IMAGE_MAX_BYTES,
-  ProfileImageError,
-  uploadCompanyImage,
+  getProfileImageErrorMessage,
+  PROFILE_IMAGE_ACCEPT,
+  useCompanyProfileImageUpload,
+} from "@/features/profile/hooks"
+import {
   validateProfileImage,
   type CropRect,
-  type ProfileImageErrorCode,
   type ProfileImageKind,
 } from "@/features/profile/lib/media"
 import { getInitials } from "@/lib/utils/format"
@@ -30,35 +28,19 @@ type Props = {
   coverUrl: string | null
 }
 
-const ACCEPT = PROFILE_IMAGE_ALLOWED_TYPES.join(",")
-
-function errorMessage(code: ProfileImageErrorCode): string {
-  switch (code) {
-    case "tooLarge":
-      return `Ảnh vượt quá ${Math.round(PROFILE_IMAGE_MAX_BYTES / 1024 / 1024)} MB`
-    case "invalidType":
-      return "Định dạng không hỗ trợ (chỉ JPG, PNG, GIF, WEBP)"
-    case "unauthorized":
-      return "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"
-    default:
-      return "Không thể tải ảnh lên, vui lòng thử lại"
-  }
-}
-
 export function CompanyAvatarCoverEditor({
   userId,
   companyName,
   logoUrl,
   coverUrl,
 }: Props) {
-  const router = useRouter()
   const initials = getInitials(companyName, "JL")
+  const { busy, uploadImage } = useCompanyProfileImageUpload(userId)
 
   const [pending, setPending] = React.useState<{
     file: File
     kind: ProfileImageKind
   } | null>(null)
-  const [busy, setBusy] = React.useState(false)
 
   const logoInputRef = React.useRef<HTMLInputElement | null>(null)
   const coverInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -75,7 +57,7 @@ export function CompanyAvatarCoverEditor({
     if (!file) return
     const code = validateProfileImage(file)
     if (code) {
-      toast.error(errorMessage(code))
+      toast.error(getProfileImageErrorMessage(code))
       return
     }
     setPending({ file, kind })
@@ -83,35 +65,13 @@ export function CompanyAvatarCoverEditor({
 
   async function handleConfirm(crop: CropRect) {
     if (!pending) return
-    setBusy(true)
-    try {
-      const url = await uploadCompanyImage({
-        file: pending.file,
-        crop,
-        kind: pending.kind,
-        userId,
-      })
-      const result = await updateCompanyMediaAction(
-        pending.kind === "avatar" ? { logoUrl: url } : { coverUrl: url },
-      )
-      if (!result.ok) throw new Error(result.error)
-      toast.success(
-        pending.kind === "avatar"
-          ? "Đã cập nhật logo công ty"
-          : "Đã cập nhật ảnh bìa",
-      )
+    const ok = await uploadImage({
+      file: pending.file,
+      crop,
+      kind: pending.kind,
+    })
+    if (ok) {
       setPending(null)
-      router.refresh()
-    } catch (err) {
-      const message =
-        err instanceof ProfileImageError
-          ? errorMessage(err.code)
-          : err instanceof Error
-            ? err.message
-            : "Không thể tải ảnh lên"
-      toast.error(message)
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -182,14 +142,14 @@ export function CompanyAvatarCoverEditor({
       <input
         ref={logoInputRef}
         type="file"
-        accept={ACCEPT}
+        accept={PROFILE_IMAGE_ACCEPT}
         className="hidden"
         onChange={(e) => onFileChosen("avatar", e.target.files?.[0])}
       />
       <input
         ref={coverInputRef}
         type="file"
-        accept={ACCEPT}
+        accept={PROFILE_IMAGE_ACCEPT}
         className="hidden"
         onChange={(e) => onFileChosen("cover", e.target.files?.[0])}
       />

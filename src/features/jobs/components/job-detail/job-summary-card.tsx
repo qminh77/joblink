@@ -132,7 +132,7 @@ export function JobSummaryCard({
           <div className="w-full min-w-0 sm:w-auto sm:flex-none">
             {viewer.isOwner ? (
               <Button asChild className="w-full sm:w-auto sm:min-w-36" size="lg">
-                <Link href="/company/post-job">
+                <Link href={`/company/post-job/${job.id}`}>
                   <Pencil />
                   {t("manageJob")}
                 </Link>
@@ -151,7 +151,7 @@ export function JobSummaryCard({
                   </span>
                 </Badge>
                 {viewer.applicationId &&
-                !["hired", "rejected", "withdrawn"].includes(
+                !["closed", "withdrawn"].includes(
                   viewer.applicationStatus ?? "",
                 ) ? (
                   <Button

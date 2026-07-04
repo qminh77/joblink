@@ -1,4 +1,5 @@
 import type { ConnectionRelation } from "@/features/network/types"
+import type { MemberCv } from "@/features/cvs/types"
 import type {
   CompanyProfileRow,
   MemberEducationRow,
@@ -42,6 +43,12 @@ export type ProfilePageData = {
   detail: AnyProfileDetail
   relation: ConnectionRelation
   isOwner: boolean
+}
+
+export type ProfileEditOverview = {
+  profile: MemberProfileDetail
+  provinces: ProvinceRow[]
+  cvs: MemberCv[]
 }
 
 export type ProfileVisibilityValue = ProfileVisibility

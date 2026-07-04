@@ -218,9 +218,9 @@ export function ProfileDropdown() {
                 transition={{ delay: 0.1 }}
               >
                 <DropdownMenuItem
-                  onPointerEnter={() => router.prefetch("/company/post-job")}
-                  onFocus={() => router.prefetch("/company/post-job")}
-                  onClick={() => pushWarm("/company/post-job")}
+                  onPointerEnter={() => router.prefetch("/company/dashboard")}
+                  onFocus={() => router.prefetch("/company/dashboard")}
+                  onClick={() => pushWarm("/company/dashboard")}
                   className="cursor-pointer rounded-xl py-2.5 px-3 transition-all focus:bg-muted"
                 >
                   <LayoutDashboard className="w-4 h-4 text-primary mr-3 shrink-0" />
