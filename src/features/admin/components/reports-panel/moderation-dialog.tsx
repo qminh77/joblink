@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import type { AdminReportRow } from "@/features/admin/types"
 import type { ModerationActionType } from "@/types/database"
-import { ACTION_TYPES } from "./constants"
+import { MODERATION_ACTION_TYPES } from "../../lib/report-moderation"
 
 export function ModerationDialog({
   actionType,
@@ -83,7 +83,7 @@ export function ModerationDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ACTION_TYPES.map((action) => (
+                {MODERATION_ACTION_TYPES.map((action) => (
                   <SelectItem key={action} value={action}>
                     {action}
                   </SelectItem>

@@ -6,9 +6,12 @@ import { ExternalLink } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import type { AdminReportRow } from "@/features/admin/types"
-import type { ReportStatus } from "@/lib/constants"
+import type { ReportStatus } from "@/features/reports/lib/constants"
 import { getInitials } from "@/lib/utils/format"
-import { STATUS_STYLE, TARGET_ICON } from "./constants"
+import {
+  REPORT_STATUS_STYLE,
+  REPORT_TARGET_ICON,
+} from "../../lib/report-moderation"
 
 export function ReportCard({
   onOpenAction,
@@ -25,7 +28,7 @@ export function ReportCard({
   const tStatuses = useTranslations("admin.reports.statuses")
   const tTypes = useTranslations("admin.reports.types")
   const format = useFormatter()
-  const Icon = TARGET_ICON[report.targetType]
+  const Icon = REPORT_TARGET_ICON[report.targetType]
 
   return (
     <div className="py-4 border-b border-border/40 last:border-0 hover:bg-muted/10 transition-colors px-2 rounded-lg -mx-2">
@@ -57,7 +60,7 @@ export function ReportCard({
                   })}
                 </span>
                 <span>•</span>
-                <span className={`font-medium ${STATUS_STYLE[report.status]}`}>
+                <span className={`font-medium ${REPORT_STATUS_STYLE[report.status]}`}>
                   {tStatuses(report.status)}
                 </span>
               </div>

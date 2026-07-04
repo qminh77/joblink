@@ -33,8 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { COMPANY_SIZE_OPTIONS } from "@/features/companies/lib/constants"
 
-import { COMPANY_SIZE_OPTIONS } from "../../schemas"
 import type { RegisterFormValues } from "../register-form"
 
 export function CompanyFields({

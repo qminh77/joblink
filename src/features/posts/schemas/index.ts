@@ -1,21 +1,15 @@
 import { z } from "zod"
 
+import {
+  POST_MAX_MEDIA_ITEMS,
+  POST_VISIBILITIES,
+  REACTION_TYPES,
+} from "../lib/constants"
+
 type Translator = (
   key: string,
   values?: Record<string, string | number>,
 ) => string
-
-const POST_VISIBILITY = ["public", "connections", "private"] as const
-const REACTION_TYPES = [
-  "like",
-  "celebrate",
-  "support",
-  "love",
-  "insightful",
-  "funny",
-] as const
-
-const MAX_MEDIA_ITEMS = 10
 
 export function createPostInputSchema(t: Translator) {
   return z
@@ -25,7 +19,7 @@ export function createPostInputSchema(t: Translator) {
         .trim()
         .max(3000, t("contentMax"))
         .default(""),
-      visibility: z.enum(POST_VISIBILITY).default("public"),
+      visibility: z.enum(POST_VISIBILITIES).default("public"),
       mediaItems: z
         .array(
           z.object({
@@ -34,7 +28,10 @@ export function createPostInputSchema(t: Translator) {
             height: z.number().int().positive().optional(),
           }),
         )
-        .max(MAX_MEDIA_ITEMS, t("tooManyImages", { max: MAX_MEDIA_ITEMS }))
+        .max(
+          POST_MAX_MEDIA_ITEMS,
+          t("tooManyImages", { max: POST_MAX_MEDIA_ITEMS }),
+        )
         .optional()
         .default([]),
     })
@@ -58,7 +55,7 @@ export function createPostUpdateSchema(t: Translator) {
         .trim()
         .max(3000, t("contentMax"))
         .default(""),
-      visibility: z.enum(POST_VISIBILITY),
+      visibility: z.enum(POST_VISIBILITIES),
       // undefined → giữ nguyên ảnh hiện tại; array (kể cả rỗng) → thay thế.
       mediaItems: z
         .array(
@@ -68,7 +65,10 @@ export function createPostUpdateSchema(t: Translator) {
             height: z.number().int().positive().optional(),
           }),
         )
-        .max(MAX_MEDIA_ITEMS, t("tooManyImages", { max: MAX_MEDIA_ITEMS }))
+        .max(
+          POST_MAX_MEDIA_ITEMS,
+          t("tooManyImages", { max: POST_MAX_MEDIA_ITEMS }),
+        )
         .optional(),
     })
     .refine(

@@ -1,6 +1,6 @@
 import "server-only"
 
-import type { JobStatus } from "@/lib/constants"
+import type { JobStatus } from "@/features/jobs/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 
 import type { ListJobsParams } from "../types"

@@ -10,7 +10,7 @@ import {
   setReportStatus,
 } from "../../api/reports"
 import type { AdminReportRow } from "../../types"
-import type { ReportStatus } from "@/lib/constants"
+import type { ReportStatus } from "@/features/reports/lib/constants"
 import type { ModerationActionType } from "@/types/database"
 
 export function useReportsPanel() {

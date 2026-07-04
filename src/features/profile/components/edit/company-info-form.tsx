@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { COMPANY_SIZE_OPTIONS } from "@/features/companies/lib/constants"
 import { LocationSelect } from "@/features/locations/components/location-select"
-import { COMPANY_SIZE_OPTIONS } from "@/features/auth/schemas"
 import {
   createCompanyProfileSchema,
   type CompanyProfileInput,

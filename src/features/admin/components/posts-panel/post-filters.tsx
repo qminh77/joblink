@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { POST_TYPES } from "@/lib/constants"
-import { POST_STATUSES } from "./constants"
+import { POST_TYPES } from "@/features/posts/lib/constants"
+import { ADMIN_POST_STATUSES } from "../../lib/post-moderation"
 
 export function PostFilters({
   count,
@@ -69,7 +69,7 @@ export function PostFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">{t("allStatuses")}</SelectItem>
-          {POST_STATUSES.map((status) => (
+          {ADMIN_POST_STATUSES.map((status) => (
             <SelectItem key={status} value={status}>
               {tStatuses(status)}
             </SelectItem>

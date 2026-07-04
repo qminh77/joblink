@@ -1,6 +1,6 @@
 import "server-only"
 
-import type { UserStatus } from "@/lib/constants"
+import type { UserStatus } from "@/features/auth/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 import type { CompanyVerification } from "@/types/database"
 

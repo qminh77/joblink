@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { AdminPostRow } from "../../api/posts"
 import {
-  ACTION_STYLE,
-  PostActionIcon,
-  STATUS_STYLE,
-  TYPE_STYLE,
-  VISIBILITY_STYLE,
+  ADMIN_POST_STATUS_STYLE,
+  POST_ACTION_STYLE,
+  POST_TYPE_STYLE,
+  POST_VISIBILITY_STYLE,
   type PostModerationAction,
-} from "./constants"
+} from "../../lib/post-moderation"
+import { PostActionIcon } from "./post-action-icon"
 
 function postPreview(content: string, max = 120) {
   return `${content.substring(0, max)}${content.length > max ? "..." : ""}`
@@ -94,7 +94,7 @@ export function PostsTable({
                     <Badge
                       variant="outline"
                       className={`text-xs ${
-                        TYPE_STYLE[post.postType] ?? TYPE_STYLE.text
+                        POST_TYPE_STYLE[post.postType] ?? POST_TYPE_STYLE.text
                       }`}
                     >
                       {tTypes(post.postType)}
@@ -107,8 +107,8 @@ export function PostsTable({
                     <Badge
                       variant="outline"
                       className={`text-xs ${
-                        VISIBILITY_STYLE[post.visibility] ??
-                        VISIBILITY_STYLE.public
+                        POST_VISIBILITY_STYLE[post.visibility] ??
+                        POST_VISIBILITY_STYLE.public
                       }`}
                     >
                       {tVisibility(post.visibility)}
@@ -118,7 +118,8 @@ export function PostsTable({
                     <Badge
                       variant="outline"
                       className={`text-xs ${
-                        STATUS_STYLE[post.status] ?? STATUS_STYLE.active
+                        ADMIN_POST_STATUS_STYLE[post.status] ??
+                        ADMIN_POST_STATUS_STYLE.active
                       }`}
                     >
                       {tStatuses(post.status)}
@@ -152,7 +153,7 @@ export function PostsTable({
                           variant="ghost"
                           size="sm"
                           className={`h-8 w-8 p-0 rounded-lg ${
-                            ACTION_STYLE[action]
+                            POST_ACTION_STYLE[action]
                           }`}
                           disabled={pending}
                           onClick={() => onAction(post, action)}

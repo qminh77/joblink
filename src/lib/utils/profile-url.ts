@@ -1,4 +1,4 @@
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 
 /**
  * Đường dẫn hồ sơ công khai theo vai trò.

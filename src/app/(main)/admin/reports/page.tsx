@@ -5,7 +5,7 @@ import {
   REPORT_TARGET_TYPES,
   type ReportStatus,
   type ReportTargetType,
-} from "@/lib/constants"
+} from "@/features/reports/lib/constants"
 
 export const dynamic = "force-dynamic"
 

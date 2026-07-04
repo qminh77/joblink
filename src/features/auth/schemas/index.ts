@@ -1,16 +1,8 @@
 import { z } from "zod"
 
-type Translator = (key: string) => string
+import { COMPANY_SIZE_OPTIONS } from "@/features/companies/lib/constants"
 
-export const COMPANY_SIZE_OPTIONS = [
-  "1-10",
-  "11-50",
-  "51-200",
-  "201-500",
-  "501-1000",
-  "1000+",
-] as const
-export type CompanySize = (typeof COMPANY_SIZE_OPTIONS)[number]
+type Translator = (key: string) => string
 
 export function createEmailSchema(t: Translator) {
   return z

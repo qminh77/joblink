@@ -1,6 +1,6 @@
 import { listAdminJobs } from "@/features/admin/api/jobs"
 import { JobsPanel } from "@/features/admin/components/jobs-panel"
-import { JOB_STATUSES, type JobStatus } from "@/lib/constants"
+import { JOB_STATUSES, type JobStatus } from "@/features/jobs/lib/constants"
 
 export const dynamic = "force-dynamic"
 

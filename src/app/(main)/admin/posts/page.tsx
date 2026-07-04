@@ -1,11 +1,14 @@
 import { listAdminPosts } from "@/features/admin/api/posts"
 import { PostsPanel } from "@/features/admin/components/posts-panel"
-import { POST_TYPES, type PostType } from "@/lib/constants"
+import {
+  ADMIN_POST_STATUSES,
+  type AdminPostStatus,
+} from "@/features/admin/lib/post-moderation"
+import { POST_TYPES, type PostType } from "@/features/posts/lib/constants"
 
 export const dynamic = "force-dynamic"
 
-const POST_STATUSES = ["active", "hidden"] as const
-type PostListStatus = (typeof POST_STATUSES)[number] | "all"
+type PostListStatus = AdminPostStatus | "all"
 
 function asType(v?: string): PostType | "all" | undefined {
   if (!v) return undefined
@@ -16,7 +19,7 @@ function asType(v?: string): PostType | "all" | undefined {
 
 function asStatus(v?: string): PostListStatus | undefined {
   if (!v) return undefined
-  if (v === "all" || (POST_STATUSES as readonly string[]).includes(v as typeof POST_STATUSES[number]))
+  if (v === "all" || (ADMIN_POST_STATUSES as readonly string[]).includes(v))
     return v as PostListStatus
   return undefined
 }

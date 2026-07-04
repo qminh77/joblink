@@ -2,7 +2,7 @@ import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Json, PostType } from "@/types/database"
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 
 import { readSharedOriginal } from "../lib/media"
 import type { SharedOriginal } from "../lib/media"

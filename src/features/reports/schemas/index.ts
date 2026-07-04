@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { REPORT_TARGET_TYPES } from "@/lib/constants"
+import { REPORT_TARGET_TYPES } from "@/features/reports/lib/constants"
 
 type Translator = (key: string) => string
 

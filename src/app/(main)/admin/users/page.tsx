@@ -5,7 +5,7 @@ import {
   USER_STATUSES,
   type UserRole,
   type UserStatus,
-} from "@/lib/constants"
+} from "@/features/auth/lib/constants"
 
 export const dynamic = "force-dynamic"
 

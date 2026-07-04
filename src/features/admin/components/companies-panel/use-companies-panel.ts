@@ -7,7 +7,10 @@ import { toast } from "sonner"
 
 import { applyCompanyAction } from "../../api/companies"
 import type { AdminCompanyRow } from "../../types"
-import { TAB_STATUS, type CompanyAction } from "./constants"
+import {
+  COMPANY_TAB_STATUS,
+  type CompanyAction,
+} from "../../lib/company-verification"
 
 type ConfirmTarget = {
   company: AdminCompanyRow
@@ -29,7 +32,8 @@ export function useCompaniesPanel({
   const [note, setNote] = useState("")
   const [pending, startTransition] = useTransition()
 
-  const tab = query.status && TAB_STATUS[query.status] ? query.status : "pending"
+  const tab =
+    query.status && COMPANY_TAB_STATUS[query.status] ? query.status : "pending"
 
   function setTab(value: string) {
     const next = new URLSearchParams(searchParams.toString())

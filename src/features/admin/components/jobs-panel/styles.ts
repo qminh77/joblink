@@ -1,4 +1,4 @@
-import type { JobStatus } from "@/lib/constants"
+import type { JobStatus } from "@/features/jobs/lib/constants"
 
 export const STATUS_STYLE: Record<JobStatus, string> = {
   draft: "bg-zinc-500/10 text-zinc-600 border-zinc-500/20",

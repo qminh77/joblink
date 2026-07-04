@@ -18,11 +18,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import type { CompanySize } from "@/features/companies/lib/constants"
 
 import { useRegister } from "../hooks"
 import {
   createRegisterSchema,
-  type CompanySize,
   type RegisterInput,
 } from "../schemas"
 

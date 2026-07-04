@@ -6,7 +6,8 @@ import type {
   ReportStatus,
   ReportTargetType,
 } from "@/types/database"
-import type { JobStatus, UserRole, UserStatus } from "@/lib/constants"
+import type { UserRole, UserStatus } from "@/features/auth/lib/constants"
+import type { JobStatus } from "@/features/jobs/lib/constants"
 
 export type AdminDashboardStats = {
   totalUsers: number

@@ -1,4 +1,5 @@
-import type { ConnectionStatus, UserRole, UserStatus } from "@/lib/constants"
+import type { UserRole, UserStatus } from "@/features/auth/lib/constants"
+import type { ConnectionStatus } from "@/features/network/lib/constants"
 
 export type Json =
   | string

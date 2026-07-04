@@ -5,7 +5,7 @@ import type { ZodType } from "zod"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 import type { CurrentUser } from "@/features/auth/types"
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 
 import { ok, fail, type ActionResult } from "./result"
 

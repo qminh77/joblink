@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { JOB_STATUSES } from "@/lib/constants"
+import { JOB_STATUSES } from "@/features/jobs/lib/constants"
 
 export function JobFilters({
   search,

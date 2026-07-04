@@ -2,7 +2,7 @@ import type { CompanyVerification } from "@/types/database"
 
 export type CompanyAction = "approve" | "reject" | "suspend" | "restore"
 
-export const TAB_STATUS: Record<string, CompanyVerification | "all"> = {
+export const COMPANY_TAB_STATUS: Record<string, CompanyVerification | "all"> = {
   pending: "pending",
   verified: "verified",
   rejected: "rejected",
@@ -10,7 +10,9 @@ export const TAB_STATUS: Record<string, CompanyVerification | "all"> = {
   all: "all",
 }
 
-export function verificationColor(status: CompanyVerification): string {
+export function companyVerificationClassName(
+  status: CompanyVerification,
+): string {
   switch (status) {
     case "verified":
       return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"

@@ -1,11 +1,10 @@
 import "server-only"
 
 import type { createAdminClient } from "@/lib/supabase/admin"
+import { USER_ROLES, USER_STATUSES } from "@/features/auth/lib/constants"
 import {
   COMPANY_VERIFICATION_STATUSES,
-  USER_ROLES,
-  USER_STATUSES,
-} from "@/lib/constants"
+} from "@/features/companies/lib/constants"
 
 type AdminSupabase = ReturnType<typeof createAdminClient>
 

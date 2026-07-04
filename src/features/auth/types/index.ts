@@ -1,4 +1,4 @@
-import type { UserRole, UserStatus } from "@/lib/constants"
+import type { UserRole, UserStatus } from "@/features/auth/lib/constants"
 import type { AppUserRow, CompanyVerification } from "@/types/database"
 
 export type CurrentUser = {

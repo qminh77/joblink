@@ -7,7 +7,7 @@ import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 
 import {
   getAppUserByAuthId,

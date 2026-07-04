@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { createAdminClient } from "@/lib/supabase/admin"
-import type { UserStatus } from "@/lib/constants"
+import type { UserStatus } from "@/features/auth/lib/constants"
 
 import { writeAuditLog } from "./audit-log.service"
 import type { UserActionInput } from "../schemas"

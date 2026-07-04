@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { getInitials } from "@/lib/utils/format"
 import type { AdminCompanyRow } from "../../types"
-import { verificationColor, type CompanyAction } from "./constants"
+import {
+  companyVerificationClassName,
+  type CompanyAction,
+} from "../../lib/company-verification"
 
 export function CompanyCard({
   company,
@@ -39,7 +42,7 @@ export function CompanyCard({
               <h3 className="font-semibold text-foreground">{company.name}</h3>
               <Badge
                 variant="outline"
-                className={`text-xs ${verificationColor(
+                className={`text-xs ${companyVerificationClassName(
                   company.verificationStatus,
                 )}`}
               >

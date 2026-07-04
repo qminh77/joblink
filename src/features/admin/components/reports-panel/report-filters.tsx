@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { REPORT_STATUSES, REPORT_TARGET_TYPES } from "@/lib/constants"
+import { REPORT_STATUSES, REPORT_TARGET_TYPES } from "@/features/reports/lib/constants"
 
 export function ReportFilters({
   count,

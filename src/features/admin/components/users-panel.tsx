@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import { applyUserAction } from "@/features/admin/api/users"
 import type { AdminUserListResult, AdminUserRow } from "@/features/admin/types"
-import { USER_ROLES, USER_STATUSES } from "@/lib/constants"
+import { USER_ROLES, USER_STATUSES } from "@/features/auth/lib/constants"
 import { type UserActionType, UsersActionDialog } from "./users/users-action-dialog"
 import { UsersTableRow } from "./users/users-table-row"
 

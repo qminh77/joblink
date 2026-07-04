@@ -1,4 +1,4 @@
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 import type { FeedAuthor, FeedPost } from "../types"
 import type { Json, PostType } from "@/types/database"
 

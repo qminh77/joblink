@@ -1,6 +1,10 @@
 import "server-only"
 
-import { USER_STATUSES, type UserRole, type UserStatus } from "@/lib/constants"
+import {
+  USER_STATUSES,
+  type UserRole,
+  type UserStatus,
+} from "@/features/auth/lib/constants"
 import type { createAdminClient } from "@/lib/supabase/admin"
 
 import type { ListUsersParams } from "../types"

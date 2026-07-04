@@ -6,7 +6,7 @@ import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import type { UserRole } from "@/lib/constants"
+import type { UserRole } from "@/features/auth/lib/constants"
 import type {
   FeedComment,
   FeedPage,

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
 import type { AdminCompanyRow } from "../../types"
 import { CompanyCard } from "./company-card"
-import type { CompanyAction } from "./constants"
+import type { CompanyAction } from "../../lib/company-verification"
 
 export function CompanyList({
   items,

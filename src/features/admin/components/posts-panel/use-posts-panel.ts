@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { applyPostAction, type AdminPostRow } from "../../api/posts"
-import type { PostModerationAction } from "./constants"
+import type { PostModerationAction } from "../../lib/post-moderation"
 
 type ConfirmTarget = {
   post: AdminPostRow
