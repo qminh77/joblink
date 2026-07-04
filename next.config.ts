@@ -11,7 +11,12 @@ const supabaseUrl = (() => {
   }
 })()
 
-const remotePatterns = []
+const remotePatterns: Array<{
+  protocol: "http" | "https"
+  hostname: string
+  port?: string
+  pathname?: string
+}> = []
 
 if (supabaseUrl) {
   remotePatterns.push({
