@@ -21,8 +21,6 @@ import {
   type MemberRegisterResult,
 } from "../services/registration.service"
 
-export type { CompanyRegisterResult, MemberRegisterResult }
-
 export async function registerCompanyAction(
   input: CompanyRegisterInput,
 ): Promise<CompanyRegisterResult> {
