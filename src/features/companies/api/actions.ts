@@ -1,33 +1,23 @@
 "use server"
 
 // SRS UC Trace - M03 Ho so cong ty:
-// UC-20 Cap nhat ho so cong ty; UC-21 Cap nhat hinh anh cong ty; UC-22 Trang thai dang tuyen dung.
-// UC-23 Gui lai yeu cau xac minh; UC-25 Theo doi/bo theo doi cong ty; UC-46 Doi trang thai tin tuyen dung.
+// UC-23 Gui lai yeu cau xac minh; UC-25 Theo doi/bo theo doi cong ty.
 // Flow: settings/company page -> company action -> company service/RPC -> company_profiles/follows.
 
 import { revalidatePath } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
-import { writeAuditLog } from "@/lib/audit"
 import { createClient } from "@/lib/supabase/server"
-import { rpcResult } from "@/lib/action/rpc"
 import { checkRateLimit } from "@/lib/action/rate-limit"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
 
-import {
-  createCompanyUserIdSchema,
-  createJobStatusUpdateSchema,
-} from "../schemas"
+import { createCompanyUserIdSchema } from "../schemas"
 import type {
   ResubmitVerificationResult,
   ToggleFollowResult,
-  UpdateStatusResult,
 } from "../types"
-import {
-  notifyCompanyFollowed,
-} from "../services/company-notifications"
-
-type StatusPayload = { noop: boolean; status: string; oldStatus?: string }
+import { toggleCompanyFollow } from "../services/company-follow.service"
+import { resubmitCompanyVerification } from "../services/company-verification.service"
 
 /**
  * Toggle follow/unfollow công ty. Idempotent — trả luôn count mới để client
@@ -46,57 +36,11 @@ export async function toggleFollowCompanyAction(
   await checkRateLimit(current.appUser.id, "follow", 20, 60) // 20 follows / 60s
   const supabase = await createClient()
 
-  const result = await rpcResult<{ isFollowing: boolean; followerCount: number }>(
-    supabase.rpc("toggle_follow_company", { p_company_user_id: parsed.data }),
-  )
+  const result = await toggleCompanyFollow(supabase, current, parsed.data)
 
   if (result.ok) {
     // Trang public server-rendered → revalidate cho SEO/OG khi refresh.
     revalidatePath(`/company/${parsed.data}`)
-    if (result.isFollowing) {
-      await notifyCompanyFollowed({ companyUserId: parsed.data, current })
-    }
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: result.isFollowing ? "company.follow" : "company.unfollow",
-      entityType: "follows",
-      entityId: parsed.data,
-    })
-  }
-  return result
-}
-
-export async function updateJobStatusAction(input: {
-  jobId: number
-  newStatus: string
-}): Promise<UpdateStatusResult> {
-  const te = await getTranslations("companies.jobActionErrors")
-  const parsed = createJobStatusUpdateSchema(te).safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? te("unknown") }
-  }
-
-  const current = await requireCurrentUser()
-  const supabase = await createClient()
-
-  const result = await rpcResult<StatusPayload>(
-    supabase.rpc("update_job_status", {
-      p_job_id: parsed.data.jobId,
-      p_new_status: parsed.data.newStatus,
-    }),
-  )
-
-  if (result.ok) {
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "company.job_status_update",
-      entityType: "jobs",
-      entityId: parsed.data.jobId,
-      newData: {
-        newStatus: parsed.data.newStatus,
-        oldStatus: result.oldStatus,
-      },
-    })
   }
   return result
 }
@@ -109,18 +53,9 @@ export async function resubmitCompanyVerificationAction(): Promise<ResubmitVerif
   const current = await requireCurrentUser()
   const supabase = await createClient()
 
-  const result = await rpcResult<{ status: "pending" }>(
-    supabase.rpc("resubmit_company_verification"),
-  )
+  const result = await resubmitCompanyVerification(supabase, current)
 
   if (result.ok) {
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "company.verification_resubmit",
-      entityType: "company_profiles",
-      entityId: current.appUser.id,
-      newData: { status: "pending" },
-    })
     revalidatePath("/settings")
   }
   return result

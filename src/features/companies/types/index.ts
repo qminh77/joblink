@@ -52,10 +52,6 @@ export type ToggleFollowResult =
   | { ok: true; isFollowing: boolean; followerCount: number }
   | { ok: false; error: string }
 
-export type UpdateStatusResult =
-  | { ok: true; noop: boolean; status: string; oldStatus?: string }
-  | { ok: false; error: string }
-
 export type ResubmitVerificationResult =
   | { ok: true; status: "pending" }
   | { ok: false; error: string }

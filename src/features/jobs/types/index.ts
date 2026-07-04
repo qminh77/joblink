@@ -112,6 +112,10 @@ export type UpdateJobInput = Omit<CreateJobInput, "status"> & { jobId: number }
 
 export type UpdateJobResult = CreateJobResult
 
+export type UpdateStatusResult =
+  | { ok: true; noop: boolean; status: string; oldStatus?: string }
+  | { ok: false; error: string }
+
 export type JobEditCore = {
   id: number
   title: string

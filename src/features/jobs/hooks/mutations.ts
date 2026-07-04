@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import {
   applyToJobAction,
   toggleSavedJobAction,
+  updateJobStatusAction,
   withdrawApplicationAction,
 } from "../api/actions"
 import type {
@@ -19,6 +20,7 @@ import type {
   JobsListPage,
   SavedJobsPage,
   ToggleSavedResult,
+  UpdateStatusResult,
   WithdrawResult,
 } from "../types"
 import { translateJobsError } from "./errors"
@@ -126,6 +128,32 @@ export function useWithdrawApplication() {
     },
     onSuccess: () => {
       toast.success(tu("withdrawSuccess"))
+      qc.invalidateQueries({ queryKey: ["jobs"] })
+    },
+    onError: (error) => {
+      toast.error(translateJobsError(te, error.message))
+    },
+  })
+}
+
+export function useUpdateJobStatus() {
+  const qc = useQueryClient()
+  const te = useTranslations("jobs.errors")
+  const ts = useTranslations("jobs.public")
+
+  return useMutation<
+    UpdateStatusResult,
+    Error,
+    { jobId: number; newStatus: string }
+  >({
+    mutationFn: async (input) => {
+      const result = await updateJobStatusAction(input)
+      if (!result.ok) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (result) => {
+      if (!result.ok || result.noop) return
+      toast.success(ts("statusUpdateSuccess"))
       qc.invalidateQueries({ queryKey: ["jobs"] })
     },
     onError: (error) => {

@@ -8,12 +8,8 @@ const FOLLOW_ERRORS = new Set([
   "unknown",
 ])
 
-const JOB_ACTION_ERRORS = new Set([
+const VERIFICATION_ERRORS = new Set([
   "unauthorized",
-  "invalidStatus",
-  "jobNotFound",
-  "invalidJob",
-  "noteTooLong",
   "notResubmittable",
   "companyNotFound",
   "notCompany",
@@ -29,11 +25,11 @@ export function translateFollowError(
   return raw
 }
 
-export function translateJobActionError(
+export function translateVerificationError(
   t: (key: string) => string,
   raw: string,
 ) {
   if (!raw) return t("unknown")
-  if (JOB_ACTION_ERRORS.has(raw)) return t(raw)
+  if (VERIFICATION_ERRORS.has(raw)) return t(raw)
   return raw
 }

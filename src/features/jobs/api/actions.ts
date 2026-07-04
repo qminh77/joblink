@@ -18,6 +18,7 @@ import {
   createApplySchema,
   createJobIdSchema,
   createJobSchema,
+  createJobStatusUpdateSchema,
   updateJobSchema,
 } from "../schemas"
 import {
@@ -26,6 +27,7 @@ import {
   logJobView,
   toggleSavedJob,
   updateJob,
+  updateJobStatus,
   withdrawApplication,
 } from "../services/jobs.service"
 import { ensureCompanyCanManageJobs } from "../services/job-management-policy"
@@ -36,6 +38,7 @@ import type {
   ToggleSavedResult,
   UpdateJobInput,
   UpdateJobResult,
+  UpdateStatusResult,
   WithdrawResult,
 } from "../types"
 
@@ -98,6 +101,27 @@ export async function updateJobAction(
       entityId: parsed.data.jobId,
       newData: { title: parsed.data.title },
     })
+    revalidatePath("/jobs")
+    revalidatePath(`/jobs/${parsed.data.jobId}`)
+  }
+  return result
+}
+
+export async function updateJobStatusAction(input: {
+  jobId: number
+  newStatus: string
+}): Promise<UpdateStatusResult> {
+  const te = await getTranslations("jobs.errors")
+  const parsed = createJobStatusUpdateSchema(te).safeParse(input)
+  if (!parsed.success) {
+    return validationError(te, parsed.error.issues[0]?.message)
+  }
+
+  const current = await requireCurrentUser()
+  const supabase = await createClient()
+  const result = await updateJobStatus(supabase, current, parsed.data)
+
+  if (result.ok) {
     revalidatePath("/jobs")
     revalidatePath(`/jobs/${parsed.data.jobId}`)
   }

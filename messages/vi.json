@@ -658,24 +658,12 @@
       "resubmit": "Gửi lại hồ sơ",
       "resubmitSuccess": "Đã gửi lại hồ sơ, vui lòng chờ duyệt"
     },
-    "jobActionErrors": {
+    "verificationErrors": {
       "unauthorized": "Vui lòng đăng nhập lại",
-      "invalidStatus": "Trạng thái không hợp lệ",
-      "applicationNotFound": "Không tìm thấy đơn ứng tuyển",
-      "notOwner": "Bạn không có quyền với đơn này",
-      "cannotWithdraw": "Chỉ ứng viên mới có thể rút đơn",
-      "invalidApplication": "Đơn không hợp lệ",
-      "invalidJob": "Việc làm không hợp lệ",
-      "jobNotFound": "Không tìm thấy việc làm",
-      "jobRemoved": "Việc làm đã bị xoá",
-      "noteTooLong": "Ghi chú quá dài",
       "notResubmittable": "Hồ sơ không ở trạng thái có thể gửi lại",
       "companyNotFound": "Không tìm thấy công ty",
       "notCompany": "Tài khoản không phải công ty",
       "unknown": "Đã có lỗi xảy ra, vui lòng thử lại"
-    },
-    "jobManagement": {
-      "jobStatusUpdated": "Đã cập nhật trạng thái tin tuyển dụng"
     }
   },
   "jobs": {
@@ -726,7 +714,8 @@
       "savedAt": "Đã lưu {time}",
       "deadlineLabel": "Hạn nộp {date}",
       "report": "Báo cáo tin tuyển dụng",
-      "manageJob": "Quản lý tin"
+      "manageJob": "Quản lý tin",
+      "statusUpdateSuccess": "Đã cập nhật trạng thái tin tuyển dụng"
     },
     "post": {
       "heading": "Đăng tin tuyển dụng",

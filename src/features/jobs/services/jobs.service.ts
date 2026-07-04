@@ -2,6 +2,7 @@ import "server-only"
 
 import type { CurrentUser } from "@/features/auth/types"
 import { rpcResult } from "@/lib/action/rpc"
+import { writeAuditLog } from "@/lib/audit"
 import type { createClient } from "@/lib/supabase/server"
 
 import { getApplicantCvForApplication } from "../data/jobs.repo"
@@ -12,6 +13,7 @@ import type {
   ToggleSavedResult,
   UpdateJobInput,
   UpdateJobResult,
+  UpdateStatusResult,
   WithdrawResult,
 } from "../types"
 import {
@@ -20,6 +22,8 @@ import {
 } from "./application-notifications"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
+
+type StatusPayload = { noop: boolean; status: string; oldStatus?: string }
 
 export type ApplyToJobInput = {
   jobId: number
@@ -74,6 +78,34 @@ export function updateJob(
       p_skills: input.skills ?? null,
     }),
   )
+}
+
+export async function updateJobStatus(
+  supabase: Supabase,
+  current: CurrentUser,
+  input: { jobId: number; newStatus: string },
+): Promise<UpdateStatusResult> {
+  const result = await rpcResult<StatusPayload>(
+    supabase.rpc("update_job_status", {
+      p_job_id: input.jobId,
+      p_new_status: input.newStatus,
+    }),
+  )
+
+  if (!result.ok) return result
+
+  await writeAuditLog({
+    actorId: current.appUser.id,
+    action: "company.job_status_update",
+    entityType: "jobs",
+    entityId: input.jobId,
+    newData: {
+      newStatus: input.newStatus,
+      oldStatus: result.oldStatus,
+    },
+  })
+
+  return result
 }
 
 export async function applyToJob(

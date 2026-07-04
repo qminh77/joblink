@@ -1,21 +1,15 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import {
-  resubmitCompanyVerificationAction,
-  updateJobStatusAction,
-} from "../api/actions"
-import type {
-  ResubmitVerificationResult,
-  UpdateStatusResult,
-} from "../types"
-import { translateJobActionError } from "./errors"
+import { resubmitCompanyVerificationAction } from "../api/actions"
+import type { ResubmitVerificationResult } from "../types"
+import { translateVerificationError } from "./errors"
 
 export function useResubmitVerification() {
-  const te = useTranslations("companies.jobActionErrors")
+  const te = useTranslations("companies.verificationErrors")
   const ts = useTranslations("companies.verification")
 
   return useMutation<ResubmitVerificationResult, Error, void>({
@@ -28,33 +22,7 @@ export function useResubmitVerification() {
       toast.success(ts("resubmitSuccess"))
     },
     onError: (error) => {
-      toast.error(translateJobActionError(te, error.message))
-    },
-  })
-}
-
-export function useUpdateJobStatus() {
-  const qc = useQueryClient()
-  const te = useTranslations("companies.jobActionErrors")
-  const ts = useTranslations("companies.jobManagement")
-
-  return useMutation<
-    UpdateStatusResult,
-    Error,
-    { jobId: number; newStatus: string }
-  >({
-    mutationFn: async (input) => {
-      const result = await updateJobStatusAction(input)
-      if (!result.ok) throw new Error(result.error)
-      return result
-    },
-    onSuccess: (result) => {
-      if (!result.ok || result.noop) return
-      toast.success(ts("jobStatusUpdated"))
-      qc.invalidateQueries({ queryKey: ["companies", "jobs"] })
-    },
-    onError: (error) => {
-      toast.error(translateJobActionError(te, error.message))
+      toast.error(translateVerificationError(te, error.message))
     },
   })
 }

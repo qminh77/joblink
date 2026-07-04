@@ -658,24 +658,12 @@
       "resubmit": "Resubmit profile",
       "resubmitSuccess": "Profile resubmitted, awaiting review"
     },
-    "jobActionErrors": {
+    "verificationErrors": {
       "unauthorized": "Please sign in again",
-      "invalidStatus": "Invalid status",
-      "applicationNotFound": "Application not found",
-      "notOwner": "You don't have permission for this application",
-      "cannotWithdraw": "Only the applicant can withdraw",
-      "invalidApplication": "Invalid application",
-      "invalidJob": "Invalid job",
-      "jobNotFound": "Job not found",
-      "jobRemoved": "Job has been removed",
-      "noteTooLong": "Note is too long",
       "notResubmittable": "Profile is not in a resubmittable state",
       "companyNotFound": "Company not found",
       "notCompany": "Account is not a company",
       "unknown": "Something went wrong, please try again"
-    },
-    "jobManagement": {
-      "jobStatusUpdated": "Job status updated"
     }
   },
   "jobs": {
@@ -726,7 +714,8 @@
       "savedAt": "Saved {time}",
       "deadlineLabel": "Apply by {date}",
       "report": "Report job",
-      "manageJob": "Manage job"
+      "manageJob": "Manage job",
+      "statusUpdateSuccess": "Job status updated"
     },
     "post": {
       "heading": "Post a job",
