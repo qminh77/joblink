@@ -36,6 +36,7 @@ export function useMessagingOverview(
     enabled: options?.enabled ?? true,
     initialData,
     staleTime: options?.staleTime ?? 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -45,6 +46,7 @@ export function useUnreadConversationsCount(initialData?: number) {
     queryFn: getUnreadConversationsCountAction,
     initialData,
     staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -69,5 +71,6 @@ export function useConversationMessages(
     initialData: options?.initialData,
     placeholderData: options?.placeholderData,
     staleTime: 10_000,
+    refetchOnWindowFocus: true,
   })
 }
