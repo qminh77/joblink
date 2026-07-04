@@ -3738,6 +3738,21 @@ BEGIN
         SELECT post_id AS id, 'post' AS kind, created_at
           FROM public.user_feeds
          WHERE user_id = v_me AND (p_posts_cursor IS NULL OR created_at < p_posts_cursor)
+        UNION
+        SELECT p.id, 'post' AS kind, p.created_at
+          FROM public.posts p
+         WHERE p.author_id <> v_me
+           AND p.status = 'active'
+           AND p.deleted_at IS NULL
+           AND p.visibility = 'public'
+           AND (p_posts_cursor IS NULL OR p.created_at < p_posts_cursor)
+           AND EXISTS (
+             SELECT 1
+               FROM public.follows f
+              WHERE f.follower_id = v_me
+                AND f.followable_id = p.author_id
+                AND f.followable_type IN ('user', 'company')
+           )
         UNION ALL
         SELECT id, 'job' AS kind, created_at
           FROM public.jobs
