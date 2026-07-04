@@ -28,7 +28,7 @@ type RealtimeOptions = {
   showToast?: boolean
 }
 
-type RealtimeMessageRow = {
+export type RealtimeMessageRow = {
   id: number
   conversation_id: number
   sender_id: number
@@ -49,7 +49,7 @@ function rowToMessage(row: RealtimeMessageRow): MessageItem {
   }
 }
 
-function applyMessageInsert(
+export function applyMessageInsert(
   qc: QueryClient,
   row: RealtimeMessageRow,
   currentUserId: number,
@@ -63,10 +63,21 @@ function applyMessageInsert(
 
   const existing = qc.getQueryData<ConversationMessagesPage>(key)
   if (existing && !existing.items.some((item) => item.id === message.id)) {
-    const hasOptimistic = existing.items.some(
-      (item) => item.id < 0 && item.senderId === message.senderId && item.content === message.content
+    const optimisticIndex = existing.items.findIndex(
+      (item) =>
+        item.id < 0 &&
+        item.senderId === message.senderId &&
+        item.content === message.content
     )
-    if (!hasOptimistic) {
+
+    if (optimisticIndex >= 0) {
+      const newItems = [...existing.items]
+      newItems[optimisticIndex] = message
+      qc.setQueryData<ConversationMessagesPage>(key, {
+        ...existing,
+        items: newItems,
+      })
+    } else {
       qc.setQueryData<ConversationMessagesPage>(key, {
         ...existing,
         items: [...existing.items, message],

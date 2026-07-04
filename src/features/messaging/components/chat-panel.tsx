@@ -25,7 +25,11 @@ import {
   useConversationMessages,
   useMarkConversationRead,
   useSendMessage,
+  applyMessageInsert,
 } from "../hooks"
+import type { RealtimeMessageRow } from "../hooks"
+import { useQueryClient } from "@tanstack/react-query"
+import { createClient as createBrowserClient } from "@/lib/supabase/client"
 import type { ConversationItem } from "../types"
 
 type Props = {
@@ -55,6 +59,22 @@ export function ChatPanel({ conversation, currentUserId, onBack }: Props) {
 
   const send = useSendMessage(currentUserId)
   const markRead = useMarkConversationRead()
+  const qc = useQueryClient()
+
+  // Subscribe to conversation channel for 0ms broadcast reception
+  useEffect(() => {
+    if (conversationId == null) return
+    const supabase = createBrowserClient()
+    const channel = supabase.channel(`conversation-${conversationId}`)
+    channel
+      .on("broadcast", { event: "new_message" }, (payload) => {
+        applyMessageInsert(qc, payload.payload as RealtimeMessageRow, currentUserId)
+      })
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [conversationId, currentUserId, qc])
 
   const [draft, setDraft] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)

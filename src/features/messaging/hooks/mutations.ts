@@ -60,6 +60,24 @@ export function useSendMessage(currentUserId: number) {
           ? { ...prev, items: [...prev.items, optimistic] }
           : { items: [optimistic], hasMore: false, otherUserId: null },
       )
+
+      // Broadcast immediately to the conversation channel for 0ms latency
+      const supabase = createClient()
+      const channel = supabase.channel(`conversation-${conversationId}`)
+      channel.send({
+        type: "broadcast",
+        event: "new_message",
+        payload: {
+          id: tempId,
+          conversation_id: conversationId,
+          sender_id: currentUserId,
+          content,
+          media: null,
+          read_at: null,
+          created_at: optimistic.createdAt,
+        },
+      })
+
       return { snapshot, tempId }
     },
     onError: (error, { conversationId }, context) => {
@@ -86,42 +104,9 @@ export function useSendMessage(currentUserId: number) {
         return { ...prev, items: replaced }
       })
 
-      broadcastNewMessage(recipientId, conversationId, currentUserId, message)
       updateSenderOverview(qc, conversationId, currentUserId, message)
     },
     onSettled: () => invalidateMessaging(qc),
-  })
-}
-
-function broadcastNewMessage(
-  recipientId: number,
-  conversationId: number,
-  currentUserId: number,
-  message: MessageItem,
-) {
-  const supabase = createClient()
-  const channel = supabase.channel(`messaging-${recipientId}`)
-  
-  channel.subscribe((status) => {
-    if (status === "SUBSCRIBED") {
-      channel
-        .send({
-          type: "broadcast",
-          event: "new_message",
-          payload: {
-            id: message.id,
-            conversation_id: conversationId,
-            sender_id: currentUserId,
-            content: message.content,
-            media: message.media,
-            read_at: message.readAt,
-            created_at: message.createdAt,
-          },
-        })
-        .finally(() => {
-          supabase.removeChannel(channel)
-        })
-    }
   })
 }
 
