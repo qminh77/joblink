@@ -1,6 +1,6 @@
 "use client"
 
-import { addSkillAction, removeSkillAction } from "../api/actions"
+import { addSkillAction, removeSkillAction } from "../api/skill-actions"
 import { useActionMutation, wrapAction } from "./shared"
 
 export function useAddSkill() {

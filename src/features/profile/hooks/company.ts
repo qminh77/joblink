@@ -1,6 +1,6 @@
 "use client"
 
-import { updateCompanyProfileAction } from "../api/actions"
+import { updateCompanyProfileAction } from "../api/company-actions"
 import type { CompanyProfileInput } from "../schemas"
 import { useActionMutation, wrapAction } from "./shared"
 

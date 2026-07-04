@@ -7,11 +7,8 @@ import "server-only"
 
 import { getCurrentUser } from "@/features/auth/api/auth-server"
 import { createClient } from "@/lib/supabase/server"
-import type { ProvinceRow } from "@/types/database"
 
 import {
-  getActiveProvinces,
-  getActiveWardsByProvince,
   getOwnCompanyProfile,
   getOwnMemberProfile,
   getProfileEditOverview,
@@ -25,16 +22,6 @@ import type {
 } from "../types"
 
 export type { ProfileEditOverview } from "../types"
-
-export async function loadProvinces(): Promise<ProvinceRow[]> {
-  const supabase = await createClient()
-  return getActiveProvinces(supabase)
-}
-
-export async function loadWardsByProvince(provinceId: number) {
-  const supabase = await createClient()
-  return getActiveWardsByProvince(supabase, provinceId)
-}
 
 export async function loadProfileById(
   targetUserId: number,

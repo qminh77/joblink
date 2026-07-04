@@ -11,17 +11,11 @@ import type {
   MemberProfileRow,
   ProvinceRow,
   SkillRow,
-  WardRow,
 } from "@/types/database"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
 type LocationRef = { id: number; name: string } | null
-
-export type WardLookupRow = Pick<
-  WardRow,
-  "id" | "province_id" | "code" | "name" | "name_en" | "sort_order" | "is_active"
->
 
 export type MemberProfileWithLocation = MemberProfileRow & {
   province: LocationRef
@@ -75,40 +69,6 @@ const COMPANY_PROFILE_SELECT = `
   province:provinces(id, name),
   ward:wards(id, name)
 `
-
-export async function selectActiveProvinces(
-  supabase: Supabase,
-): Promise<ProvinceRow[]> {
-  const { data } = await supabase
-    .from("provinces")
-    .select(
-      "id, code, name, name_en, sort_order, is_active, created_at, updated_at, deleted_at",
-    )
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true })
-
-  return (data ?? []) as ProvinceRow[]
-}
-
-export async function selectActiveWardsByProvince(
-  supabase: Supabase,
-  provinceId: number,
-): Promise<WardLookupRow[]> {
-  const { data } = await supabase
-    .from("wards")
-    .select(
-      "id, province_id, code, name, name_en, sort_order, is_active",
-    )
-    .eq("province_id", provinceId)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true })
-
-  return (data ?? []) as WardLookupRow[]
-}
 
 export function fetchProfileDetailRpc(
   supabase: Supabase,

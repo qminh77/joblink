@@ -1,8 +1,8 @@
 import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
-import { sendMail } from "@/features/system-settings/api/smtp"
-import { loadPublicAuthSettings } from "@/features/system-settings/api/public-settings"
+import { loadPublicAuthSettings } from "@/features/settings/services/public-settings.service"
+import { sendMail } from "@/features/settings/services/smtp.service"
 
 import { getRequireEmailVerificationSetting } from "../data/auth.repo"
 

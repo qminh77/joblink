@@ -2,10 +2,10 @@ import { getTranslations } from "next-intl/server"
 
 import { getAdminEntryHref } from "@/features/admin/lib/admin-navigation"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { loadProvinces } from "@/features/locations/api/queries"
 import {
   loadOwnCompanyProfile,
   loadOwnMemberProfile,
-  loadProvinces,
 } from "@/features/profile/api/queries"
 import type { SessionUserSummary } from "@/features/auth/types"
 import { SettingsTabs } from "@/features/settings/components/settings-tabs"

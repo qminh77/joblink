@@ -1,6 +1,6 @@
 "use client"
 
-import { updateMemberProfileAction } from "../api/actions"
+import { updateMemberProfileAction } from "../api/member-actions"
 import type { MemberProfileInput } from "../schemas"
 import { useActionMutation, wrapAction } from "./shared"
 

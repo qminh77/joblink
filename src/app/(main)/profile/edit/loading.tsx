@@ -1,4 +1,4 @@
-import { ProfileEditSkeleton } from "@/components/common/page-skeleton"
+import { ProfileEditSkeleton } from "@/features/profile/components/profile-edit-skeleton"
 
 export default function EditProfileLoading() {
   return <ProfileEditSkeleton />

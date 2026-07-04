@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
-import { logProfileViewAction } from "../api/actions"
+import { logProfileViewAction } from "../api/view-actions"
 
 export function ProfileViewLogger({ targetUserId }: { targetUserId: number }) {
   const sent = useRef(false)

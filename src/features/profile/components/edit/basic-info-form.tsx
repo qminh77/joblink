@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { LocationSelect } from "@/components/common/location-select"
+import { LocationSelect } from "@/features/locations/components/location-select"
 import { PROFILE_VISIBILITIES } from "@/features/profile/lib/constants"
 import {
   createMemberProfileSchema,

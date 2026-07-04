@@ -1,9 +1,10 @@
+import { loadProvinces } from "@/features/locations/api/queries"
+
 import {
   loadJobTypes,
   loadJobsList,
   loadWorkModes,
 } from "../api/queries"
-import { loadProvinces } from "@/features/profile/api/queries"
 
 import { JobsListClient } from "./jobs-list-client"
 

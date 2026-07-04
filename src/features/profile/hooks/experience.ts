@@ -4,7 +4,7 @@ import {
   addExperienceAction,
   deleteExperienceAction,
   updateExperienceAction,
-} from "../api/actions"
+} from "../api/experience-actions"
 import type { MemberExperienceInput } from "../schemas"
 import { useActionMutation, wrapAction } from "./shared"
 

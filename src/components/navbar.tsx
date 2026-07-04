@@ -17,9 +17,6 @@ import {
 
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
-import { MessageDropdown } from "@/components/message-dropdown"
-import { NotificationDropdown } from "@/components/notification-dropdown"
-import { ProfileDropdown } from "@/components/profile-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,6 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
+import { MessageDropdown } from "@/features/messaging/components/message-dropdown"
+import { NotificationDropdown } from "@/features/notifications/components/notification-dropdown"
+import { ProfileDropdown } from "@/features/profile/components/profile-dropdown"
 import { HeaderSearch } from "@/features/search/components/header-search"
 
 const NAV_ITEMS = [

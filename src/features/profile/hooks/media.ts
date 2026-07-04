@@ -16,10 +16,8 @@ import {
   USER_POSTS_QUERY_KEY,
 } from "@/features/posts/hooks"
 
-import {
-  updateCompanyMediaAction,
-  updateMemberMediaAction,
-} from "../api/actions"
+import { updateCompanyMediaAction } from "../api/company-actions"
+import { updateMemberMediaAction } from "../api/member-actions"
 import {
   PROFILE_IMAGE_ALLOWED_TYPES,
   PROFILE_IMAGE_MAX_BYTES,

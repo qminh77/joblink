@@ -7,7 +7,6 @@ import type {
   MemberEducationRow,
   MemberExperienceRow,
   MemberProfileRow,
-  ProvinceRow,
   SkillRow,
 } from "@/types/database"
 
@@ -16,8 +15,6 @@ import {
   countViewerFollow,
   fetchProfileDetailRpc,
   fetchProfileEditOverviewRpc,
-  selectActiveProvinces,
-  selectActiveWardsByProvince,
   selectCompanyProfileWithLocation,
   selectMemberEducations,
   selectMemberExperiences,
@@ -26,7 +23,6 @@ import {
   type CurrentProfileUser,
   type ProfileDetailRpc,
   type ProfileEditOverviewRpc,
-  type WardLookupRow,
 } from "../data/profile-read.repo"
 import type {
   CompanyProfileDetail,
@@ -36,22 +32,6 @@ import type {
 } from "../types"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
-
-export function getActiveProvinces(
-  supabase: Supabase,
-): Promise<ProvinceRow[]> {
-  return selectActiveProvinces(supabase)
-}
-
-export function getActiveWardsByProvince(
-  supabase: Supabase,
-  provinceId: number,
-): Promise<WardLookupRow[]> {
-  if (!Number.isInteger(provinceId) || provinceId <= 0) {
-    return Promise.resolve([])
-  }
-  return selectActiveWardsByProvince(supabase, provinceId)
-}
 
 export async function getProfilePageData(
   supabase: Supabase,

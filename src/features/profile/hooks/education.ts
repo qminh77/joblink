@@ -4,7 +4,7 @@ import {
   addEducationAction,
   deleteEducationAction,
   updateEducationAction,
-} from "../api/actions"
+} from "../api/education-actions"
 import type { MemberEducationInput } from "../schemas"
 import { useActionMutation, wrapAction } from "./shared"
 

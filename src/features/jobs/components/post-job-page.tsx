@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
-import { loadProvinces } from "@/features/profile/api/queries"
+import { loadProvinces } from "@/features/locations/api/queries"
 
 import { loadJobForEdit, loadJobTypes, loadWorkModes } from "../api/queries"
 

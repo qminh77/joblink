@@ -222,8 +222,15 @@ export type CompanyDashboardOverview = {
     activeJobs: number
     draftJobs: number
     closedJobs: number
+    expiredJobs: number
     totalApplications: number
     submittedApplications: number
+    withdrawnApplications: number
+    closedApplications: number
+  }
+  attention: {
+    draftJobs: CompanyJobItem[]
+    expiringJobs: CompanyJobItem[]
   }
   recentJobs: CompanyJobItem[]
   recentApplications: CompanyApplicationItem[]

@@ -4,17 +4,21 @@ import type { createClient } from "@/lib/supabase/server"
 import type { JobApplicationRow, JobRow } from "@/types/database"
 
 import {
-  countApplicationsForJobs,
+  countCompanyApplications,
+  countCompanyJobRows,
   listApplicantProfiles,
   listCompanyApplicationRows,
   listCompanyJobApplicationCounts,
   listCompanyJobRows,
+  listExpiringCompanyJobRows,
   listJobTypeNames,
   listProvinceNames,
+  listRecentCompanyApplicationRows,
   listWardNames,
   listWorkModeNames,
   type CompanyApplicationFilters,
   type CompanyApplicationRecord,
+  type CompanyApplicationWithJobRecord,
   type CompanyJobFilters,
   type CompanyJobRecord,
 } from "../data/company-management.repo"
@@ -115,6 +119,35 @@ async function hydrateApplications(
   })
 }
 
+async function hydrateRecentApplications(
+  rows: CompanyApplicationWithJobRecord[],
+  supabase: Supabase,
+): Promise<CompanyApplicationItem[]> {
+  const profiles = await listApplicantProfiles(
+    supabase,
+    uniqueNumbers(rows.map((row) => row.applicant_id)),
+  )
+  const profileMap = mapByUserId(profiles)
+
+  return rows.map((row) => {
+    const profile = profileMap.get(row.applicant_id)
+    return {
+      applicationId: row.id,
+      jobId: row.job_id,
+      jobTitle: row.jobs?.title ?? "Tin tuyển dụng",
+      applicantId: row.applicant_id,
+      applicantName: profile?.full_name ?? "Ứng viên",
+      applicantAvatarUrl: profile?.avatar_url ?? null,
+      applicantHeadline: profile?.headline ?? null,
+      status: applicationStatusValue(row.status),
+      appliedAt: row.applied_at,
+      updatedAt: row.updated_at,
+      coverLetter: row.cover_letter,
+      resumeAvailable: Boolean(row.resume_url),
+    }
+  })
+}
+
 export async function loadCompanyJobsPage(
   supabase: Supabase,
   companyUserId: number,
@@ -162,31 +195,57 @@ export async function loadCompanyDashboardOverview(
   supabase: Supabase,
   companyUserId: number,
 ): Promise<CompanyDashboardOverview> {
-  const { rows: allJobs, count: totalJobs } = await listCompanyJobRows(
-    supabase,
-    companyUserId,
-    { limit: 200 },
-  )
-  const jobIds = allJobs.map((job) => job.id)
-  const [totalApplications, submittedApplications] = await Promise.all([
-    countApplicationsForJobs(supabase, jobIds),
-    countApplicationsForJobs(supabase, jobIds, "submitted"),
+  const [
+    totalJobs,
+    activeJobs,
+    draftJobs,
+    closedJobs,
+    expiredJobs,
+    totalApplications,
+    submittedApplications,
+    withdrawnApplications,
+    closedApplications,
+    recentJobs,
+    draftPreview,
+    expiringPreview,
+    recentApplications,
+  ] = await Promise.all([
+    countCompanyJobRows(supabase, companyUserId),
+    countCompanyJobRows(supabase, companyUserId, "active"),
+    countCompanyJobRows(supabase, companyUserId, "draft"),
+    countCompanyJobRows(supabase, companyUserId, "closed"),
+    countCompanyJobRows(supabase, companyUserId, "expired"),
+    countCompanyApplications(supabase, companyUserId),
+    countCompanyApplications(supabase, companyUserId, "submitted"),
+    countCompanyApplications(supabase, companyUserId, "withdrawn"),
+    countCompanyApplications(supabase, companyUserId, "closed"),
+    listCompanyJobRows(supabase, companyUserId, { limit: 5 }),
+    listCompanyJobRows(supabase, companyUserId, { status: "draft", limit: 3 }),
+    listExpiringCompanyJobRows(supabase, companyUserId, 3),
+    listRecentCompanyApplicationRows(supabase, companyUserId, 5),
   ])
-  const applications = await loadCompanyApplicationsPage(supabase, companyUserId, {
-    limit: 5,
-  })
 
   return {
     stats: {
       totalJobs,
-      activeJobs: allJobs.filter((job) => job.status === "active").length,
-      draftJobs: allJobs.filter((job) => job.status === "draft").length,
-      closedJobs: allJobs.filter((job) => job.status === "closed").length,
+      activeJobs,
+      draftJobs,
+      closedJobs,
+      expiredJobs,
       totalApplications,
       submittedApplications,
+      withdrawnApplications,
+      closedApplications,
     },
-    recentJobs: await hydrateCompanyJobs(supabase, allJobs.slice(0, 5)),
-    recentApplications: applications.items,
+    attention: {
+      draftJobs: await hydrateCompanyJobs(supabase, draftPreview.rows),
+      expiringJobs: await hydrateCompanyJobs(supabase, expiringPreview.rows),
+    },
+    recentJobs: await hydrateCompanyJobs(supabase, recentJobs.rows),
+    recentApplications: await hydrateRecentApplications(
+      recentApplications.rows,
+      supabase,
+    ),
   }
 }
 

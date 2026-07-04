@@ -8,7 +8,7 @@ import { SearchSelect, type SearchOption } from "@/components/ui/search-select"
 import {
   fetchWardsAction,
   type WardOption,
-} from "@/features/profile/api/location-actions"
+} from "@/features/locations/api/location-actions"
 import type { ProvinceRow } from "@/types/database"
 
 export type LocationValue = {

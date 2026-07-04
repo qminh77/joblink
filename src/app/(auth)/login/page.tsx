@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server"
 
 import { AuthLayout } from "@/features/auth/components/auth-layout"
 import { LoginForm } from "@/features/auth/components/login-form"
-import { loadPublicAuthSettings } from "@/features/system-settings/api/public-settings"
+import { loadPublicAuthSettings } from "@/features/settings/services/public-settings.service"
 
 export const dynamic = "force-dynamic"
 
