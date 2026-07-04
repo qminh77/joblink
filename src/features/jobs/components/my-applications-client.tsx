@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
@@ -59,66 +61,84 @@ export function MyApplicationsClient({
       className="space-y-4"
     >
       {items.map((app) => (
-          <motion.div key={app.applicationId} variants={fadeUp}>
-            <Card className="rounded-2xl bg-card border-border/40 p-5 space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <Avatar className="w-11 h-11 rounded-lg shrink-0">
-                    {app.companyLogoUrl ? (
-                      <AvatarImage src={app.companyLogoUrl} alt={app.companyName} />
-                    ) : null}
-                    <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
-                      <Building2 className="w-5 h-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <Link
-                      href={`/jobs/${app.jobId}`}
-                      className="font-semibold text-foreground hover:text-primary line-clamp-1"
-                    >
-                      {app.jobTitle}
-                    </Link>
-                    <Link
-                      href={profileHref(app.companyUserId, "company")}
-                      className="text-sm text-muted-foreground hover:text-primary"
-                    >
-                      {app.companyName}
-                    </Link>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {t("appliedOn", {
-                        date: format.dateTime(new Date(app.appliedAt), {
-                          dateStyle: "medium",
-                        }),
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 ${STATUS_TONE[app.status]}`}
-                >
-                  {tStatus(app.status)}
-                </span>
-              </div>
-
-              {WITHDRAWABLE.has(app.status) ? (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    disabled={withdraw.isPending}
-                    onClick={() =>
-                      withdraw.mutate(app.applicationId, {
-                        onSuccess: () => router.refresh(),
-                      })
-                    }
-                    className="text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {t("withdraw")}
-                  </button>
-                </div>
-              ) : null}
-            </Card>
-          </motion.div>
+        <ApplicationCard key={app.applicationId} app={app} withdraw={withdraw} />
       ))}
+    </motion.div>
+  )
+}
+
+function ApplicationCard({ app, withdraw }: any) {
+  const t = useTranslations("jobs.applications")
+  const tStatus = useTranslations("notifications.appStatus")
+  const format = useFormatter()
+  const router = useRouter()
+
+  const [optimisticStatus, addOptimisticStatus] = React.useOptimistic(
+    app.status,
+    (_state, nextStatus: ApplicationStatusValue) => nextStatus
+  )
+
+  return (
+    <motion.div variants={fadeUp}>
+      <Card className="rounded-2xl bg-card border-border/40 p-5 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <Avatar className="w-11 h-11 rounded-lg shrink-0">
+              {app.companyLogoUrl ? (
+                <AvatarImage src={app.companyLogoUrl} alt={app.companyName} />
+              ) : null}
+              <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
+                <Building2 className="w-5 h-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <Link
+                href={`/jobs/${app.jobId}`}
+                className="font-semibold text-foreground hover:text-primary line-clamp-1"
+              >
+                {app.jobTitle}
+              </Link>
+              <Link
+                href={profileHref(app.companyUserId, "company")}
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                {app.companyName}
+              </Link>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {t("appliedOn", {
+                  date: format.dateTime(new Date(app.appliedAt), {
+                    dateStyle: "medium",
+                  }),
+                })}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 ${STATUS_TONE[optimisticStatus]}`}
+          >
+            {tStatus(optimisticStatus)}
+          </span>
+        </div>
+
+        {WITHDRAWABLE.has(optimisticStatus) ? (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                React.startTransition(async () => {
+                  addOptimisticStatus("withdrawn")
+                  await withdraw.mutateAsync(app.applicationId).then(() => {
+                    router.refresh()
+                  }).catch(() => {})
+                })
+              }}
+              className="text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-3 h-8 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {t("withdraw")}
+            </button>
+          </div>
+        ) : null}
+      </Card>
     </motion.div>
   )
 }

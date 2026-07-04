@@ -1,5 +1,7 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
+
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Check, MapPin, UserPlus, Users, X } from "lucide-react"
@@ -21,7 +23,10 @@ function IncomingCard({ item }: { item: InvitationItem }) {
   const t = useTranslations("network.invitations")
   const accept = useAcceptConnectionRequest()
   const reject = useRejectConnectionRequest()
-  const isBusy = accept.isPending || reject.isPending
+
+  const [hidden, setHidden] = useOptimistic(false, () => true)
+
+  if (hidden) return null
 
   return (
     <Card className="p-4">
@@ -57,8 +62,12 @@ function IncomingCard({ item }: { item: InvitationItem }) {
             size="sm"
             variant="ghost"
             className="hover:bg-destructive/10 hover:text-destructive"
-            disabled={isBusy}
-            onClick={() => reject.mutate(item.connectionId)}
+            onClick={() => {
+              startTransition(async () => {
+                setHidden(true)
+                await reject.mutateAsync(item.connectionId).catch(() => {})
+              })
+            }}
           >
             <X /> {t("reject")}
           </Button>
@@ -66,8 +75,12 @@ function IncomingCard({ item }: { item: InvitationItem }) {
             size="sm"
             variant="ghost"
             className="text-primary hover:bg-primary/10 hover:text-primary"
-            disabled={isBusy}
-            onClick={() => accept.mutate(item.connectionId)}
+            onClick={() => {
+              startTransition(async () => {
+                setHidden(true)
+                await accept.mutateAsync(item.connectionId).catch(() => {})
+              })
+            }}
           >
             <Check /> {t("accept")}
           </Button>

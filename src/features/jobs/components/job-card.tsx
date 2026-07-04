@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useOptimistic, startTransition } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import {
@@ -28,10 +28,12 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
   const t = useTranslations("jobs.public")
   const formatRel = useRelativeTimeFormatter()
 
-  const [saved, setSaved] = useState(job.viewerSaved)
-  const toggle = useToggleSavedJob({
-    onRollback: () => setSaved((v) => !v),
-  })
+  const [optimisticSaved, addOptimisticSaved] = useOptimistic(
+    job.viewerSaved,
+    (_state, nextSaved: boolean) => nextSaved
+  )
+
+  const toggle = useToggleSavedJob()
 
   const salary = formatSalary(job)
   const location = formatLocation(job)
@@ -39,12 +41,10 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
   const handleToggleSave = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (toggle.isPending) return
-    setSaved((v) => !v)
-    toggle.mutate(job.id, {
-      onSuccess: (result) => {
-        if (result.ok) setSaved(result.saved)
-      },
+    const nextSaved = !optimisticSaved
+    startTransition(async () => {
+      addOptimisticSaved(nextSaved)
+      await toggle.mutateAsync(job.id).catch(() => {})
     })
   }
 
@@ -88,14 +88,13 @@ export function JobCard({ job, showCompanyLink = true }: Props) {
             <button
               type="button"
               onClick={handleToggleSave}
-              disabled={toggle.isPending}
               className={`p-1.5 rounded-full hover:bg-muted/60 transition-colors ${
-                saved ? "text-primary" : "text-muted-foreground"
+                optimisticSaved ? "text-primary" : "text-muted-foreground"
               }`}
-              aria-label={saved ? t("unsave") : t("save")}
+              aria-label={optimisticSaved ? t("unsave") : t("save")}
             >
               <Bookmark
-                className={`w-4 h-4 ${saved ? "fill-current" : ""}`}
+                className={`w-4 h-4 ${optimisticSaved ? "fill-current" : ""}`}
               />
             </button>
           </div>

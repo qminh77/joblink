@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { getTranslations } from "next-intl/server"
 
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
@@ -56,12 +57,14 @@ export async function sendMessageAction(
   const result = await sendMessage(supabase, current, parsed.data)
 
   if (result.ok) {
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "messaging.send",
-      entityType: "messages",
-      entityId: parsed.data.conversationId,
-      newData: { recipientId: result.recipientId },
+    after(async () => {
+      await writeAuditLog({
+        actorId: current.appUser.id,
+        action: "messaging.send",
+        entityType: "messages",
+        entityId: parsed.data.conversationId,
+        newData: { recipientId: result.recipientId },
+      })
     })
   }
   return result

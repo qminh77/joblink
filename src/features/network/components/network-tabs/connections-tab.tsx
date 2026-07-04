@@ -1,5 +1,7 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
+
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Building2, MapPin, Search, UserMinus, Users } from "lucide-react"
@@ -20,6 +22,10 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
   const t = useTranslations("network.connections")
   const tButton = useTranslations("network.button")
   const remove = useRemoveConnection()
+
+  const [hidden, setHidden] = useOptimistic(false, () => true)
+
+  if (hidden) return null
 
   return (
     <div className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
@@ -51,18 +57,22 @@ function ConnectionRow({ item }: { item: ConnectionItem }) {
       </div>
       <RemoveConnectionDialog
         displayName={item.displayName}
-        isPending={remove.isPending}
-        onConfirm={() => remove.mutate(item.connectionId)}
+        isPending={false} // Use false because optimistic removal instantly unmounts it
+        onConfirm={() => {
+          startTransition(async () => {
+            setHidden(true)
+            await remove.mutateAsync(item.connectionId).catch(() => {})
+          })
+        }}
       >
         <Button
           variant="ghost"
           size="sm"
-          disabled={remove.isPending}
           aria-label={t("removeAction")}
         >
           <UserMinus />
           <span className="hidden sm:inline">
-            {remove.isPending ? tButton("removing") : t("removeAction")}
+            {t("removeAction")}
           </span>
         </Button>
       </RemoveConnectionDialog>

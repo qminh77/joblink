@@ -1,5 +1,7 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
+
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Check, MapPin, UserPlus, Users } from "lucide-react"
@@ -18,7 +20,12 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
   const tButton = useTranslations("network.button")
   const send = useSendConnectionRequest()
   const sentIds = useSentConnectionIds()
-  const isSent = sentIds.has(item.userId)
+  const serverIsSent = sentIds.has(item.userId)
+
+  const [optimisticIsSent, addOptimisticIsSent] = useOptimistic(
+    serverIsSent,
+    (_state, nextIsSent: boolean) => nextIsSent
+  )
 
   return (
     <Card className="p-4 h-full">
@@ -50,7 +57,7 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
         ) : null}
 
         <div className="mt-auto pt-2 w-full">
-          {isSent ? (
+          {optimisticIsSent ? (
             <Button
               size="sm"
               variant="secondary"
@@ -64,11 +71,15 @@ function SuggestionCard({ item }: { item: NetworkUserCard }) {
               size="sm"
               variant="ghost"
               className="w-full"
-              disabled={send.isPending}
-              onClick={() => send.mutate(item.userId)}
+              onClick={() => {
+                startTransition(async () => {
+                  addOptimisticIsSent(true)
+                  await send.mutateAsync(item.userId).catch(() => {})
+                })
+              }}
             >
               <UserPlus />
-              {send.isPending ? tButton("sending") : tButton("connect")}
+              {tButton("connect")}
             </Button>
           )}
         </div>

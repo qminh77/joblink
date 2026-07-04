@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useTranslations } from "next-intl"
 
 import { Card } from "@/components/ui/card"
@@ -40,50 +42,70 @@ export function NotificationPreferencesCard() {
       </div>
 
       {NOTIFICATION_CATEGORIES.map((key) => {
-        const pref = prefs[key]
-        const disabled = isLoading || update.isPending
         return (
-          <div
+          <NotificationCategoryRow
             key={key}
-            className="flex items-center justify-between gap-4 p-3.5 rounded-xl hover:bg-muted/30 transition-colors"
-          >
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">{tn(key)}</p>
-              <p className="text-xs text-muted-foreground">{tn(`${key}Desc`)}</p>
-            </div>
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="w-12 flex justify-center">
-                <Switch
-                  checked={pref.inApp}
-                  disabled={disabled}
-                  aria-label={`${tn(key)} — ${t("inApp")}`}
-                  onCheckedChange={(value) =>
-                    update.mutate({
-                      category: key,
-                      inApp: value,
-                      email: pref.email,
-                    })
-                  }
-                />
-              </div>
-              <div className="w-12 flex justify-center">
-                <Switch
-                  checked={pref.email}
-                  disabled={disabled}
-                  aria-label={`${tn(key)} — ${t("email")}`}
-                  onCheckedChange={(value) =>
-                    update.mutate({
-                      category: key,
-                      inApp: pref.inApp,
-                      email: value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
+            categoryKey={key}
+            pref={prefs[key]}
+            isLoading={isLoading}
+            update={update}
+            tn={tn}
+            t={t}
+          />
         )
       })}
     </Card>
+  )
+}
+
+function NotificationCategoryRow({ categoryKey, pref, isLoading, update, tn, t }: any) {
+  const [optimisticPref, addOptimisticPref] = React.useOptimistic(
+    pref,
+    (_state, nextPref: { inApp: boolean; email: boolean }) => nextPref
+  )
+
+  return (
+    <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl hover:bg-muted/30 transition-colors">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">{tn(categoryKey)}</p>
+        <p className="text-xs text-muted-foreground">{tn(`${categoryKey}Desc`)}</p>
+      </div>
+      <div className="flex items-center gap-4 shrink-0">
+        <div className="w-12 flex justify-center">
+          <Switch
+            checked={optimisticPref.inApp}
+            disabled={isLoading}
+            aria-label={`${tn(categoryKey)} — ${t("inApp")}`}
+            onCheckedChange={(value) => {
+              React.startTransition(async () => {
+                const nextPref = { ...optimisticPref, inApp: value }
+                addOptimisticPref(nextPref)
+                await update.mutateAsync({
+                  category: categoryKey,
+                  ...nextPref,
+                }).catch(() => {})
+              })
+            }}
+          />
+        </div>
+        <div className="w-12 flex justify-center">
+          <Switch
+            checked={optimisticPref.email}
+            disabled={isLoading}
+            aria-label={`${tn(categoryKey)} — ${t("email")}`}
+            onCheckedChange={(value) => {
+              React.startTransition(async () => {
+                const nextPref = { ...optimisticPref, email: value }
+                addOptimisticPref(nextPref)
+                await update.mutateAsync({
+                  category: categoryKey,
+                  ...nextPref,
+                }).catch(() => {})
+              })
+            }}
+          />
+        </div>
+      </div>
+    </div>
   )
 }

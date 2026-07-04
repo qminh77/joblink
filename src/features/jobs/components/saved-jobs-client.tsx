@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useOptimistic, startTransition, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
@@ -127,10 +127,13 @@ function SavedJobRow({
   relTime: string
 }) {
   const t = useTranslations("jobs.public")
-  const [saved, setSaved] = useState(true)
-  const toggle = useToggleSavedJob({
-    onRollback: () => setSaved((v) => !v),
-  })
+  
+  const [optimisticSaved, addOptimisticSaved] = useOptimistic(
+    true,
+    (_state, nextSaved: boolean) => nextSaved
+  )
+
+  const toggle = useToggleSavedJob()
 
   const salary = formatSalary(job)
   const location = formatLocation(job)
@@ -165,21 +168,18 @@ function SavedJobRow({
             <button
               type="button"
               onClick={() => {
-                if (toggle.isPending) return
-                setSaved((v) => !v)
-                toggle.mutate(job.id, {
-                  onSuccess: (result) => {
-                    if (result.ok) setSaved(result.saved)
-                  },
+                const nextSaved = !optimisticSaved
+                startTransition(async () => {
+                  addOptimisticSaved(nextSaved)
+                  await toggle.mutateAsync(job.id).catch(() => {})
                 })
               }}
               className={`p-1.5 rounded-full hover:bg-muted/60 transition-colors ${
-                saved ? "text-primary" : "text-muted-foreground"
+                optimisticSaved ? "text-primary" : "text-muted-foreground"
               }`}
-              disabled={toggle.isPending}
-              aria-label={saved ? t("unsave") : t("save")}
+              aria-label={optimisticSaved ? t("unsave") : t("save")}
             >
-              <Bookmark className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
+              <Bookmark className={`w-4 h-4 ${optimisticSaved ? "fill-current" : ""}`} />
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">

@@ -1,5 +1,7 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
+
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { UserPlus, Users, X } from "lucide-react"
@@ -18,6 +20,10 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
   const t = useTranslations("network.sent")
   const tButton = useTranslations("network.button")
   const cancel = useCancelConnectionRequest()
+
+  const [hidden, setHidden] = useOptimistic(false, () => true)
+
+  if (hidden) return null
 
   return (
     <Card className="p-4">
@@ -46,11 +52,15 @@ function OutgoingCard({ item }: { item: InvitationItem }) {
         <Button
           variant="ghost"
           size="sm"
-          disabled={cancel.isPending}
-          onClick={() => cancel.mutate(item.connectionId)}
+          onClick={() => {
+            startTransition(async () => {
+              setHidden(true)
+              await cancel.mutateAsync(item.connectionId).catch(() => {})
+            })
+          }}
         >
           <X />
-          {cancel.isPending ? tButton("canceling") : t("cancel")}
+          {t("cancel")}
         </Button>
       </div>
     </Card>

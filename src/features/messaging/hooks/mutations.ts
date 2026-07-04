@@ -100,22 +100,29 @@ function broadcastNewMessage(
   message: MessageItem,
 ) {
   const supabase = createClient()
-  supabase
-    .channel(`messaging-${recipientId}`)
-    .send({
-      type: "broadcast",
-      event: "new_message",
-      payload: {
-        id: message.id,
-        conversation_id: conversationId,
-        sender_id: currentUserId,
-        content: message.content,
-        media: message.media,
-        read_at: message.readAt,
-        created_at: message.createdAt,
-      },
-    })
-    .catch(console.error)
+  const channel = supabase.channel(`messaging-${recipientId}`)
+  
+  channel.subscribe((status) => {
+    if (status === "SUBSCRIBED") {
+      channel
+        .send({
+          type: "broadcast",
+          event: "new_message",
+          payload: {
+            id: message.id,
+            conversation_id: conversationId,
+            sender_id: currentUserId,
+            content: message.content,
+            media: message.media,
+            read_at: message.readAt,
+            created_at: message.createdAt,
+          },
+        })
+        .finally(() => {
+          supabase.removeChannel(channel)
+        })
+    }
+  })
 }
 
 function updateSenderOverview(

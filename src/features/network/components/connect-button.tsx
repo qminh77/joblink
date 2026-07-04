@@ -1,5 +1,6 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Check, Clock, UserCheck, UserMinus, UserPlus, X } from "lucide-react"
 
@@ -44,8 +45,12 @@ export function ConnectButton({
 }: Props) {
   const t = useTranslations("network.button")
   const { data } = useConnectionRelation(targetUserId, initialRelation)
-  const relation = data ?? initialRelation
-  const sentIds = useSentConnectionIds()
+  const serverRelation = data ?? initialRelation
+
+  const [relation, setOptimisticRelation] = useOptimistic(
+    serverRelation,
+    (_state, newRelation: ConnectionRelation) => newRelation
+  )
 
   const send = useSendConnectionRequest()
   const cancel = useCancelConnectionRequest()
@@ -57,23 +62,19 @@ export function ConnectButton({
 
   const widthClass = fullWidth ? "w-full" : ""
 
-  // Khi vừa gửi (mutation success nhưng query relation chưa kịp refetch), dùng
-  // sentIds để hiển thị trạng thái "đang chờ" ngay — tránh nháy về "Connect".
-  const isOptimisticSent =
-    sentIds.has(targetUserId) && relation.kind === "none"
-
-  if (relation.kind === "pending_outgoing" || isOptimisticSent) {
+  if (relation.kind === "pending_outgoing") {
     const isPending = cancel.isPending
     return (
       <Button
         size={size}
         variant="secondary"
         className={widthClass}
-        disabled={isPending || relation.kind !== "pending_outgoing"}
+        disabled={isPending}
         onClick={() => {
-          if (relation.kind === "pending_outgoing") {
-            cancel.mutate(relation.connectionId)
-          }
+          startTransition(async () => {
+            setOptimisticRelation({ kind: "none" })
+            await cancel.mutateAsync(relation.connectionId).catch(() => {})
+          })
         }}
       >
         <Clock />
@@ -89,7 +90,12 @@ export function ConnectButton({
         variant="ghost"
         className={`text-primary hover:bg-primary/10 hover:text-primary ${widthClass}`}
         disabled={send.isPending}
-        onClick={() => send.mutate(targetUserId)}
+        onClick={() => {
+          startTransition(async () => {
+            setOptimisticRelation({ kind: "pending_outgoing", connectionId: -1 })
+            await send.mutateAsync(targetUserId).catch(() => {})
+          })
+        }}
       >
         <UserPlus />
         {send.isPending ? t("sending") : t("connect")}
@@ -105,7 +111,15 @@ export function ConnectButton({
           variant="ghost"
           className="flex-1 text-primary hover:bg-primary/10 hover:text-primary"
           disabled={accept.isPending}
-          onClick={() => accept.mutate(relation.connectionId)}
+          onClick={() => {
+            startTransition(async () => {
+              setOptimisticRelation({
+                kind: "accepted",
+                connectionId: relation.connectionId,
+              })
+              await accept.mutateAsync(relation.connectionId).catch(() => {})
+            })
+          }}
         >
           <Check /> {t("accept")}
         </Button>
@@ -114,7 +128,12 @@ export function ConnectButton({
           variant="ghost"
           className="flex-1 hover:bg-destructive/10 hover:text-destructive"
           disabled={reject.isPending}
-          onClick={() => reject.mutate(relation.connectionId)}
+          onClick={() => {
+            startTransition(async () => {
+              setOptimisticRelation({ kind: "rejected", connectionId: relation.connectionId })
+              await reject.mutateAsync(relation.connectionId).catch(() => {})
+            })
+          }}
         >
           <X /> {t("reject")}
         </Button>
@@ -157,7 +176,12 @@ export function ConnectButton({
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={remove.isPending}
-              onClick={() => remove.mutate(acceptedConnectionId)}
+              onClick={() => {
+                startTransition(async () => {
+                  setOptimisticRelation({ kind: "none" })
+                  await remove.mutateAsync(acceptedConnectionId).catch(() => {})
+                })
+              }}
             >
               {t("removeDialog.confirm")}
             </AlertDialogAction>
@@ -178,3 +202,4 @@ export function ConnectButton({
     </Button>
   )
 }
+

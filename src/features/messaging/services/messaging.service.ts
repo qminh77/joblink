@@ -1,4 +1,5 @@
 import "server-only"
+import { after } from "next/server"
 
 import type { CurrentUser } from "@/features/auth/types"
 import { fail, ok, type ActionResult } from "@/lib/action/result"
@@ -37,13 +38,15 @@ export async function sendMessage(
   const result = await sendConversationMessage(supabase, input)
 
   if (result.ok) {
-    await notifyNewMessage({
-      recipientId: result.recipientId,
-      senderId: current.appUser.id,
-      conversationId: input.conversationId,
-      senderName: current.profile.displayName,
-      senderAvatarUrl: current.profile.avatarUrl,
-      excerpt: excerpt(result.message.content),
+    after(async () => {
+      await notifyNewMessage({
+        recipientId: result.recipientId,
+        senderId: current.appUser.id,
+        conversationId: input.conversationId,
+        senderName: current.profile.displayName,
+        senderAvatarUrl: current.profile.avatarUrl,
+        excerpt: excerpt(result.message.content),
+      })
     })
   }
 

@@ -1,5 +1,7 @@
 "use client"
 
+import { useOptimistic, startTransition } from "react"
+
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Check, Loader2, UserPlus } from "lucide-react"
@@ -45,10 +47,15 @@ function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
   const tButton = useTranslations("network.button")
   const send = useSendConnectionRequest()
   const sentIds = useSentConnectionIds()
-  const isSent = sentIds.has(connection.userId)
-  const secondary = connection.headline ?? connection.location
+  const serverIsSent = sentIds.has(connection.userId)
 
-  const label = isSent ? tButton("sent") : tButton("connect")
+  const [optimisticIsSent, addOptimisticIsSent] = useOptimistic(
+    serverIsSent,
+    (_state, nextIsSent: boolean) => nextIsSent
+  )
+
+  const secondary = connection.headline ?? connection.location
+  const label = optimisticIsSent ? tButton("sent") : tButton("connect")
 
   return (
     <li className="flex items-center gap-2.5">
@@ -83,21 +90,19 @@ function SuggestionRow({ connection }: { connection: NetworkUserCard }) {
         <TooltipTrigger asChild>
           <Button
             size="icon-sm"
-            variant={isSent ? "secondary" : "outline"}
+            variant={optimisticIsSent ? "secondary" : "outline"}
             className="rounded-full shrink-0"
-            disabled={isSent || send.isPending}
+            disabled={optimisticIsSent}
             aria-label={label}
             onClick={() => {
-              if (!isSent) send.mutate(connection.userId)
+              if (optimisticIsSent) return
+              startTransition(async () => {
+                addOptimisticIsSent(true)
+                await send.mutateAsync(connection.userId).catch(() => {})
+              })
             }}
           >
-            {send.isPending ? (
-              <Loader2 className="animate-spin" />
-            ) : isSent ? (
-              <Check />
-            ) : (
-              <UserPlus />
-            )}
+            {optimisticIsSent ? <Check /> : <UserPlus />}
           </Button>
         </TooltipTrigger>
         <TooltipContent>{label}</TooltipContent>

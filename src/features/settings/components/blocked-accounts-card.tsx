@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useTranslations } from "next-intl"
 import { UserX } from "lucide-react"
 
@@ -38,38 +40,49 @@ export function BlockedAccountsCard() {
       ) : (
         <ul className="space-y-2">
           {list.map((u) => (
-            <li
-              key={u.blockId}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors"
-            >
-              <Avatar className="w-10 h-10">
-                {u.avatarUrl ? <AvatarImage src={u.avatarUrl} /> : null}
-                <AvatarFallback className="text-xs font-semibold">
-                  {getInitials(u.displayName, "JL")}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {u.displayName}
-                </p>
-                {u.headline ? (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {u.headline}
-                  </p>
-                ) : null}
-              </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={unblock.isPending}
-                onClick={() => unblock.mutate(u.userId)}
-              >
-                {t("unblock")}
-              </Button>
-            </li>
+            <BlockedUserRow key={u.blockId} user={u} unblock={unblock} t={t} />
           ))}
         </ul>
       )}
     </Card>
+  )
+}
+
+function BlockedUserRow({ user, unblock, t }: any) {
+  const [hidden, setHidden] = React.useOptimistic(false, () => true)
+
+  if (hidden) return null
+
+  return (
+    <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors">
+      <Avatar className="w-10 h-10">
+        {user.avatarUrl ? <AvatarImage src={user.avatarUrl} /> : null}
+        <AvatarFallback className="text-xs font-semibold">
+          {getInitials(user.displayName, "JL")}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">
+          {user.displayName}
+        </p>
+        {user.headline ? (
+          <p className="text-xs text-muted-foreground truncate">
+            {user.headline}
+          </p>
+        ) : null}
+      </div>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => {
+          React.startTransition(async () => {
+            setHidden(true)
+            await unblock.mutateAsync(user.userId).catch(() => {})
+          })
+        }}
+      >
+        {t("unblock")}
+      </Button>
+    </li>
   )
 }

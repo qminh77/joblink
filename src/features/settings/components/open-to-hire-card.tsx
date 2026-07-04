@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useTranslations } from "next-intl"
 
 import { Card } from "@/components/ui/card"
@@ -9,6 +11,11 @@ import { useUpdateOpenToHire } from "@/features/settings/hooks"
 export function OpenToHireCard({ initialValue }: { initialValue: boolean }) {
   const mutation = useUpdateOpenToHire()
   const t = useTranslations("settings.openToHire")
+
+  const [optimisticValue, addOptimisticValue] = React.useOptimistic(
+    initialValue,
+    (_state, nextValue: boolean) => nextValue
+  )
 
   return (
     <Card className="rounded-2xl bg-card border-border/40 p-6">
@@ -20,9 +27,13 @@ export function OpenToHireCard({ initialValue }: { initialValue: boolean }) {
           <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
         </div>
         <Switch
-          defaultChecked={initialValue}
-          disabled={mutation.isPending}
-          onCheckedChange={(value) => mutation.mutate(value)}
+          checked={optimisticValue}
+          onCheckedChange={(value) => {
+            React.startTransition(async () => {
+              addOptimisticValue(value)
+              await mutation.mutateAsync(value).catch(() => {})
+            })
+          }}
         />
       </div>
     </Card>

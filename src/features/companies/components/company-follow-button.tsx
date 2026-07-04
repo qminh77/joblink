@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useOptimistic, startTransition, useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { Bell, Plus } from "lucide-react"
 
@@ -24,35 +24,49 @@ export function CompanyFollowButton({
   disabled,
 }: Props) {
   const t = useTranslations("companies.public")
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
-  const [followerCount, setFollowerCount] = useState(initialFollowerCount)
+  
+  const [serverState, setServerState] = useState({
+    isFollowing: initialIsFollowing,
+    followerCount: initialFollowerCount,
+  })
+
+  // Sync with props if they change externally
+  useEffect(() => {
+    setServerState({
+      isFollowing: initialIsFollowing,
+      followerCount: initialFollowerCount,
+    })
+  }, [initialIsFollowing, initialFollowerCount])
+
+  const [optimisticState, addOptimistic] = useOptimistic(
+    serverState,
+    (state, nextIsFollowing: boolean) => ({
+      isFollowing: nextIsFollowing,
+      followerCount: Math.max(
+        0,
+        state.followerCount + (nextIsFollowing ? 1 : -1)
+      ),
+    })
+  )
 
   const toggle = useToggleFollowCompany()
 
   const handleClick = () => {
-    if (toggle.isPending || disabled) return
+    if (disabled) return
+    const nextIsFollowing = !optimisticState.isFollowing
 
-    const previousIsFollowing = isFollowing
-    const previousFollowerCount = followerCount
-    const nextIsFollowing = !previousIsFollowing
-    const nextFollowerCount = Math.max(
-      0,
-      previousFollowerCount + (nextIsFollowing ? 1 : -1),
-    )
+    startTransition(async () => {
+      addOptimistic(nextIsFollowing)
 
-    setIsFollowing(nextIsFollowing)
-    setFollowerCount(nextFollowerCount)
-
-    toggle.mutate(companyUserId, {
-      onError: () => {
-        setIsFollowing(previousIsFollowing)
-        setFollowerCount(previousFollowerCount)
-      },
-      onSuccess: (result) => {
-        if (!result.ok) return
-        setIsFollowing(result.isFollowing)
-        setFollowerCount(result.followerCount)
-      },
+      await toggle.mutateAsync(companyUserId, {
+        onSuccess: (result) => {
+          if (!result.ok) return
+          setServerState({
+            isFollowing: result.isFollowing,
+            followerCount: result.followerCount,
+          })
+        },
+      }).catch(() => {})
     })
   }
 
@@ -60,20 +74,20 @@ export function CompanyFollowButton({
     <button
       type="button"
       onClick={handleClick}
-      disabled={disabled || toggle.isPending}
-      aria-label={t("followerCount", { count: followerCount })}
+      disabled={disabled}
+      aria-label={t("followerCount", { count: optimisticState.followerCount })}
       className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg transition-colors disabled:opacity-50 ${
-        isFollowing
+        optimisticState.isFollowing
           ? "bg-muted text-foreground hover:bg-muted/80"
           : "bg-primary text-primary-foreground hover:bg-primary/90"
       }`}
     >
-      {isFollowing ? (
+      {optimisticState.isFollowing ? (
         <Bell className="w-3.5 h-3.5" />
       ) : (
         <Plus className="w-3.5 h-3.5" />
       )}
-      {isFollowing ? t("following") : t("follow")}
+      {optimisticState.isFollowing ? t("following") : t("follow")}
     </button>
   )
 }

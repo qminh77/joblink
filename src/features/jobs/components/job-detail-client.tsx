@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useOptimistic, startTransition, useState } from "react"
 import { motion } from "framer-motion"
 
 import { fadeUp, pageEntrance } from "@/lib/animations"
@@ -21,27 +21,27 @@ type Props = {
 }
 
 export function JobDetailClient({ detail }: Props) {
-  const [saved, setSaved] = useState(detail.viewer.viewerSaved)
+  const [optimisticSaved, addOptimisticSaved] = useOptimistic(
+    detail.viewer.viewerSaved,
+    (_state, nextSaved: boolean) => nextSaved
+  )
+
   const [viewer, setViewer] = useState(detail.viewer)
   const [showApply, setShowApply] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [showSend, setShowSend] = useState(false)
 
-  const toggle = useToggleSavedJob({
-    onRollback: () => setSaved((v) => !v),
-  })
+  const toggle = useToggleSavedJob()
   const withdraw = useWithdrawApplication()
 
   const { job } = detail
 
   const handleToggleSave = () => {
-    if (toggle.isPending) return
-    setSaved((v) => !v)
-    toggle.mutate(job.id, {
-      onSuccess: (result) => {
-        if (result.ok) setSaved(result.saved)
-      },
+    const nextSaved = !optimisticSaved
+    startTransition(async () => {
+      addOptimisticSaved(nextSaved)
+      await toggle.mutateAsync(job.id).catch(() => {})
     })
   }
 
@@ -62,9 +62,9 @@ export function JobDetailClient({ detail }: Props) {
         <motion.div variants={fadeUp}>
           <JobSummaryCard
             detail={detail}
-            saved={saved}
+            saved={optimisticSaved}
             canApply={canApply}
-            savePending={toggle.isPending}
+            savePending={false}
             withdrawPending={withdraw.isPending}
             onApply={() => setShowApply(true)}
             onReport={() => setShowReport(true)}
