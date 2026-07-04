@@ -16,7 +16,7 @@ import type {
 
 const OVERVIEW_LIMIT = 50
 const OVERVIEW_MAX_LIMIT = 50
-const MESSAGES_PAGE = 15
+const MESSAGES_PAGE = 10
 
 export const EMPTY_MESSAGING_OVERVIEW: MessagingOverview = {
   items: [],
