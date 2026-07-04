@@ -67,7 +67,13 @@ export function MyApplicationsClient({
   )
 }
 
-function ApplicationCard({ app, withdraw }: any) {
+function ApplicationCard({
+  app,
+  withdraw,
+}: {
+  app: MyApplicationItem
+  withdraw: ReturnType<typeof useWithdrawApplication>
+}) {
   const t = useTranslations("jobs.applications")
   const tStatus = useTranslations("notifications.appStatus")
   const format = useFormatter()
