@@ -4,7 +4,8 @@ import type { createClient } from "@/lib/supabase/server"
 import type { Json, MemberCvRow } from "@/types/database"
 
 // Lớp data-access của feature CV. KHÔNG auth/i18n; chạy bằng client RLS-aware
-// (createClient của @supabase/ssr). Action ở `api/actions.ts` gọi unwrap/assertOk.
+// (createClient của @supabase/ssr). Service/action layer chịu trách nhiệm auth
+// và unwrap/assertOk.
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 

@@ -4,11 +4,11 @@ import type { CurrentUser } from "@/features/auth/types"
 import {
   createNotification,
   deleteConnectionNotifications,
-} from "@/features/notifications/lib/create-notification"
+} from "@/features/notifications/services/notification-delivery.service"
 import type { ActorRef } from "@/features/notifications/types"
 
 // Điều phối notification của network. `createNotification`/`deleteConnection
-// Notifications` dùng service-role nội bộ trong features/notifications/lib —
+// Notifications` dùng service-role nội bộ trong features/notifications/services —
 // network không tự đụng admin client.
 
 function actorRef(current: CurrentUser): ActorRef {

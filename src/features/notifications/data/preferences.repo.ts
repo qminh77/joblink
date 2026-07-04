@@ -1,5 +1,6 @@
 import "server-only"
 
+import type { createAdminClient } from "@/lib/supabase/admin"
 import type { createClient } from "@/lib/supabase/server"
 
 import type { NotificationCategory } from "../lib/preferences"
@@ -10,12 +11,32 @@ import type { NotificationCategory } from "../lib/preferences"
 // nhóm (NotificationCategory).
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
+type AdminSupabase = ReturnType<typeof createAdminClient>
+
+export type NotificationPreferenceRecord = {
+  type: string
+  in_app_enabled: boolean
+  email_enabled: boolean
+}
 
 export function listPreferences(supabase: Supabase, userId: number) {
   return supabase
     .from("notification_preferences")
     .select("type, in_app_enabled, email_enabled")
     .eq("user_id", userId)
+}
+
+export function getPreferenceByCategory(
+  admin: AdminSupabase,
+  userId: number,
+  category: NotificationCategory,
+) {
+  return admin
+    .from("notification_preferences")
+    .select("in_app_enabled, email_enabled")
+    .eq("user_id", userId)
+    .eq("type", category)
+    .maybeSingle<{ in_app_enabled: boolean; email_enabled: boolean }>()
 }
 
 export function upsertPreference(

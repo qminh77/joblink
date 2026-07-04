@@ -1,15 +1,54 @@
 import "server-only"
 
+import type { createAdminClient } from "@/lib/supabase/admin"
 import type { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+import type { Json, NotificationRow, NotificationType } from "@/types/database"
 
-import type { NotificationItem } from "../types"
+import type { NotificationItem, NotificationPayload } from "../types"
 
 // Data-access cho notifications (RLS client: recipient chỉ thấy/sửa của mình).
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
+type AdminSupabase = ReturnType<typeof createAdminClient>
 
 const now = () => new Date().toISOString()
+
+export type NotificationRecord = Pick<
+  NotificationRow,
+  "id" | "type" | "payload" | "read_at" | "created_at"
+>
+
+export type ListNotificationRowsParams = {
+  cursor?: string | null
+  limit: number
+}
+
+export function listNotificationRows(
+  supabase: Supabase,
+  userId: number,
+  params: ListNotificationRowsParams,
+) {
+  let query = supabase
+    .from("notifications")
+    .select("id, type, payload, read_at, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+
+  if (params.cursor) query = query.lt("created_at", params.cursor)
+
+  return query.limit(params.limit)
+}
+
+export function countUnreadNotificationRows(
+  supabase: Supabase,
+  userId: number,
+) {
+  return supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("read_at", null)
+}
 
 export function markNotificationRead(
   supabase: Supabase,
@@ -32,6 +71,48 @@ export function markAllNotificationsRead(supabase: Supabase, userId: number) {
     .is("read_at", null)
 }
 
+export function insertNotificationRow(
+  admin: AdminSupabase,
+  input: {
+    userId: number
+    type: NotificationType
+    payload: NotificationPayload
+  },
+) {
+  return admin.from("notifications").insert({
+    user_id: input.userId,
+    type: input.type,
+    payload: input.payload as unknown as Json,
+  })
+}
+
+export function deleteConnectionNotificationRows(
+  admin: AdminSupabase,
+  input: {
+    connectionId: number
+    types?: NotificationType[]
+  },
+) {
+  let query = admin
+    .from("notifications")
+    .delete()
+    .eq("payload->>connectionId", String(input.connectionId))
+
+  if (input.types && input.types.length > 0) {
+    query = query.in("type", input.types)
+  }
+
+  return query
+}
+
+export function getNotificationRecipient(admin: AdminSupabase, userId: number) {
+  return admin
+    .from("users")
+    .select("email, locale")
+    .eq("id", userId)
+    .maybeSingle<{ email: string; locale: string | null }>()
+}
+
 /**
  * Kiểm tra "đích" của một notification còn tồn tại để quyết định có cho click
  * điều hướng hay không (vd bài đã xoá → noti chết). Mỗi loại noti map sang một
@@ -39,9 +120,9 @@ export function markAllNotificationsRead(supabase: Supabase, userId: number) {
  */
 export async function verifyNotificationTarget(
   supabase: Supabase,
+  admin: AdminSupabase,
   item: NotificationItem,
 ): Promise<boolean> {
-  const admin = createAdminClient()
   const payload = item.payload
 
   switch (item.type) {

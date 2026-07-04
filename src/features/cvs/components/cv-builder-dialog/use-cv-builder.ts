@@ -8,10 +8,9 @@ import jsPDF from "jspdf"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/features/auth/components/current-user-provider"
-import { createClient } from "@/lib/supabase/client"
 
-import { registerCvAction } from "../../api/actions"
-import { CV_BUCKET } from "../../lib/constants"
+import { registerCvAction } from "../../api/manage-actions"
+import { CvUploadError, uploadCvFile } from "../../lib/upload"
 import type {
   CvPreviewEducation,
   CvPreviewExperience,
@@ -135,21 +134,15 @@ export function useCvBuilder({
         type: "application/pdf",
       })
 
-      const supabase = createClient()
-      const path = `${current.id}/${crypto.randomUUID()}.pdf`
-      const { error: uploadError } = await supabase.storage
-        .from(CV_BUCKET)
-        .upload(path, file, {
-          contentType: "application/pdf",
-          cacheControl: "3600",
-          upsert: false,
-        })
-      if (uploadError) throw new Error(uploadError.message)
+      const { storagePath, fileSize } = await uploadCvFile({
+        file,
+        userId: current.id,
+      })
 
       const result = await registerCvAction({
         fileName: fileName.trim() || "CV",
-        storagePath: path,
-        fileSize: file.size,
+        storagePath,
+        fileSize,
         mimeType: "application/pdf",
         source: "builder",
         builderConfig: {
@@ -166,6 +159,10 @@ export function useCvBuilder({
       router.refresh()
       onClose()
     } catch (error) {
+      if (error instanceof CvUploadError) {
+        toast.error(t(`upload.${error.code}`))
+        return
+      }
       toast.error(
         error instanceof Error ? error.message : t("messages.unknownError"),
       )

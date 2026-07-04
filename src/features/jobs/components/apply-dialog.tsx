@@ -8,7 +8,8 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CvPicker } from "@/features/cvs/components/cv-picker"
-import { loadOwnCvsAction } from "@/features/cvs/api/actions"
+import { loadOwnCvsAction } from "@/features/cvs/api/read-actions"
+import type { OwnCvSummary } from "@/features/cvs/types"
 import { modalContent, modalOverlay } from "@/lib/animations"
 
 import { useApplyToJob } from "../hooks"
@@ -21,36 +22,6 @@ type Props = {
   open: boolean
   onClose: () => void
   onApplied?: (result: Extract<ApplyResult, { ok: true }>) => void
-}
-
-type PickerCv = {
-  id: number
-  fileName: string
-  fileSize: number
-  isDefault: boolean
-  storagePath: string
-  mimeType: string
-  source: "upload" | "builder"
-  builderConfig: null
-  createdAt: string
-  updatedAt: string
-}
-
-function toPickerCv(row: {
-  id: number
-  fileName: string
-  fileSize: number
-  isDefault: boolean
-}): PickerCv {
-  return {
-    ...row,
-    storagePath: "",
-    mimeType: "application/pdf",
-    source: "upload",
-    builderConfig: null,
-    createdAt: "",
-    updatedAt: "",
-  }
 }
 
 // Form sống trong ApplyDialogContent — mount theo `open=true` (AnimatePresence
@@ -70,7 +41,7 @@ function ApplyDialogContent({
 }) {
   const t = useTranslations("jobs.public")
   const [coverLetter, setCoverLetter] = useState("")
-  const [cvs, setCvs] = useState<PickerCv[] | null>(null)
+  const [cvs, setCvs] = useState<OwnCvSummary[] | null>(null)
   const [selectedCv, setSelectedCv] = useState<number | null>(null)
   const apply = useApplyToJob()
 
@@ -81,7 +52,7 @@ function ApplyDialogContent({
     void (async () => {
       const res = await loadOwnCvsAction()
       if (cancelled) return
-      setCvs(res.ok ? res.data.map(toPickerCv) : [])
+      setCvs(res.ok ? res.data : [])
     })()
     return () => {
       cancelled = true
@@ -90,7 +61,7 @@ function ApplyDialogContent({
 
   async function refreshCvs() {
     const res = await loadOwnCvsAction()
-    const next = res.ok ? res.data.map(toPickerCv) : []
+    const next = res.ok ? res.data : []
     setCvs(next)
     return next
   }

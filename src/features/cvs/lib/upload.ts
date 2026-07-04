@@ -1,4 +1,4 @@
-// Helper upload PDF lên bucket private `cv` từ phía client (giống pattern
+// Helper upload PDF lên bucket private `cvs` từ phía client (giống pattern
 // avatar/cover trong profile/lib/media.ts). Bucket có RLS chỉ cho user ghi
 // vào folder của chính mình — server action sau đó verify path khi đăng ký
 // metadata.

@@ -11,7 +11,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 
-import { getCvViewUrlAction, getApplicantResumeUrlAction } from "../api/actions"
+import {
+  getApplicantResumeUrlAction,
+  getCvViewUrlAction,
+} from "../api/read-actions"
 
 type CommonProps = {
   open: boolean

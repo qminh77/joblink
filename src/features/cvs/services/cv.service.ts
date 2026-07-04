@@ -1,6 +1,5 @@
 import "server-only"
 
-import { createAdminClient } from "@/lib/supabase/admin"
 import type { createClient } from "@/lib/supabase/server"
 import { ActionError, assertOk, unwrap } from "@/lib/action/server"
 import type { CurrentUser } from "@/features/auth/types"
@@ -21,7 +20,6 @@ import {
   softDeleteMemberCv,
   unsetDefaultMemberCvs,
 } from "../data/cvs.repo"
-import { CV_BUCKET, CV_SIGNED_URL_TTL_SECONDS } from "../lib/constants"
 import type { RegisterCvInput, RenameCvInput } from "../schemas"
 import {
   mapMemberCv,
@@ -31,6 +29,11 @@ import {
   type MemberCvRow,
   type OwnCvSummary,
 } from "../types"
+import {
+  createAdminCvSignedUrl,
+  createCvSignedUrl,
+  removeCvStorageObject,
+} from "./cv-storage.service"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
@@ -138,8 +141,7 @@ export async function deleteOwnCv(
     "unexpected",
   )
 
-  const admin = createAdminClient()
-  const { error } = await admin.storage.from(CV_BUCKET).remove([cv.storage_path])
+  const { error } = await removeCvStorageObject(cv.storage_path)
   if (error) {
     console.error("[deleteCvAction] storage remove failed", error)
   }
@@ -168,14 +170,12 @@ export async function getOwnCvViewUrl(
   const { data: cv } = await findMemberCv(supabase, cvId, current.appUser.id)
   if (!cv) throw ActionError.key("notFound")
 
-  const { data, error } = await supabase.storage
-    .from(CV_BUCKET)
-    .createSignedUrl(cv.storage_path, CV_SIGNED_URL_TTL_SECONDS)
-  if (error || !data) {
-    console.error("[getCvViewUrl]", error)
+  const signed = await createCvSignedUrl(supabase, cv.storage_path)
+  if (!signed.data) {
+    console.error("[getCvViewUrl]", signed.error)
     throw ActionError.key("unexpected")
   }
-  return { url: data.signedUrl }
+  return { url: signed.data }
 }
 
 export async function loadOwnCvSummaries(
@@ -220,20 +220,15 @@ export async function getApplicantResumeUrl(
     return { url: raw, kind: "external" }
   }
 
-  const { data: signed, error: signErr } = await supabase.storage
-    .from(CV_BUCKET)
-    .createSignedUrl(raw, CV_SIGNED_URL_TTL_SECONDS)
-  if (!signErr && signed) {
-    return { url: signed.signedUrl, kind: "signed" }
+  const signed = await createCvSignedUrl(supabase, raw)
+  if (signed.data) {
+    return { url: signed.data, kind: "signed" }
   }
 
-  const admin = createAdminClient()
-  const { data: adminSigned, error: adminErr } = await admin.storage
-    .from(CV_BUCKET)
-    .createSignedUrl(raw, CV_SIGNED_URL_TTL_SECONDS)
-  if (adminErr || !adminSigned) {
-    console.error("[getApplicantResumeUrl] sign", signErr, adminErr)
+  const adminSigned = await createAdminCvSignedUrl(raw)
+  if (!adminSigned.data) {
+    console.error("[getApplicantResumeUrl] sign", signed.error, adminSigned.error)
     throw ActionError.key("unexpected")
   }
-  return { url: adminSigned.signedUrl, kind: "signed" }
+  return { url: adminSigned.data, kind: "signed" }
 }

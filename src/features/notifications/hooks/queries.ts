@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   getNotificationsAction,
   getUnreadCountAction,
-} from "../api/actions"
+} from "../api/read-actions"
 import type { NotificationItem } from "../types"
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from "./keys"
 

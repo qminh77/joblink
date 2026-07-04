@@ -3,11 +3,7 @@ import "server-only"
 import { loadPublicAuthSettings } from "@/features/settings/services/public-settings.service"
 import { sendMail } from "@/features/settings/services/smtp.service"
 
-import type { NotificationCategory } from "./preferences"
-
-// Gửi email thông báo sự kiện qua SMTP của Admin Settings (opt-in — chỉ gọi khi
-// người nhận đã BẬT kênh Email cho nhóm tương ứng). Nội dung ở mức NHÓM để dùng
-// chung cho mọi loại notification, kèm liên kết mở app.
+import type { NotificationCategory } from "../lib/preferences"
 
 const CATEGORY_LABEL: Record<
   NotificationCategory,
@@ -45,7 +41,7 @@ export async function sendNotificationEmail(opts: {
   const link = `${siteUrl()}/notifications`
   const subject = isEn
     ? `${site}: new notification (${label})`
-    : `${site}: thông báo mới — ${label}`
+    : `${site}: thông báo mới - ${label}`
   const heading = isEn ? "You have a new notification" : "Bạn có thông báo mới"
   const intro = isEn
     ? `There's new activity in your "${label}" notifications on ${site}.`

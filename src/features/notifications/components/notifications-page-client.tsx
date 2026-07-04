@@ -52,7 +52,7 @@ function filterItems(
   }
 }
 
-export default function NotificationsClient({
+export function NotificationsPageClient({
   initialItems = [],
   initialHasMore = false,
 }: {

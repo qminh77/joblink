@@ -82,10 +82,10 @@ export type SearchPageResults = {
 }
 
 export type SearchFilters = {
-  peopleLocation: string | null
-  companyIndustry: string | null
-  jobProvinceId: number | null
-  jobTypeIds: number[] | null
-  workModeIds: number[] | null
-  salaryMin: number | null
+  peopleLocation?: string | null
+  companyIndustry?: string | null
+  jobProvinceId?: number | null
+  jobTypeIds?: number[] | null
+  workModeIds?: number[] | null
+  salaryMin?: number | null
 }

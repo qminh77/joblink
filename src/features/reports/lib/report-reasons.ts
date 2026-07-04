@@ -1,9 +1,4 @@
-export type ReportReasonOption = {
-  id: number
-  code: string
-  name: string
-  nameEn: string | null
-}
+import type { ReportReasonOption } from "../types"
 
 export const REPORT_REASON_OPTIONS = [
   {

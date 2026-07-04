@@ -2,25 +2,72 @@ import "server-only"
 
 import type { createClient } from "@/lib/supabase/server"
 
-import type {
-  SearchCompany,
-  SearchPageCompany,
-  SearchPagePerson,
-  SearchPagePost,
-  SearchPerson,
-} from "../types"
-
 type Supabase = Awaited<ReturnType<typeof createClient>>
+
+export type HeaderPersonRow = {
+  user_id: number
+  full_name: string | null
+  avatar_url: string | null
+  headline: string | null
+}
+
+export type HeaderCompanyRow = {
+  user_id: number
+  name: string | null
+  logo_url: string | null
+  industry: string | null
+}
+
+export type SearchPagePersonRow = HeaderPersonRow & {
+  profile_visibility: string
+}
+
+export type SearchUserRoleRow = {
+  id: number
+  role: string
+}
+
+export type SearchConnectionRow = {
+  requester_id: number
+  receiver_id: number
+  status: string
+}
+
+export type SearchPageCompanyRow = HeaderCompanyRow & {
+  verification_status: string | null
+}
+
+export type SearchPostRow = {
+  id: number
+  author_id: number
+  content: string
+  post_type: string
+  created_at: string
+  reaction_count: number | null
+  comment_count: number | null
+}
+
+export type SearchIdentityMemberRow = {
+  user_id: number
+  full_name: string | null
+  avatar_url: string | null
+}
+
+export type SearchIdentityCompanyRow = {
+  user_id: number
+  name: string | null
+  logo_url: string | null
+}
 
 function likeOf(q: string): string {
   return `%${q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`
 }
 
-export async function searchPeople(
+export async function listHeaderPeopleRows(
   supabase: Supabase,
   q: string,
   limit: number,
-): Promise<SearchPerson[]> {
+): Promise<HeaderPersonRow[]> {
   const { data } = await supabase
     .from("member_profiles")
     .select("user_id, full_name, avatar_url, headline")
@@ -28,226 +75,153 @@ export async function searchPeople(
     .neq("profile_visibility", "private")
     .is("deleted_at", null)
     .limit(limit)
-  return (data ?? [])
-    .filter((m) => m.full_name)
-    .map((m) => ({
-      userId: m.user_id,
-      name: m.full_name,
-      avatarUrl: m.avatar_url,
-      headline: m.headline,
-    }))
+
+  return (data ?? []) as HeaderPersonRow[]
 }
 
-export async function searchCompanies(
+export async function listHeaderCompanyRows(
   supabase: Supabase,
   q: string,
   limit: number,
-): Promise<SearchCompany[]> {
+): Promise<HeaderCompanyRow[]> {
   const { data } = await supabase
     .from("company_profiles")
     .select("user_id, name, logo_url, industry")
     .ilike("name", likeOf(q))
     .is("deleted_at", null)
     .limit(limit)
-  return (data ?? [])
-    .filter((c) => c.name)
-    .map((c) => ({
-      userId: c.user_id,
-      name: c.name,
-      logoUrl: c.logo_url,
-      industry: c.industry,
-    }))
+
+  return (data ?? []) as HeaderCompanyRow[]
 }
 
-export async function searchPagePeople(
+export async function listSearchPagePersonRows(
   supabase: Supabase,
   q: string,
-  currentUserId: number,
   limit: number,
   offset: number,
-): Promise<{ items: SearchPagePerson[]; total: number }> {
-  const like = likeOf(q)
-
-  const { data, count: total } = await supabase
+): Promise<{ rows: SearchPagePersonRow[]; total: number }> {
+  const { data, count } = await supabase
     .from("member_profiles")
     .select("user_id, full_name, avatar_url, headline, profile_visibility", {
       count: "exact",
     })
-    .ilike("full_name", like)
+    .ilike("full_name", likeOf(q))
     .neq("profile_visibility", "private")
     .is("deleted_at", null)
     .order("full_name", { ascending: true })
     .range(offset, offset + limit - 1)
 
-  const profiles = ((data ?? []).filter((m) => m.full_name) as {
-    user_id: number
-    full_name: string
-    avatar_url: string | null
-    headline: string | null
-    profile_visibility: string
-  }[])
-  if (profiles.length === 0) return { items: [], total: total ?? 0 }
-
-  const userIds = profiles.map((m) => m.user_id)
-
-  const [userRes, connRes] = await Promise.all([
-    supabase.from("users").select("id, role").in("id", userIds),
-    supabase
-      .from("connections")
-      .select("requester_id, receiver_id, status")
-      .or(
-        `and(requester_id.eq.${currentUserId},receiver_id.in.(${userIds.join(",")})),` +
-          `and(receiver_id.eq.${currentUserId},requester_id.in.(${userIds.join(",")}))`,
-      ),
-  ])
-
-  const roleMap = new Map<number, string>()
-  for (const u of userRes.data ?? []) {
-    roleMap.set(u.id, u.role)
+  return {
+    rows: (data ?? []) as SearchPagePersonRow[],
+    total: count ?? 0,
   }
-
-  const connMap = new Map<number, "pending" | "connected">()
-  for (const c of connRes.data ?? []) {
-    const otherId =
-      c.requester_id === currentUserId ? c.receiver_id : c.requester_id
-    if (c.status === "accepted") {
-      connMap.set(otherId, "connected")
-    } else if (c.status === "pending") {
-      if (!connMap.has(otherId)) connMap.set(otherId, "pending")
-    }
-  }
-
-  const items: SearchPagePerson[] = profiles.map((m) => ({
-    userId: m.user_id,
-    name: m.full_name,
-    avatarUrl: m.avatar_url,
-    headline: m.headline,
-    role: (roleMap.get(m.user_id) ?? "member") as "member" | "admin",
-    location: null,
-    connectionStatus: connMap.get(m.user_id) ?? "none",
-  }))
-
-  return { items, total: total ?? 0 }
 }
 
-export async function searchPageCompanies(
+export async function listUserRoleRows(
+  supabase: Supabase,
+  userIds: number[],
+): Promise<SearchUserRoleRow[]> {
+  if (userIds.length === 0) return []
+
+  const { data } = await supabase
+    .from("users")
+    .select("id, role")
+    .in("id", userIds)
+
+  return (data ?? []) as SearchUserRoleRow[]
+}
+
+export async function listViewerConnectionRows(
+  supabase: Supabase,
+  currentUserId: number,
+  userIds: number[],
+): Promise<SearchConnectionRow[]> {
+  if (userIds.length === 0) return []
+
+  const ids = userIds.join(",")
+  const { data } = await supabase
+    .from("connections")
+    .select("requester_id, receiver_id, status")
+    .or(
+      `and(requester_id.eq.${currentUserId},receiver_id.in.(${ids})),` +
+        `and(receiver_id.eq.${currentUserId},requester_id.in.(${ids}))`,
+    )
+
+  return (data ?? []) as SearchConnectionRow[]
+}
+
+export async function listSearchPageCompanyRows(
   supabase: Supabase,
   q: string,
   limit: number,
   offset: number,
-): Promise<{ items: SearchPageCompany[]; total: number }> {
-  const like = likeOf(q)
-
-  const { data, count: total } = await supabase
+): Promise<{ rows: SearchPageCompanyRow[]; total: number }> {
+  const { data, count } = await supabase
     .from("company_profiles")
     .select("user_id, name, logo_url, industry, verification_status", {
       count: "exact",
     })
-    .ilike("name", like)
+    .ilike("name", likeOf(q))
     .is("deleted_at", null)
     .order("name", { ascending: true })
     .range(offset, offset + limit - 1)
 
-  const rows = (data ?? []).filter((c) => c.name)
   return {
-    items: rows.map((c) => ({
-      userId: c.user_id,
-      name: c.name ?? "",
-      logoUrl: c.logo_url,
-      industry: c.industry,
-      verified: c.verification_status === "verified",
-      description: null,
-    })),
-    total: total ?? 0,
+    rows: (data ?? []) as SearchPageCompanyRow[],
+    total: count ?? 0,
   }
 }
 
-export async function searchPosts(
+export async function listSearchPostRows(
   supabase: Supabase,
   q: string,
   limit: number,
   offset: number,
-): Promise<{ items: SearchPagePost[]; total: number }> {
-  const like = likeOf(q)
-
-  const { data: postRows, count: total } = await supabase
+): Promise<{ rows: SearchPostRow[]; total: number }> {
+  const { data, count } = await supabase
     .from("posts")
     .select(
       "id, author_id, content, post_type, created_at, reaction_count, comment_count",
       { count: "exact" },
     )
-    .ilike("content", like)
+    .ilike("content", likeOf(q))
     .is("deleted_at", null)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (!postRows || postRows.length === 0) {
-    return { items: [], total: total ?? 0 }
+  return {
+    rows: (data ?? []) as SearchPostRow[],
+    total: count ?? 0,
   }
+}
 
-  const authorIds = Array.from(new Set(postRows.map((p) => p.author_id)))
+export async function listMemberIdentityRows(
+  supabase: Supabase,
+  userIds: number[],
+): Promise<SearchIdentityMemberRow[]> {
+  if (userIds.length === 0) return []
 
-  const [userRes, memberRes, companyRes] = await Promise.all([
-    supabase
-      .from("users")
-      .select("id, role")
-      .in("id", authorIds),
-    supabase
-      .from("member_profiles")
-      .select("user_id, full_name, avatar_url")
-      .in("user_id", authorIds)
-      .is("deleted_at", null),
-    supabase
-      .from("company_profiles")
-      .select("user_id, name, logo_url")
-      .in("user_id", authorIds)
-      .is("deleted_at", null),
-  ])
+  const { data } = await supabase
+    .from("member_profiles")
+    .select("user_id, full_name, avatar_url")
+    .in("user_id", userIds)
+    .is("deleted_at", null)
 
-  const roleMap = new Map<number, string>()
-  for (const u of userRes.data ?? []) roleMap.set(u.id, u.role)
+  return (data ?? []) as SearchIdentityMemberRow[]
+}
 
-  const authorMap = new Map<
-    number,
-    { name: string; avatarUrl: string | null; role: string }
-  >()
-  for (const m of memberRes.data ?? []) {
-    authorMap.set(m.user_id, {
-      name: m.full_name ?? "JobLink",
-      avatarUrl: m.avatar_url,
-      role: roleMap.get(m.user_id) ?? "member",
-    })
-  }
-  for (const c of companyRes.data ?? []) {
-    if (!authorMap.has(c.user_id)) {
-      authorMap.set(c.user_id, {
-        name: c.name ?? "JobLink",
-        avatarUrl: c.logo_url,
-        role: roleMap.get(c.user_id) ?? "company",
-      })
-    }
-  }
+export async function listCompanyIdentityRows(
+  supabase: Supabase,
+  userIds: number[],
+): Promise<SearchIdentityCompanyRow[]> {
+  if (userIds.length === 0) return []
 
-  const items: SearchPagePost[] = postRows.map((p) => {
-    const author = authorMap.get(p.author_id) ?? {
-      name: "JobLink",
-      avatarUrl: null,
-      role: "member",
-    }
-    return {
-      id: p.id,
-      authorId: p.author_id,
-      content: p.content,
-      postType: p.post_type,
-      createdAt: p.created_at,
-      authorName: author.name,
-      authorAvatarUrl: author.avatarUrl,
-      authorRole: author.role,
-      reactionCount: p.reaction_count ?? 0,
-      commentCount: p.comment_count ?? 0,
-    }
-  })
+  const { data } = await supabase
+    .from("company_profiles")
+    .select("user_id, name, logo_url")
+    .in("user_id", userIds)
+    .is("deleted_at", null)
 
-  return { items, total: total ?? 0 }
+  return (data ?? []) as SearchIdentityCompanyRow[]
 }

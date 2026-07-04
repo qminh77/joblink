@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { CurrentUser } from "@/features/auth/types"
-import { createNotification } from "@/features/notifications/lib/create-notification"
+import { createNotification } from "@/features/notifications/services/notification-delivery.service"
 
 // Notify follower mới cho chủ công ty. Unfollow KHÔNG trigger (tránh spam).
 export async function notifyCompanyFollowed(opts: {

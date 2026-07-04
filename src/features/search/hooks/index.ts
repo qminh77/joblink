@@ -6,6 +6,7 @@ import { globalSearchAction, searchAllTabAction, searchPageAction } from "../api
 import type {
   GlobalSearchResults,
   SearchCompaniesResult,
+  SearchFilters,
   SearchJobsResult,
   SearchPeopleResult,
   SearchPostsResult,
@@ -38,15 +39,6 @@ type SearchTabResult =
   | SearchJobsResult
   | SearchPostsResult
 
-type SearchTabFilters = {
-  peopleLocation?: string | null
-  companyIndustry?: string | null
-  jobProvinceId?: number | null
-  jobTypeIds?: number[] | null
-  workModeIds?: number[] | null
-  salaryMin?: number | null
-}
-
 export function useSearchAllTab(query: string) {
   const q = query.trim()
   return useQuery<SearchAllData>({
@@ -61,7 +53,7 @@ export function useSearchTabResults(
   query: string,
   tab: SearchTab,
   offset: number,
-  filters?: SearchTabFilters,
+  filters?: SearchFilters,
 ) {
   const q = query.trim()
   return useQuery<
@@ -80,7 +72,7 @@ export function useSearchTabResults(
 export function useSearchTabInfiniteResults(
   query: string,
   tab: SearchTab,
-  filters?: SearchTabFilters,
+  filters?: SearchFilters,
 ) {
   const q = query.trim()
   return useInfiniteQuery<SearchTabResult>({
@@ -103,7 +95,7 @@ export function useSearchMore(
   query: string,
   tab: SearchTab,
   offset: number,
-  filters?: SearchTabFilters,
+  filters?: SearchFilters,
 ) {
   const q = query.trim()
   return useQuery({

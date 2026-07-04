@@ -38,3 +38,28 @@ export function markConversationReadById(
     p_conversation_id: conversationId,
   })
 }
+
+export function fetchMessagingOverviewRpc(supabase: Supabase, limit: number) {
+  return supabase.rpc("get_messaging_overview", { p_limit: limit })
+}
+
+export function fetchUnreadConversationsCountRpc(supabase: Supabase) {
+  return supabase.rpc("get_unread_conversations_count")
+}
+
+export function fetchConversationMessagesRpc(
+  supabase: Supabase,
+  input: {
+    conversationId: number
+    beforeCreatedAt?: string | null
+    beforeId?: number | null
+    limit: number
+  },
+) {
+  return supabase.rpc("get_conversation_messages", {
+    p_conversation_id: input.conversationId,
+    p_before_created_at: input.beforeCreatedAt ?? null,
+    p_before_id: input.beforeId ?? null,
+    p_limit: input.limit,
+  })
+}

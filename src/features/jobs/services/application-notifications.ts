@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { CurrentUser } from "@/features/auth/types"
-import { createNotification } from "@/features/notifications/lib/create-notification"
+import { createNotification } from "@/features/notifications/services/notification-delivery.service"
 import type { createClient } from "@/lib/supabase/server"
 
 import {

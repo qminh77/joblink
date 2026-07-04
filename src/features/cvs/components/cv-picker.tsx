@@ -7,14 +7,19 @@ import { FileText, Plus, Star } from "lucide-react"
 import { Label } from "@/components/ui/label"
 
 import { CvUploadDialog } from "./cv-upload-dialog"
-import type { MemberCv } from "../types"
+import type { OwnCvSummary } from "../types"
+
+export type CvPickerItem = Pick<
+  OwnCvSummary,
+  "id" | "fileName" | "fileSize" | "isDefault"
+>
 
 type Props = {
-  cvs: MemberCv[]
+  cvs: CvPickerItem[]
   value: number | null
   onChange: (cvId: number | null) => void
   // Parent gọi để re-fetch CVs sau upload — picker không lưu state của list.
-  refreshOnUpload?: () => Promise<MemberCv[]> | MemberCv[]
+  refreshOnUpload?: () => Promise<CvPickerItem[]> | CvPickerItem[]
 }
 
 export function CvPicker({ cvs, value, onChange, refreshOnUpload }: Props) {

@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { registerCvAction } from "../api/actions"
+import { registerCvAction } from "../api/manage-actions"
 import {
   CvUploadError,
   uploadCvFile,

@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import {
   getNotificationPreferencesAction,
   updateNotificationPreferenceAction,
-} from "../api/actions"
+} from "../api/preference-actions"
 import type { NotificationPreferenceMap } from "../lib/preferences"
 import type { UpdateNotificationPreferenceInput } from "../schemas"
 import { NOTIFICATION_PREFS_KEY } from "./keys"

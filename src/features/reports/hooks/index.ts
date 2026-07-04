@@ -7,9 +7,8 @@ import { toast } from "sonner"
 import { createReportAction } from "../api/actions"
 import {
   loadReportReasons,
-  type ReportReasonOption,
 } from "../lib/report-reasons"
-import type { CreateReportInput } from "../types"
+import type { CreateReportInput, ReportReasonOption } from "../types"
 
 export function useReportReasons() {
   return useQuery<ReportReasonOption[]>({

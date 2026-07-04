@@ -8,7 +8,7 @@ import {
   deleteCvAction,
   renameCvAction,
   setDefaultCvAction,
-} from "../api/actions"
+} from "../api/manage-actions"
 import type { RenameCvInput } from "../schemas"
 import { actionMessage, useCvTranslations } from "./shared"
 

@@ -1,30 +1,41 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from "@/features/notifications/hooks"
-
-import { ensureConversationWithAction, markConversationReadAction, sendMessageAction } from "../api/actions"
-import { translateMessagingError } from "../lib/translate-error"
-import type { ConversationMessagesPage, MessageItem, MessagingOverview } from "../types"
-import { MESSAGING_MESSAGES_KEY, MESSAGING_OVERVIEW_KEY } from "./keys"
-import { invalidateMessaging } from "./shared"
 import { createClient } from "@/lib/supabase/client"
 
+import {
+  ensureConversationWithAction,
+  markConversationReadAction,
+  sendMessageAction,
+} from "../api/actions"
+import { translateMessagingError } from "../lib/translate-error"
+import type {
+  ConversationMessagesPage,
+  MessageItem,
+  MessagingOverview,
+} from "../types"
+import { MESSAGING_MESSAGES_KEY, MESSAGING_OVERVIEW_KEY } from "./keys"
+import { invalidateMessaging } from "./shared"
+
 type SendMessageVars = { conversationId: number; content: string }
+type SendMessageData = { message: MessageItem; recipientId: number }
 
 export function useSendMessage(currentUserId: number) {
   const qc = useQueryClient()
   const te = useTranslations("messages.errors")
 
-  return useMutation<
-    { message: MessageItem; recipientId: number },
-    Error,
-    SendMessageVars,
-    { snapshot?: ConversationMessagesPage; tempId: number }
-  >({
+  return useMutation<SendMessageData, Error, SendMessageVars, {
+    snapshot?: ConversationMessagesPage
+    tempId: number
+  }>({
     mutationFn: async ({ conversationId, content }) => {
       const result = await sendMessageAction(conversationId, content)
       if (!result.ok) throw new Error(result.error)
@@ -75,40 +86,72 @@ export function useSendMessage(currentUserId: number) {
         return { ...prev, items: replaced }
       })
 
-      // Send broadcast to recipient
-      const supabase = createClient()
-      supabase.channel(`messaging-${recipientId}`).send({
-        type: "broadcast",
-        event: "new_message",
-        payload: {
-          id: message.id,
-          conversation_id: conversationId,
-          sender_id: currentUserId,
-          content: message.content,
-          media: message.media,
-          read_at: message.readAt,
-          created_at: message.createdAt,
-        },
-      }).catch(console.error)
-
-      // Optimistically update overview for sender
-      qc.setQueriesData<MessagingOverview>({ queryKey: MESSAGING_OVERVIEW_KEY }, (prev) => {
-        if (!prev) return prev
-        const existingConvo = prev.items.find(i => i.conversationId === conversationId)
-        if (!existingConvo) return prev
-        const updatedItems = prev.items.map(i => i.conversationId === conversationId ? {
-          ...i,
-          lastMessageId: message.id,
-          lastSenderId: currentUserId,
-          lastContent: message.content || "",
-          lastCreatedAt: message.createdAt,
-        } : i)
-        updatedItems.sort((a, b) => new Date(b.lastCreatedAt || b.updatedAt).getTime() - new Date(a.lastCreatedAt || a.updatedAt).getTime())
-        return { ...prev, items: updatedItems }
-      })
+      broadcastNewMessage(recipientId, conversationId, currentUserId, message)
+      updateSenderOverview(qc, conversationId, currentUserId, message)
     },
     onSettled: () => invalidateMessaging(qc),
   })
+}
+
+function broadcastNewMessage(
+  recipientId: number,
+  conversationId: number,
+  currentUserId: number,
+  message: MessageItem,
+) {
+  const supabase = createClient()
+  supabase
+    .channel(`messaging-${recipientId}`)
+    .send({
+      type: "broadcast",
+      event: "new_message",
+      payload: {
+        id: message.id,
+        conversation_id: conversationId,
+        sender_id: currentUserId,
+        content: message.content,
+        media: message.media,
+        read_at: message.readAt,
+        created_at: message.createdAt,
+      },
+    })
+    .catch(console.error)
+}
+
+function updateSenderOverview(
+  qc: QueryClient,
+  conversationId: number,
+  currentUserId: number,
+  message: MessageItem,
+) {
+  qc.setQueriesData<MessagingOverview>(
+    { queryKey: MESSAGING_OVERVIEW_KEY },
+    (prev) => {
+      if (!prev) return prev
+      if (!prev.items.some((item) => item.conversationId === conversationId)) {
+        return prev
+      }
+
+      const items = prev.items.map((item) =>
+        item.conversationId === conversationId
+          ? {
+              ...item,
+              lastMessageId: message.id,
+              lastSenderId: currentUserId,
+              lastContent: message.content || "",
+              lastCreatedAt: message.createdAt,
+            }
+          : item,
+      )
+      items.sort(
+        (a, b) =>
+          new Date(b.lastCreatedAt || b.updatedAt).getTime() -
+          new Date(a.lastCreatedAt || a.updatedAt).getTime(),
+      )
+
+      return { ...prev, items }
+    },
+  )
 }
 
 export function useMarkConversationRead() {

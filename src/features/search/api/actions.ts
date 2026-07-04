@@ -1,33 +1,28 @@
 "use server"
 
 // SRS UC Trace - M05 UC-34 Tim kiem tong hop.
-// Flow: navbar search|/search -> search action -> search repo -> users/companies/posts/jobs result tabs.
+// Flow: navbar search|/search -> search action facade -> search services -> repos/result tabs.
 
-import { searchAllTabAction as searchAllTab } from "./all-tab-search"
-import { globalSearchAction as globalSearch } from "./global-search"
 import {
-  searchPageAction as searchPage,
-  type SearchPageFilters,
-} from "./page-search"
-import type { SearchTab } from "../types"
+  loadAllTabSearchResults,
+  loadGlobalSearchResults,
+  loadSearchPageResults,
+} from "../services/search.service"
+import type { SearchFilters, SearchTab } from "../types"
 
-export async function globalSearchAction(
-  query: Parameters<typeof globalSearch>[0],
-) {
-  return globalSearch(query)
+export async function globalSearchAction(query: string) {
+  return loadGlobalSearchResults(query)
 }
 
 export async function searchPageAction(
-  query: Parameters<typeof searchPage>[0],
+  query: string,
   tab: SearchTab,
-  offset: Parameters<typeof searchPage>[2],
-  filters?: SearchPageFilters,
+  offset: number,
+  filters?: SearchFilters,
 ) {
-  return searchPage(query, tab, offset, filters)
+  return loadSearchPageResults(query, tab, offset, filters)
 }
 
-export async function searchAllTabAction(
-  query: Parameters<typeof searchAllTab>[0],
-) {
-  return searchAllTab(query)
+export async function searchAllTabAction(query: string) {
+  return loadAllTabSearchResults(query)
 }

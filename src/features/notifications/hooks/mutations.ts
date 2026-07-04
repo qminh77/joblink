@@ -3,11 +3,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import { loadMoreNotificationsAction } from "../api/read-actions"
 import {
-  loadMoreNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
-} from "../api/actions"
+} from "../api/mutation-actions"
 import type { NotificationItem } from "../types"
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from "./keys"
 

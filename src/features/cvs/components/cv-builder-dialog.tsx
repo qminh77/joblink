@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 
-import { getProfileForCvBuilderAction } from "../api/actions"
+import { getProfileForCvBuilderAction } from "../api/read-actions"
 import { BuilderForm } from "./cv-builder-dialog/builder-form"
 import type { ProfileData } from "./cv-builder-dialog/types"
 

@@ -57,7 +57,7 @@ export async function markConversationRead(
 ): Promise<ActionResult> {
   const { error } = await markConversationReadById(supabase, conversationId)
   if (error) {
-    console.error("[markConversationReadAction]", error)
+    console.error("[markConversationRead]", error)
     return fail("unknown")
   }
 
