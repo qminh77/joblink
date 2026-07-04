@@ -128,25 +128,27 @@ export function JobSummaryCard({
       </div>
 
       <div className="mt-5 border-t border-border/30 pt-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-full min-w-0 sm:w-auto sm:flex-none">
             {viewer.isOwner ? (
-              <Button asChild className="w-full sm:w-auto" size="lg">
+              <Button asChild className="w-full sm:w-auto sm:min-w-36" size="lg">
                 <Link href="/company/post-job">
                   <Pencil />
                   {t("manageJob")}
                 </Link>
               </Button>
             ) : viewer.viewerApplied ? (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:items-center">
                 <Badge
                   variant="outline"
-                  className="h-9 justify-center border-0 bg-emerald-50 px-3 text-emerald-600 dark:bg-emerald-500/10"
+                  className="h-9 min-w-0 justify-center border-0 bg-emerald-50 px-3 text-emerald-600 dark:bg-emerald-500/10"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                  {viewer.applicationStatus
-                    ? tAppStatus(viewer.applicationStatus)
-                    : t("applied")}
+                  <span className="min-w-0 truncate">
+                    {viewer.applicationStatus
+                      ? tAppStatus(viewer.applicationStatus)
+                      : t("applied")}
+                  </span>
                 </Badge>
                 {viewer.applicationId &&
                 !["hired", "rejected", "withdrawn"].includes(
@@ -158,6 +160,7 @@ export function JobSummaryCard({
                     size="sm"
                     disabled={withdrawPending}
                     onClick={() => onWithdraw(viewer.applicationId as number)}
+                    className="w-full sm:w-auto"
                   >
                     {withdrawPending ? t("withdrawing") : t("withdraw")}
                   </Button>
@@ -167,7 +170,7 @@ export function JobSummaryCard({
               <Button
                 type="button"
                 onClick={onApply}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto sm:min-w-36"
                 size="lg"
               >
                 <Send />
@@ -176,7 +179,7 @@ export function JobSummaryCard({
             ) : (
               <Badge
                 variant="outline"
-                className="h-9 justify-center border-0 bg-muted px-3 text-muted-foreground"
+                className="h-9 w-full justify-center border-0 bg-muted px-3 text-muted-foreground sm:w-auto"
               >
                 <XCircle className="w-3.5 h-3.5 mr-1.5" />
                 {t("notAcceptingApplications")}
@@ -185,7 +188,7 @@ export function JobSummaryCard({
           </div>
 
           {!viewer.isOwner ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[360px]">
+            <div className="grid min-w-0 flex-1 basis-full grid-cols-2 gap-2 sm:basis-[25rem] sm:grid-cols-4">
               <Button
                 type="button"
                 variant={saved ? "secondary" : "outline"}
@@ -193,29 +196,42 @@ export function JobSummaryCard({
                 onClick={onToggleSave}
                 disabled={savePending}
                 aria-label={saved ? t("unsave") : t("save")}
+                className="min-w-0 px-2"
               >
                 <Bookmark className={saved ? "fill-current" : ""} />
-                <span className="truncate">
+                <span className="min-w-0 truncate">
                   {saved ? t("saved") : t("save")}
                 </span>
               </Button>
-              <Button type="button" variant="outline" size="sm" onClick={onShare}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onShare}
+                className="min-w-0 px-2"
+              >
                 <Share2 />
-                <span className="truncate">{t("share")}</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={onSend}>
-                <Send />
-                <span className="truncate">{t("send")}</span>
+                <span className="min-w-0 truncate">{t("share")}</span>
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
+                size="sm"
+                onClick={onSend}
+                className="min-w-0 px-2"
+              >
+                <Send />
+                <span className="min-w-0 truncate">{t("send")}</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
                 size="sm"
                 onClick={onReport}
-                className="text-muted-foreground hover:text-destructive"
+                className="min-w-0 px-2 text-muted-foreground hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
               >
                 <Flag />
-                <span className="truncate">{t("report")}</span>
+                <span className="min-w-0 truncate">{t("report")}</span>
               </Button>
             </div>
           ) : null}

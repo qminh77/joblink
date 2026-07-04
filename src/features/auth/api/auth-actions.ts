@@ -3,34 +3,25 @@
 // SRS UC Trace - M01 Tai khoan va dang nhap:
 // UC-01 Dang ky tai khoan ca nhan; UC-02 Dang ky tai khoan cong ty.
 // UC-07 Gui yeu cau dat lai mat khau.
-// Flow: /register|/forgot-password -> auth component/hook -> server action -> auth-mailer -> Supabase Auth + public.users.
+// Flow: /register|/forgot-password -> auth component/hook -> auth action facade -> auth services/data.
 
 import { getTranslations } from "next-intl/server"
 
-import { createAdminClient } from "@/lib/supabase/admin"
-
 import {
-  createUserAndSendVerification,
-  sendPasswordResetEmail,
-} from "./auth-mailer"
-
-import {
-  COMPANY_SIZE_OPTIONS,
   createCompanyRegisterSchema,
   createMemberRegisterSchema,
   type CompanyRegisterInput,
   type MemberRegisterInput,
 } from "../schemas"
+import {
+  registerCompany,
+  registerMember,
+  requestPasswordReset,
+  type CompanyRegisterResult,
+  type MemberRegisterResult,
+} from "../services/registration.service"
 
-export type CompanyRegisterResult =
-  | { ok: true }
-  | { ok: false; error: string; code?: string }
-
-function emptyToNull(value: string | undefined | null): string | null {
-  if (value === undefined || value === null) return null
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
+export type { CompanyRegisterResult, MemberRegisterResult }
 
 export async function registerCompanyAction(
   input: CompanyRegisterInput,
@@ -46,82 +37,11 @@ export async function registerCompanyAction(
     }
   }
 
-  if (!COMPANY_SIZE_OPTIONS.includes(parsed.data.size)) {
-    return { ok: false, error: tv("sizeRequired") }
-  }
-
-  const data = parsed.data
-  const admin = createAdminClient()
-
-  const { count: taxCount, error: taxError } = await admin
-    .from("company_profiles")
-    .select("id", { count: "exact", head: true })
-    .eq("tax_id", data.taxId)
-    .is("deleted_at", null)
-  if (taxError) {
-    return { ok: false, error: taxError.message }
-  }
-  if ((taxCount ?? 0) > 0) {
-    return {
-      ok: false,
-      code: "tax_id_already_exists",
-      error: tErr("taxIdAlreadyExists"),
-    }
-  }
-
-  // Tạo user + gửi email xác minh qua SMTP.
-  const created = await createUserAndSendVerification({
-    email: data.email,
-    password: data.password,
-    data: { role: "company", company_name: data.companyName },
+  return registerCompany(parsed.data, {
+    registrationFailed: tErr("registrationFailed"),
+    taxIdAlreadyExists: tErr("taxIdAlreadyExists"),
+    userAlreadyExists: tErr("userAlreadyExists"),
   })
-  if (!created.ok) {
-    const dup =
-      created.code === "email_exists" ||
-      created.code === "user_already_exists"
-    return {
-      ok: false,
-      code: created.code,
-      error: dup ? tErr("userAlreadyExists") : tErr("registrationFailed"),
-    }
-  }
-  const authId = created.authId
-
-  const { data: userRow, error: userLookupError } = await admin
-    .from("users")
-    .select("id")
-    .eq("auth_id", authId)
-    .maybeSingle()
-  if (userLookupError || !userRow) {
-    return {
-      ok: false,
-      error: userLookupError?.message ?? tErr("registrationFailed"),
-    }
-  }
-
-  const { error: updateError } = await admin
-    .from("company_profiles")
-    .update({
-      tax_id: data.taxId,
-      industry: data.industry,
-      size: data.size,
-      representative_name: data.representativeName,
-      representative_title: emptyToNull(data.representativeTitle),
-      business_address: data.businessAddress,
-      business_email: data.businessEmail,
-      website: emptyToNull(data.website),
-      phone: emptyToNull(data.phone),
-      about: emptyToNull(data.about),
-      verification_status: "pending",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userRow.id)
-
-  if (updateError) {
-    return { ok: false, error: updateError.message }
-  }
-
-  return { ok: true }
 }
 
 // Quên mật khẩu: gửi email đặt lại qua SMTP của Admin (không dùng email Supabase).
@@ -130,21 +50,17 @@ export async function requestPasswordResetAction(input: {
   email: string
   locale?: string
 }): Promise<{ ok: true }> {
-  const email = (input.email ?? "").trim().toLowerCase()
-  if (email && /.+@.+\..+/.test(email)) {
-    await sendPasswordResetEmail(email, input.locale === "en" ? "en" : "vi")
-  }
-  return { ok: true }
+  return requestPasswordReset({
+    email: input.email,
+    locale: input.locale === "en" ? "en" : "vi",
+  })
 }
 
 // Đăng ký Cá nhân (server): tạo user + gửi email xác minh qua SMTP của Admin.
 // Trigger handle_new_user tự tạo public.users + member_profile theo data.role.
 export async function registerMemberAction(
   input: MemberRegisterInput,
-): Promise<
-  | { ok: true; verifyRequired: boolean }
-  | { ok: false; error: string; code?: string }
-> {
+): Promise<MemberRegisterResult> {
   const tv = await getTranslations("auth.validation")
   const tErr = await getTranslations("auth.errors")
 
@@ -155,22 +71,8 @@ export async function registerMemberAction(
       error: parsed.error.issues[0]?.message ?? tErr("registrationFailed"),
     }
   }
-  const data = parsed.data
-
-  const created = await createUserAndSendVerification({
-    email: data.email,
-    password: data.password,
-    data: { role: "member", full_name: data.fullName },
+  return registerMember(parsed.data, {
+    registrationFailed: tErr("registrationFailed"),
+    userAlreadyExists: tErr("userAlreadyExists"),
   })
-  if (!created.ok) {
-    const dup =
-      created.code === "email_exists" ||
-      created.code === "user_already_exists"
-    return {
-      ok: false,
-      code: created.code,
-      error: dup ? tErr("userAlreadyExists") : tErr("registrationFailed"),
-    }
-  }
-  return { ok: true, verifyRequired: created.verifyRequired }
 }

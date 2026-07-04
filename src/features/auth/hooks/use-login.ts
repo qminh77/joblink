@@ -8,9 +8,11 @@ import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
-import { createClient } from "@/lib/supabase/client"
-
-import { signInWithPasswordClient, signOutClient } from "../api/auth-client"
+import {
+  AuthGateError,
+  signInAndValidateClient,
+  type AuthGateErrorCode,
+} from "../api/auth-client"
 import { getAuthErrorMessage } from "../lib/error-messages"
 import type { LoginInput } from "../schemas"
 
@@ -18,12 +20,11 @@ type UseLoginOptions = {
   redirectTo?: string
 }
 
-class AuthGateError extends Error {
-  code: "company_pending" | "account_suspended" | "account_banned"
-  constructor(code: AuthGateError["code"], message: string) {
-    super(message)
-    this.code = code
-  }
+const AUTH_GATE_ERROR_KEYS: Record<AuthGateErrorCode, string> = {
+  user_not_found: "userNotFound",
+  company_pending: "companyPendingApproval",
+  account_suspended: "accountSuspended",
+  account_banned: "accountBanned",
 }
 
 export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
@@ -34,46 +35,7 @@ export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
 
   return useMutation({
     mutationFn: async (input: LoginInput) => {
-      const data = await signInWithPasswordClient(input)
-      const authId = data.user?.id
-      if (!authId) return
-
-      const supabase = createClient()
-      const { data: appUser, error: appUserError } = await supabase
-        .from("users")
-        .select("role, status")
-        .eq("auth_id", authId)
-        .is("deleted_at", null)
-        .maybeSingle<{ role: string; status: string }>()
-
-      if (appUserError) {
-        await signOutClient()
-        throw appUserError
-      }
-
-      if (!appUser) {
-        await signOutClient()
-        throw new Error(tErr("userNotFound"))
-      }
-
-      if (
-        appUser.role === "company" &&
-        appUser.status === "pending_verification"
-      ) {
-        await signOutClient()
-        throw new AuthGateError(
-          "company_pending",
-          tErr("companyPendingApproval"),
-        )
-      }
-      if (appUser.status === "suspended") {
-        await signOutClient()
-        throw new AuthGateError("account_suspended", tErr("accountSuspended"))
-      }
-      if (appUser.status === "banned") {
-        await signOutClient()
-        throw new AuthGateError("account_banned", tErr("accountBanned"))
-      }
+      await signInAndValidateClient(input)
     },
     onSuccess: () => {
       toast.success(t("success"))
@@ -81,7 +43,7 @@ export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
     },
     onError: (error) => {
       if (error instanceof AuthGateError) {
-        toast.error(error.message)
+        toast.error(tErr(AUTH_GATE_ERROR_KEYS[error.code]))
         return
       }
       toast.error(getAuthErrorMessage(error, tErr, tCommon))
