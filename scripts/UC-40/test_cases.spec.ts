@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-40-valid-chan-hoac-bo-chan-nguoi-dung",
-      "kind": "valid",
-      "title": "Happy path completes Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "Actor Nguoi dung has the correct starting state",
-        "Open /profile/[id]|/settings"
-      ],
-      "steps": [
-        "Navigate to /profile/[id]|/settings",
-        "Provide valid data for targetUserId",
-        "Submit or trigger the Chan hoac bo chan nguoi dung flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "targetUserId are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-40-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "Actor Nguoi dung can reach /profile/[id]|/settings"
-      ],
-      "steps": [
-        "Open /profile/[id]|/settings",
-        "Leave one required value empty: targetUserId",
-        "Submit or trigger the Chan hoac bo chan nguoi dung flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: targetUserId",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-40-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /profile/[id]|/settings",
-        "Trigger the Chan hoac bo chan nguoi dung flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-40-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /profile/[id]|/settings with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Chan hoac bo chan nguoi dung flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-40-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "Actor Nguoi dung can reach /profile/[id]|/settings"
-      ],
-      "steps": [
-        "Prepare boundary values for targetUserId",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Chan hoac bo chan nguoi dung flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-40-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Chan hoac bo chan nguoi dung",
-      "preconditions": [
-        "The Chan hoac bo chan nguoi dung happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-40-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Chan hoac bo chan nguoi dung",
+      "id": "TC-NETWORK-UC40-01",
+      "kind": "functional",
+      "title": "Chan hoac bo chan nguoi dung - luồng chính",
       "preconditions": [
         "Actor Nguoi dung matches the SRS actor for UC-40",
-        "Route or entry point /profile/[id]|/settings is reachable"
+        "Route /profile/[id]|/settings is reachable"
       ],
       "steps": [
-        "Open /profile/[id]|/settings",
-        "Start the Chan hoac bo chan nguoi dung control mapped to src/features/network/api/actions.ts",
-        "Complete the flow using business data: targetUserId",
-        "Confirm the final business result and returned state"
+        "Mở /profile/[id]|/settings",
+        "Thực hiện Chan hoac bo chan nguoi dung với dữ liệu: targetUserId"
       ],
       "expected": [
         "user blocks and unblocks another user",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "user blocks and unblocks another user",
-        "Input fields covered: targetUserId"
+        "targetUserId are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-40-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Chan hoac bo chan nguoi dung",
+      "id": "TC-NETWORK-UC40-02",
+      "kind": "required_fields",
+      "title": "Chan hoac bo chan nguoi dung - trường bắt buộc",
       "preconditions": [
-        "Actor Nguoi dung can start Chan hoac bo chan nguoi dung",
-        "Prepare data that triggers the documented exception path"
+        "Actor Nguoi dung can reach /profile/[id]|/settings"
       ],
       "steps": [
-        "Open /profile/[id]|/settings",
-        "Use the alternate or exception business condition for Chan hoac bo chan nguoi dung",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (targetUserId)"
       ],
       "expected": [
-        "self-block or invalid target is rejected",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "self-block or invalid target is rejected",
+        "Required fields are enforced: targetUserId"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-03",
+      "kind": "boundary",
+      "title": "Chan hoac bo chan nguoi dung - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Nguoi dung can reach /profile/[id]|/settings"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (targetUserId)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-04",
+      "kind": "auth",
+      "title": "Chan hoac bo chan nguoi dung - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-05",
+      "kind": "permission",
+      "title": "Chan hoac bo chan nguoi dung - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-06",
+      "kind": "alternative",
+      "title": "Chan hoac bo chan nguoi dung - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Nguoi dung can start Chan hoac bo chan nguoi dung"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Chan hoac bo chan nguoi dung"
+      ],
+      "expected": [
+        "self-block or invalid target is rejected"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-40-business-state-transition",
+      "id": "TC-NETWORK-UC40-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Chan hoac bo chan nguoi dung",
+      "title": "Chan hoac bo chan nguoi dung - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Chan hoac bo chan nguoi dung"
       ],
       "steps": [
-        "Execute Chan hoac bo chan nguoi dung",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "relationship moves to blocked and later unblocked state",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "relationship moves to blocked and later unblocked state",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-40-business-integration-check",
+      "id": "TC-NETWORK-UC40-08",
+      "kind": "side_effect",
+      "title": "Chan hoac bo chan nguoi dung - tác động liên quan",
+      "preconditions": [
+        "The Chan hoac bo chan nguoi dung happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Chan hoac bo chan nguoi dung",
+      "title": "Chan hoac bo chan nguoi dung - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Chan hoac bo chan nguoi dung path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "block removes/invalidates connection, follow, messaging, and suggestion access",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "block removes/invalidates connection, follow, messaging, and suggestion access",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-40-business-ui-feedback",
+      "id": "TC-NETWORK-UC40-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Chan hoac bo chan nguoi dung",
+      "title": "Chan hoac bo chan nguoi dung - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Chan hoac bo chan nguoi dung"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "profile/settings UI shows blocked state and unblock entry point",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "profile/settings UI shows blocked state and unblock entry point",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-NETWORK-UC40-11",
+      "kind": "regression",
+      "title": "Chan hoac bo chan nguoi dung - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

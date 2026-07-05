@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-08-valid-dang-xuat-khoi-he-thong",
-      "kind": "valid",
-      "title": "Happy path completes Dang xuat khoi he thong",
-      "preconditions": [
-        "Actor Nguoi dung has the correct starting state",
-        "Open profile menu"
-      ],
-      "steps": [
-        "Navigate to profile menu",
-        "Provide valid data for session",
-        "Submit or trigger the Dang xuat khoi he thong flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "session are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-08-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Dang xuat khoi he thong",
-      "preconditions": [
-        "Actor Nguoi dung can reach profile menu"
-      ],
-      "steps": [
-        "Open profile menu",
-        "Leave one required value empty: session",
-        "Submit or trigger the Dang xuat khoi he thong flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: session",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-08-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Dang xuat khoi he thong",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access profile menu",
-        "Trigger the Dang xuat khoi he thong flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-08-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Dang xuat khoi he thong",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call profile menu with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Dang xuat khoi he thong flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-08-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Dang xuat khoi he thong",
-      "preconditions": [
-        "Actor Nguoi dung can reach profile menu"
-      ],
-      "steps": [
-        "Prepare boundary values for session",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Dang xuat khoi he thong flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-08-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Dang xuat khoi he thong",
-      "preconditions": [
-        "The Dang xuat khoi he thong happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-08-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Dang xuat khoi he thong",
+      "id": "TC-AUTH-UC08-01",
+      "kind": "functional",
+      "title": "Dang xuat khoi he thong - luồng chính",
       "preconditions": [
         "Actor Nguoi dung matches the SRS actor for UC-08",
-        "Route or entry point profile menu is reachable"
+        "Route profile menu is reachable"
       ],
       "steps": [
-        "Open profile menu",
-        "Start the Dang xuat khoi he thong control mapped to src/features/auth/api/auth-client.ts",
-        "Complete the flow using business data: session",
-        "Confirm the final business result and returned state"
+        "Mở profile menu",
+        "Thực hiện Dang xuat khoi he thong với dữ liệu: session"
       ],
       "expected": [
         "signed-in user signs out and local session is cleared",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "signed-in user signs out and local session is cleared",
-        "Input fields covered: session"
+        "session are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-08-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Dang xuat khoi he thong",
+      "id": "TC-AUTH-UC08-02",
+      "kind": "required_fields",
+      "title": "Dang xuat khoi he thong - trường bắt buộc",
       "preconditions": [
-        "Actor Nguoi dung can start Dang xuat khoi he thong",
-        "Prepare data that triggers the documented exception path"
+        "Actor Nguoi dung can reach profile menu"
       ],
       "steps": [
-        "Open profile menu",
-        "Use the alternate or exception business condition for Dang xuat khoi he thong",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (session)"
       ],
       "expected": [
-        "repeat logout or expired session remains idempotent",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "repeat logout or expired session remains idempotent",
+        "Required fields are enforced: session"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-03",
+      "kind": "boundary",
+      "title": "Dang xuat khoi he thong - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Nguoi dung can reach profile menu"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (session)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-04",
+      "kind": "auth",
+      "title": "Dang xuat khoi he thong - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-05",
+      "kind": "permission",
+      "title": "Dang xuat khoi he thong - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-06",
+      "kind": "alternative",
+      "title": "Dang xuat khoi he thong - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Nguoi dung can start Dang xuat khoi he thong"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Dang xuat khoi he thong"
+      ],
+      "expected": [
+        "repeat logout or expired session remains idempotent"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-08-business-state-transition",
+      "id": "TC-AUTH-UC08-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Dang xuat khoi he thong",
+      "title": "Dang xuat khoi he thong - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Dang xuat khoi he thong"
       ],
       "steps": [
-        "Execute Dang xuat khoi he thong",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "authenticated session moves to guest state",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "authenticated session moves to guest state",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-08-business-integration-check",
+      "id": "TC-AUTH-UC08-08",
+      "kind": "side_effect",
+      "title": "Dang xuat khoi he thong - tác động liên quan",
+      "preconditions": [
+        "The Dang xuat khoi he thong happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Dang xuat khoi he thong",
+      "title": "Dang xuat khoi he thong - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Dang xuat khoi he thong path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "Supabase client session, middleware cookie state, and router redirect align",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "Supabase client session, middleware cookie state, and router redirect align",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-08-business-ui-feedback",
+      "id": "TC-AUTH-UC08-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Dang xuat khoi he thong",
+      "title": "Dang xuat khoi he thong - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Dang xuat khoi he thong"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "menu item shows progress and returns to login/public surface",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "menu item shows progress and returns to login/public surface",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC08-11",
+      "kind": "regression",
+      "title": "Dang xuat khoi he thong - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

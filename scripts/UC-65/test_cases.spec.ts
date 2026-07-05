@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-65-valid-kiem-duyet-tin-tuyen-dung",
-      "kind": "valid",
-      "title": "Happy path completes Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "Actor Quan tri vien has the correct starting state",
-        "Open /admin/jobs"
-      ],
-      "steps": [
-        "Navigate to /admin/jobs",
-        "Provide valid data for jobId, action",
-        "Submit or trigger the Kiem duyet tin tuyen dung flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "jobId, action are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-65-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "Actor Quan tri vien can reach /admin/jobs"
-      ],
-      "steps": [
-        "Open /admin/jobs",
-        "Leave one required value empty: jobId, action",
-        "Submit or trigger the Kiem duyet tin tuyen dung flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: jobId, action",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-65-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /admin/jobs",
-        "Trigger the Kiem duyet tin tuyen dung flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-65-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /admin/jobs with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Kiem duyet tin tuyen dung flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-65-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "Actor Quan tri vien can reach /admin/jobs"
-      ],
-      "steps": [
-        "Prepare boundary values for jobId, action",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Kiem duyet tin tuyen dung flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-65-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Kiem duyet tin tuyen dung",
-      "preconditions": [
-        "The Kiem duyet tin tuyen dung happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-65-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Kiem duyet tin tuyen dung",
+      "id": "TC-ADMIN-UC65-01",
+      "kind": "functional",
+      "title": "Kiem duyet tin tuyen dung - luồng chính",
       "preconditions": [
         "Actor Quan tri vien matches the SRS actor for UC-65",
-        "Route or entry point /admin/jobs is reachable"
+        "Route /admin/jobs is reachable"
       ],
       "steps": [
-        "Open /admin/jobs",
-        "Start the Kiem duyet tin tuyen dung control mapped to src/features/admin/api/jobs.ts",
-        "Complete the flow using business data: jobId, action",
-        "Confirm the final business result and returned state"
+        "Mở /admin/jobs",
+        "Thực hiện Kiem duyet tin tuyen dung với dữ liệu: jobId, action"
       ],
       "expected": [
         "admin moderates a job posting",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "admin moderates a job posting",
-        "Input fields covered: jobId, action"
+        "jobId, action are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-65-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Kiem duyet tin tuyen dung",
+      "id": "TC-ADMIN-UC65-02",
+      "kind": "required_fields",
+      "title": "Kiem duyet tin tuyen dung - trường bắt buộc",
       "preconditions": [
-        "Actor Quan tri vien can start Kiem duyet tin tuyen dung",
-        "Prepare data that triggers the documented exception path"
+        "Actor Quan tri vien can reach /admin/jobs"
       ],
       "steps": [
-        "Open /admin/jobs",
-        "Use the alternate or exception business condition for Kiem duyet tin tuyen dung",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (jobId, action)"
       ],
       "expected": [
-        "invalid job id or unsupported moderation action is rejected",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "invalid job id or unsupported moderation action is rejected",
+        "Required fields are enforced: jobId, action"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-03",
+      "kind": "boundary",
+      "title": "Kiem duyet tin tuyen dung - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Quan tri vien can reach /admin/jobs"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (jobId, action)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-04",
+      "kind": "auth",
+      "title": "Kiem duyet tin tuyen dung - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-05",
+      "kind": "permission",
+      "title": "Kiem duyet tin tuyen dung - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-06",
+      "kind": "alternative",
+      "title": "Kiem duyet tin tuyen dung - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Quan tri vien can start Kiem duyet tin tuyen dung"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Kiem duyet tin tuyen dung"
+      ],
+      "expected": [
+        "invalid job id or unsupported moderation action is rejected"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-65-business-state-transition",
+      "id": "TC-ADMIN-UC65-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Kiem duyet tin tuyen dung",
+      "title": "Kiem duyet tin tuyen dung - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Kiem duyet tin tuyen dung"
       ],
       "steps": [
-        "Execute Kiem duyet tin tuyen dung",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "job moderation state moves active/removed/restored as allowed",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "job moderation state moves active/removed/restored as allowed",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-65-business-integration-check",
+      "id": "TC-ADMIN-UC65-08",
+      "kind": "side_effect",
+      "title": "Kiem duyet tin tuyen dung - tác động liên quan",
+      "preconditions": [
+        "The Kiem duyet tin tuyen dung happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Kiem duyet tin tuyen dung",
+      "title": "Kiem duyet tin tuyen dung - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Kiem duyet tin tuyen dung path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "job moderation service updates jobs status and audit log",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "job moderation service updates jobs status and audit log",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-65-business-ui-feedback",
+      "id": "TC-ADMIN-UC65-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Kiem duyet tin tuyen dung",
+      "title": "Kiem duyet tin tuyen dung - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Kiem duyet tin tuyen dung"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "jobs panel shows applications count, filters, and status action feedback",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "jobs panel shows applications count, filters, and status action feedback",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC65-11",
+      "kind": "regression",
+      "title": "Kiem duyet tin tuyen dung - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

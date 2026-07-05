@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-66-valid-xu-ly-bao-cao-vi-pham",
-      "kind": "valid",
-      "title": "Happy path completes Xu ly bao cao vi pham",
-      "preconditions": [
-        "Actor Quan tri vien has the correct starting state",
-        "Open /admin/reports"
-      ],
-      "steps": [
-        "Navigate to /admin/reports",
-        "Provide valid data for reportId, action",
-        "Submit or trigger the Xu ly bao cao vi pham flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "reportId, action are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-66-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Xu ly bao cao vi pham",
-      "preconditions": [
-        "Actor Quan tri vien can reach /admin/reports"
-      ],
-      "steps": [
-        "Open /admin/reports",
-        "Leave one required value empty: reportId, action",
-        "Submit or trigger the Xu ly bao cao vi pham flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: reportId, action",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-66-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Xu ly bao cao vi pham",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /admin/reports",
-        "Trigger the Xu ly bao cao vi pham flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-66-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Xu ly bao cao vi pham",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /admin/reports with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Xu ly bao cao vi pham flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-66-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Xu ly bao cao vi pham",
-      "preconditions": [
-        "Actor Quan tri vien can reach /admin/reports"
-      ],
-      "steps": [
-        "Prepare boundary values for reportId, action",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Xu ly bao cao vi pham flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-66-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Xu ly bao cao vi pham",
-      "preconditions": [
-        "The Xu ly bao cao vi pham happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-66-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Xu ly bao cao vi pham",
+      "id": "TC-ADMIN-UC66-01",
+      "kind": "functional",
+      "title": "Xu ly bao cao vi pham - luồng chính",
       "preconditions": [
         "Actor Quan tri vien matches the SRS actor for UC-66",
-        "Route or entry point /admin/reports is reachable"
+        "Route /admin/reports is reachable"
       ],
       "steps": [
-        "Open /admin/reports",
-        "Start the Xu ly bao cao vi pham control mapped to src/features/admin/api/reports.ts",
-        "Complete the flow using business data: reportId, action",
-        "Confirm the final business result and returned state"
+        "Mở /admin/reports",
+        "Thực hiện Xu ly bao cao vi pham với dữ liệu: reportId, action"
       ],
       "expected": [
         "admin changes report status or applies a moderation action",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "admin changes report status or applies a moderation action",
-        "Input fields covered: reportId, action"
+        "reportId, action are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-66-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Xu ly bao cao vi pham",
+      "id": "TC-ADMIN-UC66-02",
+      "kind": "required_fields",
+      "title": "Xu ly bao cao vi pham - trường bắt buộc",
       "preconditions": [
-        "Actor Quan tri vien can start Xu ly bao cao vi pham",
-        "Prepare data that triggers the documented exception path"
+        "Actor Quan tri vien can reach /admin/reports"
       ],
       "steps": [
-        "Open /admin/reports",
-        "Use the alternate or exception business condition for Xu ly bao cao vi pham",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (reportId, action)"
       ],
       "expected": [
-        "invalid transition, missing reason, or already resolved report is rejected",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "invalid transition, missing reason, or already resolved report is rejected",
+        "Required fields are enforced: reportId, action"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-03",
+      "kind": "boundary",
+      "title": "Xu ly bao cao vi pham - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Quan tri vien can reach /admin/reports"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (reportId, action)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-04",
+      "kind": "auth",
+      "title": "Xu ly bao cao vi pham - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-05",
+      "kind": "permission",
+      "title": "Xu ly bao cao vi pham - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-06",
+      "kind": "alternative",
+      "title": "Xu ly bao cao vi pham - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Quan tri vien can start Xu ly bao cao vi pham"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Xu ly bao cao vi pham"
+      ],
+      "expected": [
+        "invalid transition, missing reason, or already resolved report is rejected"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-66-business-state-transition",
+      "id": "TC-ADMIN-UC66-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Xu ly bao cao vi pham",
+      "title": "Xu ly bao cao vi pham - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Xu ly bao cao vi pham"
       ],
       "steps": [
-        "Execute Xu ly bao cao vi pham",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "report state moves pending/reviewing/resolved/dismissed",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "report state moves pending/reviewing/resolved/dismissed",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-66-business-integration-check",
+      "id": "TC-ADMIN-UC66-08",
+      "kind": "side_effect",
+      "title": "Xu ly bao cao vi pham - tác động liên quan",
+      "preconditions": [
+        "The Xu ly bao cao vi pham happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Xu ly bao cao vi pham",
+      "title": "Xu ly bao cao vi pham - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Xu ly bao cao vi pham path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "report, moderation_actions, target entity, and audit log stay consistent",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "report, moderation_actions, target entity, and audit log stay consistent",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-66-business-ui-feedback",
+      "id": "TC-ADMIN-UC66-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Xu ly bao cao vi pham",
+      "title": "Xu ly bao cao vi pham - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Xu ly bao cao vi pham"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "reports panel shows action modal, status badge, and result feedback",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "reports panel shows action modal, status badge, and result feedback",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-ADMIN-UC66-11",
+      "kind": "regression",
+      "title": "Xu ly bao cao vi pham - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

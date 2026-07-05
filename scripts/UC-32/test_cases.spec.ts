@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-32-valid-tim-nguoi-de-nhac-ten",
-      "kind": "valid",
-      "title": "Happy path completes Tim nguoi de nhac ten",
-      "preconditions": [
-        "Actor Nguoi dung has the correct starting state",
-        "Open /home"
-      ],
-      "steps": [
-        "Navigate to /home",
-        "Provide valid data for query",
-        "Submit or trigger the Tim nguoi de nhac ten flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "query are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-32-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Tim nguoi de nhac ten",
-      "preconditions": [
-        "Actor Nguoi dung can reach /home"
-      ],
-      "steps": [
-        "Open /home",
-        "Leave one required value empty: query",
-        "Submit or trigger the Tim nguoi de nhac ten flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: query",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-32-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Tim nguoi de nhac ten",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /home",
-        "Trigger the Tim nguoi de nhac ten flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-32-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Tim nguoi de nhac ten",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /home with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Tim nguoi de nhac ten flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-32-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Tim nguoi de nhac ten",
-      "preconditions": [
-        "Actor Nguoi dung can reach /home"
-      ],
-      "steps": [
-        "Prepare boundary values for query",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Tim nguoi de nhac ten flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-32-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Tim nguoi de nhac ten",
-      "preconditions": [
-        "The Tim nguoi de nhac ten happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-32-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Tim nguoi de nhac ten",
+      "id": "TC-POST-UC32-01",
+      "kind": "functional",
+      "title": "Tim nguoi de nhac ten - luồng chính",
       "preconditions": [
         "Actor Nguoi dung matches the SRS actor for UC-32",
-        "Route or entry point /home is reachable"
+        "Route /home is reachable"
       ],
       "steps": [
-        "Open /home",
-        "Start the Tim nguoi de nhac ten control mapped to src/features/posts/api/actions.ts",
-        "Complete the flow using business data: query",
-        "Confirm the final business result and returned state"
+        "Mở /home",
+        "Thực hiện Tim nguoi de nhac ten với dữ liệu: query"
       ],
       "expected": [
         "user searches mentionable people while composing content",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "user searches mentionable people while composing content",
-        "Input fields covered: query"
+        "query are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-32-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Tim nguoi de nhac ten",
+      "id": "TC-POST-UC32-02",
+      "kind": "required_fields",
+      "title": "Tim nguoi de nhac ten - trường bắt buộc",
       "preconditions": [
-        "Actor Nguoi dung can start Tim nguoi de nhac ten",
-        "Prepare data that triggers the documented exception path"
+        "Actor Nguoi dung can reach /home"
       ],
       "steps": [
-        "Open /home",
-        "Use the alternate or exception business condition for Tim nguoi de nhac ten",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (query)"
       ],
       "expected": [
-        "empty/short query or blocked users return safe limited results",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "empty/short query or blocked users return safe limited results",
+        "Required fields are enforced: query"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-03",
+      "kind": "boundary",
+      "title": "Tim nguoi de nhac ten - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Nguoi dung can reach /home"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (query)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-04",
+      "kind": "auth",
+      "title": "Tim nguoi de nhac ten - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-05",
+      "kind": "permission",
+      "title": "Tim nguoi de nhac ten - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-06",
+      "kind": "alternative",
+      "title": "Tim nguoi de nhac ten - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Nguoi dung can start Tim nguoi de nhac ten"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Tim nguoi de nhac ten"
+      ],
+      "expected": [
+        "empty/short query or blocked users return safe limited results"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-32-business-state-transition",
+      "id": "TC-POST-UC32-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Tim nguoi de nhac ten",
+      "title": "Tim nguoi de nhac ten - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Tim nguoi de nhac ten"
       ],
       "steps": [
-        "Execute Tim nguoi de nhac ten",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "mention query moves from idle to result selection state",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "mention query moves from idle to result selection state",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-32-business-integration-check",
+      "id": "TC-POST-UC32-08",
+      "kind": "side_effect",
+      "title": "Tim nguoi de nhac ten - tác động liên quan",
+      "preconditions": [
+        "The Tim nguoi de nhac ten happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Tim nguoi de nhac ten",
+      "title": "Tim nguoi de nhac ten - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Tim nguoi de nhac ten path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "mention search respects connection/block/visibility rules",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "mention search respects connection/block/visibility rules",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-32-business-ui-feedback",
+      "id": "TC-POST-UC32-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Tim nguoi de nhac ten",
+      "title": "Tim nguoi de nhac ten - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Tim nguoi de nhac ten"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "mention popover handles loading, no result, keyboard selection, and insertion",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "mention popover handles loading, no result, keyboard selection, and insertion",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-POST-UC32-11",
+      "kind": "regression",
+      "title": "Tim nguoi de nhac ten - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

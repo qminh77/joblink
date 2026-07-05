@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-04-valid-dang-nhap-bang-email-va-mat-khau",
-      "kind": "valid",
-      "title": "Happy path completes Dang nhap bang email va mat khau",
-      "preconditions": [
-        "Actor Khach has the correct starting state",
-        "Open /login"
-      ],
-      "steps": [
-        "Navigate to /login",
-        "Provide valid data for email, password",
-        "Submit or trigger the Dang nhap bang email va mat khau flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "email, password are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-04-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Dang nhap bang email va mat khau",
-      "preconditions": [
-        "Actor Khach can reach /login"
-      ],
-      "steps": [
-        "Open /login",
-        "Leave one required value empty: email, password",
-        "Submit or trigger the Dang nhap bang email va mat khau flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: email, password",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-04-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Dang nhap bang email va mat khau",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /login",
-        "Trigger the Dang nhap bang email va mat khau flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-04-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Dang nhap bang email va mat khau",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /login with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Dang nhap bang email va mat khau flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-04-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Dang nhap bang email va mat khau",
-      "preconditions": [
-        "Actor Khach can reach /login"
-      ],
-      "steps": [
-        "Prepare boundary values for email, password",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Dang nhap bang email va mat khau flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-04-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Dang nhap bang email va mat khau",
-      "preconditions": [
-        "The Dang nhap bang email va mat khau happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-04-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Dang nhap bang email va mat khau",
+      "id": "TC-AUTH-UC04-01",
+      "kind": "functional",
+      "title": "Dang nhap bang email va mat khau - luồng chính",
       "preconditions": [
         "Actor Khach matches the SRS actor for UC-04",
-        "Route or entry point /login is reachable"
+        "Route /login is reachable"
       ],
       "steps": [
-        "Open /login",
-        "Start the Dang nhap bang email va mat khau control mapped to src/features/auth/hooks/use-login.ts",
-        "Complete the flow using business data: email, password",
-        "Confirm the final business result and returned state"
+        "Mở /login",
+        "Thực hiện Dang nhap bang email va mat khau với dữ liệu: email, password"
       ],
       "expected": [
         "valid email/password signs in and loads the app user mirror",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "valid email/password signs in and loads the app user mirror",
-        "Input fields covered: email, password"
+        "email, password are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-04-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Dang nhap bang email va mat khau",
+      "id": "TC-AUTH-UC04-02",
+      "kind": "required_fields",
+      "title": "Dang nhap bang email va mat khau - trường bắt buộc",
       "preconditions": [
-        "Actor Khach can start Dang nhap bang email va mat khau",
-        "Prepare data that triggers the documented exception path"
+        "Actor Khach can reach /login"
       ],
       "steps": [
-        "Open /login",
-        "Use the alternate or exception business condition for Dang nhap bang email va mat khau",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (email, password)"
       ],
       "expected": [
-        "wrong credentials or missing app user mirror signs out and shows safe error",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "wrong credentials or missing app user mirror signs out and shows safe error",
+        "Required fields are enforced: email, password"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-03",
+      "kind": "boundary",
+      "title": "Dang nhap bang email va mat khau - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Khach can reach /login"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (email, password)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-04",
+      "kind": "auth",
+      "title": "Dang nhap bang email va mat khau - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-05",
+      "kind": "permission",
+      "title": "Dang nhap bang email va mat khau - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-06",
+      "kind": "alternative",
+      "title": "Dang nhap bang email va mat khau - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Khach can start Dang nhap bang email va mat khau"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Dang nhap bang email va mat khau"
+      ],
+      "expected": [
+        "wrong credentials or missing app user mirror signs out and shows safe error"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-04-business-state-transition",
+      "id": "TC-AUTH-UC04-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Dang nhap bang email va mat khau",
+      "title": "Dang nhap bang email va mat khau - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Dang nhap bang email va mat khau"
       ],
       "steps": [
-        "Execute Dang nhap bang email va mat khau",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "guest session moves to authenticated session when UC-06 passes",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "guest session moves to authenticated session when UC-06 passes",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-04-business-integration-check",
+      "id": "TC-AUTH-UC04-08",
+      "kind": "side_effect",
+      "title": "Dang nhap bang email va mat khau - tác động liên quan",
+      "preconditions": [
+        "The Dang nhap bang email va mat khau happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Dang nhap bang email va mat khau",
+      "title": "Dang nhap bang email va mat khau - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Dang nhap bang email va mat khau path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "Supabase Auth session and public.users role/status checks stay consistent",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "Supabase Auth session and public.users role/status checks stay consistent",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-04-business-ui-feedback",
+      "id": "TC-AUTH-UC04-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Dang nhap bang email va mat khau",
+      "title": "Dang nhap bang email va mat khau - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Dang nhap bang email va mat khau"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "login form shows loading, success redirect, and translated error states",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "login form shows loading, success redirect, and translated error states",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-AUTH-UC04-11",
+      "kind": "regression",
+      "title": "Dang nhap bang email va mat khau - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

@@ -18,241 +18,214 @@ defineUcTestSuite({
   ],
   "cases": [
     {
-      "id": "UC-54-valid-danh-dau-thong-bao-da-doc",
-      "kind": "valid",
-      "title": "Happy path completes Danh dau thong bao da doc",
-      "preconditions": [
-        "Actor Nguoi dung has the correct starting state",
-        "Open /notifications"
-      ],
-      "steps": [
-        "Navigate to /notifications",
-        "Provide valid data for notificationId",
-        "Submit or trigger the Danh dau thong bao da doc flow",
-        "Observe the returned UI/action result"
-      ],
-      "expected": [
-        "The operation succeeds without validation or permission errors",
-        "The UI shows the new business state immediately or after refresh",
-        "The persisted data matches the submitted values"
-      ],
-      "dataChecks": [
-        "notificationId are persisted or returned correctly",
-        "No unrelated entity is changed"
-      ]
-    },
-    {
-      "id": "UC-54-not-null-required-fields",
-      "kind": "not_null",
-      "title": "Reject missing required data for Danh dau thong bao da doc",
-      "preconditions": [
-        "Actor Nguoi dung can reach /notifications"
-      ],
-      "steps": [
-        "Open /notifications",
-        "Leave one required value empty: notificationId",
-        "Submit or trigger the Danh dau thong bao da doc flow"
-      ],
-      "expected": [
-        "The action is rejected before mutating data",
-        "A clear validation message is shown for the missing field"
-      ],
-      "dataChecks": [
-        "Required fields are enforced: notificationId",
-        "Database row count/state remains unchanged"
-      ]
-    },
-    {
-      "id": "UC-54-auth-required",
-      "kind": "auth",
-      "title": "Enforce authentication boundary for Danh dau thong bao da doc",
-      "preconditions": [
-        "No active authenticated session or an expired session"
-      ],
-      "steps": [
-        "Attempt to access /notifications",
-        "Trigger the Danh dau thong bao da doc flow",
-        "Inspect redirect, action result or toast"
-      ],
-      "expected": [
-        "Unauthenticated access is redirected or rejected",
-        "No business data is created, updated or leaked"
-      ],
-      "dataChecks": [
-        "Session guard is evaluated before business mutation",
-        "Sensitive payload is not returned"
-      ]
-    },
-    {
-      "id": "UC-54-permission-ownership-state",
-      "kind": "permission",
-      "title": "Reject wrong actor, owner or state for Danh dau thong bao da doc",
-      "preconditions": [
-        "Use an account without the required role, ownership or business state"
-      ],
-      "steps": [
-        "Open or call /notifications with a valid-looking payload",
-        "Use target data that belongs to another user or is in a forbidden state",
-        "Submit the Danh dau thong bao da doc flow"
-      ],
-      "expected": [
-        "The operation is denied with a business-safe error",
-        "The forbidden target remains unchanged"
-      ],
-      "dataChecks": [
-        "Role/ownership/status guard is checked",
-        "Audit/log state is not falsely recorded as success"
-      ]
-    },
-    {
-      "id": "UC-54-boundary-invalid-input",
-      "kind": "boundary",
-      "title": "Validate invalid or boundary input for Danh dau thong bao da doc",
-      "preconditions": [
-        "Actor Nguoi dung can reach /notifications"
-      ],
-      "steps": [
-        "Prepare boundary values for notificationId",
-        "Use too long text, invalid id, invalid file/type, or out-of-range enum where applicable",
-        "Submit the Danh dau thong bao da doc flow"
-      ],
-      "expected": [
-        "Invalid boundary input is rejected consistently",
-        "The message identifies what must be fixed"
-      ],
-      "dataChecks": [
-        "Schema or service validation rejects invalid payload",
-        "No partial write is left behind"
-      ]
-    },
-    {
-      "id": "UC-54-side-effect-consistency",
-      "kind": "side_effect",
-      "title": "Verify side effects and cache consistency for Danh dau thong bao da doc",
-      "preconditions": [
-        "The Danh dau thong bao da doc happy path has completed once"
-      ],
-      "steps": [
-        "Refresh the relevant page or reload the query",
-        "Check counters, notifications, audit logs, realtime badge or cache state when applicable",
-        "Repeat the action if it is idempotent or reversible"
-      ],
-      "expected": [
-        "Derived counts, notifications, cache and audit data stay consistent",
-        "Repeating/reversing the action does not create duplicate or stale state"
-      ],
-      "dataChecks": [
-        "Related aggregate/counter/cache state is consistent",
-        "Expected side effects are present only once"
-      ]
-    },
-    {
-      "id": "UC-54-business-main-flow",
-      "kind": "business_flow",
-      "title": "Run SRS business flow for Danh dau thong bao da doc",
+      "id": "TC-MSG-UC54-01",
+      "kind": "functional",
+      "title": "Danh dau thong bao da doc - luồng chính",
       "preconditions": [
         "Actor Nguoi dung matches the SRS actor for UC-54",
-        "Route or entry point /notifications is reachable"
+        "Route /notifications is reachable"
       ],
       "steps": [
-        "Open /notifications",
-        "Start the Danh dau thong bao da doc control mapped to src/features/notifications/api/actions.ts",
-        "Complete the flow using business data: notificationId",
-        "Confirm the final business result and returned state"
+        "Mở /notifications",
+        "Thực hiện Danh dau thong bao da doc với dữ liệu: notificationId"
       ],
       "expected": [
         "user marks one or all notifications as read",
-        "The result is visible to the actor in the same workflow",
-        "No unrelated feature state is changed"
+        "Luồng chính thành công"
       ],
       "dataChecks": [
-        "user marks one or all notifications as read",
-        "Input fields covered: notificationId"
+        "notificationId are persisted or returned correctly"
       ]
     },
     {
-      "id": "UC-54-alternate-business-flow",
-      "kind": "alternate_flow",
-      "title": "Exercise SRS alternative flow for Danh dau thong bao da doc",
+      "id": "TC-MSG-UC54-02",
+      "kind": "required_fields",
+      "title": "Danh dau thong bao da doc - trường bắt buộc",
       "preconditions": [
-        "Actor Nguoi dung can start Danh dau thong bao da doc",
-        "Prepare data that triggers the documented exception path"
+        "Actor Nguoi dung can reach /notifications"
       ],
       "steps": [
-        "Open /notifications",
-        "Use the alternate or exception business condition for Danh dau thong bao da doc",
-        "Submit the flow and inspect the action result"
+        "Bỏ trống từng trường bắt buộc hoặc xác nhận bắt buộc rồi gửi form/thao tác. (notificationId)"
       ],
       "expected": [
-        "another user's notification id or invalid id is rejected",
-        "The system explains the rejection without exposing sensitive data"
+        "Hệ thống chặn lưu.",
+        "Báo lỗi đúng trường.",
+        "Dữ liệu cũ không đổi."
       ],
       "dataChecks": [
-        "another user's notification id or invalid id is rejected",
+        "Required fields are enforced: notificationId"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-03",
+      "kind": "boundary",
+      "title": "Danh dau thong bao da doc - dữ liệu biên và sai định dạng",
+      "preconditions": [
+        "Actor Nguoi dung can reach /notifications"
+      ],
+      "steps": [
+        "Nhập dữ liệu min/max, quá giới hạn, sai định dạng hoặc file sai loại/dung lượng nếu UC có file. (notificationId)"
+      ],
+      "expected": [
+        "Biên hợp lệ được nhận.",
+        "Dữ liệu sai bị từ chối.",
+        "Không ghi dữ liệu dở."
+      ],
+      "dataChecks": [
+        "Schema or service validation rejects invalid payload"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-04",
+      "kind": "auth",
+      "title": "Danh dau thong bao da doc - truy cập và phiên đăng nhập",
+      "preconditions": [
+        "Trạng thái đăng nhập được thiết lập"
+      ],
+      "steps": [
+        "Thực hiện UC với trạng thái đăng nhập phù hợp; thử chưa đăng nhập hoặc hết phiên nếu UC yêu cầu bảo vệ."
+      ],
+      "expected": [
+        "Đúng vai trò được truy cập.",
+        "Sai phiên bị chặn hoặc yêu cầu đăng nhập lại.",
+        "Không lộ dữ liệu riêng tư."
+      ],
+      "dataChecks": [
+        "Session guard is evaluated"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-05",
+      "kind": "permission",
+      "title": "Danh dau thong bao da doc - phân quyền và trạng thái nghiệp vụ",
+      "preconditions": [
+        "Use an account with different role or ownership"
+      ],
+      "steps": [
+        "Dùng tài khoản sai vai trò, không sở hữu dữ liệu hoặc đối tượng ở trạng thái không cho phép."
+      ],
+      "expected": [
+        "Thao tác bị từ chối an toàn.",
+        "Dữ liệu không bị thay đổi sai.",
+        "Thông báo lỗi rõ ràng."
+      ],
+      "dataChecks": [
+        "Role/ownership/status guard is checked"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-06",
+      "kind": "alternative",
+      "title": "Danh dau thong bao da doc - ngoại lệ nghiệp vụ",
+      "preconditions": [
+        "Actor Nguoi dung can start Danh dau thong bao da doc"
+      ],
+      "steps": [
+        "Thực hiện ngoại lệ nghiệp vụ cho Danh dau thong bao da doc"
+      ],
+      "expected": [
+        "another user's notification id or invalid id is rejected"
+      ],
+      "dataChecks": [
         "No partial mutation is committed"
       ]
     },
     {
-      "id": "UC-54-business-state-transition",
+      "id": "TC-MSG-UC54-07",
       "kind": "state_transition",
-      "title": "Verify business state transition for Danh dau thong bao da doc",
+      "title": "Danh dau thong bao da doc - chuyển trạng thái",
       "preconditions": [
         "Record the starting state before Danh dau thong bao da doc"
       ],
       "steps": [
-        "Execute Danh dau thong bao da doc",
-        "Reload the relevant page/query",
-        "Compare before and after state"
+        "Ghi nhận trạng thái trước/sau khi hoàn tất luồng chính; tải lại màn hình liên quan."
       ],
       "expected": [
         "notification state moves unread -> read",
-        "The transition is repeatable or idempotent according to the UC"
+        "Trạng thái mới đúng SRS.",
+        "Không có trạng thái loại trừ nhau.",
+        "Thao tác lặp được xử lý rõ."
       ],
       "dataChecks": [
-        "notification state moves unread -> read",
-        "Old and new state are not both active when mutually exclusive"
+        "Old and new state are not both active"
       ]
     },
     {
-      "id": "UC-54-business-integration-check",
+      "id": "TC-MSG-UC54-08",
+      "kind": "side_effect",
+      "title": "Danh dau thong bao da doc - tác động liên quan",
+      "preconditions": [
+        "The Danh dau thong bao da doc happy path has completed once"
+      ],
+      "steps": [
+        "Hoàn tất luồng chính; kiểm tra thông báo, số đếm, badge hoặc dữ liệu liên quan."
+      ],
+      "expected": [
+        "Dữ liệu liên quan đồng bộ.",
+        "Không tạo bản ghi/thông báo trùng.",
+        "Sau tải lại vẫn đúng."
+      ],
+      "dataChecks": [
+        "Expected side effects are present only once"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-09",
       "kind": "integration",
-      "title": "Verify cross-feature integration for Danh dau thong bao da doc",
+      "title": "Danh dau thong bao da doc - tích hợp dữ liệu",
       "preconditions": [
         "Complete the main Danh dau thong bao da doc path once"
       ],
       "steps": [
-        "Open the dependent feature, list, badge, notification, audit, or public page",
-        "Refresh or refetch the dependent data",
-        "Confirm the dependent state follows the source action"
+        "Thực hiện UC qua giao diện; kiểm tra dữ liệu, file, thông báo hoặc số đếm phát sinh."
       ],
       "expected": [
         "notifications read_at and unread count cache stay consistent",
-        "Dependent surfaces do not show stale or duplicated data"
+        "Dữ liệu được tạo/sửa/xóa đúng phạm vi.",
+        "Quyền truy cập dữ liệu được bảo vệ.",
+        "Các phần liên quan hiển thị nhất quán."
       ],
       "dataChecks": [
-        "notifications read_at and unread count cache stay consistent",
-        "Related cache/revalidation/realtime output is consistent"
+        "Related cache/revalidation is consistent"
       ]
     },
     {
-      "id": "UC-54-business-ui-feedback",
+      "id": "TC-MSG-UC54-10",
       "kind": "ui_feedback",
-      "title": "Verify UI feedback for Danh dau thong bao da doc",
+      "title": "Danh dau thong bao da doc - phản hồi giao diện",
       "preconditions": [
         "Open the UI surface for Danh dau thong bao da doc"
       ],
       "steps": [
-        "Trigger loading, validation error, success, and empty/no-result states where applicable",
-        "Observe controls, disabled states, toasts, dialogs, and redirects",
-        "Repeat once to check idempotent or duplicate-click behavior"
+        "Kiểm tra loading, success, validation error, empty/error state; thử submit nhanh và màn hình mobile cơ bản."
       ],
       "expected": [
         "read action updates badge/list immediately",
-        "The UI does not feel stuck, stale, or ambiguous after the action"
+        "Có phản hồi rõ ràng.",
+        "Không kẹt loading hoặc stale UI.",
+        "Layout không vỡ ở mobile phổ biến."
       ],
       "dataChecks": [
-        "read action updates badge/list immediately",
         "Visible state matches action/query result"
+      ]
+    },
+    {
+      "id": "TC-MSG-UC54-11",
+      "kind": "regression",
+      "title": "Danh dau thong bao da doc - hồi quy sau sửa lỗi",
+      "preconditions": [
+        "Đã có lỗi được ghi nhận và sửa chữa"
+      ],
+      "steps": [
+        "Chạy lại luồng chính và lỗi từng ghi trong Defect Log sau khi sửa."
+      ],
+      "expected": [
+        "Lỗi đã đóng không tái diễn.",
+        "UC liên quan không phát sinh hồi quy.",
+        "Kết quả re-test được ghi nhận."
+      ],
+      "dataChecks": [
+        "Regression test passed"
       ]
     }
   ]

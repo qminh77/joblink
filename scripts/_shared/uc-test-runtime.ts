@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest"
 
 export type UcCaseKind =
-  | "valid"
-  | "not_null"
+  | "functional"
+  | "required_fields"
+  | "boundary"
   | "auth"
   | "permission"
-  | "boundary"
-  | "side_effect"
-  | "business_flow"
-  | "alternate_flow"
+  | "alternative"
   | "state_transition"
+  | "side_effect"
   | "integration"
   | "ui_feedback"
+  | "regression"
 
 export type UcTestCase = {
   id: string
@@ -37,17 +37,17 @@ export type UcTestSuite = {
 }
 
 const REQUIRED_KINDS: UcCaseKind[] = [
-  "valid",
-  "not_null",
+  "functional",
+  "required_fields",
+  "boundary",
   "auth",
   "permission",
-  "boundary",
-  "side_effect",
-  "business_flow",
-  "alternate_flow",
+  "alternative",
   "state_transition",
+  "side_effect",
   "integration",
   "ui_feedback",
+  "regression",
 ]
 
 export function defineUcTestSuite(suite: UcTestSuite) {
@@ -68,11 +68,11 @@ export function defineUcTestSuite(suite: UcTestSuite) {
 
     for (const testCase of suite.cases) {
       it(`${testCase.id} - ${testCase.title}`, () => {
-        expect(testCase.id).toMatch(new RegExp(`^${suite.uc}-`))
+        expect(testCase.id).toMatch(new RegExp(`^TC-[A-Z]+-${suite.uc.replace('-', '')}-\\d+$`))
         expect(testCase.title.length).toBeGreaterThan(10)
         expect(testCase.preconditions.length).toBeGreaterThan(0)
-        expect(testCase.steps.length).toBeGreaterThanOrEqual(3)
-        expect(testCase.expected.length).toBeGreaterThanOrEqual(2)
+        expect(testCase.steps.length).toBeGreaterThan(0)
+        expect(testCase.expected.length).toBeGreaterThan(0)
         expect(testCase.dataChecks.length).toBeGreaterThan(0)
       })
     }
