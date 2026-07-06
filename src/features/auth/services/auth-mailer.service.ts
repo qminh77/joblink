@@ -99,7 +99,7 @@ export async function sendPasswordResetEmail(
   
   const hashedToken = data?.properties?.hashed_token
   const link = hashedToken
-    ? `${siteUrl()}/auth/callback?token_hash=${hashedToken}&type=recovery&next=/settings`
+    ? `${siteUrl()}/auth/callback?token_hash=${hashedToken}&type=recovery&next=/update-password`
     : data?.properties?.action_link
 
   if (error || !link) {

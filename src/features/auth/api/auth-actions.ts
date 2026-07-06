@@ -10,8 +10,10 @@ import { getTranslations } from "next-intl/server"
 import {
   createCompanyRegisterSchema,
   createMemberRegisterSchema,
+  createUpdatePasswordSchema,
   type CompanyRegisterInput,
   type MemberRegisterInput,
+  type UpdatePasswordInput,
 } from "../schemas"
 import {
   registerCompany,
@@ -21,6 +23,9 @@ import {
   type MemberRegisterResult,
 } from "../services/registration.service"
 import { logFailedLogin } from "../services/session.service"
+import { createClient } from "@/lib/supabase/server"
+import { requireCurrentUser } from "@/features/auth/api/auth-server"
+import { writeAuditLog } from "@/lib/audit"
 
 export async function registerCompanyAction(
   input: CompanyRegisterInput,
@@ -79,4 +84,43 @@ export async function registerMemberAction(
 // Log đăng nhập thất bại từ Client
 export async function logFailedLoginAction(email: string, reason: string): Promise<void> {
   await logFailedLogin(email, reason)
+}
+
+// Cập nhật mật khẩu sau khi khôi phục (không cần mật khẩu cũ vì đã được verify bằng OTP)
+export async function updatePasswordAction(
+  input: UpdatePasswordInput,
+): Promise<{ ok: boolean; error?: string }> {
+  const tv = await getTranslations("auth.validation")
+  const tp = await getTranslations("settings.password")
+
+  const parsed = createUpdatePasswordSchema(tv).safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? tp("updateFailed") }
+  }
+
+  try {
+    const current = await requireCurrentUser()
+    const supabase = await createClient()
+
+    const { error } = await supabase.auth.updateUser({
+      password: parsed.data.password,
+    })
+
+    if (error) {
+      console.error("[updatePasswordAction]", error)
+      return { ok: false, error: tp("updateFailed") }
+    }
+
+    await writeAuditLog({
+      actorId: current.appUser.id,
+      action: "user.password_change",
+      entityType: "users",
+      entityId: current.appUser.id,
+    })
+
+    return { ok: true }
+  } catch (error) {
+    console.error("[updatePasswordAction] error:", error)
+    return { ok: false, error: tp("updateFailed") }
+  }
 }

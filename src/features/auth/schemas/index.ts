@@ -116,6 +116,18 @@ export function createForgotPasswordSchema(t: Translator) {
   })
 }
 
+export function createUpdatePasswordSchema(t: Translator) {
+  return z
+    .object({
+      password: createPasswordSchema(t),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    })
+}
+
 const noop: Translator = (k) => k
 export type LoginInput = z.infer<ReturnType<typeof createLoginSchema>>
 export type RegisterInput = z.infer<ReturnType<typeof createRegisterSchema>>
@@ -127,5 +139,8 @@ export type CompanyRegisterInput = z.infer<
 >
 export type ForgotPasswordInput = z.infer<
   ReturnType<typeof createForgotPasswordSchema>
+>
+export type UpdatePasswordInput = z.infer<
+  ReturnType<typeof createUpdatePasswordSchema>
 >
 void noop

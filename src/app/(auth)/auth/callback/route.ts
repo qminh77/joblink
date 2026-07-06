@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server"
 // Flow: Supabase email/OAuth link -> /auth/callback -> exchangeCodeForSession -> redirect to target screen.
 
 import { createClient } from "@/lib/supabase/server"
+import { logEmailChangeSuccess } from "@/features/auth/services/session.service"
 
 import { type EmailOtpType } from "@supabase/supabase-js"
 
@@ -21,7 +22,6 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
       if (type === "email_change") {
-        const { logEmailChangeSuccess } = await import("@/features/auth/services/session.service")
         await logEmailChangeSuccess(data.user)
       }
       return NextResponse.redirect(new URL(next, origin))
