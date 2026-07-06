@@ -11,7 +11,7 @@ import { useRelativeTimeFormatter } from "@/lib/utils/use-relative-time"
 import {
   getPostPreviewAction,
   type PostPreviewData,
-} from "@/features/posts/api/preview-actions"
+} from "@/features/posts/api/actions"
 
 type Props = {
   postId: number

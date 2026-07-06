@@ -175,3 +175,11 @@ function toMediaItem(raw: unknown): MediaItem | null {
   if (typeof r.height === "number") item.height = r.height
   return item
 }
+
+export function imageMedia(
+  mediaItems: { url: string; width?: number; height?: number }[],
+): Json | null {
+  return mediaItems.length > 0
+    ? ({ type: "image", items: mediaItems } as unknown as Json)
+    : null
+}
