@@ -38,10 +38,16 @@ const SMTP_KEYS = [
 export async function loadSmtpConfig(): Promise<SmtpConfig | null> {
   try {
     const supabase = createAdminClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("system_settings")
       .select("setting_key, value")
       .in("setting_key", SMTP_KEYS)
+
+    if (error) {
+      console.error("[SMTP] Lỗi khi đọc cấu hình từ DB:", error.message)
+      return null
+    }
+
     const map = new Map<string, unknown>()
     for (const row of (data ?? []) as Array<{
       setting_key: string
@@ -59,7 +65,8 @@ export async function loadSmtpConfig(): Promise<SmtpConfig | null> {
         : portValue
           ? Number(portValue)
           : 587
-    const encryption = ((map.get("smtp_encryption") as string) || "tls") as
+    const encryptionRaw = (map.get("smtp_encryption") as string) || "tls"
+    const encryption = encryptionRaw.toLowerCase() as
       | "none"
       | "ssl"
       | "tls"
@@ -72,7 +79,8 @@ export async function loadSmtpConfig(): Promise<SmtpConfig | null> {
       fromEmail,
       fromName: (map.get("smtp_from_name") as string | null) || "Joblink",
     }
-  } catch {
+  } catch (err) {
+    console.error("[SMTP] Lỗi nghiêm trọng khi load config:", err)
     return null
   }
 }
@@ -104,6 +112,7 @@ export async function sendMail(input: SmtpSendInput): Promise<SmtpSendResult> {
     })
     return { ok: true, messageId: info.messageId ?? "" }
   } catch (err) {
+    console.error("[SMTP] Lỗi khi gửi mail qua nodemailer:", err)
     return {
       ok: false,
       error: err instanceof Error ? err.message : "send_failed",

@@ -2615,10 +2615,10 @@ ALTER TABLE public.saved_jobs ENABLE TRIGGER ALL;
 ALTER TABLE public.system_settings DISABLE TRIGGER ALL;
 
 COPY public.system_settings (id, setting_key, setting_group, value, encrypted, updated_by, created_at, updated_at) FROM stdin;
-12	smtp_password	smtp	"y*8OD&A$WLZF7?tD"	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-13	smtp_encryption	smtp	"tls"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-14	smtp_from_email	smtp	"noreply@umters.club"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-15	smtp_from_name	smtp	"Joblink"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+12	smtp_password	smtp	null	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+13	smtp_encryption	smtp	"none"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+14	smtp_from_email	smtp	"noreply@joblink.local"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+15	smtp_from_name	smtp	"Joblink Local"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 19	login_rate_limit	security	10	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 20	upload_max_mb	security	10	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 22	google_auth_enabled	security	true	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
@@ -2630,10 +2630,10 @@ COPY public.system_settings (id, setting_key, setting_group, value, encrypted, u
 6	default_timezone	regional	"Asia/Ho_Chi_Minh"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 7	default_currency	regional	"VND"	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 8	available_locales	regional	["vi", "en"]	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-9	smtp_host	smtp	"mail.umters.club"	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-10	smtp_port	smtp	587	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-11	smtp_username	smtp	"noreply@umters.club"	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
-23	require_email_verification	security	false	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+9	smtp_host	smtp	"127.0.0.1"	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+10	smtp_port	smtp	54325	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+11	smtp_username	smtp	null	t	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
+23	require_email_verification	security	true	f	5	2026-06-20 08:13:45.281878+00	2026-06-20 08:13:45.281878+00
 \.
 
 
