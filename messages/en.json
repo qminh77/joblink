@@ -1469,5 +1469,68 @@
     "noResultsTab": "No {tab} found",
     "typeToSearch": "Type at least 2 characters to start searching",
     "viewAllResults": "View all results"
+  },
+  "companyDashboard": {
+    "title": "Recruitment Center",
+    "verified": "Verified",
+    "viewCompany": "Company Page",
+    "updateProfile": "Update Profile",
+    "postJob": "Post a Job",
+    "stats": {
+      "activeJobs": "Active Jobs",
+      "submittedApps": "Submitted",
+      "draftJobs": "Drafts",
+      "totalApps": "Total Applications"
+    },
+    "attention": {
+      "title": "Needs Attention",
+      "action": "Manage Jobs",
+      "empty": "No drafts or jobs expiring in the next 7 days.",
+      "completeDraft": "Complete Draft",
+      "draftDesc": "Job is in draft status, not publicly visible.",
+      "checkExpiry": "Check Expiry",
+      "expireDesc": "Job will expire {date}.",
+      "noExpiryDesc": "Active job has no set expiry."
+    },
+    "recentJobs": {
+      "title": "Recent Jobs",
+      "action": "View All",
+      "empty": "No jobs posted yet.",
+      "createFirst": "Create First Job",
+      "view": "View",
+      "edit": "Edit",
+      "applicants": "{count} applicants"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "postJob": "Post a Job",
+      "manageJobs": "Manage Jobs",
+      "viewApps": "View Applications",
+      "updateProfile": "Update Company Profile"
+    },
+    "applicationSummary": {
+      "title": "Applications",
+      "action": "All Applications",
+      "submitted": "Submitted",
+      "withdrawn": "Withdrawn",
+      "closed": "Closed"
+    },
+    "recentApplications": {
+      "title": "Recent Applications",
+      "action": "Manage",
+      "empty": "No applications received yet.",
+      "appliedAt": "Applied on {date}",
+      "viewApp": "View Application",
+      "viewProfile": "View Profile"
+    },
+    "status": {
+      "active": "Active",
+      "closed": "Closed",
+      "draft": "Draft",
+      "expired": "Expired",
+      "removed": "Removed",
+      "submitted": "Submitted",
+      "withdrawn": "Withdrawn"
+    }
   }
 }

@@ -1469,5 +1469,68 @@
     "noResultsTab": "Không tìm thấy {tab} nào",
     "typeToSearch": "Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm",
     "viewAllResults": "Xem tất cả kết quả"
+  },
+  "companyDashboard": {
+    "title": "Trung tâm tuyển dụng",
+    "verified": "Đã xác minh",
+    "viewCompany": "Trang công ty",
+    "updateProfile": "Cập nhật hồ sơ",
+    "postJob": "Đăng tin mới",
+    "stats": {
+      "activeJobs": "Tin đang tuyển",
+      "submittedApps": "Hồ sơ đã nộp",
+      "draftJobs": "Tin nháp",
+      "totalApps": "Tổng hồ sơ"
+    },
+    "attention": {
+      "title": "Việc cần chú ý",
+      "action": "Quản lý tin",
+      "empty": "Không có tin nháp hoặc tin sắp hết hạn trong 7 ngày tới.",
+      "completeDraft": "Hoàn tất tin",
+      "draftDesc": "Tin đang ở trạng thái nháp, chưa hiển thị công khai.",
+      "checkExpiry": "Kiểm tra hạn",
+      "expireDesc": "Tin sẽ hết hạn {date}.",
+      "noExpiryDesc": "Tin đang tuyển chưa có thời hạn."
+    },
+    "recentJobs": {
+      "title": "Tin tuyển dụng gần đây",
+      "action": "Xem tất cả",
+      "empty": "Chưa có tin tuyển dụng nào.",
+      "createFirst": "Tạo tin đầu tiên",
+      "view": "Xem",
+      "edit": "Sửa",
+      "applicants": "{count} hồ sơ"
+    },
+    "quickActions": {
+      "title": "Thao tác nhanh",
+      "postJob": "Đăng tin tuyển dụng",
+      "manageJobs": "Quản lý tin tuyển dụng",
+      "viewApps": "Xem hồ sơ ứng tuyển",
+      "updateProfile": "Cập nhật hồ sơ công ty"
+    },
+    "applicationSummary": {
+      "title": "Hồ sơ ứng tuyển",
+      "action": "Tất cả hồ sơ",
+      "submitted": "Đã nộp",
+      "withdrawn": "Đã rút",
+      "closed": "Đã đóng"
+    },
+    "recentApplications": {
+      "title": "Hồ sơ mới nhận",
+      "action": "Quản lý",
+      "empty": "Chưa có hồ sơ ứng tuyển nào.",
+      "appliedAt": "Nộp ngày {date}",
+      "viewApp": "Xem hồ sơ",
+      "viewProfile": "Hồ sơ cá nhân"
+    },
+    "status": {
+      "active": "Đang tuyển",
+      "closed": "Đã đóng",
+      "draft": "Nháp",
+      "expired": "Hết hạn",
+      "removed": "Đã gỡ",
+      "submitted": "Đã nộp",
+      "withdrawn": "Đã rút"
+    }
   }
 }
