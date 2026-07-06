@@ -18,8 +18,12 @@ export function useForgotPassword() {
     // Email đặt lại gửi qua SMTP của Admin (auth-mailer), KHÔNG qua Supabase.
     mutationFn: (input: ForgotPasswordInput) =>
       requestPasswordResetAction({ email: input.email, locale }),
-    onSuccess: () => {
+    onMutate: () => {
+      // Optimistic UI: Immediately show success without waiting for SMTP
       toast.success(t("success"))
+    },
+    onSuccess: () => {
+      // Handled optimistically in onMutate
     },
     onError: (error) => {
       toast.error(getAuthErrorMessage(error, tErr, tCommon))

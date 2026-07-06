@@ -39,16 +39,19 @@ export function useRegister() {
       }
       return { kind: "member", verifyRequired: result.verifyRequired }
     },
-    onSuccess: (result) => {
-      if (result.kind === "company") {
+    onMutate: (input) => {
+      // Optimistic UI: Immediately show success and redirect without waiting for SMTP/backend
+      if (input.role === "company") {
         toast.success(t("successCompanyPending"))
         router.replace("/login")
         return
       }
-      toast.success(
-        result.verifyRequired ? t("successNeedVerify") : t("successNoVerify"),
-      )
+      // For members, we optimistically assume verify is required
+      toast.success(t("successNeedVerify"))
       router.replace("/login")
+    },
+    onSuccess: () => {
+      // Handled optimistically in onMutate
     },
     onError: (error) => {
       toast.error(getAuthErrorMessage(error, tErr, tCommon))

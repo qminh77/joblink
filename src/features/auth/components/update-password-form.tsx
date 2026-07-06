@@ -22,7 +22,7 @@ import {
 import { PasswordInput } from "./password-input"
 
 export function UpdatePasswordForm() {
-  const tAuth = useTranslations("auth.forgotPassword")
+  const tAuth = useTranslations("auth.updatePassword")
   const tSet = useTranslations("settings.password")
   const tv = useTranslations("auth.validation")
 
@@ -66,7 +66,7 @@ export function UpdatePasswordForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="font-semibold text-foreground/80">
-                {tSet("confirmNew")}
+                {tSet("confirm")}
               </FormLabel>
               <FormControl>
                 <PasswordInput

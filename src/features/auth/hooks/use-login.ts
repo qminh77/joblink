@@ -4,6 +4,7 @@
 // Flow: login form submit -> Supabase password sign-in -> app user mirror/status check -> redirect or sign out with business error.
 
 import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -30,6 +31,7 @@ const AUTH_GATE_ERROR_KEYS: Record<AuthGateErrorCode, string> = {
 
 export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const t = useTranslations("auth.login")
   const tErr = useTranslations("auth.errors")
   const tCommon = useTranslations("common")
@@ -40,7 +42,9 @@ export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
     },
     onSuccess: () => {
       toast.success(t("success"))
-      router.push(redirectTo)
+      startTransition(() => {
+        router.push(redirectTo)
+      })
     },
     onError: (error, variables) => {
       if (error instanceof AuthGateError) {

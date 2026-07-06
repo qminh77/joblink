@@ -18,6 +18,7 @@ export default async function ForgotPasswordPage() {
         <Link
           href="/login"
           className="flex items-center justify-center text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+          prefetch={true}
         >
           <ArrowLeft className="mr-2 size-4" />
           {t("backToLogin")}

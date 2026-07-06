@@ -89,6 +89,7 @@ export function LoginForm({
                 <Link
                   href="/forgot-password"
                   className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                  prefetch={true}
                 >
                   {t("forgotPassword")}
                 </Link>

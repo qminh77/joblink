@@ -8,7 +8,7 @@ import { UpdatePasswordForm } from "@/features/auth/components/update-password-f
 export const dynamic = "force-dynamic"
 
 export default async function UpdatePasswordPage() {
-  const t = await getTranslations("auth.forgotPassword")
+  const t = await getTranslations("auth.updatePassword")
 
   return (
     <AuthLayout

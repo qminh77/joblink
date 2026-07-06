@@ -304,6 +304,13 @@
       "google": "Continue with Google",
       "redirecting": "Redirecting...",
       "error": "Couldn't sign in with Google, please try again"
+    },
+    "updatePassword": {
+      "title": "Update password",
+      "subtitle": "Please enter a new password for your account.",
+      "submit": "Update password",
+      "submitting": "Processing...",
+      "backToLogin": "Back to Home"
     }
   },
   "profile": {

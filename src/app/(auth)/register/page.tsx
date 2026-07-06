@@ -20,6 +20,7 @@ export default async function RegisterPage() {
           <Link
             className="font-semibold text-primary transition-colors hover:text-primary/80"
             href="/login"
+            prefetch={true}
           >
             {t("login")}
           </Link>

@@ -304,6 +304,13 @@
       "google": "Tiếp tục với Google",
       "redirecting": "Đang chuyển hướng...",
       "error": "Không thể đăng nhập bằng Google, vui lòng thử lại"
+    },
+    "updatePassword": {
+      "title": "Cập nhật mật khẩu",
+      "subtitle": "Vui lòng nhập mật khẩu mới cho tài khoản của bạn.",
+      "submit": "Cập nhật mật khẩu",
+      "submitting": "Đang xử lý...",
+      "backToLogin": "Quay lại trang chủ"
     }
   },
   "profile": {

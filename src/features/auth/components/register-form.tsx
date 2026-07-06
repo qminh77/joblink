@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslations } from "next-intl"
@@ -123,6 +123,9 @@ export function RegisterForm() {
   const role = useWatch({ control: form.control, name: "role" })
   const register = useRegister()
 
+  const [activeTab, setActiveTab] = useState<"member" | "company">(role || "member")
+  const [isPending, startTransition] = useTransition()
+
   useEffect(() => {
     form.clearErrors()
   }, [role, form])
@@ -163,10 +166,14 @@ export function RegisterForm() {
           render={({ field }) => (
             <FormItem>
               <Tabs
-                value={field.value}
-                onValueChange={(value) =>
-                  field.onChange(value as "member" | "company")
-                }
+                value={activeTab}
+                onValueChange={(value) => {
+                  const newRole = value as "member" | "company"
+                  setActiveTab(newRole)
+                  startTransition(() => {
+                    field.onChange(newRole)
+                  })
+                }}
                 className="w-full mb-2"
               >
                 <TabsList className="grid w-full grid-cols-2 bg-muted h-11 border border-border/80 rounded-xl p-1">
@@ -188,11 +195,13 @@ export function RegisterForm() {
           )}
         />
 
-        {role === "member" ? (
-          <MemberFields control={form.control} inputClass={INPUT_CLASS} />
-        ) : (
-          <CompanyFields control={form.control} inputClass={INPUT_CLASS} />
-        )}
+        <div className={isPending ? "opacity-50 pointer-events-none transition-opacity duration-200" : "transition-opacity duration-200"}>
+          {role === "member" ? (
+            <MemberFields control={form.control} inputClass={INPUT_CLASS} />
+          ) : (
+            <CompanyFields control={form.control} inputClass={INPUT_CLASS} />
+          )}
+        </div>
 
         <FormField
           control={form.control}
