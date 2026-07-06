@@ -96,7 +96,12 @@ export async function sendPasswordResetEmail(
     email,
     options: { redirectTo },
   })
-  const link = data?.properties?.action_link
+  
+  const hashedToken = data?.properties?.hashed_token
+  const link = hashedToken
+    ? `${siteUrl()}/auth/callback?token_hash=${hashedToken}&type=recovery&next=/settings`
+    : data?.properties?.action_link
+
   if (error || !link) {
     if (error) console.error("[auth-mailer] generateLink recovery", error.message)
     return false
@@ -186,7 +191,12 @@ export async function createUserAndSendVerification(input: {
     password: input.password,
     options: { data: input.data, redirectTo },
   })
-  const link = data?.properties?.action_link
+
+  const hashedToken = data?.properties?.hashed_token
+  const link = hashedToken
+    ? `${siteUrl()}/auth/callback?token_hash=${hashedToken}&type=signup&next=/home`
+    : data?.properties?.action_link
+
   if (error || !link || !data?.user) {
     return { ok: false, code: error?.code || "signup_failed" }
   }
@@ -246,7 +256,12 @@ export async function sendEmailChangeVerification(
     newEmail,
     options: { redirectTo },
   })
-  const link = data?.properties?.action_link
+
+  const hashedToken = data?.properties?.hashed_token
+  const link = hashedToken
+    ? `${siteUrl()}/auth/callback?token_hash=${hashedToken}&type=email_change&next=/settings`
+    : data?.properties?.action_link
+
   if (error || !link) {
     if (error) console.error("[auth-mailer] generateLink email_change", error.message)
     return { ok: false, code: error?.code || "email_change_failed" }
