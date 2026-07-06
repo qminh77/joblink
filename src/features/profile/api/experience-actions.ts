@@ -2,7 +2,6 @@
 
 import { getTranslations } from "next-intl/server"
 
-import { writeAuditLog } from "@/lib/audit"
 import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { requireCurrentUser } from "@/features/auth/api/auth-server"
@@ -36,12 +35,6 @@ export async function addExperienceAction(
       data,
       tv("startDateRequired"),
     )
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_add",
-      entityType: "member_experiences",
-      newData: { companyName: data.companyName, position: data.position },
-    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -61,13 +54,6 @@ export async function updateExperienceAction(
       data,
       tv("startDateRequired"),
     )
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_update",
-      entityType: "member_experiences",
-      entityId: data.id ?? undefined,
-      newData: { companyName: data.companyName, position: data.position },
-    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -80,12 +66,6 @@ export async function deleteExperienceAction(
     const supabase = await createClient()
 
     await deleteExperience(supabase, current.appUser.id, experienceId)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.experience_delete",
-      entityType: "member_experiences",
-      entityId: experienceId,
-    })
     revalidateProfile(current.appUser.id)
   })
 }

@@ -1,5 +1,6 @@
 import "server-only"
 
+import { writeAuditLog } from "@/lib/audit"
 import { ActionError, assertOk } from "@/lib/action/server"
 import type { createClient } from "@/lib/supabase/server"
 
@@ -35,6 +36,13 @@ export async function updateMemberProfile(
   input: MemberProfileInput,
 ) {
   assertOk(await updateMemberProfileRow(supabase, userId, input), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.update",
+    entityType: "member_profiles",
+    entityId: userId,
+    newData: { fullName: input.fullName, headline: input.headline },
+  })
 }
 
 export async function updateMemberMedia(
@@ -43,6 +51,13 @@ export async function updateMemberMedia(
   input: { avatarUrl?: string | null; coverUrl?: string | null },
 ) {
   assertOk(await updateMemberMediaRow(supabase, userId, input), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.media_update",
+    entityType: "member_profiles",
+    entityId: userId,
+    newData: input,
+  })
 }
 
 export async function addExperience(
@@ -65,6 +80,12 @@ export async function addExperience(
     }),
     "unexpected",
   )
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.experience_add",
+    entityType: "member_experiences",
+    newData: { companyName: input.companyName, position: input.position },
+  })
 }
 
 export async function editExperience(
@@ -88,6 +109,13 @@ export async function editExperience(
     }),
     "unexpected",
   )
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.experience_update",
+    entityType: "member_experiences",
+    entityId: input.id ?? undefined,
+    newData: { companyName: input.companyName, position: input.position },
+  })
 }
 
 export async function deleteExperience(
@@ -99,6 +127,12 @@ export async function deleteExperience(
     await softDeleteExperience(supabase, experienceId, userId),
     "unexpected",
   )
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.experience_delete",
+    entityType: "member_experiences",
+    entityId: experienceId,
+  })
 }
 
 export async function addEducation(
@@ -107,6 +141,12 @@ export async function addEducation(
   input: MemberEducationInput,
 ) {
   assertOk(await insertEducation(supabase, userId, input), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.education_add",
+    entityType: "member_educations",
+    newData: { schoolName: input.schoolName, degree: input.degree },
+  })
 }
 
 export async function editEducation(
@@ -119,6 +159,13 @@ export async function editEducation(
     await updateEducation(supabase, input.id, userId, input),
     "unexpected",
   )
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.education_update",
+    entityType: "member_educations",
+    entityId: input.id ?? undefined,
+    newData: { schoolName: input.schoolName, degree: input.degree },
+  })
 }
 
 export async function deleteEducation(
@@ -130,6 +177,12 @@ export async function deleteEducation(
     await softDeleteEducation(supabase, educationId, userId),
     "unexpected",
   )
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.education_delete",
+    entityType: "member_educations",
+    entityId: educationId,
+  })
 }
 
 export async function addSkill(
@@ -138,6 +191,12 @@ export async function addSkill(
   skillName: string,
 ) {
   assertOk(await insertMemberSkill(supabase, userId, skillName), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.skill_add",
+    entityType: "member_skills",
+    newData: { name: skillName },
+  })
 }
 
 export async function removeSkill(
@@ -146,6 +205,12 @@ export async function removeSkill(
   skillId: number,
 ) {
   assertOk(await deleteMemberSkill(supabase, userId, skillId), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "profile.skill_remove",
+    entityType: "member_skills",
+    entityId: skillId,
+  })
 }
 
 export async function logProfileView(
@@ -166,6 +231,13 @@ export async function updateCompanyMedia(
   input: { logoUrl?: string | null; coverUrl?: string | null },
 ) {
   assertOk(await updateCompanyMediaRow(supabase, userId, input), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "company.media_update",
+    entityType: "company_profiles",
+    entityId: userId,
+    newData: input,
+  })
 }
 
 export async function updateCompanyProfile(
@@ -174,6 +246,13 @@ export async function updateCompanyProfile(
   input: CompanyProfileInput,
 ) {
   assertOk(await updateCompanyProfileRow(supabase, userId, input), "unexpected")
+  await writeAuditLog({
+    actorId: userId,
+    action: "company.profile_update",
+    entityType: "company_profiles",
+    entityId: userId,
+    newData: { name: input.name, industry: input.industry },
+  })
 }
 
 export function getProfileStats(supabase: Supabase, userId: number) {

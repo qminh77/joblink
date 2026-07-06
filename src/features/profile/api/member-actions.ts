@@ -2,7 +2,6 @@
 
 import { getTranslations } from "next-intl/server"
 
-import { writeAuditLog } from "@/lib/audit"
 import { action, parse, requireRole } from "@/lib/action/server"
 import type { ActionResult } from "@/lib/action/result"
 import { createClient } from "@/lib/supabase/server"
@@ -28,13 +27,6 @@ export async function updateMemberProfileAction(
     const supabase = await createClient()
 
     await updateMemberProfile(supabase, current.appUser.id, data)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.update",
-      entityType: "member_profiles",
-      entityId: current.appUser.id,
-      newData: { fullName: data.fullName, headline: data.headline },
-    })
     revalidateProfile(current.appUser.id)
   })
 }
@@ -49,13 +41,6 @@ export async function updateMemberMediaAction(input: {
     const supabase = await createClient()
 
     await updateMemberMedia(supabase, current.appUser.id, input)
-    await writeAuditLog({
-      actorId: current.appUser.id,
-      action: "profile.media_update",
-      entityType: "member_profiles",
-      entityId: current.appUser.id,
-      newData: input,
-    })
     revalidateProfile(current.appUser.id)
   })
 }
