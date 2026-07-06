@@ -20,6 +20,7 @@ import {
   type CompanyRegisterResult,
   type MemberRegisterResult,
 } from "../services/registration.service"
+import { logFailedLogin } from "../services/session.service"
 
 export async function registerCompanyAction(
   input: CompanyRegisterInput,
@@ -73,4 +74,9 @@ export async function registerMemberAction(
     registrationFailed: tErr("registrationFailed"),
     userAlreadyExists: tErr("userAlreadyExists"),
   })
+}
+
+// Log đăng nhập thất bại từ Client
+export async function logFailedLoginAction(email: string, reason: string): Promise<void> {
+  await logFailedLogin(email, reason)
 }

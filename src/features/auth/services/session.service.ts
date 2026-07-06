@@ -13,8 +13,13 @@ import {
   getAppUserByAuthId,
   getCompanyProfileSummary,
   getMemberProfileSummary,
+  getAppUserIdByEmail,
+  getAppUserIdByAuthId as repoGetAppUserIdByAuthId,
 } from "../data/auth.repo"
 import type { CurrentUser } from "../types"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { writeAuditLog } from "@/lib/audit"
+import { type User } from "@supabase/supabase-js"
 
 // Xác minh JWT cục bộ thay vì gọi mạng tới Auth server (getUser()).
 // Middleware (proxy.ts) đã refresh phiên ở đầu mỗi request nên tại đây chỉ cần
@@ -105,4 +110,40 @@ function getBlockedCurrentUserReason(user: CurrentUser) {
     return "account_banned"
   }
   return null
+}
+
+export async function logFailedLogin(email: string, reason: string): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const { data } = await getAppUserIdByEmail(supabase, email)
+      
+    await writeAuditLog({
+      actorId: data?.id ?? 0,
+      action: "user.login_failed",
+      entityType: "users",
+      entityId: data?.id ?? null,
+      reason: `Email: ${email} - Reason: ${reason}`,
+    })
+  } catch {
+    // Ignore audit log errors
+  }
+}
+
+export async function logEmailChangeSuccess(authUser: User | null): Promise<void> {
+  if (!authUser?.id) return
+  try {
+    const admin = createAdminClient()
+    const { data: appUser } = await repoGetAppUserIdByAuthId(admin, authUser.id)
+    if (appUser) {
+      await writeAuditLog({
+        actorId: appUser.id,
+        action: "user.email_change",
+        entityType: "users",
+        entityId: appUser.id,
+        newData: { email: authUser.email },
+      })
+    }
+  } catch {
+    // Ignore audit errors in callback
+  }
 }

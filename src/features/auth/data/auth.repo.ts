@@ -95,6 +95,17 @@ export function getAppUserIdByAuthId(
     .maybeSingle<{ id: number }>()
 }
 
+export function getAppUserIdByEmail(
+  supabase: AdminSupabase,
+  email: string,
+) {
+  return supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle<{ id: number }>()
+}
+
 export function updateCompanyRegistrationProfile(
   supabase: AdminSupabase,
   userId: number,

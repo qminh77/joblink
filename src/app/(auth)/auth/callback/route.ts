@@ -18,8 +18,12 @@ export async function GET(request: NextRequest) {
   // Xử lý Implicit Flow bypass qua token_hash (dùng cho link tạo từ Admin API)
   if (token_hash && type) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash })
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
+      if (type === "email_change") {
+        const { logEmailChangeSuccess } = await import("@/features/auth/services/session.service")
+        await logEmailChangeSuccess(data.user)
+      }
       return NextResponse.redirect(new URL(next, origin))
     }
     // Nếu token hết hạn hoặc lỗi, có thể redirect về trang báo lỗi

@@ -15,6 +15,7 @@ import {
 } from "../api/auth-client"
 import { getAuthErrorMessage } from "../lib/error-messages"
 import type { LoginInput } from "../schemas"
+import { logFailedLoginAction } from "../api/auth-actions"
 
 type UseLoginOptions = {
   redirectTo?: string
@@ -41,12 +42,15 @@ export function useLogin({ redirectTo = "/home" }: UseLoginOptions = {}) {
       toast.success(t("success"))
       router.push(redirectTo)
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       if (error instanceof AuthGateError) {
         toast.error(tErr(AUTH_GATE_ERROR_KEYS[error.code]))
+        logFailedLoginAction(variables.email, `Gate Error: ${error.code}`)
         return
       }
-      toast.error(getAuthErrorMessage(error, tErr, tCommon))
+      const msg = getAuthErrorMessage(error, tErr, tCommon)
+      toast.error(msg)
+      logFailedLoginAction(variables.email, `Auth Error: ${msg}`)
     },
   })
 }
