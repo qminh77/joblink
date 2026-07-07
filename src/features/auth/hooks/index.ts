@@ -1,4 +1,4 @@
-export { useLogin } from "./use-login"
+export { useLogin, AUTH_GATE_ERROR_KEYS } from "./use-login"
 export { useLogout } from "./use-logout"
 export { useRegister } from "./use-register"
 export { useForgotPassword } from "./use-forgot-password"

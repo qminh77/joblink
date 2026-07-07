@@ -48,10 +48,10 @@ export async function signInAndValidateClient(input: LoginInput) {
   const supabase = createClient()
   const { data: appUser, error: appUserError } = await supabase
     .from("users")
-    .select("role, status")
+    .select("id, role, status")
     .eq("auth_id", authId)
     .is("deleted_at", null)
-    .maybeSingle<{ role: string; status: string }>()
+    .maybeSingle<{ id: number; role: string; status: string }>()
 
   if (appUserError) {
     await signOutClient()
@@ -63,12 +63,25 @@ export async function signInAndValidateClient(input: LoginInput) {
     throw new AuthGateError("user_not_found")
   }
 
-  if (
-    appUser.role === "company" &&
-    appUser.status === "pending_verification"
-  ) {
-    await signOutClient()
-    throw new AuthGateError("company_pending")
+  if (appUser.role === "company") {
+    if (appUser.status === "pending_verification") {
+      await signOutClient()
+      throw new AuthGateError("company_pending")
+    }
+
+    if (appUser.status === "active") {
+      const { data: company } = await supabase
+        .from("company_profiles")
+        .select("verification_status")
+        .eq("user_id", appUser.id)
+        .is("deleted_at", null)
+        .maybeSingle<{ verification_status: string }>()
+        
+      if (company?.verification_status !== "verified") {
+        await signOutClient()
+        throw new AuthGateError("company_pending")
+      }
+    }
   }
   if (appUser.status === "suspended") {
     await signOutClient()

@@ -4,7 +4,10 @@ import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
+import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
 import { Lock, Mail } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -18,8 +21,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
-import { useLogin } from "../hooks"
+import { useLogin, AUTH_GATE_ERROR_KEYS } from "../hooks"
 import { createLoginSchema, type LoginInput } from "../schemas"
+import { type AuthGateErrorCode } from "../api/auth-client"
 
 import { GoogleSignInButton } from "./google-sign-in-button"
 import { PasswordInput } from "./password-input"
@@ -31,6 +35,7 @@ export function LoginForm({
 } = {}) {
   const t = useTranslations("auth.login")
   const tv = useTranslations("auth.validation")
+  const tErr = useTranslations("auth.errors")
   const schema = createLoginSchema(tv)
 
   const form = useForm<LoginInput>({
@@ -43,6 +48,15 @@ export function LoginForm({
   async function onSubmit(values: LoginInput) {
     login.mutate(values)
   }
+
+  const searchParams = useSearchParams()
+  const reason = searchParams.get("reason") as AuthGateErrorCode | null
+
+  useEffect(() => {
+    if (reason && AUTH_GATE_ERROR_KEYS[reason]) {
+      toast.error(tErr(AUTH_GATE_ERROR_KEYS[reason]))
+    }
+  }, [reason, tErr])
 
   return (
     <Form {...form}>

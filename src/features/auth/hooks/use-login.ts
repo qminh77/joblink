@@ -22,7 +22,7 @@ type UseLoginOptions = {
   redirectTo?: string
 }
 
-const AUTH_GATE_ERROR_KEYS: Record<AuthGateErrorCode, string> = {
+export const AUTH_GATE_ERROR_KEYS: Record<AuthGateErrorCode, string> = {
   user_not_found: "userNotFound",
   company_pending: "companyPendingApproval",
   account_suspended: "accountSuspended",
