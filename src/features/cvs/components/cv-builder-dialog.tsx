@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl"
 import { Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 import { getProfileForCvBuilderAction } from "../api/read-actions"
 import { BuilderForm } from "./cv-builder-dialog/builder-form"
@@ -33,6 +33,7 @@ export function CvBuilderDialog({ open, onOpenChange }: Props) {
         className="rounded-2xl sm:max-w-lg"
         showCloseButton={false}
       >
+        <DialogTitle className="sr-only">CV Builder</DialogTitle>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
